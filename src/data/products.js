@@ -4,10 +4,10 @@ import { img } from './images.js'
 
 // Featured cards on Home — visually distinctive picks across categories.
 export const featured = [
-  { id: 'feat-1', name: 'Strawberry Cheesecake', price: 350, img: img.berryCake, category: 'Cheesecakes' },
-  { id: 'feat-2', name: 'Vanilla Cupcakes', price: 100, img: img.cupcakesRose, category: 'Cupcakes' },
-  { id: 'feat-3', name: 'Triple Choc Cookies (Box of 6)', price: 340, img: img.cookies, category: 'Cookies' },
-  { id: 'feat-4', name: 'Biscoff Milk Cake 6"', price: 800, img: img.pinkDripCake, category: 'Milk Cakes' },
+  { id: 'feat-1', name: 'Strawberry Cheesecake', price: 350, img: img.cheesecakeStrawberry, category: 'Cheesecakes' },
+  { id: 'feat-2', name: 'Pink Rose Cupcakes', price: 100, img: img.cupcakesRose, category: 'Cupcakes' },
+  { id: 'feat-3', name: 'Triple Choc Cookies (Box of 6)', price: 340, img: img.cookiesTripleChoc, category: 'Cookies' },
+  { id: 'feat-4', name: 'Pistachio Milk Cake 6"', price: 950, img: img.milkcakeRosePistachio, category: 'Milk Cakes' },
 ]
 
 // Flat list for /shop — full PDF menu, every item orderable.
@@ -15,90 +15,90 @@ export const featured = [
 export const shopProducts = [
   // ───── CHEESECAKES — Banto 4" whole / per slice ─────
   // Classic
-  { id: 'cc-strawberry', name: 'Strawberry Cheesecake', price: 350, slice: 120, img: img.berryCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-blueberry', name: 'Blueberry Cheesecake', price: 410, slice: 140, img: img.berryCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-raspberry', name: 'Raspberry Cheesecake', price: 410, slice: 140, img: img.berryCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-orange', name: 'Orange Creamsicle Cheesecake', price: 380, slice: 130, img: img.cheesecake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-lemon', name: 'Lemon Cheesecake', price: 350, slice: 120, img: img.cheesecake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-rose', name: 'Rose Cheesecake', price: 350, slice: 120, img: img.cupcakesRose, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-strawberry', name: 'Strawberry Cheesecake', price: 350, slice: 120, img: img.cheesecakeStrawberry, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-blueberry', name: 'Blueberry Cheesecake', price: 410, slice: 140, img: img.cheesecakeBlueberry, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-raspberry', name: 'Raspberry Cheesecake', price: 410, slice: 140, img: img.cheesecakeStrawberryCups, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-orange', name: 'Orange Creamsicle Cheesecake', price: 380, slice: 130, img: img.cheesecakeChocMango, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-lemon', name: 'Lemon Cheesecake', price: 350, slice: 120, img: img.cheesecakeCookiesCream, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-rose', name: 'Rose Cheesecake', price: 350, slice: 120, img: img.cheesecakeStrawberryRose || img.cheesecakeStrawberry, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
   // Exotic
-  { id: 'cc-mango', name: 'Mango Cheesecake', price: 350, slice: 120, img: img.cheesecake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-passion', name: 'Passion Fruit Cheesecake', price: 380, slice: 130, img: img.cheesecake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-cherry', name: 'Cherry Cheesecake', price: 380, slice: 130, img: img.berryCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-guava', name: 'Guava Cheesecake', price: 350, slice: 120, img: img.cheesecake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-mango-passion', name: 'Mango & Passion Cheesecake', price: 410, slice: 140, img: img.cheesecake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-coconut', name: 'Coconut Cheesecake', price: 410, slice: 140, img: img.cheesecake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-mango', name: 'Mango Cheesecake', price: 350, slice: 120, img: img.cheesecakeMango, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-passion', name: 'Passion Fruit Cheesecake', price: 380, slice: 130, img: img.cheesecakeChocMango, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-cherry', name: 'Cherry Cheesecake', price: 380, slice: 130, img: img.cheesecakeStrawberry, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-guava', name: 'Guava Cheesecake', price: 350, slice: 120, img: img.cheesecakeMango, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-mango-passion', name: 'Mango & Passion Cheesecake', price: 410, slice: 140, img: img.cheesecakeMango, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-coconut', name: 'Coconut Cheesecake', price: 410, slice: 140, img: img.cheesecakeCookiesCream, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
   // Chocolate
-  { id: 'cc-choc', name: 'Chocolate Cheesecake (Milk & Dark)', price: 380, slice: 130, img: img.chocolateCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-choc-orange', name: 'Chocolate Orange Cheesecake', price: 380, slice: 130, img: img.chocolateCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-blackforest', name: 'Black Forest Cheesecake', price: 380, slice: 130, img: img.chocolateCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-choc-chunk', name: 'Chocolate Chunk Cheesecake', price: 380, slice: 130, img: img.chocolateCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-nutella', name: 'Nutella Cheesecake', price: 440, slice: 150, img: img.chocolateCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-biscoff', name: 'Biscoff Cheesecake', price: 410, slice: 140, img: img.chocolateCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-choc', name: 'Chocolate Cheesecake (Milk & Dark)', price: 380, slice: 130, img: img.cheesecakeChocRose, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-choc-orange', name: 'Chocolate Orange Cheesecake', price: 380, slice: 130, img: img.cheesecakeChocMango, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-blackforest', name: 'Black Forest Cheesecake', price: 380, slice: 130, img: img.cheesecakeChocRoseBowl, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-choc-chunk', name: 'Chocolate Chunk Cheesecake', price: 380, slice: 130, img: img.cheesecakeChocPistachio, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-nutella', name: 'Nutella Cheesecake', price: 440, slice: 150, img: img.cheesecakeNutella, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-biscoff', name: 'Biscoff Cheesecake', price: 410, slice: 140, img: img.cheesecakeCaramel, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
   // Premium
-  { id: 'cc-cookies-cream', name: 'Cookies & Cream Cheesecake', price: 430, slice: 150, img: img.cookies, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-caramel', name: 'Caramel Cheesecake', price: 430, slice: 150, img: img.cheesecake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-coffee', name: 'Coffee Cheesecake', price: 430, slice: 150, img: img.chocolateCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
-  { id: 'cc-pistachio', name: 'Pistachio Cheesecake', price: 470, slice: 160, img: img.cheesecake, category: 'Cheesecakes', sizeLabel: 'Banto 4"', badge: 'Premium' },
-  { id: 'cc-dubai', name: 'Dubai Cheesecake', price: 500, slice: 170, img: img.cheesecake, category: 'Cheesecakes', sizeLabel: 'Banto 4"', badge: 'Special' },
+  { id: 'cc-cookies-cream', name: 'Cookies & Cream Cheesecake', price: 430, slice: 150, img: img.cheesecakeCookiesCream, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-caramel', name: 'Caramel Cheesecake', price: 430, slice: 150, img: img.cheesecakeCaramel, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-coffee', name: 'Coffee Cheesecake', price: 430, slice: 150, img: img.cheesecakeCoffee, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-pistachio', name: 'Pistachio Cheesecake', price: 470, slice: 160, img: img.cheesecakePistachio, category: 'Cheesecakes', sizeLabel: 'Banto 4"', badge: 'Premium' },
+  { id: 'cc-dubai', name: 'Dubai Cheesecake', price: 500, slice: 170, img: img.cheesecakeChocPistachio, category: 'Cheesecakes', sizeLabel: 'Banto 4"', badge: 'Special' },
 
   // ───── MILK CAKES — 6" whole / per slice ─────
-  { id: 'mc-biscoff', name: 'Biscoff Milk Cake', price: 800, slice: 100, img: img.pinkDripCake, category: 'Milk Cakes', sizeLabel: '6"' },
-  { id: 'mc-tres', name: 'Trés Léches Milk Cake', price: 800, slice: 100, img: img.pinkDripCake, category: 'Milk Cakes', sizeLabel: '6"' },
-  { id: 'mc-rose', name: 'Rose Milk Cake', price: 800, slice: 100, img: img.pinkDripCake, category: 'Milk Cakes', sizeLabel: '6"' },
-  { id: 'mc-turkish', name: 'Turkish Milk Cake', price: 850, slice: 110, img: img.pinkDripCake, category: 'Milk Cakes', sizeLabel: '6"' },
-  { id: 'mc-chocolate', name: 'Chocolate Milk Cake', price: 850, slice: 110, img: img.chocolateCake, category: 'Milk Cakes', sizeLabel: '6"' },
-  { id: 'mc-raspberry', name: 'Raspberry Milk Cake', price: 900, slice: 115, img: img.berryCake, category: 'Milk Cakes', sizeLabel: '6"' },
-  { id: 'mc-pistachio', name: 'Pistachio Milk Cake', price: 950, slice: 120, img: img.pinkDripCake, category: 'Milk Cakes', sizeLabel: '6"', badge: 'Premium' },
+  { id: 'mc-biscoff', name: 'Biscoff Milk Cake', price: 800, slice: 100, img: img.cakeNakedYellow, category: 'Milk Cakes', sizeLabel: '6"' },
+  { id: 'mc-tres', name: 'Trés Léches Milk Cake', price: 800, slice: 100, img: img.milkcakeRosePistachio, category: 'Milk Cakes', sizeLabel: '6"' },
+  { id: 'mc-rose', name: 'Rose Milk Cake', price: 800, slice: 100, img: img.milkcakeRose, category: 'Milk Cakes', sizeLabel: '6"' },
+  { id: 'mc-turkish', name: 'Turkish Milk Cake', price: 850, slice: 110, img: img.cakeYellowFlowers, category: 'Milk Cakes', sizeLabel: '6"' },
+  { id: 'mc-chocolate', name: 'Chocolate Milk Cake', price: 850, slice: 110, img: img.cakeChocolateBirthday, category: 'Milk Cakes', sizeLabel: '6"' },
+  { id: 'mc-raspberry', name: 'Raspberry Milk Cake', price: 900, slice: 115, img: img.milkcakePomegranate || img.berryCake, category: 'Milk Cakes', sizeLabel: '6"' },
+  { id: 'mc-pistachio', name: 'Pistachio Milk Cake', price: 950, slice: 120, img: img.cheesecakePistachioSlices, category: 'Milk Cakes', sizeLabel: '6"', badge: 'Premium' },
 
   // ───── COOKIES — Box of 6 / Box of 12 ─────
-  { id: 'ck-triple', name: 'Triple Choc Cookies', price: 340, slice: 700, img: img.cookies, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12' },
-  { id: 'ck-white', name: 'White Choc Cookies', price: 280, slice: 580, img: img.cookies, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12' },
+  { id: 'ck-triple', name: 'Triple Choc Cookies', price: 340, slice: 700, img: img.cookiesTripleChoc, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12' },
+  { id: 'ck-white', name: 'White Choc Cookies', price: 280, slice: 580, img: img.cookiesChunky, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12' },
   { id: 'ck-classic', name: 'Classic Cookies', price: 280, slice: 580, img: img.cookies, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12' },
-  { id: 'ck-redvelvet', name: 'Red Velvet Cookies', price: 340, slice: 700, img: img.cookies, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12' },
-  { id: 'ck-almond', name: 'Almond Cookies', price: 400, slice: 820, img: img.cookies, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12' },
+  { id: 'ck-redvelvet', name: 'Red Velvet Cookies', price: 340, slice: 700, img: img.cookiesTripleChoc, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12' },
+  { id: 'ck-almond', name: 'Almond Cookies', price: 400, slice: 820, img: img.cookiesChunky, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12' },
   { id: 'ck-coconut', name: 'Coconut Cookies', price: 340, slice: 700, img: img.cookies, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12' },
-  { id: 'ck-pistachio', name: 'Pistachio & Rose Cookies', price: 400, slice: 820, img: img.cookies, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12', badge: 'Special' },
+  { id: 'ck-pistachio', name: 'Pistachio & Rose Cookies', price: 400, slice: 820, img: img.cookiesChunky, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12', badge: 'Special' },
 
   // ───── CUPCAKES — per piece ─────
-  { id: 'cup-chocolate', name: 'Chocolate Cupcake', price: 100, img: img.cupcakesPink, category: 'Cupcakes' },
-  { id: 'cup-vanilla', name: 'Vanilla Cupcake', price: 100, img: img.cupcakesRose, category: 'Cupcakes' },
+  { id: 'cup-chocolate', name: 'Chocolate Cupcake', price: 100, img: img.cupcakesAssorted, category: 'Cupcakes' },
+  { id: 'cup-vanilla', name: 'Vanilla Cupcake', price: 100, img: img.cupcakesPink, category: 'Cupcakes' },
 
   // ───── BAKES — per piece ─────
-  { id: 'bk-brownie', name: 'Brownie', price: 80, img: img.brownies, category: 'Bakes' },
-  { id: 'bk-blondie', name: 'Blondie', price: 80, img: img.brownies, category: 'Bakes' },
-  { id: 'bk-cakesickle-sq', name: 'Cakesickle (Square)', price: 120, img: img.cakePops, category: 'Bakes' },
-  { id: 'bk-cakesickle-cir', name: 'Cakesickle (Circle)', price: 120, img: img.cakePops, category: 'Bakes' },
-  { id: 'bk-cakepop', name: 'Cake Pop', price: 90, img: img.cakePops, category: 'Bakes' },
-  { id: 'bk-strawberry', name: 'Choc Covered Strawberry', price: 70, img: img.berryCake, category: 'Bakes' },
+  { id: 'bk-brownie', name: 'Brownie', price: 80, img: img.bakesChocolateSquare, category: 'Bakes' },
+  { id: 'bk-blondie', name: 'Blondie', price: 80, img: img.bakesPlain, category: 'Bakes' },
+  { id: 'bk-cakesickle-sq', name: 'Cakesickle (Square)', price: 120, img: img.cakePinkLetter, category: 'Bakes' },
+  { id: 'bk-cakesickle-cir', name: 'Cakesickle (Circle)', price: 120, img: img.bakesCreamCones, category: 'Bakes' },
+  { id: 'bk-cakepop', name: 'Cake Pop', price: 90, img: img.cakePinkLetter, category: 'Bakes' },
+  { id: 'bk-strawberry', name: 'Choc Covered Strawberry', price: 70, img: img.cheesecakeStrawberryCups, category: 'Bakes' },
 
   // ───── PLATTERS ─────
-  { id: 'pl-pancakes', name: 'Pancakes (stack of 3)', price: 170, img: img.brownies, category: 'Platters' },
-  { id: 'pl-crepes', name: 'Crêpes (stack of 3)', price: 170, img: img.brownies, category: 'Platters' },
+  { id: 'pl-pancakes', name: 'Pancakes (stack of 3)', price: 170, img: img.bakesCreamCones, category: 'Platters' },
+  { id: 'pl-crepes', name: 'Crêpes (stack of 3)', price: 170, img: img.bakesRosePetal, category: 'Platters' },
 
   // ───── DESSERT CUPS ─────
-  { id: 'dc-custard', name: 'Custard Cup', price: 90, img: img.cheesecake, category: 'Dessert Cups' },
-  { id: 'dc-cheesecake', name: 'Cheesecake Cup', price: 150, img: img.cheesecake, category: 'Dessert Cups' },
-  { id: 'dc-trifle', name: 'Trifle Cup', price: 100, img: img.berryCake, category: 'Dessert Cups' },
-  { id: 'dc-jelly', name: 'Jelly Cup', price: 80, img: img.cheesecake, category: 'Dessert Cups' },
-  { id: 'dc-grass', name: 'Grass Cup (Ghas)', price: 90, img: img.cheesecake, category: 'Dessert Cups' },
+  { id: 'dc-custard', name: 'Custard Cup', price: 90, img: img.dessertCupsLemon, category: 'Dessert Cups' },
+  { id: 'dc-cheesecake', name: 'Cheesecake Cup', price: 150, img: img.dessertCupsTrio, category: 'Dessert Cups' },
+  { id: 'dc-trifle', name: 'Trifle Cup', price: 100, img: img.dessertCupsLemon, category: 'Dessert Cups' },
+  { id: 'dc-jelly', name: 'Jelly Cup', price: 80, img: img.jellyCupsRainbow, category: 'Dessert Cups' },
+  { id: 'dc-grass', name: 'Grass Cup (Ghas)', price: 90, img: img.jellyCupsRainbow, category: 'Dessert Cups' },
 
   // ───── DRINKS — Mojitos ─────
-  { id: 'dr-virginmojito', name: 'Virgin Mojito', price: 120, img: img.berryCake, category: 'Drinks' },
-  { id: 'dr-bluemojito', name: 'Blue Lagoon Mojito', price: 120, img: img.berryCake, category: 'Drinks' },
-  { id: 'dr-strawberrymojito', name: 'Strawberry Mojito', price: 120, img: img.berryCake, category: 'Drinks' },
-  { id: 'dr-fruitmojito', name: 'Fruit Flavour Mojito', price: 130, img: img.berryCake, category: 'Drinks' },
+  { id: 'dr-virginmojito', name: 'Virgin Mojito', price: 120, img: img.drinkVirginMojito, category: 'Drinks' },
+  { id: 'dr-bluemojito', name: 'Blue Lagoon Mojito', price: 120, img: img.drinkBlueLagoon, category: 'Drinks' },
+  { id: 'dr-strawberrymojito', name: 'Strawberry Mojito', price: 120, img: img.drinkStrawberryMojito, category: 'Drinks' },
+  { id: 'dr-fruitmojito', name: 'Fruit Flavour Mojito', price: 130, img: img.drinkStrawberryMojito, category: 'Drinks' },
 
   // ───── DRINKS — Coffee ─────
-  { id: 'dr-icedcoffee', name: 'Iced Coffee', price: 100, img: img.chocolateCake, category: 'Drinks' },
-  { id: 'dr-hotcoffee', name: 'Hot Coffee', price: 90, img: img.chocolateCake, category: 'Drinks' },
+  { id: 'dr-icedcoffee', name: 'Iced Coffee', price: 100, img: img.drinkBlueLagoon, category: 'Drinks' },
+  { id: 'dr-hotcoffee', name: 'Hot Coffee', price: 90, img: img.drinkVirginMojito, category: 'Drinks' },
 
   // ───── DRINKS — Milkshakes ─────
-  { id: 'dr-fruitshake', name: 'Fruit Flavour Milkshake', price: 160, img: img.cupcakesPink, category: 'Drinks' },
-  { id: 'dr-biscoff-shake', name: 'Biscoff Milkshake', price: 180, img: img.chocolateCake, category: 'Drinks' },
-  { id: 'dr-nutella-shake', name: 'Nutella Milkshake', price: 180, img: img.chocolateCake, category: 'Drinks' },
-  { id: 'dr-oreo-shake', name: 'Oreo Milkshake', price: 180, img: img.chocolateCake, category: 'Drinks' },
-  { id: 'dr-choc-shake', name: 'Choc Flavour Milkshake', price: 180, img: img.chocolateCake, category: 'Drinks' },
+  { id: 'dr-fruitshake', name: 'Fruit Flavour Milkshake', price: 160, img: img.drinkStrawberryMojito, category: 'Drinks' },
+  { id: 'dr-biscoff-shake', name: 'Biscoff Milkshake', price: 180, img: img.drinkVirginMojito, category: 'Drinks' },
+  { id: 'dr-nutella-shake', name: 'Nutella Milkshake', price: 180, img: img.drinkVirginMojito, category: 'Drinks' },
+  { id: 'dr-oreo-shake', name: 'Oreo Milkshake', price: 180, img: img.drinkBlueLagoon, category: 'Drinks' },
+  { id: 'dr-choc-shake', name: 'Choc Flavour Milkshake', price: 180, img: img.drinkVirginMojito, category: 'Drinks' },
 ]
 
 // Structured menu (used on /menu).

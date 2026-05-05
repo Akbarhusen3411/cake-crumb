@@ -6,7 +6,7 @@ import {
 } from 'react-icons/fi'
 import { useCart } from '../context/CartContext.jsx'
 import { inr } from '../data/format.js'
-import { u, asset } from '../data/images.js'
+import { u } from '../data/images.js'
 
 const UPI_ID = '9081668490@kotakbank'
 const PAYEE_NAME = 'Momin Akbarhusen Gulamali'
@@ -224,52 +224,159 @@ export default function Checkout() {
                   </button>
                 </div>
 
-                {form.payment === 'upi' && (
-                  <div
-                    className="p-3 p-md-4 text-center"
-                    style={{ background: 'var(--cc-cream)', borderRadius: 12 }}
-                  >
-                    <div className="tag-badge mb-2">Scan to pay {inr(total)}</div>
-                    <img
-                      src={asset('upi-qr.jpeg')}
-                      alt="UPI QR code"
+                {form.payment === 'upi' && (() => {
+                  const upiPayString =
+                    `upi://pay?pa=${encodeURIComponent(UPI_ID)}` +
+                    `&pn=${encodeURIComponent(PAYEE_NAME)}` +
+                    `&am=${total}` +
+                    `&cu=INR` +
+                    `&tn=${encodeURIComponent('Cake & Crumb order')}`
+                  const qrUrl =
+                    `https://api.qrserver.com/v1/create-qr-code/` +
+                    `?size=320x320&margin=8&color=1a1a1a&bgcolor=ffffff` +
+                    `&data=${encodeURIComponent(upiPayString)}`
+
+                  return (
+                    <div
+                      className="upi-pay-card"
                       style={{
-                        maxWidth: 260,
-                        width: '100%',
-                        height: 'auto',
+                        background: '#fff',
+                        border: '1px solid var(--cc-border)',
                         borderRadius: 14,
-                        margin: '0 auto',
-                        display: 'block',
-                        boxShadow: '0 6px 20px rgba(0,0,0,0.08)',
+                        overflow: 'hidden',
                       }}
-                    />
-                    <div className="mt-3" style={{ fontSize: '0.85rem' }}>
-                      <div style={{ color: 'var(--cc-cocoa)' }}><strong>{PAYEE_NAME}</strong></div>
-                      <div className="d-inline-flex align-items-center mt-1" style={{ gap: '0.4rem' }}>
-                        <span>UPI ID: <strong>{UPI_ID}</strong></span>
-                        <button
-                          type="button"
-                          onClick={copyUPI}
-                          aria-label="Copy UPI ID"
-                          className="border-0 bg-transparent"
-                          style={{ color: 'var(--cc-rose)' }}
+                    >
+                      <div
+                        className="px-3 px-md-4 py-3 d-flex flex-wrap align-items-center justify-content-between"
+                        style={{ background: 'var(--cc-cream)', gap: '0.6rem' }}
+                      >
+                        <div className="d-flex align-items-center" style={{ gap: '0.6rem' }}>
+                          <span className="feature-icon" style={{ width: 38, height: 38 }}>
+                            <FiSmartphone size={16} />
+                          </span>
+                          <div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--cc-cocoa-soft)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                              Amount to Pay
+                            </div>
+                            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.4rem', color: 'var(--cc-cocoa)', lineHeight: 1 }}>
+                              {inr(total)}
+                            </div>
+                          </div>
+                        </div>
+                        <span
+                          style={{
+                            background: 'var(--cc-rose)',
+                            color: '#fff',
+                            fontSize: '0.65rem',
+                            padding: '0.25rem 0.7rem',
+                            borderRadius: 999,
+                            fontWeight: 700,
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                          }}
                         >
-                          <FiCopy size={14} />
-                        </button>
-                        {copied && <span style={{ color: 'var(--cc-rose)', fontSize: '0.75rem' }}>Copied!</span>}
+                          UPI
+                        </span>
                       </div>
+
+                      <div className="row g-0 align-items-center">
+                        <div className="col-md-5 p-3 p-md-4 text-center">
+                          <div
+                            style={{
+                              display: 'inline-block',
+                              padding: 12,
+                              background: '#fff',
+                              border: '2px solid var(--cc-rose)',
+                              borderRadius: 14,
+                            }}
+                          >
+                            <img
+                              src={qrUrl}
+                              alt="UPI payment QR code"
+                              style={{
+                                width: '100%',
+                                maxWidth: 200,
+                                height: 'auto',
+                                display: 'block',
+                              }}
+                            />
+                          </div>
+                          <p style={{ fontSize: '0.75rem', color: 'var(--cc-cocoa-soft)', marginTop: '0.6rem', marginBottom: 0 }}>
+                            Scan with any UPI app
+                          </p>
+                        </div>
+
+                        <div className="col-md-7 p-3 p-md-4">
+                          <div className="mb-3">
+                            <div style={{ fontSize: '0.65rem', color: 'var(--cc-cocoa-soft)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 2 }}>
+                              Pay to
+                            </div>
+                            <div style={{ color: 'var(--cc-cocoa)', fontWeight: 600 }}>{PAYEE_NAME}</div>
+                          </div>
+                          <div className="mb-3">
+                            <div style={{ fontSize: '0.65rem', color: 'var(--cc-cocoa-soft)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 2 }}>
+                              UPI ID
+                            </div>
+                            <div
+                              className="d-flex align-items-center justify-content-between"
+                              style={{
+                                background: 'var(--cc-cream)',
+                                padding: '0.5rem 0.7rem',
+                                borderRadius: 8,
+                                gap: '0.5rem',
+                              }}
+                            >
+                              <code style={{ background: 'transparent', padding: 0, color: 'var(--cc-cocoa)', fontSize: '0.85rem' }}>
+                                {UPI_ID}
+                              </code>
+                              <button
+                                type="button"
+                                onClick={copyUPI}
+                                className="border-0 bg-transparent"
+                                aria-label="Copy UPI ID"
+                                style={{ color: 'var(--cc-rose)', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                              >
+                                <FiCopy size={13} /> {copied ? 'Copied!' : 'Copy'}
+                              </button>
+                            </div>
+                          </div>
+                          <a
+                            href={upiPayString}
+                            className="btn-rose w-100 justify-content-center"
+                            style={{ fontSize: '0.8rem' }}
+                          >
+                            <FiSmartphone size={14} /> Open in UPI App
+                          </a>
+                          <p style={{ fontSize: '0.7rem', color: 'var(--cc-cocoa-soft)', textAlign: 'center', marginTop: '0.5rem', marginBottom: 0 }}>
+                            Works on phones with GPay, PhonePe, Paytm, BHIM, etc.
+                          </p>
+                        </div>
+                      </div>
+
+                      <label
+                        className="d-flex align-items-center px-3 px-md-4 py-3"
+                        style={{
+                          background: paid ? 'var(--cc-cream)' : '#fff',
+                          borderTop: '1px solid var(--cc-border)',
+                          fontSize: '0.85rem',
+                          cursor: 'pointer',
+                          gap: '0.6rem',
+                          transition: 'background 0.2s',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={paid}
+                          onChange={(e) => setPaid(e.target.checked)}
+                          style={{ accentColor: 'var(--cc-rose)', width: 18, height: 18, flexShrink: 0 }}
+                        />
+                        <span style={{ color: paid ? 'var(--cc-rose-deep)' : 'var(--cc-cocoa)', fontWeight: paid ? 600 : 400 }}>
+                          {paid ? '✓ ' : ''}I have completed the UPI payment
+                        </span>
+                      </label>
                     </div>
-                    <label className="d-flex align-items-center justify-content-center mt-3" style={{ fontSize: '0.85rem', cursor: 'pointer', gap: '0.5rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={paid}
-                        onChange={(e) => setPaid(e.target.checked)}
-                        style={{ accentColor: 'var(--cc-rose)' }}
-                      />
-                      I have completed the UPI payment
-                    </label>
-                  </div>
-                )}
+                  )
+                })()}
 
                 {form.payment === 'cod' && (
                   <div
@@ -296,7 +403,7 @@ export default function Checkout() {
             <div className="col-lg-5">
               <div
                 className="p-4 sticky-lg-top"
-                style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14, top: '90px' }}
+                style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14, top: '140px' }}
               >
                 <div className="tag-badge mb-3">Order Summary</div>
                 <div style={{ maxHeight: 280, overflowY: 'auto' }}>
