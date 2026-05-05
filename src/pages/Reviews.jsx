@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  FiStar, FiHeart, FiCheckCircle, FiSend, FiCopy, FiShare2,
-} from 'react-icons/fi'
+import { FiStar, FiHeart, FiCheckCircle, FiSend } from 'react-icons/fi'
 import PageHero from '../components/PageHero.jsx'
 import { addReview, getReviews, summarize, timeAgo } from '../services/reviews.js'
 import { isFirebaseEnabled } from '../firebase.js'
@@ -38,10 +36,6 @@ export default function Reviews() {
   const [form, setForm] = useState({ name: '', email: '', rating: 5, title: '', text: '', orderItem: '' })
   const [submitting, setSubmitting] = useState(false)
   const [submitMsg, setSubmitMsg] = useState('')
-  const [linkCopied, setLinkCopied] = useState(false)
-
-  const reviewLink =
-    typeof window !== 'undefined' ? `${window.location.origin}/review` : '/review'
 
   async function reload() {
     setLoading(true)
@@ -77,24 +71,6 @@ export default function Reviews() {
     }
   }
 
-  function copyLink() {
-    navigator.clipboard?.writeText(reviewLink)
-    setLinkCopied(true)
-    setTimeout(() => setLinkCopied(false), 1800)
-  }
-
-  function shareLink() {
-    if (navigator.share) {
-      navigator.share({
-        title: 'Cake & Crumb — Leave us a review',
-        text: 'Loved your treat from Cake & Crumb? Share your thoughts:',
-        url: reviewLink,
-      })
-    } else {
-      copyLink()
-    }
-  }
-
   const stats = summarize(reviews)
   const breakdown = stats.breakdown
 
@@ -111,41 +87,6 @@ export default function Reviews() {
 
       <section className="py-5">
         <div className="container">
-          {/* Shareable review link box */}
-          <div
-            className="p-3 p-md-4 mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between"
-            style={{ background: 'var(--cc-blush)', borderRadius: 14, gap: '1rem' }}
-          >
-            <div>
-              <div className="tag-badge mb-1">
-                <FiShare2 size={12} style={{ marginRight: 4 }} /> Customer Review Link
-              </div>
-              <p className="mb-1" style={{ fontSize: '0.85rem' }}>
-                Share this link with customers — they can leave a review in seconds.
-              </p>
-              <code
-                style={{
-                  background: '#fff',
-                  padding: '0.4rem 0.7rem',
-                  borderRadius: 6,
-                  fontSize: '0.85rem',
-                  color: 'var(--cc-cocoa)',
-                  wordBreak: 'break-all',
-                }}
-              >
-                {reviewLink}
-              </code>
-            </div>
-            <div className="d-flex flex-shrink-0" style={{ gap: '0.5rem' }}>
-              <button onClick={copyLink} className="btn-outline-rose" style={{ fontSize: '0.75rem' }}>
-                <FiCopy size={14} /> {linkCopied ? 'Copied!' : 'Copy'}
-              </button>
-              <button onClick={shareLink} className="btn-rose" style={{ fontSize: '0.75rem' }}>
-                <FiShare2 size={14} /> Share
-              </button>
-            </div>
-          </div>
-
           {/* Stats */}
           <div
             className="row g-4 p-3 p-md-4 mb-4"
