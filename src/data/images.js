@@ -1,7 +1,13 @@
-// If the value starts with "/" it's a local file in /public; return as-is.
+// Vite's base path (e.g. "/cake-crumb/" on GitHub Pages, "/" on local dev without base).
+const BASE = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
+
+// Helper for /public assets — prefix with base URL so they resolve correctly under Vite's `base`.
+export const asset = (path) => BASE + (path.startsWith('/') ? path : '/' + path)
+
+// If the value starts with "/" it's a local file in /public; prefix it with the base URL.
 // Otherwise treat it as an Unsplash photo ID and build a sized URL.
 export const u = (idOrPath, w = 800, h = 800) => {
-  if (typeof idOrPath === 'string' && idOrPath.startsWith('/')) return idOrPath
+  if (typeof idOrPath === 'string' && idOrPath.startsWith('/')) return BASE + idOrPath
   return `https://images.unsplash.com/photo-${idOrPath}?w=${w}&h=${h}&fit=crop&auto=format&q=80`
 }
 

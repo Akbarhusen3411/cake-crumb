@@ -6,7 +6,7 @@ import {
 } from 'react-icons/fi'
 import { useCart } from '../context/CartContext.jsx'
 import { inr } from '../data/format.js'
-import { u } from '../data/images.js'
+import { u, asset } from '../data/images.js'
 
 const UPI_ID = '9081668490@kotakbank'
 const PAYEE_NAME = 'Momin Akbarhusen Gulamali'
@@ -231,7 +231,7 @@ export default function Checkout() {
                   >
                     <div className="tag-badge mb-2">Scan to pay {inr(total)}</div>
                     <img
-                      src="/upi-qr.jpeg"
+                      src={asset('upi-qr.jpeg')}
                       alt="UPI QR code"
                       style={{
                         maxWidth: 260,

@@ -167,7 +167,7 @@ export default function Home() {
           <div className="row g-0 align-items-stretch flex-lg-row-reverse">
             <div className="col-lg-7">
               <img
-                src="/hero-cake.jpeg"
+                src={u(img.pinkDripCake, 1100, 900)}
                 alt="Signature pink drip cake with roses and raspberries"
                 className="hero-img"
                 style={{ borderRadius: 0 }}

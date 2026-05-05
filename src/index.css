@@ -327,6 +327,45 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
 }
 .qty-btn:hover { background: var(--cc-rose); color: #fff; }
 
+/* Responsive logo — shrink on small screens */
+.logo-icon { height: 78px; flex-shrink: 0; }
+.logo-text { font-size: 1.7rem; }
+.logo-tagline { font-size: 0.85rem; }
+@media (max-width: 768px) {
+  .logo-icon { height: 56px; }
+  .logo-text { font-size: 1.2rem; }
+  .logo-tagline { font-size: 0.65rem; }
+}
+@media (max-width: 420px) {
+  .logo-icon { height: 46px; }
+  .logo-text { font-size: 1rem; }
+  .logo-tagline { font-size: 0.55rem; }
+}
+
+/* Tighter section padding on small screens */
+@media (max-width: 768px) {
+  section.py-5 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+}
+
+/* Responsive product card image — slightly smaller on mobile */
+@media (max-width: 480px) {
+  .product-card img { aspect-ratio: 1/1; }
+}
+
+/* Hero split — shorter image on mobile */
+@media (max-width: 768px) {
+  .hero-split .hero-img {
+    aspect-ratio: 3/2;
+    border-radius: 0;
+  }
+}
+
+/* Allow long words / URLs / emails to wrap on mobile */
+@media (max-width: 576px) {
+  body { word-wrap: break-word; overflow-wrap: break-word; }
+  h1, h2, h3 { word-wrap: break-word; overflow-wrap: break-word; }
+}
+
 .payment-tab {
   flex: 1;
   padding: 0.9rem 1rem;

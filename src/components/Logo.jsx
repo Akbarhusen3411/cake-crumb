@@ -1,30 +1,52 @@
+import { asset } from '../data/images.js'
+
 export default function Logo({ size = 'md' }) {
-  const iconSize = size === 'lg' ? 110 : size === 'sm' ? 56 : 78
-  const titleFont = size === 'lg' ? '2.4rem' : size === 'sm' ? '1.05rem' : '1.7rem'
-  const taglineFont = size === 'lg' ? '1.05rem' : size === 'sm' ? '0.62rem' : '0.85rem'
+  const isLarge = size === 'lg'
+  const isSmall = size === 'sm'
+
+  // Defaults applied via inline (md size). Mobile overrides via CSS classes (.logo-icon etc.).
+  const iconStyle = isLarge
+    ? { height: 110 }
+    : isSmall
+      ? { height: 56 }
+      : undefined // md → CSS .logo-icon decides
+
+  const titleStyle = isLarge
+    ? { fontSize: '2.4rem' }
+    : isSmall
+      ? { fontSize: '1.05rem' }
+      : undefined // md → CSS .logo-text
+
+  const taglineStyle = isLarge
+    ? { fontSize: '1.05rem' }
+    : isSmall
+      ? { fontSize: '0.62rem' }
+      : undefined // md → CSS .logo-tagline
 
   return (
-    <span className="d-inline-flex align-items-center" style={{ gap: '0.7rem' }}>
+    <span className="d-inline-flex align-items-center" style={{ gap: '0.65rem' }}>
       <img
-        src="/logo-icon.png"
+        src={asset('logo-icon.png')}
         alt=""
         aria-hidden="true"
+        className={size === 'md' ? 'logo-icon' : ''}
         style={{
-          height: iconSize,
           width: 'auto',
           display: 'block',
           flexShrink: 0,
-          mixBlendMode: 'multiply',
+          ...iconStyle,
         }}
       />
-      <span className="d-inline-flex flex-column" style={{ lineHeight: 1.05 }}>
+      <span className="d-inline-flex flex-column" style={{ lineHeight: 1.05, minWidth: 0 }}>
         <span
+          className={size === 'md' ? 'logo-text' : ''}
           style={{
             fontFamily: "'Playfair Display', serif",
-            fontSize: titleFont,
             fontWeight: 600,
             color: '#1a1a1a',
             letterSpacing: '0.01em',
+            whiteSpace: 'nowrap',
+            ...titleStyle,
           }}
         >
           CAKE
@@ -43,11 +65,13 @@ export default function Logo({ size = 'md' }) {
           CRUMB
         </span>
         <span
+          className={size === 'md' ? 'logo-tagline' : ''}
           style={{
             fontFamily: "'Allura', cursive",
-            fontSize: taglineFont,
             color: '#1a1a1a',
             marginTop: '0.05em',
+            whiteSpace: 'nowrap',
+            ...taglineStyle,
           }}
         >
           The gourmet chocolate and berry boutique!
