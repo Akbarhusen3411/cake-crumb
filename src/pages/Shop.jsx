@@ -9,7 +9,17 @@ import { img, u } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { useCart } from '../context/CartContext.jsx'
 
-const CATEGORIES = ['All Products', 'Cakes', 'Cupcakes', 'Cookies', 'Chocolates', 'Sweet Treats', 'Gift Boxes']
+const CATEGORIES = [
+  'All Products',
+  'Cheesecakes',
+  'Milk Cakes',
+  'Cookies',
+  'Cupcakes',
+  'Bakes',
+  'Platters',
+  'Dessert Cups',
+  'Drinks',
+]
 const PRICES = [
   { id: 'a', label: 'Under ₹500', test: (p) => p < 500 },
   { id: 'b', label: '₹500 – ₹1,000', test: (p) => p >= 500 && p < 1000 },
@@ -189,14 +199,14 @@ export default function Shop() {
                             >
                               <div className="text-center">
                                 <div style={{ fontSize: '0.6rem', color: 'var(--cc-cocoa-soft)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                                  Whole {p.sizeLabel || ''}
+                                  {p.sizeLabel || 'Whole'}
                                 </div>
                                 <div style={{ color: 'var(--cc-rose)', fontWeight: 700 }}>{inr(p.price)}</div>
                               </div>
                               <div style={{ width: 1, background: 'var(--cc-border)' }} />
                               <div className="text-center">
                                 <div style={{ fontSize: '0.6rem', color: 'var(--cc-cocoa-soft)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                                  Slice
+                                  {p.sliceLabel || 'Slice'}
                                 </div>
                                 <div style={{ color: 'var(--cc-rose)', fontWeight: 700 }}>{inr(p.slice)}</div>
                               </div>
@@ -208,20 +218,22 @@ export default function Shop() {
                                 onClick={() =>
                                   add({
                                     id: p.id + '-slice',
-                                    name: p.name + ' (Slice)',
+                                    name: `${p.name} (${p.sliceLabel || 'Slice'})`,
                                     price: p.slice,
                                     img: p.img,
                                   })
                                 }
                               >
-                                + Slice
+                                + {p.sliceLabel || 'Slice'}
                               </button>
                               <button
                                 className="btn-rose flex-grow-1 justify-content-center"
                                 style={{ fontSize: '0.65rem', padding: '0.4rem 0.5rem' }}
-                                onClick={() => add({ ...p, name: p.name + ' (Whole)' })}
+                                onClick={() =>
+                                  add({ ...p, name: `${p.name} (${p.sizeLabel || 'Whole'})` })
+                                }
                               >
-                                + Whole
+                                + {p.sizeLabel || 'Whole'}
                               </button>
                             </div>
                           </>
