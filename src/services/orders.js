@@ -57,6 +57,7 @@ export async function saveOrder(input) {
     payment: {
       method: input.payment?.method || 'cod',
       paid: !!input.payment?.paid,
+      utr: String(input.payment?.utr || '').trim(),
     },
     source: input.source || 'checkout',
     notes: String(input.notes || ''),

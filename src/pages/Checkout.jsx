@@ -12,6 +12,7 @@ import { usePageMeta } from '../hooks/usePageMeta.js'
 import { saveOrder } from '../services/orders.js'
 import { generateOrderId } from '../services/orderId.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
+import { sendOrderEmail } from '../services/emailNotify.js'
 
 const UPI_ID = '9081668490@kotakbank'
 const PAYEE_NAME = 'Momin Akbarhusen Gulamali'
@@ -23,7 +24,7 @@ export default function Checkout() {
 
   const [step, setStep] = useState('checkout') // checkout | success
   const [orderId, setOrderId] = useState(null)
-  const [paid, setPaid] = useState(false)
+  const [utr, setUtr] = useState('')          // 12-digit UPI transaction reference
   const [copied, setCopied] = useState(false)
 
   const [form, setForm] = useState({
@@ -63,6 +64,9 @@ export default function Checkout() {
   const [placedTotals, setPlacedTotals] = useState({ subtotal: 0, delivery: 0, total: 0 })
 
   function buildOrderMessage(id, snapshotItems, totals) {
+    const paymentLine = form.payment === 'upi'
+      ? `*💳 Payment:* UPI ✅ Paid\n*🧾 UTR:* ${utr}`
+      : '*💳 Payment:* Cash on Delivery'
     const lines = [
       `🎂 *NEW ORDER — ${id}*`,
       '━━━━━━━━━━━━━━━━━━━━',
@@ -80,7 +84,7 @@ export default function Checkout() {
       `*Delivery:* ${totals.delivery === 0 ? 'FREE ✅' : inr(totals.delivery)}`,
       `*💰 Total: ${inr(totals.total)}*`,
       '',
-      `*💳 Payment:* ${form.payment === 'upi' ? 'UPI / QR ✅ Paid' : 'Cash on Delivery'}`,
+      paymentLine,
       ...(form.notes ? ['', `*📝 Notes:* ${form.notes}`] : []),
       '',
       'Please confirm my order. Thank you! 🙏',
@@ -88,11 +92,11 @@ export default function Checkout() {
     return lines.join('\n')
   }
 
-  async function placeOrder(e) {
+  function placeOrder(e) {
     e.preventDefault()
     if (!isFormValid) return
-    if (form.payment === 'upi' && !paid) {
-      alert('Please mark "I have paid" after completing your UPI payment.')
+    if (form.payment === 'upi' && !/^\d{12}$/.test(utr)) {
+      alert('Please enter the 12-digit UTR / UPI reference number from your payment app.')
       return
     }
 
@@ -100,12 +104,17 @@ export default function Checkout() {
     const snapshotItems = items.map((it) => ({ ...it }))
     const snapshotTotals = { subtotal, delivery, total }
 
-    setOrderId(id)
-    setPlacedItems(snapshotItems)
-    setPlacedTotals(snapshotTotals)
+    // (A) Open WhatsApp synchronously inside this click — bypasses popup blockers.
+    // The success page still has a "Send Order on WhatsApp" button as a manual fallback.
+    const msg = buildOrderMessage(id, snapshotItems, snapshotTotals)
+    try {
+      window.open(buildWhatsAppLink(msg), '_blank', 'noopener,noreferrer')
+    } catch {
+      // popup blocker or no window — silently continue; user has fallback button
+    }
 
-    // Fire-and-forget — order saving must not block the success transition.
-    saveOrder({
+    // (B) Persist + email — both fire-and-forget, never block the success transition.
+    const orderData = {
       orderId: id,
       items: snapshotItems,
       totals: snapshotTotals,
@@ -117,11 +126,20 @@ export default function Checkout() {
         city: form.city,
         pincode: form.pincode,
       },
-      payment: { method: form.payment, paid: form.payment === 'upi' ? paid : false },
+      payment: {
+        method: form.payment,
+        paid: form.payment === 'upi',
+        utr: form.payment === 'upi' ? utr : '',
+      },
       notes: form.notes,
       source: 'checkout',
-    })
+    }
+    saveOrder(orderData)
+    sendOrderEmail(orderData)
 
+    setOrderId(id)
+    setPlacedItems(snapshotItems)
+    setPlacedTotals(snapshotTotals)
     setStep('success')
     clear()
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -178,10 +196,11 @@ export default function Checkout() {
           >
             <div className="d-flex align-items-center mb-2" style={{ gap: '0.5rem' }}>
               <FaWhatsapp size={20} color="#25D366" />
-              <strong style={{ color: 'var(--cc-cocoa)' }}>One more step</strong>
+              <strong style={{ color: 'var(--cc-cocoa)' }}>WhatsApp opened</strong>
             </div>
-            <p style={{ fontSize: '0.9rem', marginBottom: '0.8rem' }}>
-              Tap below to send your order details to our WhatsApp — that's how we confirm and start baking.
+            <p style={{ fontSize: '0.88rem', marginBottom: '0.8rem' }}>
+              Your order details are pre-filled in WhatsApp — <strong>just press Send</strong>.
+              If WhatsApp didn't open or got blocked, tap below.
             </p>
             <button
               type="button"
@@ -189,7 +208,7 @@ export default function Checkout() {
               className="btn-rose w-100 justify-content-center"
               style={{ background: '#25D366' }}
             >
-              <FaWhatsapp size={18} /> Send Order on WhatsApp
+              <FaWhatsapp size={18} /> Open WhatsApp Again
             </button>
           </div>
 
@@ -448,27 +467,71 @@ export default function Checkout() {
                         </div>
                       </div>
 
-                      <label
-                        className="d-flex align-items-center px-3 px-md-4 py-3"
+                      <div
+                        className="px-3 px-md-4 py-3"
                         style={{
-                          background: paid ? 'var(--cc-cream)' : '#fff',
+                          background: utr.length === 12 ? 'var(--cc-cream)' : '#fff',
                           borderTop: '1px solid var(--cc-border)',
-                          fontSize: '0.85rem',
-                          cursor: 'pointer',
-                          gap: '0.6rem',
                           transition: 'background 0.2s',
                         }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={paid}
-                          onChange={(e) => setPaid(e.target.checked)}
-                          style={{ accentColor: 'var(--cc-rose)', width: 18, height: 18, flexShrink: 0 }}
-                        />
-                        <span style={{ color: paid ? 'var(--cc-rose-deep)' : 'var(--cc-cocoa)', fontWeight: paid ? 600 : 400 }}>
-                          {paid ? '✓ ' : ''}I have completed the UPI payment
-                        </span>
-                      </label>
+                        <label
+                          htmlFor="utr-input"
+                          style={{
+                            display: 'block',
+                            fontSize: '0.7rem',
+                            color: 'var(--cc-cocoa-soft)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.12em',
+                            fontWeight: 700,
+                            marginBottom: 6,
+                          }}
+                        >
+                          Enter UTR / UPI Reference Number *
+                        </label>
+                        <div className="d-flex" style={{ gap: '0.5rem' }}>
+                          <input
+                            id="utr-input"
+                            type="text"
+                            value={utr}
+                            onChange={(e) => setUtr(e.target.value.replace(/\D/g, '').slice(0, 12))}
+                            placeholder="12-digit number from your UPI app"
+                            inputMode="numeric"
+                            maxLength={12}
+                            className="cc-input"
+                            style={{
+                              flex: 1,
+                              fontSize: '0.95rem',
+                              letterSpacing: '0.04em',
+                              fontFamily: 'monospace',
+                            }}
+                          />
+                          {utr.length === 12 && (
+                            <span
+                              className="d-inline-flex align-items-center"
+                              style={{
+                                color: 'var(--cc-rose-deep)',
+                                fontSize: '0.85rem',
+                                fontWeight: 700,
+                                gap: 4,
+                              }}
+                            >
+                              <FiCheckCircle size={16} />
+                            </span>
+                          )}
+                        </div>
+                        <p style={{
+                          fontSize: '0.7rem',
+                          color: 'var(--cc-cocoa-soft)',
+                          marginTop: 6,
+                          marginBottom: 0,
+                          lineHeight: 1.4,
+                        }}>
+                          After paying, your UPI app shows a <strong>12-digit transaction
+                          reference (UTR)</strong>. Open the payment receipt → copy the
+                          reference number → paste it here. This proves the payment.
+                        </p>
+                      </div>
                     </div>
                   )
                 })()}
@@ -544,10 +607,10 @@ export default function Checkout() {
                 <button
                   type="submit"
                   className="btn-rose w-100 justify-content-center"
-                  disabled={!isFormValid || (form.payment === 'upi' && !paid)}
+                  disabled={!isFormValid || (form.payment === 'upi' && !/^\d{12}$/.test(utr))}
                   style={{
-                    opacity: !isFormValid || (form.payment === 'upi' && !paid) ? 0.5 : 1,
-                    cursor: !isFormValid || (form.payment === 'upi' && !paid) ? 'not-allowed' : 'pointer',
+                    opacity: !isFormValid || (form.payment === 'upi' && !/^\d{12}$/.test(utr)) ? 0.5 : 1,
+                    cursor: !isFormValid || (form.payment === 'upi' && !/^\d{12}$/.test(utr)) ? 'not-allowed' : 'pointer',
                   }}
                 >
                   <FiCheckCircle /> Place Order
