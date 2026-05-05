@@ -1,5 +1,57 @@
 @import "tailwindcss";
 
+/* ─── Custom scrollbars (matches brand) ─── */
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #e0617a transparent;
+}
+
+/* WebKit / Blink (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(247, 227, 223, 0.35);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #ec8a99 0%, #e0617a 50%, #cf3e63 100%);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #e0617a 0%, #cf3e63 50%, #b02e52 100%);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* Slimmer scrollbar for inner panels (chat, modals, sticky sidebars) */
+.chat-scroll::-webkit-scrollbar,
+[class*="chat-bg-pattern"]::-webkit-scrollbar,
+.sticky-lg-top::-webkit-scrollbar,
+.qv-modal::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.chat-scroll::-webkit-scrollbar-thumb,
+[class*="chat-bg-pattern"]::-webkit-scrollbar-thumb,
+.sticky-lg-top::-webkit-scrollbar-thumb,
+.qv-modal::-webkit-scrollbar-thumb {
+  background: #e0617a;
+  background-clip: padding-box;
+  border: 1px solid transparent;
+}
+
+/* Hide scrollbars where we explicitly don't want them (already used by chat carousel) */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { scrollbar-width: none; }
+
+
 @theme {
   --color-rose-50: #fff6f2;
   --color-rose-100: #fdeae8;
