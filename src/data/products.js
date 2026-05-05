@@ -11,22 +11,23 @@ export const featured = [
 ]
 
 // Flat list for /shop — single SKUs with cart-friendly prices.
+// Items with `slice` show both Whole + Slice prices and two add-to-cart buttons.
 export const shopProducts = [
-  // Cheesecakes (Banto 4")
-  { id: 'cc-strawberry', name: 'Strawberry Cheesecake', price: 350, img: img.berryCake, category: 'Cheesecakes' },
-  { id: 'cc-blueberry', name: 'Blueberry Cheesecake', price: 410, img: img.berryCake, category: 'Cheesecakes' },
-  { id: 'cc-rose', name: 'Rose Cheesecake', price: 350, img: img.cupcakesRose, category: 'Cheesecakes' },
-  { id: 'cc-mango', name: 'Mango Cheesecake', price: 350, img: img.berryCake, category: 'Cheesecakes' },
-  { id: 'cc-nutella', name: 'Nutella Cheesecake', price: 440, img: img.chocolateCake, category: 'Cheesecakes' },
-  { id: 'cc-biscoff', name: 'Biscoff Cheesecake', price: 410, img: img.chocolateCake, category: 'Cheesecakes' },
-  { id: 'cc-pistachio', name: 'Pistachio Cheesecake', price: 470, img: img.cheesecake, category: 'Cheesecakes' },
-  { id: 'cc-dubai', name: 'Dubai Cheesecake', price: 500, img: img.cheesecake, category: 'Cheesecakes' },
+  // Cheesecakes (Banto 4" whole / per slice)
+  { id: 'cc-strawberry', name: 'Strawberry Cheesecake', price: 350, slice: 120, img: img.berryCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-blueberry', name: 'Blueberry Cheesecake', price: 410, slice: 140, img: img.berryCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-rose', name: 'Rose Cheesecake', price: 350, slice: 120, img: img.cupcakesRose, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-mango', name: 'Mango Cheesecake', price: 350, slice: 120, img: img.berryCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-nutella', name: 'Nutella Cheesecake', price: 440, slice: 150, img: img.chocolateCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-biscoff', name: 'Biscoff Cheesecake', price: 410, slice: 140, img: img.chocolateCake, category: 'Cheesecakes', sizeLabel: 'Banto 4"' },
+  { id: 'cc-pistachio', name: 'Pistachio Cheesecake', price: 470, slice: 160, img: img.cheesecake, category: 'Cheesecakes', sizeLabel: 'Banto 4"', badge: 'Premium' },
+  { id: 'cc-dubai', name: 'Dubai Cheesecake', price: 500, slice: 170, img: img.cheesecake, category: 'Cheesecakes', sizeLabel: 'Banto 4"', badge: 'Special' },
 
-  // Milk Cakes (6")
-  { id: 'mc-biscoff', name: 'Biscoff Milk Cake', price: 800, img: img.pinkDripCake, category: 'Milk Cakes' },
-  { id: 'mc-rose', name: 'Rose Milk Cake', price: 800, img: img.pinkDripCake, category: 'Milk Cakes' },
-  { id: 'mc-chocolate', name: 'Chocolate Milk Cake', price: 850, img: img.chocolateCake, category: 'Milk Cakes' },
-  { id: 'mc-pistachio', name: 'Pistachio Milk Cake', price: 950, img: img.pinkDripCake, category: 'Milk Cakes' },
+  // Milk Cakes (6" whole / per slice)
+  { id: 'mc-biscoff', name: 'Biscoff Milk Cake', price: 800, slice: 100, img: img.pinkDripCake, category: 'Milk Cakes', sizeLabel: '6"' },
+  { id: 'mc-rose', name: 'Rose Milk Cake', price: 800, slice: 100, img: img.pinkDripCake, category: 'Milk Cakes', sizeLabel: '6"' },
+  { id: 'mc-chocolate', name: 'Chocolate Milk Cake', price: 850, slice: 110, img: img.chocolateCake, category: 'Milk Cakes', sizeLabel: '6"' },
+  { id: 'mc-pistachio', name: 'Pistachio Milk Cake', price: 950, slice: 120, img: img.pinkDripCake, category: 'Milk Cakes', sizeLabel: '6"', badge: 'Premium' },
 
   // Cookies (Box of 6)
   { id: 'ck-triple-6', name: 'Triple Choc Cookies (Box of 6)', price: 340, img: img.cookies, category: 'Cookies' },

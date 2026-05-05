@@ -136,7 +136,7 @@ export default function Shop() {
               <div className="row g-3">
                 {filtered.map((p) => (
                   <div className="col-6 col-md-4" key={p.id}>
-                    <article className="product-card position-relative">
+                    <article className="product-card position-relative h-100">
                       <button
                         aria-label="Favorite"
                         className="position-absolute"
@@ -146,26 +146,99 @@ export default function Shop() {
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           color: 'var(--cc-rose)',
                           boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+                          zIndex: 2,
                         }}
                       >
                         <FiHeart size={14} />
                       </button>
+                      {p.badge && (
+                        <span
+                          className="position-absolute"
+                          style={{
+                            top: 8, left: 8,
+                            background: 'var(--cc-rose)',
+                            color: '#fff',
+                            fontSize: '0.6rem',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: 999,
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase',
+                            zIndex: 2,
+                          }}
+                        >
+                          {p.badge}
+                        </span>
+                      )}
                       <img src={u(p.img, 500, 500)} alt={p.name} loading="lazy" />
-                      <div className="p-3 text-center">
-                        <div className="tag-badge mb-1" style={{ fontSize: '0.65rem' }}>{p.category}</div>
-                        <h6 style={{ fontFamily: "'Playfair Display', serif", fontSize: '0.95rem', margin: '0 0 0.3rem' }}>
+                      <div className="p-3 d-flex flex-column flex-grow-1">
+                        <div className="tag-badge mb-1 text-center" style={{ fontSize: '0.65rem' }}>{p.category}</div>
+                        <h6 className="text-center" style={{ fontFamily: "'Playfair Display', serif", fontSize: '0.95rem', margin: '0 0 0.5rem' }}>
                           {p.name}
                         </h6>
-                        <div style={{ color: 'var(--cc-rose)', fontWeight: 700, fontSize: '0.95rem' }}>
-                          {inr(p.price)}
-                        </div>
-                        <button
-                          className="btn-rose mt-2 w-100 justify-content-center"
-                          style={{ fontSize: '0.7rem', padding: '0.45rem 0.8rem' }}
-                          onClick={() => add(p)}
-                        >
-                          <FiShoppingBag size={12} /> Add to Cart
-                        </button>
+
+                        {p.slice ? (
+                          <>
+                            <div
+                              className="d-flex justify-content-around mb-2 py-1"
+                              style={{
+                                background: 'var(--cc-cream)',
+                                borderRadius: 8,
+                                fontSize: '0.78rem',
+                              }}
+                            >
+                              <div className="text-center">
+                                <div style={{ fontSize: '0.6rem', color: 'var(--cc-cocoa-soft)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                  Whole {p.sizeLabel || ''}
+                                </div>
+                                <div style={{ color: 'var(--cc-rose)', fontWeight: 700 }}>{inr(p.price)}</div>
+                              </div>
+                              <div style={{ width: 1, background: 'var(--cc-border)' }} />
+                              <div className="text-center">
+                                <div style={{ fontSize: '0.6rem', color: 'var(--cc-cocoa-soft)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                  Slice
+                                </div>
+                                <div style={{ color: 'var(--cc-rose)', fontWeight: 700 }}>{inr(p.slice)}</div>
+                              </div>
+                            </div>
+                            <div className="d-flex gap-2 mt-auto">
+                              <button
+                                className="btn-outline-rose flex-grow-1 justify-content-center"
+                                style={{ fontSize: '0.65rem', padding: '0.4rem 0.5rem' }}
+                                onClick={() =>
+                                  add({
+                                    id: p.id + '-slice',
+                                    name: p.name + ' (Slice)',
+                                    price: p.slice,
+                                    img: p.img,
+                                  })
+                                }
+                              >
+                                + Slice
+                              </button>
+                              <button
+                                className="btn-rose flex-grow-1 justify-content-center"
+                                style={{ fontSize: '0.65rem', padding: '0.4rem 0.5rem' }}
+                                onClick={() => add({ ...p, name: p.name + ' (Whole)' })}
+                              >
+                                + Whole
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-center mb-2" style={{ color: 'var(--cc-rose)', fontWeight: 700, fontSize: '0.95rem' }}>
+                              {inr(p.price)}
+                            </div>
+                            <button
+                              className="btn-rose mt-auto w-100 justify-content-center"
+                              style={{ fontSize: '0.7rem', padding: '0.45rem 0.8rem' }}
+                              onClick={() => add(p)}
+                            >
+                              <FiShoppingBag size={12} /> Add to Cart
+                            </button>
+                          </>
+                        )}
                       </div>
                     </article>
                   </div>
