@@ -1,5 +1,5 @@
 import {
-  addDoc, collection, getDocs, orderBy, query, serverTimestamp,
+  addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, serverTimestamp,
 } from 'firebase/firestore'
 import { db, isFirebaseEnabled } from '../firebase.js'
 
@@ -75,6 +75,29 @@ export async function getReviews() {
     }
   }
   return readLocal()
+}
+
+/**
+ * Delete a review by id (admin moderation).
+ * Returns true on success. Falls through to localStorage when not on Firestore.
+ */
+export async function deleteReview(id) {
+  if (!id) return false
+
+  if (isFirebaseEnabled && db && !id.startsWith('local-')) {
+    try {
+      await deleteDoc(doc(db, COLLECTION, id))
+      return true
+    } catch (err) {
+      console.error('[reviews] delete failed:', err)
+      return false
+    }
+  }
+
+  // Local fallback
+  const list = readLocal().filter((r) => r.id !== id)
+  writeLocal(list)
+  return true
 }
 
 /**

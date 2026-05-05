@@ -41,10 +41,10 @@ export default function Logo({ size = 'md' }) {
         <span
           className={size === 'md' ? 'logo-text' : ''}
           style={{
-            fontFamily: "'Playfair Display', serif",
-            fontWeight: 600,
+            fontFamily: "'Cormorant Garamond', 'Playfair Display', serif",
+            fontWeight: 700,
             color: '#1a1a1a',
-            letterSpacing: '0.01em',
+            letterSpacing: '0.04em',
             whiteSpace: 'nowrap',
             ...titleStyle,
           }}
@@ -55,9 +55,9 @@ export default function Logo({ size = 'md' }) {
               color: '#1a1a1a',
               fontStyle: 'italic',
               fontWeight: 500,
-              fontSize: '1.25em',
-              margin: '0 0.02em',
-              verticalAlign: '-0.05em',
+              fontSize: '1.3em',
+              margin: '0 0.04em',
+              verticalAlign: '-0.06em',
             }}
           >
             &

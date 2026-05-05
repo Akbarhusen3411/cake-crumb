@@ -1,5 +1,6 @@
 import { FiHeart } from 'react-icons/fi'
 import PageHero from '../components/PageHero.jsx'
+import { usePageMeta } from '../hooks/usePageMeta.js'
 import FeatureStrip from '../components/FeatureStrip.jsx'
 import { img, u } from '../data/images.js'
 
@@ -17,6 +18,10 @@ const whyItems = [
 ]
 
 export default function About() {
+  usePageMeta({
+    title: 'About',
+    description: 'Our story — Cake & Crumb is a small home boutique baking gourmet cheesecakes, milk cakes and cookies with love and the finest ingredients.',
+  })
   return (
     <>
       <PageHero

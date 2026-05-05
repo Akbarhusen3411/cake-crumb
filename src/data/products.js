@@ -2,12 +2,19 @@ import { img } from './images.js'
 
 // All prices in INR. Sourced from menu.html.
 
+// Default allergen sets per category — most baked goods share these.
+const A_BAKED   = ['contains-egg', 'contains-dairy', 'contains-gluten', 'eggless-option']
+const A_NUTS    = [...A_BAKED, 'contains-nuts']
+const A_DRINK   = []
+const A_SHAKE   = ['contains-dairy']
+const A_VEGGY   = ['eggless']
+
 // Featured cards on Home — visually distinctive picks across categories.
 export const featured = [
-  { id: 'feat-1', name: 'Strawberry Cheesecake', price: 350, img: img.cheesecakeStrawberry, category: 'Cheesecakes' },
-  { id: 'feat-2', name: 'Pink Rose Cupcakes', price: 100, img: img.cupcakesRose, category: 'Cupcakes' },
-  { id: 'feat-3', name: 'Triple Choc Cookies (Box of 6)', price: 340, img: img.cookiesTripleChoc, category: 'Cookies' },
-  { id: 'feat-4', name: 'Pistachio Milk Cake 6"', price: 950, img: img.milkcakeRosePistachio, category: 'Milk Cakes' },
+  { id: 'feat-1', name: 'Strawberry Cheesecake', price: 350, img: img.cheesecakeStrawberry, category: 'Cheesecakes', allergens: A_BAKED },
+  { id: 'feat-2', name: 'Pink Rose Cupcakes', price: 100, img: img.cupcakesRose, category: 'Cupcakes', allergens: A_BAKED },
+  { id: 'feat-3', name: 'Triple Choc Cookies (Box of 6)', price: 340, img: img.cookiesTripleChoc, category: 'Cookies', allergens: A_BAKED },
+  { id: 'feat-4', name: 'Pistachio Milk Cake 6"', price: 950, img: img.milkcakeRosePistachio, category: 'Milk Cakes', allergens: A_NUTS },
 ]
 
 // Flat list for /shop — full PDF menu, every item orderable.
@@ -99,7 +106,41 @@ export const shopProducts = [
   { id: 'dr-nutella-shake', name: 'Nutella Milkshake', price: 180, img: img.drinkVirginMojito, category: 'Drinks' },
   { id: 'dr-oreo-shake', name: 'Oreo Milkshake', price: 180, img: img.drinkBlueLagoon, category: 'Drinks' },
   { id: 'dr-choc-shake', name: 'Choc Flavour Milkshake', price: 180, img: img.drinkVirginMojito, category: 'Drinks' },
-]
+].map(attachAllergens)
+
+// Auto-attach allergen tags based on product category + name keywords.
+// Lets us avoid pasting `allergens: [...]` on every line.
+function attachAllergens(p) {
+  const name = p.name.toLowerCase()
+  const isMojito = /mojito|lagoon/.test(name)
+  const isShake = /milkshake|shake/.test(name)
+  const isCoffee = /coffee/.test(name)
+  const hasNuts = /pistach|almond|nutella|hazelnut|coconut|dubai/.test(name)
+
+  let tags = []
+  switch (p.category) {
+    case 'Cheesecakes':
+    case 'Milk Cakes':
+    case 'Cookies':
+    case 'Cupcakes':
+    case 'Bakes':
+    case 'Platters':
+      tags = ['contains-egg', 'contains-dairy', 'contains-gluten', 'eggless-option']
+      if (hasNuts) tags.push('contains-nuts')
+      break
+    case 'Dessert Cups':
+      if (/jelly|grass/.test(name)) tags = ['eggless']
+      else tags = ['contains-egg', 'contains-dairy', 'eggless-option']
+      break
+    case 'Drinks':
+      if (isShake) tags = ['contains-dairy']
+      else if (isMojito || isCoffee) tags = []
+      break
+    default:
+      tags = []
+  }
+  return { ...p, allergens: tags }
+}
 
 // Structured menu (used on /menu).
 export const cheesecakes = {

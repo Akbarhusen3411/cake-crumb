@@ -4,14 +4,20 @@ import {
   FiCheckCircle, FiHome, FiArrowLeft, FiSmartphone, FiTruck,
   FiCopy, FiShoppingBag,
 } from 'react-icons/fi'
+import { FaWhatsapp } from 'react-icons/fa'
 import { useCart } from '../context/CartContext.jsx'
 import { inr } from '../data/format.js'
 import { u } from '../data/images.js'
+import { usePageMeta } from '../hooks/usePageMeta.js'
+import { saveOrder } from '../services/orders.js'
+import { generateOrderId } from '../services/orderId.js'
+import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
 
 const UPI_ID = '9081668490@kotakbank'
 const PAYEE_NAME = 'Momin Akbarhusen Gulamali'
 
 export default function Checkout() {
+  usePageMeta({ title: 'Checkout' })
   const { items, count, subtotal, delivery, total, clear } = useCart()
   const navigate = useNavigate()
 
@@ -51,18 +57,80 @@ export default function Checkout() {
     )
   }, [form])
 
-  function placeOrder(e) {
+  // Snapshot of items at the moment of order — preserved for the success page
+  // even after we clear() the live cart.
+  const [placedItems, setPlacedItems] = useState([])
+  const [placedTotals, setPlacedTotals] = useState({ subtotal: 0, delivery: 0, total: 0 })
+
+  function buildOrderMessage(id, snapshotItems, totals) {
+    const lines = [
+      `🎂 *NEW ORDER — ${id}*`,
+      '━━━━━━━━━━━━━━━━━━━━',
+      '',
+      `*👤 Customer:* ${form.name}`,
+      `*📞 Phone:* +91 ${form.phone}`,
+      ...(form.email ? [`*📧 Email:* ${form.email}`] : []),
+      `*📍 Address:* ${form.address}, ${form.city} - ${form.pincode}`,
+      '',
+      '━━━━━━━━━━━━━━━━━━━━',
+      '*📋 Items:*',
+      ...snapshotItems.map((it) => `  • ${it.name} × ${it.qty} = ${inr(it.price * it.qty)}`),
+      '━━━━━━━━━━━━━━━━━━━━',
+      `*Subtotal:* ${inr(totals.subtotal)}`,
+      `*Delivery:* ${totals.delivery === 0 ? 'FREE ✅' : inr(totals.delivery)}`,
+      `*💰 Total: ${inr(totals.total)}*`,
+      '',
+      `*💳 Payment:* ${form.payment === 'upi' ? 'UPI / QR ✅ Paid' : 'Cash on Delivery'}`,
+      ...(form.notes ? ['', `*📝 Notes:* ${form.notes}`] : []),
+      '',
+      'Please confirm my order. Thank you! 🙏',
+    ]
+    return lines.join('\n')
+  }
+
+  async function placeOrder(e) {
     e.preventDefault()
     if (!isFormValid) return
     if (form.payment === 'upi' && !paid) {
       alert('Please mark "I have paid" after completing your UPI payment.')
       return
     }
-    const id = 'CC-' + Math.random().toString(36).slice(2, 8).toUpperCase()
+
+    const id = generateOrderId(form.name)
+    const snapshotItems = items.map((it) => ({ ...it }))
+    const snapshotTotals = { subtotal, delivery, total }
+
     setOrderId(id)
+    setPlacedItems(snapshotItems)
+    setPlacedTotals(snapshotTotals)
+
+    // Fire-and-forget — order saving must not block the success transition.
+    saveOrder({
+      orderId: id,
+      items: snapshotItems,
+      totals: snapshotTotals,
+      customer: {
+        name: form.name,
+        phone: form.phone,
+        email: form.email,
+        address: form.address,
+        city: form.city,
+        pincode: form.pincode,
+      },
+      payment: { method: form.payment, paid: form.payment === 'upi' ? paid : false },
+      notes: form.notes,
+      source: 'checkout',
+    })
+
     setStep('success')
     clear()
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function sendOrderToWhatsApp() {
+    if (!orderId) return
+    const msg = buildOrderMessage(orderId, placedItems, placedTotals)
+    window.open(buildWhatsAppLink(msg), '_blank', 'noopener,noreferrer')
   }
 
   // Empty-cart guard (only if not on success step)
@@ -83,14 +151,14 @@ export default function Checkout() {
   if (step === 'success') {
     return (
       <section className="bg-cream py-5">
-        <div className="container py-5 text-center" style={{ maxWidth: 560 }}>
+        <div className="container py-5 text-center" style={{ maxWidth: 600 }}>
           <span className="feature-icon mb-3" style={{ width: 84, height: 84, color: 'var(--cc-rose)' }}>
             <FiCheckCircle size={40} />
           </span>
           <h2 className="section-title">Order Placed!</h2>
           <p className="mt-2">Thank you for your sweet order. We'll start baking right away.</p>
           <div
-            className="d-inline-flex flex-column align-items-center mt-3 mb-4 px-4 py-3"
+            className="d-inline-flex flex-column align-items-center mt-3 mb-3 px-4 py-3"
             style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 12 }}
           >
             <span className="tag-badge">Order ID</span>
@@ -98,12 +166,39 @@ export default function Checkout() {
               {orderId}
             </strong>
           </div>
-          <p style={{ fontSize: '0.9rem' }}>
+
+          <div
+            className="p-3 p-md-4 mb-4 mx-auto"
+            style={{
+              background: 'rgba(37, 211, 102, 0.08)',
+              border: '1.5px solid rgba(37, 211, 102, 0.35)',
+              borderRadius: 14,
+              maxWidth: 520,
+            }}
+          >
+            <div className="d-flex align-items-center mb-2" style={{ gap: '0.5rem' }}>
+              <FaWhatsapp size={20} color="#25D366" />
+              <strong style={{ color: 'var(--cc-cocoa)' }}>One more step</strong>
+            </div>
+            <p style={{ fontSize: '0.9rem', marginBottom: '0.8rem' }}>
+              Tap below to send your order details to our WhatsApp — that's how we confirm and start baking.
+            </p>
+            <button
+              type="button"
+              onClick={sendOrderToWhatsApp}
+              className="btn-rose w-100 justify-content-center"
+              style={{ background: '#25D366' }}
+            >
+              <FaWhatsapp size={18} /> Send Order on WhatsApp
+            </button>
+          </div>
+
+          <p style={{ fontSize: '0.85rem', color: 'var(--cc-cocoa-soft)' }}>
             {form.payment === 'upi'
-              ? 'Your UPI payment is being verified. We will confirm via WhatsApp/email shortly.'
-              : 'Cash on Delivery — please keep the exact amount ready when our delivery partner arrives.'}
+              ? 'Your UPI payment will be verified via WhatsApp.'
+              : 'Cash on Delivery — please keep the exact amount ready.'}
           </p>
-          <div className="d-flex gap-2 justify-content-center mt-4 flex-wrap">
+          <div className="d-flex gap-2 justify-content-center mt-3 flex-wrap">
             <Link to="/" className="btn-outline-rose">
               <FiHome /> Back to Home
             </Link>
@@ -258,7 +353,7 @@ export default function Checkout() {
                             <div style={{ fontSize: '0.7rem', color: 'var(--cc-cocoa-soft)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
                               Amount to Pay
                             </div>
-                            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.4rem', color: 'var(--cc-cocoa)', lineHeight: 1 }}>
+                            <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: '1.4rem', color: 'var(--cc-cocoa)', lineHeight: 1 }}>
                               {inr(total)}
                             </div>
                           </div>
@@ -441,7 +536,7 @@ export default function Checkout() {
                 <hr style={{ borderColor: 'var(--cc-border)' }} />
                 <div className="d-flex justify-content-between mb-3" style={{ fontSize: '1.05rem' }}>
                   <strong style={{ color: 'var(--cc-cocoa)' }}>Total</strong>
-                  <strong style={{ color: 'var(--cc-rose)', fontFamily: "'Playfair Display', serif", fontSize: '1.3rem' }}>
+                  <strong style={{ color: 'var(--cc-rose)', fontFamily: "'Inter', system-ui, sans-serif", fontSize: '1.3rem' }}>
                     {inr(total)}
                   </strong>
                 </div>

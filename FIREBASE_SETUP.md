@@ -42,6 +42,34 @@ service cloud.firestore {
       allow read: if true;
       allow update, delete: if false;
     }
+
+    match /orders/{order} {
+      // Customer can write their own order; admin reads via Firebase console.
+      allow create: if
+        request.resource.data.orderId is string &&
+        request.resource.data.orderId.size() > 4 &&
+        request.resource.data.totals.total is number &&
+        request.resource.data.totals.total > 0 &&
+        request.resource.data.totals.total < 200000;
+      allow read, update, delete: if false;
+    }
+
+    match /newsletter/{subscription} {
+      // Anyone can subscribe; nobody reads/edits via the browser.
+      allow create: if
+        request.resource.data.email is string &&
+        request.resource.data.email.matches('^[^@]+@[^@]+\\.[^@]+$') &&
+        request.resource.data.email.size() < 250;
+      allow read, update, delete: if false;
+    }
+
+    // Reviews delete: opt-in.
+    // The admin moderation UI (single hardcoded password, sessionStorage gate)
+    // is *client-side only*. To actually allow deletes on the database, change
+    // the line under /reviews from "allow update, delete: if false;" to:
+    //   allow delete: if true;
+    // Then any browser session that can match the password can also delete.
+    // For real security, swap to Firebase Auth + uid-based rules.
   }
 }
 ```

@@ -3,10 +3,13 @@ import {
   FiShoppingBag, FiTrash2, FiPlus, FiMinus, FiArrowRight, FiHeart,
 } from 'react-icons/fi'
 import { useCart } from '../context/CartContext.jsx'
+import { usePageMeta } from '../hooks/usePageMeta.js'
+import RelatedProducts from '../components/RelatedProducts.jsx'
 import { inr } from '../data/format.js'
 import { u } from '../data/images.js'
 
 export default function Cart() {
+  usePageMeta({ title: 'Your Cart' })
   const {
     items, count, subtotal, delivery, total,
     increment, decrement, remove, clear,
@@ -62,7 +65,7 @@ export default function Cart() {
                       style={{ width: 70, height: 70, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
                     />
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontFamily: "'Playfair Display', serif", color: 'var(--cc-cocoa)', fontSize: '1rem' }}>
+                      <div style={{ fontFamily: "'Inter', system-ui, sans-serif", color: 'var(--cc-cocoa)', fontSize: '1rem' }}>
                         {it.name}
                       </div>
                       <button
@@ -135,7 +138,7 @@ export default function Cart() {
               <hr style={{ borderColor: 'var(--cc-border)' }} />
               <div className="d-flex justify-content-between mb-3" style={{ fontSize: '1.05rem' }}>
                 <span style={{ color: 'var(--cc-cocoa)' }}>Total</span>
-                <strong style={{ color: 'var(--cc-rose)', fontFamily: "'Playfair Display', serif", fontSize: '1.2rem' }}>
+                <strong style={{ color: 'var(--cc-rose)', fontFamily: "'Inter', system-ui, sans-serif", fontSize: '1.2rem' }}>
                   {inr(total)}
                 </strong>
               </div>
@@ -150,6 +153,8 @@ export default function Cart() {
             </div>
           </div>
         </div>
+
+        <RelatedProducts />
       </div>
     </section>
   )

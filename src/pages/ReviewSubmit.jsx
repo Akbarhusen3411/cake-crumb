@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FiStar, FiHeart, FiCheckCircle, FiSend } from 'react-icons/fi'
 import { addReview } from '../services/reviews.js'
+import { usePageMeta } from '../hooks/usePageMeta.js'
 
 function StarPicker({ value, onChange }) {
   const [hover, setHover] = useState(0)
@@ -30,6 +31,10 @@ function StarPicker({ value, onChange }) {
 }
 
 export default function ReviewSubmit() {
+  usePageMeta({
+    title: 'Leave a Review',
+    description: 'Share your Cake & Crumb experience — takes less than 30 seconds.',
+  })
   const [form, setForm] = useState({
     name: '',
     email: '',

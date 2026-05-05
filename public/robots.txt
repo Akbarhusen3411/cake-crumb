@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://akbarhusen3411.github.io/cake-crumb/sitemap.xml

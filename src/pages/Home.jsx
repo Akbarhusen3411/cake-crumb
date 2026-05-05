@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
+import { usePageMeta } from '../hooks/usePageMeta.js'
 import {
-  FiHeart, FiShoppingBag, FiInstagram, FiGift, FiCoffee,
+  FiHeart, FiShoppingBag, FiGift, FiCoffee,
 } from 'react-icons/fi'
+import InstagramFeed from '../components/InstagramFeed.jsx'
 import { TbLeaf } from 'react-icons/tb'
 import { featured } from '../data/products.js'
 import { img, u } from '../data/images.js'
@@ -27,6 +29,10 @@ function Ornament() {
 
 export default function Home() {
   const { add } = useCart()
+  usePageMeta({
+    title: 'Home',
+    description: 'Cake & Crumb — handcrafted cheesecakes, milk cakes, cookies and desserts. Made with love. Order on WhatsApp.',
+  })
   return (
     <>
       {/* HERO --- full-bleed split */}
@@ -51,8 +57,8 @@ export default function Home() {
             </div>
             <div className="col-lg-6">
               <img
-                src={u(img.heroRoses, 1100, 900)}
-                alt="Pink roses bouquet"
+                src={u(img.milkcakeBlueberry, 1100, 900)}
+                alt="Blueberry milk cake with lavender rosettes"
                 className="hero-img"
               />
             </div>
@@ -199,32 +205,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* INSTAGRAM --- 7 thumbnails */}
-      <section className="py-5">
-        <div className="container">
-          <div className="text-center mb-4">
-            <span className="eyebrow"><FiInstagram /> Follow Us on Instagram</span>
-          </div>
-          <div className="row g-2 g-md-3">
-            {[
-              img.pinkRoses, img.cupcakesRose, img.truffleBox,
-              img.pinkDripCake2, img.cookies, img.cupcakesPink, img.berryCake,
-            ].map((id, i) => (
-              <div className="col-4 col-md" key={i}>
-                <img
-                  src={u(id, 400, 400)}
-                  alt=""
-                  style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', borderRadius: 12 }}
-                  loading="lazy"
-                />
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-4">
-            <a href="#" className="btn-rose"><FiInstagram /> View More</a>
-          </div>
-        </div>
-      </section>
+      <InstagramFeed />
     </>
   )
 }

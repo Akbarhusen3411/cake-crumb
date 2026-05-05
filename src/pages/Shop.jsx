@@ -1,13 +1,18 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  FiHeart, FiShoppingBag, FiX, FiPlus, FiMinus, FiCheckCircle,
+  FiHeart, FiShoppingBag, FiX, FiPlus, FiMinus, FiCheckCircle, FiSearch,
+  FiShield, FiTruck, FiAward,
 } from 'react-icons/fi'
+import { TbLeaf } from 'react-icons/tb'
 import PageHero from '../components/PageHero.jsx'
 import { shopProducts } from '../data/products.js'
 import { img, u } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { useCart } from '../context/CartContext.jsx'
+import { usePageMeta } from '../hooks/usePageMeta.js'
+import { useJsonLd } from '../hooks/useJsonLd.js'
+import ProductQuickView from '../components/ProductQuickView.jsx'
 
 const CATEGORIES = [
   'All Products',
@@ -29,9 +34,35 @@ const PRICES = [
 const OCCASIONS = ['Birthday', 'Wedding', 'Anniversary', 'Thank You', 'Just Because', 'Other']
 
 export default function Shop() {
+  usePageMeta({
+    title: 'Shop',
+    description: 'Order from our full menu — 23 cheesecake flavours, 7 milk cakes, cookies, cupcakes, dessert cups and drinks. UPI / Cash on Delivery.',
+  })
+  useJsonLd('shop-products', {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Cake & Crumb — Shop',
+    numberOfItems: shopProducts.length,
+    itemListElement: shopProducts.slice(0, 30).map((p, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'Product',
+        name: p.name,
+        category: p.category,
+        offers: {
+          '@type': 'Offer',
+          price: p.price,
+          priceCurrency: 'INR',
+          availability: 'https://schema.org/InStock',
+        },
+      },
+    })),
+  })
   const [category, setCategory] = useState('All Products')
   const [priceIds, setPriceIds] = useState([])
   const [sort, setSort] = useState('featured')
+  const [quickView, setQuickView] = useState(null) // product object or null
   const { items, count, subtotal, add, increment, decrement, remove, clear } = useCart()
 
   const filtered = useMemo(() => {
@@ -59,9 +90,9 @@ export default function Shop() {
       />
 
       <section className="py-5">
-        <div className="container">
-          <div className="row g-4">
-            <aside className="col-12 col-lg-3">
+        <div className="container-fluid px-2 px-md-3 px-lg-4">
+          <div className="row g-3">
+            <aside className="col-12 col-lg-2">
               <div
                 className="p-3 p-lg-4"
                 style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14 }}
@@ -123,7 +154,7 @@ export default function Shop() {
               </div>
             </aside>
 
-            <div className="col-12 col-lg-6">
+            <div className="col-12 col-lg-8">
               <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
                 <div style={{ fontSize: '0.85rem' }}>
                   Showing 1–{filtered.length} of {shopProducts.length} results
@@ -143,118 +174,66 @@ export default function Shop() {
                 </div>
               </div>
 
-              <div className="row g-3">
-                {filtered.map((p) => (
-                  <div className="col-6 col-md-4" key={p.id}>
-                    <article className="product-card position-relative h-100">
-                      <button
-                        aria-label="Favorite"
-                        className="position-absolute"
-                        style={{
-                          top: 8, right: 8, background: '#fff', border: 'none',
-                          borderRadius: '50%', width: 30, height: 30,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: 'var(--cc-rose)',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
-                          zIndex: 2,
-                        }}
-                      >
-                        <FiHeart size={14} />
-                      </button>
-                      {p.badge && (
-                        <span
-                          className="position-absolute"
-                          style={{
-                            top: 8, left: 8,
-                            background: 'var(--cc-rose)',
-                            color: '#fff',
-                            fontSize: '0.6rem',
-                            fontWeight: 700,
-                            padding: '2px 8px',
-                            borderRadius: 999,
-                            letterSpacing: '0.06em',
-                            textTransform: 'uppercase',
-                            zIndex: 2,
-                          }}
-                        >
-                          {p.badge}
-                        </span>
-                      )}
-                      <img src={u(p.img, 500, 500)} alt={p.name} loading="lazy" />
-                      <div className="p-3 d-flex flex-column flex-grow-1">
-                        <div className="tag-badge mb-1 text-center" style={{ fontSize: '0.65rem' }}>{p.category}</div>
-                        <h6 className="text-center" style={{ fontFamily: "'Playfair Display', serif", fontSize: '0.95rem', margin: '0 0 0.5rem' }}>
-                          {p.name}
-                        </h6>
-
-                        {p.slice ? (
-                          <>
-                            <div
-                              className="d-flex justify-content-around mb-2 py-1"
-                              style={{
-                                background: 'var(--cc-cream)',
-                                borderRadius: 8,
-                                fontSize: '0.78rem',
-                              }}
-                            >
-                              <div className="text-center">
-                                <div style={{ fontSize: '0.6rem', color: 'var(--cc-cocoa-soft)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                                  {p.sizeLabel || 'Whole'}
-                                </div>
-                                <div style={{ color: 'var(--cc-rose)', fontWeight: 700 }}>{inr(p.price)}</div>
-                              </div>
-                              <div style={{ width: 1, background: 'var(--cc-border)' }} />
-                              <div className="text-center">
-                                <div style={{ fontSize: '0.6rem', color: 'var(--cc-cocoa-soft)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                                  {p.sliceLabel || 'Slice'}
-                                </div>
-                                <div style={{ color: 'var(--cc-rose)', fontWeight: 700 }}>{inr(p.slice)}</div>
-                              </div>
-                            </div>
-                            <div className="d-flex gap-2 mt-auto">
-                              <button
-                                className="btn-outline-rose flex-grow-1 justify-content-center"
-                                style={{ fontSize: '0.65rem', padding: '0.4rem 0.5rem' }}
-                                onClick={() =>
-                                  add({
-                                    id: p.id + '-slice',
-                                    name: `${p.name} (${p.sliceLabel || 'Slice'})`,
-                                    price: p.slice,
-                                    img: p.img,
-                                  })
-                                }
-                              >
-                                + {p.sliceLabel || 'Slice'}
-                              </button>
-                              <button
-                                className="btn-rose flex-grow-1 justify-content-center"
-                                style={{ fontSize: '0.65rem', padding: '0.4rem 0.5rem' }}
-                                onClick={() =>
-                                  add({ ...p, name: `${p.name} (${p.sizeLabel || 'Whole'})` })
-                                }
-                              >
-                                + {p.sizeLabel || 'Whole'}
-                              </button>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="text-center mb-2" style={{ color: 'var(--cc-rose)', fontWeight: 700, fontSize: '0.95rem' }}>
-                              {inr(p.price)}
-                            </div>
-                            <button
-                              className="btn-rose mt-auto w-100 justify-content-center"
-                              style={{ fontSize: '0.7rem', padding: '0.45rem 0.8rem' }}
-                              onClick={() => add(p)}
-                            >
-                              <FiShoppingBag size={12} /> Add to Cart
-                            </button>
-                          </>
+              <div className="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-2 g-md-3">
+                {filtered.map((p) => {
+                  const hasNuts = p.allergens?.includes('contains-nuts')
+                  const isEggless = p.allergens?.includes('eggless')
+                  return (
+                    <div className="col" key={p.id}>
+                      <article className="shop-card-mini">
+                        {p.badge && (
+                          <span className="shop-card-mini__badge">{p.badge}</span>
                         )}
-                      </div>
-                    </article>
-                  </div>
-                ))}
+                        {(hasNuts || isEggless) && (
+                          <span
+                            className="shop-card-mini__diet"
+                            style={{
+                              background: hasNuts ? 'rgba(184, 134, 11, 0.85)' : 'rgba(34, 139, 81, 0.85)',
+                            }}
+                            title={hasNuts ? 'Contains nuts' : 'Eggless'}
+                          >
+                            {hasNuts ? '🌰' : '🌱'}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setQuickView(p)}
+                          aria-label={`View ${p.name}`}
+                          className="shop-card-mini__img-btn"
+                        >
+                          <img
+                            src={u(p.img, 500, 500)}
+                            alt={p.name}
+                            loading="lazy"
+                          />
+                        </button>
+                        <div className="shop-card-mini__body text-center">
+                          <div className="shop-card-mini__cat">{p.category}</div>
+                          <h6
+                            className="shop-card-mini__name"
+                            onClick={() => setQuickView(p)}
+                            title={p.name}
+                          >
+                            {p.name}
+                          </h6>
+                          <div className="shop-card-mini__price">
+                            {p.slice ? `From ${inr(p.slice)}` : inr(p.price)}
+                          </div>
+                          <button
+                            aria-label={`Add ${p.name} to cart`}
+                            className="shop-card-mini__add-full"
+                            onClick={() => {
+                              if (p.slice) setQuickView(p)
+                              else add(p)
+                            }}
+                          >
+                            <FiShoppingBag size={12} /> Add to Cart
+                          </button>
+                        </div>
+                      </article>
+                    </div>
+                  )
+                })}
                 {filtered.length === 0 && (
                   <div className="col-12 text-center py-5">
                     <p>No products match your filters.</p>
@@ -263,10 +242,18 @@ export default function Shop() {
               </div>
             </div>
 
-            <aside className="col-12 col-lg-3">
+            <aside className="col-12 col-lg-2">
               <div
-                className="p-3 p-lg-4"
-                style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14 }}
+                className="p-3 sticky-lg-top"
+                style={{
+                  background: '#fff',
+                  border: '1px solid var(--cc-border)',
+                  borderRadius: 14,
+                  top: 150,
+                  marginTop: 20,
+                  maxHeight: 'calc(100vh - 170px)',
+                  overflowY: 'auto',
+                }}
               >
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <div className="tag-badge">Your Cart ({count})</div>
@@ -351,11 +338,82 @@ export default function Shop() {
                     Place Custom Order
                   </Link>
                 </div>
+
+                {/* Trust strip — vertical mini-list under the custom-order block */}
+                <ul className="list-unstyled mt-4 mb-0">
+                  {[
+                    { Icon: FiHeart, title: 'Handcrafted with Love', text: 'Made in small batches with care.' },
+                    { Icon: TbLeaf, title: 'Premium Ingredients', text: 'We use only the finest ingredients.' },
+                    { Icon: FiShield, title: 'Secure Packaging', text: 'Your treats arrive fresh and beautifully.' },
+                  ].map((it, i) => (
+                    <li
+                      key={i}
+                      className="d-flex align-items-start"
+                      style={{ gap: '0.6rem', padding: '0.6rem 0', borderTop: i ? '1px dashed var(--cc-border)' : 'none' }}
+                    >
+                      <span
+                        style={{
+                          width: 30,
+                          height: 30,
+                          borderRadius: '50%',
+                          background: 'var(--cc-blush)',
+                          color: 'var(--cc-rose)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <it.Icon size={14} />
+                      </span>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--cc-rose)', textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.2 }}>
+                          {it.title}
+                        </div>
+                        <p style={{ fontSize: '0.72rem', margin: '0.15rem 0 0', color: 'var(--cc-cocoa-soft)', lineHeight: 1.3 }}>
+                          {it.text}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </aside>
           </div>
+
+          {/* Bottom-of-page promise strip — 4 across on desktop */}
+          <div className="row g-3 g-md-4 mt-2 mt-md-3 pt-3 pt-md-4" style={{ borderTop: '1px solid var(--cc-border)' }}>
+            {[
+              { Icon: TbLeaf,    title: 'Fresh & Quality',  text: 'We source the freshest ingredients for the best taste and quality.' },
+              { Icon: FiAward,   title: 'Made to Order',    text: 'Every treat is made to order just for you.' },
+              { Icon: FiTruck,   title: 'On-Time Delivery', text: 'We deliver your treats fresh and on time, every time.' },
+              { Icon: FiShield,  title: 'Safe & Secure',    text: 'Secure checkout and careful packaging always.' },
+            ].map((it, i) => (
+              <div key={i} className="col-6 col-lg-3 text-center px-3">
+                <span
+                  className="d-inline-flex align-items-center justify-content-center mb-2"
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: '50%',
+                    background: '#fff',
+                    border: '1.5px solid var(--cc-rose)',
+                    color: 'var(--cc-rose)',
+                  }}
+                >
+                  <it.Icon size={20} />
+                </span>
+                <div className="tag-badge mb-1">{it.title}</div>
+                <p style={{ fontSize: '0.78rem', color: 'var(--cc-cocoa-soft)', maxWidth: 220, margin: '0 auto' }}>
+                  {it.text}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
+
+      <ProductQuickView product={quickView} onClose={() => setQuickView(null)} />
     </>
   )
 }

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { FiMapPin, FiPhone, FiMail, FiClock, FiInstagram, FiFacebook } from 'react-icons/fi'
 import { FaPinterestP } from 'react-icons/fa'
+import Newsletter from './Newsletter.jsx'
 import Logo from './Logo.jsx'
 
 export default function Footer() {
@@ -29,6 +30,7 @@ export default function Footer() {
               <li className="mb-2"><Link to="/menu">Menu</Link></li>
               <li className="mb-2"><Link to="/shop">Shop</Link></li>
               <li className="mb-2"><Link to="/gallery">Gallery</Link></li>
+              <li className="mb-2"><Link to="/faq">FAQ</Link></li>
               <li className="mb-2"><Link to="/contact">Contact Us</Link></li>
             </ul>
           </div>
@@ -70,6 +72,21 @@ export default function Footer() {
             <p className="script mt-3" style={{ fontSize: '1.4rem', lineHeight: 1.1 }}>
               We can't wait to<br />sweeten your day!
             </p>
+          </div>
+        </div>
+
+        <div
+          className="mt-4 pt-4 row align-items-center g-3"
+          style={{ borderTop: '1px solid var(--cc-border)' }}
+        >
+          <div className="col-md-5">
+            <h6 className="tag-badge mb-1">Newsletter</h6>
+            <p style={{ fontSize: '0.82rem', color: 'var(--cc-cocoa-soft)', margin: 0 }}>
+              Sweet news, festival specials & treat-of-the-week — never spam.
+            </p>
+          </div>
+          <div className="col-md-7">
+            <Newsletter compact />
           </div>
         </div>
       </div>

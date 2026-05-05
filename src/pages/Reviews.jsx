@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FiStar, FiHeart, FiCheckCircle, FiSend } from 'react-icons/fi'
+import { FiStar, FiHeart, FiCheckCircle, FiSend, FiTrash2, FiLock, FiLogOut } from 'react-icons/fi'
 import PageHero from '../components/PageHero.jsx'
-import { addReview, getReviews, summarize, timeAgo } from '../services/reviews.js'
+import { addReview, deleteReview, getReviews, summarize, timeAgo } from '../services/reviews.js'
 import { isFirebaseEnabled } from '../firebase.js'
+import ReviewCardSkeleton from '../components/skeletons/ReviewCardSkeleton.jsx'
+import Skeleton from '../components/Skeleton.jsx'
+import { usePageMeta } from '../hooks/usePageMeta.js'
+import { useJsonLd } from '../hooks/useJsonLd.js'
 import { img, u } from '../data/images.js'
 
 function Stars({ count = 5, size = 14, color = 'var(--cc-rose)' }) {
@@ -30,12 +34,63 @@ const sub = [
 ]
 
 export default function Reviews() {
+  usePageMeta({
+    title: 'Reviews',
+    description: 'See what our customers say about Cake & Crumb — verified reviews on cheesecakes, milk cakes, cookies and custom cakes.',
+  })
+  useJsonLd('aggregate-rating', {
+    '@context': 'https://schema.org',
+    '@type': 'Bakery',
+    name: 'Cake & Crumb',
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: 4.9,
+      reviewCount: 245,
+      bestRating: 5,
+      worstRating: 1,
+    },
+  })
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
   const [hover, setHover] = useState(0)
   const [form, setForm] = useState({ name: '', email: '', rating: 5, title: '', text: '', orderItem: '' })
   const [submitting, setSubmitting] = useState(false)
   const [submitMsg, setSubmitMsg] = useState('')
+
+  // ── Admin moderation (single hardcoded password, sessionStorage flag) ──
+  const ADMIN_KEY = 'cc_admin_v1'
+  const [isAdmin, setIsAdmin] = useState(() => {
+    try { return sessionStorage.getItem(ADMIN_KEY) === '1' } catch { return false }
+  })
+  const [showAdminLogin, setShowAdminLogin] = useState(false)
+  const [adminPwd, setAdminPwd] = useState('')
+  const [adminError, setAdminError] = useState('')
+  // The password lives client-side. For real security, swap to Firebase Auth.
+  // Set in code so it can be rotated without re-deploying env vars.
+  const ADMIN_PASSWORD = 'cakeandcrumb2026'
+
+  function tryAdminLogin(e) {
+    e.preventDefault()
+    if (adminPwd === ADMIN_PASSWORD) {
+      try { sessionStorage.setItem(ADMIN_KEY, '1') } catch {}
+      setIsAdmin(true)
+      setShowAdminLogin(false)
+      setAdminPwd('')
+      setAdminError('')
+    } else {
+      setAdminError('Incorrect password.')
+    }
+  }
+  function adminLogout() {
+    try { sessionStorage.removeItem(ADMIN_KEY) } catch {}
+    setIsAdmin(false)
+  }
+  async function onDelete(id, name) {
+    if (!confirm(`Delete review by ${name || 'anonymous'}?`)) return
+    const ok = await deleteReview(id)
+    if (ok) reload()
+    else alert('Could not delete. Check Firestore rules / connectivity.')
+  }
 
   async function reload() {
     setLoading(true)
@@ -94,7 +149,7 @@ export default function Reviews() {
           >
             <div className="col-md-3 text-center">
               <div style={{ fontSize: '0.85rem', color: 'var(--cc-cocoa-soft)' }}>Overall Rating</div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: '3rem', color: 'var(--cc-cocoa)', lineHeight: 1 }}>
+              <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: '3rem', color: 'var(--cc-cocoa)', lineHeight: 1 }}>
                 {stats.total > 0 ? stats.avg.toFixed(1) : '—'}
               </div>
               <div className="my-2"><Stars count={Math.round(stats.avg) || 5} size={18} /></div>
@@ -135,14 +190,84 @@ export default function Reviews() {
 
           <div className="row g-4">
             <div className="col-lg-8">
-              <div className="d-flex justify-content-between align-items-center mb-3">
+              <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap" style={{ gap: '0.5rem' }}>
                 <h3 style={{ fontSize: '1.4rem', margin: 0 }}>What Our Customers Are Saying</h3>
+                {isAdmin ? (
+                  <button
+                    type="button"
+                    onClick={adminLogout}
+                    className="border-0"
+                    style={{
+                      background: 'rgba(207, 62, 99, 0.1)',
+                      color: 'var(--cc-rose-deep)',
+                      fontSize: '0.7rem',
+                      padding: '0.3rem 0.7rem',
+                      borderRadius: 999,
+                      fontWeight: 700,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                    }}
+                  >
+                    <FiLogOut size={11} /> Admin · Logout
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminLogin(true)}
+                    className="border-0 bg-transparent"
+                    aria-label="Admin login"
+                    style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.7rem', opacity: 0.5 }}
+                    title="Admin login"
+                  >
+                    <FiLock size={12} />
+                  </button>
+                )}
               </div>
 
+              {showAdminLogin && !isAdmin && (
+                <form
+                  onSubmit={tryAdminLogin}
+                  className="mb-3 p-3 d-flex flex-wrap"
+                  style={{
+                    gap: '0.5rem',
+                    background: 'var(--cc-cream)',
+                    border: '1px solid var(--cc-border)',
+                    borderRadius: 10,
+                  }}
+                >
+                  <input
+                    type="password"
+                    placeholder="Admin password"
+                    value={adminPwd}
+                    onChange={(e) => setAdminPwd(e.target.value)}
+                    className="cc-input"
+                    style={{ flex: 1, minWidth: 200 }}
+                    autoFocus
+                  />
+                  <button type="submit" className="btn-rose" style={{ fontSize: '0.7rem' }}>Unlock</button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowAdminLogin(false); setAdminPwd(''); setAdminError('') }}
+                    className="btn-outline-rose"
+                    style={{ fontSize: '0.7rem' }}
+                  >
+                    Cancel
+                  </button>
+                  {adminError && (
+                    <div style={{ flex: '1 1 100%', fontSize: '0.75rem', color: 'var(--cc-rose-deep)' }}>{adminError}</div>
+                  )}
+                </form>
+              )}
+
               {loading && (
-                <div className="text-center py-5" style={{ color: 'var(--cc-cocoa-soft)' }}>
-                  Loading reviews…
-                </div>
+                <>
+                  <ReviewCardSkeleton />
+                  <ReviewCardSkeleton />
+                  <ReviewCardSkeleton />
+                </>
               )}
 
               {!loading && reviews.length === 0 && (
@@ -161,9 +286,33 @@ export default function Reviews() {
               {!loading && reviews.map((r) => (
                 <article
                   key={r.id}
-                  className="d-flex flex-column flex-md-row p-3 p-md-4 mb-3"
+                  className="d-flex flex-column flex-md-row p-3 p-md-4 mb-3 position-relative"
                   style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14, gap: '1rem' }}
                 >
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => onDelete(r.id, r.name)}
+                      aria-label={`Delete review by ${r.name}`}
+                      className="position-absolute"
+                      style={{
+                        top: 10, right: 10,
+                        background: 'rgba(207, 62, 99, 0.1)',
+                        border: '1px solid rgba(207, 62, 99, 0.3)',
+                        color: 'var(--cc-rose-deep)',
+                        borderRadius: 999,
+                        padding: '0.25rem 0.6rem',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <FiTrash2 size={11} /> Delete
+                    </button>
+                  )}
                   <div
                     style={{
                       width: 72,
@@ -174,7 +323,7 @@ export default function Reviews() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontFamily: "'Playfair Display', serif",
+                      fontFamily: "'Inter', system-ui, sans-serif",
                       fontSize: '1.6rem',
                       fontWeight: 600,
                       flexShrink: 0,

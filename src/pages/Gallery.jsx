@@ -1,4 +1,5 @@
 import PageHero from '../components/PageHero.jsx'
+import { usePageMeta } from '../hooks/usePageMeta.js'
 import { img, u } from '../data/images.js'
 
 const gallery = [
@@ -9,6 +10,10 @@ const gallery = [
 ]
 
 export default function Gallery() {
+  usePageMeta({
+    title: 'Gallery',
+    description: 'A peek at our handcrafted cakes, cupcakes, cookies and chocolates.',
+  })
   return (
     <>
       <PageHero

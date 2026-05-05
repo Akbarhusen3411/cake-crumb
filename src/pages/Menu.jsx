@@ -1,359 +1,293 @@
 import { Link } from 'react-router-dom'
-import { FiHeart, FiClock, FiPhone } from 'react-icons/fi'
+import { FiArrowRight, FiHeart } from 'react-icons/fi'
 import PageHero from '../components/PageHero.jsx'
-import {
-  cheesecakes, cookies, milkCakes, cakesAndBakes,
-  dessertCups, drinks, comingSoon,
-} from '../data/products.js'
 import { img, u } from '../data/images.js'
 import { inr } from '../data/format.js'
+import { usePageMeta } from '../hooks/usePageMeta.js'
+import { useJsonLd } from '../hooks/useJsonLd.js'
 
-function Group({ title, children }) {
-  return (
-    <div className="mb-3">
-      <div
-        style={{
-          color: 'var(--cc-rose)',
-          fontWeight: 700,
-          fontSize: '0.75rem',
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          margin: '0.4rem 0 0.5rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-        }}
-      >
-        <span style={{ color: 'var(--cc-rose)' }}>✦</span> {title}
-      </div>
-      {children}
-    </div>
-  )
-}
+// Curated short lists per card — keeps the page light and inviting.
+// Full lists live in /shop and the structured data in products.js.
+const CARDS = [
+  {
+    title: 'Cheesecakes',
+    image: img.cheesecakeQuartet,
+    link: '/shop',
+    items: [
+      { n: 'Strawberry Banto', p: 350 },
+      { n: 'Blueberry Banto', p: 410 },
+      { n: 'Pistachio Banto', p: 470, badge: 'Premium' },
+      { n: 'Biscoff Banto', p: 410 },
+      { n: 'Dubai Banto', p: 500, badge: 'Special' },
+    ],
+  },
+  {
+    title: 'Milk Cakes',
+    image: img.milkcakeRosePistachio,
+    link: '/shop',
+    items: [
+      { n: 'Biscoff Milk Cake', p: 800 },
+      { n: 'Trés Léches Milk Cake', p: 800 },
+      { n: 'Rose Milk Cake', p: 800 },
+      { n: 'Chocolate Milk Cake', p: 850 },
+      { n: 'Pistachio Milk Cake', p: 950, badge: 'Premium' },
+    ],
+  },
+  {
+    title: 'Cookies',
+    image: img.cookiesTripleChoc,
+    link: '/shop',
+    items: [
+      { n: 'Triple Choc', p: 60 },
+      { n: 'Red Velvet', p: 60 },
+      { n: 'Almond', p: 70 },
+      { n: 'White Choc', p: 50 },
+      { n: 'Pistachio & Rose', p: 70, badge: 'Special' },
+    ],
+    suffix: 'per piece',
+  },
+  {
+    title: 'Cakes & Bakes',
+    image: img.cupcakesPink,
+    link: '/shop',
+    items: [
+      { n: 'Chocolate Cupcake', p: 100 },
+      { n: 'Vanilla Cupcake', p: 100 },
+      { n: 'Brownie', p: 80 },
+      { n: 'Cakesickle', p: 120 },
+      { n: 'Cake Pop', p: 90 },
+    ],
+    suffix: 'per piece',
+  },
+]
 
-function Row({ name, badge, children }) {
+const SWEET_TREATS_LEFT = [
+  { n: 'Macarons (Box of 6)', p: '₹449' },
+  { n: 'Cake Pops (Each)', p: '₹99' },
+  { n: 'Brownies', p: '₹120' },
+]
+const SWEET_TREATS_RIGHT = [
+  { n: 'Mini Cheesecake', p: '₹150' },
+  { n: 'Seasonal Specials', p: 'Market Price' },
+  { n: 'Gift Boxes', p: '₹799+' },
+]
+
+function PriceRow({ name, price, suffix, badge }) {
   return (
     <div
-      className="d-flex justify-content-between align-items-baseline py-2"
-      style={{ borderBottom: '1px dashed var(--cc-border)', fontSize: '0.92rem', gap: '0.6rem' }}
+      className="d-flex align-items-baseline justify-content-between"
+      style={{ padding: '0.6rem 0', borderBottom: '1px dashed var(--cc-border)', fontSize: '0.92rem', gap: '0.6rem' }}
     >
-      <span style={{ color: 'var(--cc-cocoa)' }}>
+      <span style={{ color: 'var(--cc-cocoa)', minWidth: 0, flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {name}
         {badge && (
           <span
             className="ms-2"
             style={{
-              fontSize: '0.65rem',
-              padding: '1px 8px',
+              fontSize: '0.6rem',
+              padding: '1px 7px',
               borderRadius: 999,
               background: 'var(--cc-blush)',
-              color: 'var(--cc-rose)',
+              color: 'var(--cc-rose-deep)',
               fontWeight: 700,
               letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              verticalAlign: 'middle',
             }}
           >
             {badge}
           </span>
         )}
       </span>
-      <span className="d-inline-flex align-items-baseline" style={{ gap: '1rem', whiteSpace: 'nowrap' }}>
-        {children}
+      <span style={{ color: 'var(--cc-rose)', fontWeight: 700, whiteSpace: 'nowrap' }}>
+        {typeof price === 'number' ? inr(price) : price}
       </span>
     </div>
   )
 }
 
-function CategoryCard({ title, image, children, footerNote }) {
-  return (
-    <div
-      className="p-3 p-md-4 h-100"
-      style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 16 }}
-    >
-      <div className="d-flex align-items-center mb-3" style={{ gap: '1rem' }}>
-        <img
-          src={u(image, 200, 200)}
-          alt={title}
-          style={{ width: 72, height: 72, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }}
-        />
-        <div>
-          <h3 style={{ fontSize: '1.4rem', margin: 0 }}>{title}</h3>
-        </div>
-      </div>
-      {children}
-      {footerNote && (
-        <p style={{ fontSize: '0.75rem', color: 'var(--cc-cocoa-soft)', fontStyle: 'italic', marginTop: '0.6rem' }}>
-          {footerNote}
-        </p>
-      )}
-    </div>
-  )
-}
-
 export default function Menu() {
+  usePageMeta({
+    title: 'Menu',
+    description: 'Cheesecakes, milk cakes, cookies, cupcakes, bakes, dessert cups and drinks. Banto 4" cakes, 6" milk cakes — whole or per slice.',
+  })
+  useJsonLd('menu', {
+    '@context': 'https://schema.org',
+    '@type': 'Menu',
+    name: 'Cake & Crumb Menu',
+    hasMenuSection: CARDS.map((c) => ({
+      '@type': 'MenuSection',
+      name: c.title,
+      hasMenuItem: c.items.map((it) => ({
+        '@type': 'MenuItem',
+        name: it.n,
+        offers: { '@type': 'Offer', price: it.p, priceCurrency: 'INR' },
+      })),
+    })),
+  })
+
   return (
     <>
       <PageHero
         eyebrow="Our Menu"
         title={<>Made with Love,<br />Baked for You</>}
-        text="Indulge in our handcrafted cheesecakes, milk cakes, cookies, dessert cups, and drinks — made with the finest ingredients and a touch of love."
+        text="Indulge in our handcrafted cheesecakes, milk cakes, cookies, cupcakes, and bakes — made with the finest ingredients and a touch of love."
         cta={null}
         image={u(img.pinkDripCake2, 1000, 750)}
         imageAlt="Pink drip cake"
       />
 
-      <section className="py-5">
-        <div className="container">
-          <div className="text-center mb-5">
+      <section className="py-5" style={{ background: 'var(--cc-cream)' }}>
+        <div className="container" style={{ maxWidth: 1180 }}>
+          <div className="text-center mb-4 mb-md-5">
             <span className="eyebrow">Our Delicious Treats</span>
             <h2 className="section-title mt-3">Handcrafted Just for You</h2>
             <div className="heart-divider"><span aria-hidden>♥</span></div>
           </div>
 
-          {/* CHEESECAKES — full width */}
-          <CategoryCard
-            title="Cheesecake"
-            image={img.cheesecake}
-            footerNote='Banto 4" = 3 slices · per slice also available · *Customisable flavours on request*'
-          >
-            <div className="row g-3">
-              {Object.entries(cheesecakes).map(([key, items]) => (
-                <div className="col-md-6" key={key}>
-                  <Group title={key}>
-                    <div
-                      className="d-flex justify-content-between"
+          {/* 4 category cards in a 2×2 grid */}
+          <div className="row g-3 g-md-4">
+            {CARDS.map((card) => (
+              <div className="col-md-6" key={card.title}>
+                <div
+                  className="d-flex h-100"
+                  style={{
+                    background: '#fff',
+                    border: '1px solid var(--cc-border)',
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-3px)'
+                    e.currentTarget.style.boxShadow = '0 10px 28px rgba(176, 46, 82, 0.10)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                >
+                  <img
+                    src={u(card.image, 500, 700)}
+                    alt={card.title}
+                    className="menu-card-img"
+                    style={{
+                      flexShrink: 0,
+                      objectFit: 'cover',
+                      alignSelf: 'stretch',
+                    }}
+                  />
+                  <div className="p-3 p-md-4 flex-grow-1 d-flex flex-column">
+                    <h3
                       style={{
-                        fontSize: '0.7rem',
-                        color: 'var(--cc-cocoa-soft)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.1em',
-                        paddingBottom: '0.3rem',
-                        borderBottom: '1px solid var(--cc-border)',
-                        marginBottom: '0.2rem',
+                        fontSize: '1.4rem',
+                        margin: '0 0 0.6rem',
+                        color: 'var(--cc-cocoa)',
+                        fontWeight: 700,
                       }}
                     >
-                      <span>Flavour</span>
-                      <span style={{ display: 'flex', gap: '1rem' }}>
-                        <span style={{ minWidth: 60, textAlign: 'right' }}>Whole</span>
-                        <span style={{ minWidth: 50, textAlign: 'right' }}>Slice</span>
-                      </span>
-                    </div>
-                    {items.map((it) => (
-                      <Row key={it.name} name={it.name} badge={it.badge}>
-                        <span style={{ color: 'var(--cc-cocoa-soft)', fontStyle: 'italic', minWidth: 60, textAlign: 'right' }}>
-                          {inr(it.whole)}
+                      {card.title}
+                      {card.suffix && (
+                        <span style={{ fontSize: '0.65rem', fontWeight: 500, color: 'var(--cc-cocoa-soft)', textTransform: 'uppercase', letterSpacing: '0.1em', marginLeft: 8 }}>
+                          {card.suffix}
                         </span>
-                        <span style={{ color: 'var(--cc-rose)', fontWeight: 700, minWidth: 50, textAlign: 'right' }}>
-                          {inr(it.slice)}
-                        </span>
-                      </Row>
-                    ))}
-                  </Group>
-                </div>
-              ))}
-            </div>
-          </CategoryCard>
-
-          <div className="row g-4 mt-1">
-            {/* COOKIES */}
-            <div className="col-lg-6">
-              <CategoryCard title="Cookies" image={img.cookies} footerNote="*Mixed or single flavour*">
-                <div
-                  className="d-flex justify-content-between"
-                  style={{
-                    fontSize: '0.7rem',
-                    color: 'var(--cc-cocoa-soft)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    paddingBottom: '0.3rem',
-                    borderBottom: '1px solid var(--cc-border)',
-                    marginBottom: '0.2rem',
-                  }}
-                >
-                  <span>Flavour</span>
-                  <span style={{ display: 'flex', gap: '0.7rem' }}>
-                    <span style={{ minWidth: 36, textAlign: 'right' }}>Each</span>
-                    <span style={{ minWidth: 44, textAlign: 'right' }}>Box 6</span>
-                    <span style={{ minWidth: 50, textAlign: 'right' }}>Box 12</span>
-                  </span>
-                </div>
-                {cookies.map((c) => (
-                  <Row key={c.name} name={c.name} badge={c.badge}>
-                    <span style={{ color: 'var(--cc-rose)', fontWeight: 700, minWidth: 36, textAlign: 'right' }}>
-                      {inr(c.each)}
-                    </span>
-                    <span style={{ color: 'var(--cc-cocoa-soft)', fontStyle: 'italic', minWidth: 44, textAlign: 'right' }}>
-                      {inr(c.six)}
-                    </span>
-                    <span style={{ color: 'var(--cc-cocoa-soft)', fontStyle: 'italic', minWidth: 50, textAlign: 'right' }}>
-                      {inr(c.twelve)}
-                    </span>
-                  </Row>
-                ))}
-              </CategoryCard>
-            </div>
-
-            {/* MILK CAKES */}
-            <div className="col-lg-6">
-              <CategoryCard title='Milk Cake 6"' image={img.pinkDripCake} footerNote="Whole or per slice">
-                <div
-                  className="d-flex justify-content-between"
-                  style={{
-                    fontSize: '0.7rem',
-                    color: 'var(--cc-cocoa-soft)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    paddingBottom: '0.3rem',
-                    borderBottom: '1px solid var(--cc-border)',
-                    marginBottom: '0.2rem',
-                  }}
-                >
-                  <span>Flavour</span>
-                  <span style={{ display: 'flex', gap: '1rem' }}>
-                    <span style={{ minWidth: 60, textAlign: 'right' }}>Whole</span>
-                    <span style={{ minWidth: 50, textAlign: 'right' }}>Slice</span>
-                  </span>
-                </div>
-                {milkCakes.map((m) => (
-                  <Row key={m.name} name={m.name} badge={m.badge}>
-                    <span style={{ color: 'var(--cc-cocoa-soft)', fontStyle: 'italic', minWidth: 60, textAlign: 'right' }}>
-                      {inr(m.whole)}
-                    </span>
-                    <span style={{ color: 'var(--cc-rose)', fontWeight: 700, minWidth: 50, textAlign: 'right' }}>
-                      {inr(m.slice)}
-                    </span>
-                  </Row>
-                ))}
-              </CategoryCard>
-            </div>
-
-            {/* CAKES & BAKES */}
-            <div className="col-lg-6">
-              <CategoryCard title="Cakes & Bakes" image={img.cupcakesRose}>
-                <Group title="Cupcakes — per piece">
-                  {cakesAndBakes.cupcakes.map((it) => (
-                    <Row key={it.name} name={it.name}>
-                      <span style={{ color: 'var(--cc-rose)', fontWeight: 700 }}>{inr(it.price)}</span>
-                    </Row>
-                  ))}
-                </Group>
-                <Group title="Bakes — per piece">
-                  {cakesAndBakes.bakes.map((it) => (
-                    <Row key={it.name} name={it.name}>
-                      <span style={{ color: 'var(--cc-rose)', fontWeight: 700 }}>{inr(it.price)}</span>
-                    </Row>
-                  ))}
-                </Group>
-                <Group title="Platters">
-                  {cakesAndBakes.platters.map((it) => (
-                    <Row key={it.name} name={it.name}>
-                      <span style={{ color: 'var(--cc-rose)', fontWeight: 700 }}>{inr(it.price)}</span>
-                    </Row>
-                  ))}
-                </Group>
-              </CategoryCard>
-            </div>
-
-            {/* DESSERT CUPS + DRINKS */}
-            <div className="col-lg-6">
-              <CategoryCard title="Desserts & Drinks" image={img.macarons}>
-                <Group title="Dessert Cups">
-                  {dessertCups.map((it) => (
-                    <Row key={it.name} name={it.name}>
-                      <span style={{ color: 'var(--cc-rose)', fontWeight: 700 }}>{inr(it.price)}</span>
-                    </Row>
-                  ))}
-                </Group>
-                <Group title="Mojitos — per glass">
-                  {drinks.mojitos.map((it) => (
-                    <Row key={it.name} name={it.name}>
-                      <span style={{ color: 'var(--cc-rose)', fontWeight: 700 }}>{inr(it.price)}</span>
-                    </Row>
-                  ))}
-                </Group>
-                <Group title="Coffee">
-                  {drinks.coffee.map((it) => (
-                    <Row key={it.name} name={it.name}>
-                      <span style={{ color: 'var(--cc-rose)', fontWeight: 700 }}>{inr(it.price)}</span>
-                    </Row>
-                  ))}
-                </Group>
-                <Group title="Milkshakes — per glass">
-                  {drinks.milkshakes.map((it) => (
-                    <Row key={it.name} name={it.name}>
-                      <span style={{ color: 'var(--cc-rose)', fontWeight: 700 }}>{inr(it.price)}</span>
-                    </Row>
-                  ))}
-                </Group>
-              </CategoryCard>
-            </div>
-          </div>
-
-          {/* COMING SOON */}
-          <div className="mt-4">
-            <CategoryCard title="Look out for…" image={img.truffleBox} footerNote="More sweetness on the way!">
-              <div className="row g-2">
-                {comingSoon.map((it) => (
-                  <div className="col-md-6" key={it.name}>
-                    <Row name={it.name}>
-                      {it.soon ? (
-                        <span
-                          style={{
-                            fontSize: '0.65rem',
-                            padding: '2px 10px',
-                            borderRadius: 999,
-                            background: 'var(--cc-cream)',
-                            color: 'var(--cc-rose)',
-                            fontWeight: 700,
-                            letterSpacing: '0.06em',
-                            border: '1px solid var(--cc-rose)',
-                          }}
-                        >
-                          Coming Soon
-                        </span>
-                      ) : (
-                        <span style={{ color: 'var(--cc-rose)', fontWeight: 700 }}>{inr(it.price)}</span>
                       )}
-                    </Row>
+                    </h3>
+
+                    <div>
+                      {card.items.map((it) => (
+                        <PriceRow key={it.n} name={it.n} price={it.p} badge={it.badge} />
+                      ))}
+                    </div>
+
+                    <Link
+                      to={card.link}
+                      className="d-inline-flex align-items-center mt-3"
+                      style={{
+                        color: 'var(--cc-rose)',
+                        fontWeight: 700,
+                        fontSize: '0.78rem',
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        gap: '0.4rem',
+                      }}
+                    >
+                      View All {card.title} <FiArrowRight />
+                    </Link>
                   </div>
-                ))}
+                </div>
               </div>
-            </CategoryCard>
+            ))}
           </div>
 
-          {/* ORDER INFO */}
-          <div
-            className="mt-4 p-4 p-md-5"
-            style={{ background: 'var(--cc-blush)', borderRadius: 16 }}
-          >
-            <div className="row g-3 align-items-center">
-              <div className="col-md-4">
-                <div className="d-flex align-items-center" style={{ gap: '0.7rem' }}>
-                  <span className="feature-icon" style={{ width: 44, height: 44 }}>
-                    <FiClock size={18} />
-                  </span>
-                  <div>
-                    <div className="tag-badge">Pre-order Required</div>
-                    <p className="mb-0" style={{ fontSize: '0.85rem' }}>Please order at least 1 day in advance.</p>
-                  </div>
+          {/* Sweet Treats & More */}
+          <div className="row g-4 align-items-center mt-4">
+            <div className="col-md-4">
+              <img
+                src={u(img.macarons, 600, 500)}
+                alt="Sweet Treats"
+                style={{
+                  width: '100%',
+                  borderRadius: 16,
+                  aspectRatio: '5/4',
+                  objectFit: 'cover',
+                  boxShadow: '0 8px 24px rgba(176, 46, 82, 0.08)',
+                }}
+              />
+            </div>
+            <div className="col-md-8">
+              <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: 'var(--cc-cocoa)', fontWeight: 700 }}>
+                Sweet Treats &amp; More
+              </h3>
+              <div className="row g-md-4">
+                <div className="col-md-6">
+                  {SWEET_TREATS_LEFT.map((it) => (
+                    <PriceRow key={it.n} name={it.n} price={it.p} />
+                  ))}
                 </div>
-              </div>
-              <div className="col-md-4">
-                <div className="d-flex align-items-center" style={{ gap: '0.7rem' }}>
-                  <span className="feature-icon" style={{ width: 44, height: 44 }}>
-                    <FiPhone size={18} />
-                  </span>
-                  <div>
-                    <div className="tag-badge">Place Order</div>
-                    <p className="mb-0" style={{ fontSize: '0.85rem' }}>+91 90816 68490 · +91 91731 83440</p>
-                  </div>
+                <div className="col-md-6">
+                  {SWEET_TREATS_RIGHT.map((it) => (
+                    <PriceRow key={it.n} name={it.n} price={it.p} />
+                  ))}
                 </div>
-              </div>
-              <div className="col-md-4 text-md-end">
-                <Link to="/contact" className="btn-rose">
-                  Place a Custom Order <FiHeart />
-                </Link>
               </div>
             </div>
+          </div>
+
+          {/* Custom Orders banner */}
+          <div
+            className="mt-4 mt-md-5 p-4 p-md-5 d-flex flex-column flex-md-row align-items-md-center justify-content-between position-relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #fff0eb 0%, #fce4e9 100%)',
+              borderRadius: 16,
+              gap: '1.5rem',
+              border: '1px solid rgba(224, 97, 122, 0.2)',
+            }}
+          >
+            <div
+              className="position-absolute"
+              aria-hidden
+              style={{ right: -30, top: -30, width: 160, height: 160, borderRadius: '50%', background: 'rgba(224, 97, 122, 0.08)', filter: 'blur(8px)' }}
+            />
+            <div className="d-flex align-items-center" style={{ gap: '1rem', position: 'relative', zIndex: 1 }}>
+              <span
+                className="d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                style={{ width: 56, height: 56, borderRadius: '50%', background: '#fff', color: 'var(--cc-rose)', boxShadow: '0 4px 12px rgba(207, 62, 99, 0.18)' }}
+              >
+                <FiHeart size={22} />
+              </span>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '1.3rem', color: 'var(--cc-cocoa)', fontWeight: 700 }}>
+                  Custom Orders
+                </h4>
+                <p className="mb-0" style={{ fontSize: '0.92rem', color: 'var(--cc-cocoa-soft)' }}>
+                  Have something special in mind? We love creating custom treats for birthdays, weddings, and every celebration.
+                </p>
+              </div>
+            </div>
+            <Link to="/contact" className="btn-rose flex-shrink-0" style={{ position: 'relative', zIndex: 1 }}>
+              Place a Custom Order <FiHeart />
+            </Link>
           </div>
         </div>
       </section>
