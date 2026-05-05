@@ -4,5 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Repo name on GitHub Pages — assets load from /cake-crumb/...
+  base: '/cake-crumb/',
   plugins: [react(), tailwindcss()],
 })

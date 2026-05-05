@@ -23,19 +23,31 @@ export default function Logo({ size = 'md' }) {
             fontFamily: "'Playfair Display', serif",
             fontSize: titleFont,
             fontWeight: 600,
-            color: 'var(--cc-cocoa)',
-            letterSpacing: '0.04em',
+            color: '#1a1a1a',
+            letterSpacing: '0.01em',
           }}
         >
-          CAKE<span style={{ color: 'var(--cc-rose)', margin: '0 0.08em' }}>&</span>CRUMB
+          CAKE
+          <span
+            style={{
+              color: '#1a1a1a',
+              fontStyle: 'italic',
+              fontWeight: 500,
+              fontSize: '1.25em',
+              margin: '0 0.02em',
+              verticalAlign: '-0.05em',
+            }}
+          >
+            &
+          </span>
+          CRUMB
         </span>
         <span
           style={{
             fontFamily: "'Allura', cursive",
             fontSize: taglineFont,
-            color: 'var(--cc-rose)',
+            color: '#1a1a1a',
             marginTop: '0.05em',
-            opacity: 0.9,
           }}
         >
           The gourmet chocolate and berry boutique!
