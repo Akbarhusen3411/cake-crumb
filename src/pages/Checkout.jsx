@@ -12,7 +12,7 @@ import { usePageMeta } from '../hooks/usePageMeta.js'
 import { saveOrder } from '../services/orders.js'
 import { generateOrderId } from '../services/orderId.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
-import { sendOrderEmail } from '../services/emailNotify.js'
+// import { sendOrderEmail } from '../services/emailNotify.js'  // TODO: re-enable when EmailJS is configured
 
 const UPI_ID = '9081668490@kotakbank'
 const PAYEE_NAME = 'Momin Akbarhusen Gulamali'
@@ -135,7 +135,7 @@ export default function Checkout() {
       source: 'checkout',
     }
     saveOrder(orderData)
-    sendOrderEmail(orderData)
+    // sendOrderEmail(orderData)  // TODO: re-enable after EmailJS setup — see EMAILJS_SETUP.md
 
     setOrderId(id)
     setPlacedItems(snapshotItems)
