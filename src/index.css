@@ -1283,12 +1283,14 @@ html, body { overflow-x: hidden; }
   max-height: 88vh;
   margin: auto;
   min-height: 0;
-  /* Glassmorphism — translucent so the dim + blurred page reads through,
-     paired with a strong backdrop-filter blur for the frosted-glass look. */
+  /* Glassmorphism — translucent enough to show the dim + blurred page
+     through it, opaque enough that menu text stays sharp and the page
+     text behind doesn't bleed legibly. Higher blur radius (36px) means
+     anything behind becomes a soft colour wash, not readable text. */
   background:
-    linear-gradient(180deg, rgba(255, 252, 250, 0.72) 0%, rgba(252, 228, 220, 0.62) 100%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
-  backdrop-filter: blur(28px) saturate(200%);
+    linear-gradient(180deg, rgba(255, 252, 250, 0.88) 0%, rgba(252, 228, 220, 0.84) 100%);
+  -webkit-backdrop-filter: blur(36px) saturate(200%);
+  backdrop-filter: blur(36px) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 24px;
   box-shadow:
