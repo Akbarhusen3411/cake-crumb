@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { CartProvider } from './context/CartContext.jsx'
 import Navbar from './components/Navbar.jsx'
 import Footer from './components/Footer.jsx'
@@ -23,7 +23,16 @@ const ReviewSubmit = lazy(() => import('./pages/ReviewSubmit.jsx'))
 const FAQ = lazy(() => import('./pages/FAQ.jsx'))
 const ConfirmOrder = lazy(() => import('./pages/ConfirmOrder.jsx'))
 
+// Routes inside the buying / admin-confirm flow render without the footer
+// so customers stay focused on the cart → checkout → done path.
+const NO_FOOTER_ROUTES = ['/cart', '/checkout', '/confirm-order']
+
 function App() {
+  const { pathname } = useLocation()
+  const hideFooter = NO_FOOTER_ROUTES.some(
+    (r) => pathname === r || pathname.startsWith(r + '/')
+  )
+
   return (
     <CartProvider>
       <div className="d-flex flex-column min-vh-100">
@@ -48,7 +57,7 @@ function App() {
             </Routes>
           </Suspense>
         </main>
-        <Footer />
+        {!hideFooter && <Footer />}
         <CartToast />
         <ChatBot />
       </div>
