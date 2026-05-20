@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import {
   FiSearch, FiShoppingBag, FiHome, FiInfo, FiBook, FiImage,
@@ -27,34 +27,27 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false)
   const { count } = useCart()
 
-  // Force close on any route change so a navigation inside the menu can't
-  // leave it in a half-open state where the body lock outlives the panel.
-  // queueMicrotask defers the setState so it doesn't fire synchronously
-  // inside the effect body (which lint flags as a cascading-render risk).
+  // Force close on any route change. Defensive — covers the case where a
+  // link click slips past the onClick handler.
   const location = useLocation()
   useEffect(() => {
     queueMicrotask(() => setOpen(false))
   }, [location.pathname])
 
-  // Lock background scroll while the fullscreen mobile menu is open.
-  // All unlock + scroll-restore logic lives in the cleanup function so it
-  // runs reliably whenever open flips back to false (or the component
-  // unmounts). This avoids the race condition where the NavLink click
-  // schedules setOpen(false) + navigation simultaneously and the old
-  // effect's "else" branch could miss running.
-  const savedScrollY = useRef(0)
+  // Scroll lock — kept as simple as possible. No position:fixed dance,
+  // no scrollY ref, no restore math. Just disable html overflow while the
+  // menu is open. Scroll position is preserved automatically because we
+  // never move the body. Works the same across every browser and can't
+  // desync on rapid open/close or mid-navigation.
   useEffect(() => {
     if (!open) return
-    savedScrollY.current = window.scrollY
-    document.body.style.top = `-${savedScrollY.current}px`
+    const html = document.documentElement
+    const prevOverflow = html.style.overflow
+    html.style.overflow = 'hidden'
     document.body.classList.add('menu-open')
     return () => {
+      html.style.overflow = prevOverflow
       document.body.classList.remove('menu-open')
-      document.body.style.top = ''
-      if (savedScrollY.current) {
-        window.scrollTo(0, savedScrollY.current)
-        savedScrollY.current = 0
-      }
     }
   }, [open])
 
