@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  FiHeart, FiShoppingBag, FiX, FiPlus, FiMinus, FiCheckCircle, FiSearch,
+  FiHeart, FiShoppingBag, FiX, FiPlus, FiMinus, FiCheckCircle,
   FiShield, FiTruck, FiAward,
 } from 'react-icons/fi'
 import { TbLeaf } from 'react-icons/tb'
@@ -93,8 +93,69 @@ export default function Shop() {
         <div className="container-fluid px-2 px-md-3 px-lg-4">
           <div className="row g-3">
             <aside className="col-12 col-lg-2">
+              {/* Mobile: horizontal category chips + collapsible Price/Occasion */}
+              <div className="cc-filter-mobile d-lg-none">
+                <div className="cc-filter-mobile__chips" role="radiogroup" aria-label="Category">
+                  {CATEGORIES.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      role="radio"
+                      aria-checked={category === c}
+                      className={'cc-chip' + (category === c ? ' is-active' : '')}
+                      onClick={() => setCategory(c)}
+                    >
+                      {c === 'All Products' ? 'All' : c}
+                    </button>
+                  ))}
+                </div>
+
+                <details className="cc-filter-acc">
+                  <summary>Price Range {priceIds.length > 0 && <span className="cc-filter-acc__count">{priceIds.length}</span>}</summary>
+                  <div className="cc-filter-acc__body">
+                    {PRICES.map((p) => (
+                      <label key={p.id} className="filter-row">
+                        <input
+                          type="checkbox"
+                          checked={priceIds.includes(p.id)}
+                          onChange={(e) =>
+                            setPriceIds((prev) =>
+                              e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id)
+                            )
+                          }
+                        />
+                        {p.label}
+                      </label>
+                    ))}
+                  </div>
+                </details>
+
+                <details className="cc-filter-acc">
+                  <summary>Occasion</summary>
+                  <div className="cc-filter-acc__body">
+                    {OCCASIONS.map((o) => (
+                      <label key={o} className="filter-row">
+                        <input type="checkbox" />
+                        {o}
+                      </label>
+                    ))}
+                  </div>
+                </details>
+
+                {(category !== 'All Products' || priceIds.length > 0) && (
+                  <button
+                    type="button"
+                    className="cc-filter-clear"
+                    onClick={() => { setCategory('All Products'); setPriceIds([]) }}
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+
+              {/* Desktop: original sidebar layout */}
               <div
-                className="p-3 p-lg-4"
+                className="d-none d-lg-block p-3 p-lg-4"
                 style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14 }}
               >
                 <div className="tag-badge mb-3">Filter By</div>

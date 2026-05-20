@@ -65,7 +65,7 @@ export default function Navbar() {
             <Link
               to="/cart"
               aria-label={`Cart (${count} items)`}
-              className="position-relative"
+              className="position-relative cc-cart-link"
               style={{ color: 'var(--cc-cocoa)' }}
             >
               <FiShoppingBag size={20} strokeWidth={1.8} />

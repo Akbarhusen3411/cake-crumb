@@ -1681,47 +1681,140 @@ body.menu-open { overflow: hidden; }
   margin-bottom: 0.35rem;
 }
 
-/* ─── Sticky mobile checkout bar ─────────────────────────────────────────── */
-.cc-checkout-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 40;
-  background: #fff;
-  border-top: 1px solid var(--cc-border);
-  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.06);
-  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+/* ─── Phone with country-code dropdown ───────────────────────────────────── */
+.cc-phone-row {
   display: flex;
+  gap: 0.5rem;
+}
+.cc-phone-cc {
+  width: auto;
+  flex: 0 0 auto;
+  max-width: 130px;
+  padding-right: 0.4rem !important;
+  font-size: 0.85rem !important;
+}
+.cc-phone-num { flex: 1 1 auto; }
+
+/* Pincode field with inline loading/check/error icon */
+.cc-input-with-status { position: relative; }
+.cc-input-with-status .cc-input { padding-right: 38px; }
+.cc-input-status {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
+  pointer-events: none;
 }
-.cc-checkout-bar__total {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
-  min-width: 0;
-  flex-shrink: 0;
-}
-.cc-checkout-bar__total-label {
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--cc-cocoa-soft);
-  font-weight: 700;
-}
-.cc-checkout-bar__total strong {
-  font-family: 'Inter', system-ui, sans-serif;
-  font-size: 1.15rem;
-  color: var(--cc-cocoa);
-}
-.cc-checkout-bar__cta {
-  flex: 1;
+.cc-spin { animation: cc-spin 1s linear infinite; }
+@keyframes cc-spin { to { transform: rotate(360deg); } }
+
+/* ─── Cart icon — tap feedback ───────────────────────────────────────────── */
+.cc-cart-link {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  padding: 8px;
+  margin: -8px;
+  border-radius: 50%;
+  transition: background 0.2s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.cc-cart-link:active {
+  background: var(--cc-blush);
+  transform: scale(0.88);
+}
+@media (hover: hover) {
+  .cc-cart-link:hover { background: var(--cc-blush); }
 }
 
-/* Clear space below the form on mobile so the sticky bar doesn't cover content */
-@media (max-width: 991px) {
-  .cc-checkout-section { padding-bottom: 96px; }
+/* ─── Shop filter — mobile (chips + accordion) ───────────────────────────── */
+.cc-filter-mobile {
+  background: #fff;
+  border: 1px solid var(--cc-border);
+  border-radius: 14px;
+  padding: 0.9rem 0.95rem 1rem;
+  margin-bottom: 0.6rem;
+}
+.cc-filter-mobile__chips {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.45rem;
+  overflow-x: auto;
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.8rem;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.cc-chip {
+  flex: 0 0 auto;
+  border: 1px solid var(--cc-border);
+  background: #fff;
+  color: var(--cc-cocoa);
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.cc-chip:hover { border-color: var(--cc-rose); color: var(--cc-rose); }
+.cc-chip.is-active {
+  background: var(--cc-rose);
+  border-color: var(--cc-rose);
+  color: #fff;
+}
+.cc-filter-acc {
+  border-top: 1px solid var(--cc-border);
+  padding: 0.6rem 0;
+}
+.cc-filter-acc > summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--cc-rose);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0;
+}
+.cc-filter-acc > summary::-webkit-details-marker { display: none; }
+.cc-filter-acc > summary::after {
+  content: '+';
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--cc-rose);
+  transition: transform 0.2s;
+}
+.cc-filter-acc[open] > summary::after { content: '–'; }
+.cc-filter-acc__count {
+  display: inline-block;
+  margin-left: 0.4rem;
+  background: var(--cc-rose);
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+.cc-filter-acc__body {
+  padding: 0.4rem 0 0.2rem;
+}
+.cc-filter-clear {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  background: transparent;
+  border: 1px dashed var(--cc-border);
+  border-radius: 8px;
+  color: var(--cc-rose);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.45rem;
+  cursor: pointer;
 }
 

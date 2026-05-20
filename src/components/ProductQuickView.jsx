@@ -66,35 +66,33 @@ export default function ProductQuickView({ product, onClose }) {
               </div>
             )}
 
-            {/* Price block */}
-            <div className="mt-3">
-              {p.slice ? (
-                <div className="qv-price-pair">
-                  <div className="qv-price-cell" style={{ background: 'var(--cc-cream)' }}>
-                    <div className="qv-price-label">{p.sizeLabel || 'Whole'}</div>
-                    <div className="qv-price-amount">{inr(p.price)}</div>
-                  </div>
-                  <div className="qv-price-cell" style={{ background: '#fff' }}>
-                    <div className="qv-price-label">{p.sliceLabel || 'Slice'}</div>
-                    <div className="qv-price-amount">{inr(p.slice)}</div>
-                  </div>
-                </div>
-              ) : (
-                <div className="qv-price-single">
-                  <div className="qv-price-amount" style={{ fontSize: '1.5rem' }}>{inr(p.price)}</div>
-                </div>
-              )}
-            </div>
-
             <p className="qv-desc">
               Handcrafted with the finest ingredients. Each order is freshly prepared.
               Please pre-order at least 1 day in advance.
             </p>
 
-            {/* Action buttons */}
-            <div className="qv-actions">
-              {p.slice ? (
-                <>
+            {/* Options — each size on its own row with price + Add button */}
+            {p.slice ? (
+              <div className="qv-options">
+                <div className="qv-option">
+                  <div className="qv-option__info">
+                    <div className="qv-option__label">{p.sizeLabel || 'Whole'}</div>
+                    <div className="qv-option__price">{inr(p.price)}</div>
+                  </div>
+                  <button
+                    className="qv-btn qv-btn--filled"
+                    onClick={() =>
+                      addAndClose({ ...p, name: `${p.name} (${p.sizeLabel || 'Whole'})` })
+                    }
+                  >
+                    <FiShoppingBag size={13} /> Add
+                  </button>
+                </div>
+                <div className="qv-option">
+                  <div className="qv-option__info">
+                    <div className="qv-option__label">{p.sliceLabel || 'Slice'}</div>
+                    <div className="qv-option__price">{inr(p.slice)}</div>
+                  </div>
                   <button
                     className="qv-btn qv-btn--outline"
                     onClick={() =>
@@ -106,26 +104,20 @@ export default function ProductQuickView({ product, onClose }) {
                       })
                     }
                   >
-                    + {p.sliceLabel || 'Slice'}
+                    <FiShoppingBag size={13} /> Add
                   </button>
-                  <button
-                    className="qv-btn qv-btn--filled"
-                    onClick={() =>
-                      addAndClose({ ...p, name: `${p.name} (${p.sizeLabel || 'Whole'})` })
-                    }
-                  >
-                    <FiShoppingBag size={13} /> + {p.sizeLabel || 'Whole'}
-                  </button>
-                </>
-              ) : (
+                </div>
+              </div>
+            ) : (
+              <div className="qv-actions">
                 <button
                   className="qv-btn qv-btn--filled w-100"
                   onClick={() => addAndClose(p)}
                 >
                   <FiShoppingBag size={13} /> Add to Cart — {inr(p.price)}
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             <button className="qv-fav">
               <FiHeart size={13} /> Save to favourites
@@ -251,11 +243,47 @@ export default function ProductQuickView({ product, onClose }) {
           line-height: 1.5;
         }
 
+        /* Stacked size options — replaces the side-by-side price pair */
+        .qv-options {
+          display: flex;
+          flex-direction: column;
+          gap: 0.6rem;
+          margin-top: 1rem;
+          padding-top: 0.4rem;
+        }
+        .qv-option {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.8rem;
+          padding: 0.7rem 0.95rem;
+          background: var(--cc-cream);
+          border: 1px solid var(--cc-border);
+          border-radius: 12px;
+        }
+        .qv-option + .qv-option { background: #fff; }
+        .qv-option__info { min-width: 0; }
+        .qv-option__label {
+          font-size: 0.62rem;
+          color: var(--cc-cocoa-soft);
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          font-weight: 700;
+        }
+        .qv-option__price {
+          font-size: 1.25rem;
+          color: var(--cc-rose);
+          font-weight: 700;
+          line-height: 1.1;
+          margin-top: 2px;
+        }
+        .qv-option .qv-btn { flex: 0 0 auto; min-width: 96px; padding: 0.6rem 1rem; }
+
         .qv-actions {
           display: flex;
           gap: 0.5rem;
-          margin-top: auto;
-          padding-top: 1rem;
+          margin-top: 1rem;
+          padding-top: 0.4rem;
         }
         .qv-btn {
           flex: 1;

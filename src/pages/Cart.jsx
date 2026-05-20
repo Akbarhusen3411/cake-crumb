@@ -11,7 +11,7 @@ import { u } from '../data/images.js'
 export default function Cart() {
   usePageMeta({ title: 'Your Cart' })
   const {
-    items, count, subtotal, delivery, total,
+    items, count, subtotal,
     increment, decrement, remove, clear,
   } = useCart()
 
@@ -126,20 +126,16 @@ export default function Cart() {
               </div>
               <div className="d-flex justify-content-between mb-2" style={{ fontSize: '0.9rem' }}>
                 <span>Delivery</span>
-                <strong style={{ color: delivery === 0 ? 'var(--cc-rose)' : 'var(--cc-cocoa)' }}>
-                  {delivery === 0 ? 'Free' : inr(delivery)}
-                </strong>
+                <span style={{ color: 'var(--cc-cocoa-soft)' }}>Calculated at checkout</span>
               </div>
-              {subtotal < 999 && delivery > 0 && (
-                <p style={{ fontSize: '0.75rem', color: 'var(--cc-cocoa-soft)' }}>
-                  Add {inr(999 - subtotal)} more for free delivery.
-                </p>
-              )}
+              <p style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', marginBottom: '0.5rem' }}>
+                Based on your delivery address.
+              </p>
               <hr style={{ borderColor: 'var(--cc-border)' }} />
               <div className="d-flex justify-content-between mb-3" style={{ fontSize: '1.05rem' }}>
-                <span style={{ color: 'var(--cc-cocoa)' }}>Total</span>
+                <span style={{ color: 'var(--cc-cocoa)' }}>Subtotal</span>
                 <strong style={{ color: 'var(--cc-rose)', fontFamily: "'Inter', system-ui, sans-serif", fontSize: '1.2rem' }}>
-                  {inr(total)}
+                  {inr(subtotal)}
                 </strong>
               </div>
               <Link to="/checkout" className="btn-rose w-100 justify-content-center">
