@@ -1180,6 +1180,28 @@ html, body { overflow-x: hidden; }
     0 14px 32px rgba(207, 62, 99, 0.20),
     0 2px 6px rgba(207, 62, 99, 0.14);
 }
+
+/* Permanent fade-strip below the header — sticks WITH the header so
+   any card scrolling underneath fades into a soft cream gradient
+   before it can visually touch the header's bottom edge. */
+.cc-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 16px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 246, 242, 0.85) 0%,
+    rgba(255, 246, 242, 0.45) 55%,
+    rgba(255, 246, 242, 0) 100%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.cc-header.is-scrolled::after { opacity: 1; }
 /* Solid fallback for browsers without backdrop-filter (older Firefox/etc.) */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .cc-header { background: #ffffff; }
@@ -1283,20 +1305,13 @@ html, body { overflow-x: hidden; }
   max-height: 88vh;
   margin: auto;
   min-height: 0;
-  /* Glassmorphism — translucent enough to show the dim + blurred page
-     through it, opaque enough that menu text stays sharp and the page
-     text behind doesn't bleed legibly. Higher blur radius (36px) means
-     anything behind becomes a soft colour wash, not readable text. */
-  background:
-    linear-gradient(180deg, rgba(255, 252, 250, 0.88) 0%, rgba(252, 228, 220, 0.84) 100%);
-  -webkit-backdrop-filter: blur(36px) saturate(200%);
-  backdrop-filter: blur(36px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  /* Fully solid panel — no glass, no see-through. Theme gradient only. */
+  background: linear-gradient(180deg, #fffcfa 0%, #fce4dc 100%);
+  border: 1px solid rgba(207, 62, 99, 0.18);
   border-radius: 24px;
   box-shadow:
     0 30px 60px rgba(120, 30, 60, 0.42),
-    0 0 0 1px rgba(207, 62, 99, 0.10),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    0 0 0 1px rgba(207, 62, 99, 0.10);
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
@@ -1364,9 +1379,9 @@ html, body { overflow-x: hidden; }
 }
 .mobile-menu__logo {
   width: auto;
-  height: 60px;
+  height: 92px;
   display: block;
-  filter: drop-shadow(0 6px 18px rgba(207, 62, 99, 0.18));
+  filter: drop-shadow(0 8px 22px rgba(207, 62, 99, 0.20));
 }
 .mobile-menu__wordmark {
   font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
@@ -1881,6 +1896,79 @@ body.menu-open {
 @media (max-width: 420px) {
   .cc-mini-footer__copy { width: 100%; text-align: center; order: 2; }
   .cc-mini-footer__wa { order: 1; margin: 0 auto; }
+}
+
+/* ─── Contact page — horizontal contact strip ───────────────────────────── */
+.cc-contact-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  background: #ffffff;
+  border: 1px solid var(--cc-border);
+  border-radius: 16px;
+  padding: 0.75rem;
+}
+.cc-contact-strip__cta,
+.cc-contact-strip__item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--cc-cocoa);
+  background: var(--cc-cream);
+  transition: background 0.2s ease, transform 0.2s ease;
+  min-width: 0;
+}
+.cc-contact-strip__cta {
+  background: #25D366;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.28);
+}
+.cc-contact-strip__cta:hover,
+.cc-contact-strip__cta:focus-visible {
+  background: #1fb558;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+.cc-contact-strip__item:hover,
+.cc-contact-strip__item:focus-visible {
+  background: var(--cc-blush);
+}
+.cc-contact-strip__item--info {
+  cursor: default;
+}
+.cc-contact-strip__item--info:hover {
+  background: var(--cc-cream);
+}
+.cc-contact-strip__icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--cc-blush);
+  color: var(--cc-rose);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.cc-contact-strip__cta svg { flex-shrink: 0; }
+.cc-contact-strip__label {
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  opacity: 0.7;
+  line-height: 1.1;
+}
+.cc-contact-strip__value {
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ─── Search overlay ─────────────────────────────────────────────────────── */

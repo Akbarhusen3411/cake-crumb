@@ -85,8 +85,8 @@ export default function Shop() {
         title={<>Handcrafted<br />Just for You</>}
         text="Discover our handmade cakes, cupcakes, cookies, and chocolates — made with the finest ingredients and a whole lot of love."
         cta={null}
-        image={u(img.pinkDripCake2, 1000, 750)}
-        imageAlt="Pink drip cake"
+        image={u(img.cheesecakeBoxesPair, 1000, 750)}
+        imageAlt="Pair of cheesecake boxes ready to ship"
       />
 
       <section className="py-5">
@@ -202,8 +202,11 @@ export default function Shop() {
                   background: '#fff',
                   border: '1px solid var(--cc-border)',
                   borderRadius: 14,
-                  top: 'calc(var(--cc-header-h, 82px) + 1rem)',
-                  maxHeight: 'calc(100vh - var(--cc-header-h, 82px) - 2rem)',
+                  // Centered vertically in the viewport gap below the header.
+                  // max() falls back to "just below header" on short viewports
+                  // so the card never overlaps the sticky header.
+                  top: 'max(calc(var(--cc-header-h, 82px) + 1rem), 12vh)',
+                  maxHeight: '76vh',
                   overflowY: 'auto',
                 }}
               >

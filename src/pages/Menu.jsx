@@ -133,8 +133,8 @@ export default function Menu() {
         title={<>Made with Love,<br />Baked for You</>}
         text="Indulge in our handcrafted cheesecakes, milk cakes, cookies, cupcakes, and bakes — made with the finest ingredients and a touch of love."
         cta={null}
-        image={u(img.pinkDripCake2, 1000, 750)}
-        imageAlt="Pink drip cake"
+        image={u(img.cheesecakeAssorted, 1000, 750)}
+        imageAlt="Assorted cheesecake flavours"
       />
 
       <section className="py-5" style={{ background: 'var(--cc-cream)' }}>

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
-  FiMail, FiMapPin, FiPhone, FiClock, FiInstagram, FiHeart,
+  FiMapPin, FiPhone, FiClock, FiInstagram, FiHeart,
   FiCheckCircle, FiChevronDown,
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
@@ -84,74 +84,66 @@ export default function Contact() {
         imageAlt="Cupcakes"
       />
 
-      <section className="py-4 py-md-5">
+      {/* Horizontal contact strip — replaces the sticky left card.
+          Sits below the hero, gives quick access to WhatsApp / Phone /
+          IG / hours without floating into the sticky header zone. */}
+      <section className="py-4">
         <div className="container">
-          <div className="row g-4 g-lg-5">
-            {/* LEFT — slim contact card */}
-            <div className="col-lg-4">
-              <div
-                className="p-4 sticky-lg-top"
-                style={{
-                  background: '#fff',
-                  border: '1px solid var(--cc-border)',
-                  borderRadius: 14,
-                  top: 130,
-                }}
-              >
-                <h3 style={{ fontSize: '1.25rem', margin: 0 }}>Reach us</h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--cc-cocoa-soft)', margin: '0.3rem 0 1rem' }}>
-                  WhatsApp is fastest — we usually reply within a few hours.
-                </p>
-
-                <a
-                  href={buildWhatsAppLink()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-rose w-100 justify-content-center mb-2"
-                  style={{ background: '#25D366' }}
-                >
-                  <FaWhatsapp size={16} /> WhatsApp Us
-                </a>
-                <a
-                  href="tel:+919081668490"
-                  className="btn-outline-rose w-100 justify-content-center"
-                  style={{ fontSize: '0.78rem', padding: '0.5rem 1rem' }}
-                >
-                  <FiPhone size={14} /> +91 90816 68490
-                </a>
-
-                <hr style={{ borderColor: 'var(--cc-border)', margin: '1rem 0' }} />
-
-                <ul className="list-unstyled mb-0" style={{ fontSize: '0.85rem' }}>
-                  <li className="d-flex mb-2" style={{ gap: '0.6rem' }}>
-                    <FiPhone size={14} style={{ color: 'var(--cc-rose)', flexShrink: 0, marginTop: 3 }} />
-                    <span>+91 91731 83440</span>
-                  </li>
-                  <li className="d-flex mb-2" style={{ gap: '0.6rem' }}>
-                    <FiInstagram size={14} style={{ color: 'var(--cc-rose)', flexShrink: 0, marginTop: 3 }} />
-                    <a
-                      href="https://www.instagram.com/cake_and_crumb_1/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: 'var(--cc-cocoa)', fontWeight: 500 }}
-                    >
-                      @cake_and_crumb_1
-                    </a>
-                  </li>
-                  <li className="d-flex mb-2" style={{ gap: '0.6rem' }}>
-                    <FiClock size={14} style={{ color: 'var(--cc-rose)', flexShrink: 0, marginTop: 3 }} />
-                    <span>Pre-order 1 day in advance</span>
-                  </li>
-                  <li className="d-flex" style={{ gap: '0.6rem' }}>
-                    <FiMapPin size={14} style={{ color: 'var(--cc-rose)', flexShrink: 0, marginTop: 3 }} />
-                    <span>Home delivery (charges apply) or self-pickup</span>
-                  </li>
-                </ul>
+          <div className="cc-contact-strip">
+            <a
+              href={buildWhatsAppLink()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cc-contact-strip__cta"
+            >
+              <FaWhatsapp size={18} />
+              <div>
+                <div className="cc-contact-strip__label">Fastest reply</div>
+                <div className="cc-contact-strip__value">WhatsApp Us</div>
+              </div>
+            </a>
+            <a href="tel:+919081668490" className="cc-contact-strip__item">
+              <span className="cc-contact-strip__icon"><FiPhone size={14} /></span>
+              <div>
+                <div className="cc-contact-strip__label">Call</div>
+                <div className="cc-contact-strip__value">+91 90816 68490</div>
+              </div>
+            </a>
+            <a
+              href="https://www.instagram.com/cake_and_crumb_1/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cc-contact-strip__item"
+            >
+              <span className="cc-contact-strip__icon"><FiInstagram size={14} /></span>
+              <div>
+                <div className="cc-contact-strip__label">DM us</div>
+                <div className="cc-contact-strip__value">@cake_and_crumb_1</div>
+              </div>
+            </a>
+            <div className="cc-contact-strip__item cc-contact-strip__item--info">
+              <span className="cc-contact-strip__icon"><FiClock size={14} /></span>
+              <div>
+                <div className="cc-contact-strip__label">Lead time</div>
+                <div className="cc-contact-strip__value">Pre-order 1 day in advance</div>
               </div>
             </div>
+            <div className="cc-contact-strip__item cc-contact-strip__item--info">
+              <span className="cc-contact-strip__icon"><FiMapPin size={14} /></span>
+              <div>
+                <div className="cc-contact-strip__label">Delivery</div>
+                <div className="cc-contact-strip__value">Home delivery or pickup</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-            {/* RIGHT — compact custom-order form */}
-            <div className="col-lg-8">
+      {/* Full-width custom order form — no sidebar, no sticky */}
+      <section className="py-4 py-md-5">
+        <div className="container" style={{ maxWidth: 820 }}>
+          <div className="row">
+            <div className="col-12">
               <form
                 onSubmit={onSubmit}
                 className="p-4 p-md-4"

@@ -147,8 +147,8 @@ export default function Reviews() {
         title={<>Baked with Love,<br />Loved by You</>}
         text="We're so grateful for your sweet words! Here's what our lovely customers have to say about their experience."
         cta={null}
-        image={u(img.pinkDripCake2, 1000, 750)}
-        imageAlt="Pink drip cake"
+        image={u(img.cakeStand, 1000, 750)}
+        imageAlt="Celebration cake with yellow flowers"
       />
 
       <section className="py-5">

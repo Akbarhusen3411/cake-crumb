@@ -95,8 +95,8 @@ export default function TrackOrder() {
         title={<>Where is My<br />Sweet Treat?</>}
         text="Paste your Order ID below and we'll show you exactly where your order stands."
         cta={null}
-        image={u(img.pinkDripCake2, 1000, 750)}
-        imageAlt="Drip cake"
+        image={u(img.pinkDripCake, 1000, 750)}
+        imageAlt="Pink letter cake"
       />
 
       <section className="py-5">

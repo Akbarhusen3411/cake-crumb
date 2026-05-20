@@ -33,8 +33,8 @@ export default function About() {
             <FiHeart /> Our Journey
           </button>
         }
-        image={u(img.pinkDripCake2, 1000, 750)}
-        imageAlt="Pink drip cake with roses"
+        image={u(img.pipingBags, 1000, 750)}
+        imageAlt="Behind-the-scenes piping bags at our bakery"
       />
 
       <section className="py-5">
@@ -42,8 +42,8 @@ export default function About() {
           <div className="row g-4 align-items-center">
             <div className="col-lg-5">
               <img
-                src={u(img.bakerPiping, 800, 900)}
-                alt="Baker decorating a cake"
+                src={u(img.pinkDripCake2, 800, 900)}
+                alt="Milk cake with rose and pistachio — handcrafted by Cake & Crumb"
                 style={{ width: '100%', borderRadius: 16, aspectRatio: '4/5', objectFit: 'cover' }}
               />
             </div>
@@ -106,7 +106,7 @@ export default function About() {
             <div className="heart-divider"><span aria-hidden>♥</span></div>
           </div>
           <div className="row g-3">
-            {[img.bakerPiping, img.cupcakesRose, img.flourSplash, img.cakeStand, img.truffleBox].map(
+            {[img.milkcakeRose, img.cupcakesRose, img.flourSplash, img.cakeStand, img.truffleBox].map(
               (id, i) => (
                 <div className="col-6 col-md" key={i}>
                   <img
