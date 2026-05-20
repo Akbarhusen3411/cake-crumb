@@ -82,7 +82,7 @@ export default function Footer() {
 
           <div className="cc-footer__section">
             <h6 className="cc-footer__heading">Hours</h6>
-            <ul className="cc-footer__contact">
+            <ul className="cc-footer__contact cc-footer__contact--centered">
               <li>
                 <span className="cc-footer__contact-icon"><FiClock size={12} /></span>
                 <span className="text-start">Pre-order required<br />Order 1 day in advance</span>
