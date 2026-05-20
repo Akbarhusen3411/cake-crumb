@@ -1681,6 +1681,97 @@ body.menu-open { overflow: hidden; }
   margin-bottom: 0.35rem;
 }
 
+/* ─── Cart item — compact mobile card ────────────────────────────────────── */
+.cc-cart-item {
+  border-bottom: 1px solid var(--cc-border);
+}
+.cc-cart-item:last-of-type { border-bottom: none; }
+
+.cc-cart-item__mobile {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.85rem 0.85rem;
+  align-items: stretch;
+}
+.cc-cart-item__img {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  align-self: center;
+}
+.cc-cart-item__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.cc-cart-item__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.cc-cart-item__name {
+  font-size: 0.92rem;
+  color: var(--cc-cocoa);
+  line-height: 1.25;
+  font-weight: 600;
+  word-break: break-word;
+}
+.cc-cart-item__remove {
+  background: var(--cc-blush);
+  border: none;
+  color: var(--cc-rose);
+  padding: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.cc-cart-item__remove:hover {
+  background: var(--cc-rose);
+  color: #fff;
+}
+.cc-cart-item__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.cc-cart-item__qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.cc-cart-item__price-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.1;
+}
+
+/* ─── Header — make the sticky behavior bullet-proof ──────────────────── */
+/* Already set via inline style on <header>, but the -webkit- prefix helps
+   older iOS Safari, and we make damn sure no parent breaks sticky. */
+header[style*="sticky"] {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+/* Sticky requires the scroll context to not be a transformed/clipped
+   ancestor. Our outer wrapper is flex-column min-vh-100 — that's safe,
+   but force a clean stacking context here. */
+#root > .d-flex.flex-column.min-vh-100 {
+  overflow: visible;
+}
+
 /* ─── Phone with country-code dropdown ───────────────────────────────────── */
 .cc-phone-row {
   display: flex;

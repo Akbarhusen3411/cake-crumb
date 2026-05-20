@@ -33,18 +33,19 @@ export default function Cart() {
   }
 
   return (
-    <section className="bg-cream py-5">
-      <div className="container">
+    <section className="bg-cream py-4 py-md-5">
+      <div className="container px-2 px-md-3">
         <div className="text-center mb-4">
           <span className="eyebrow">Your Cart</span>
           <h2 className="section-title mt-2">A Sweet Selection</h2>
         </div>
 
-        <div className="row g-4">
+        <div className="row g-3 g-lg-4">
           <div className="col-lg-8">
             <div
               style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14 }}
             >
+              {/* Desktop column headers — hidden on mobile */}
               <div className="d-none d-md-flex tag-badge px-4 py-3" style={{ borderBottom: '1px solid var(--cc-border)' }}>
                 <span style={{ flex: 2 }}>Product</span>
                 <span style={{ flex: 1, textAlign: 'center' }}>Price</span>
@@ -53,57 +54,87 @@ export default function Cart() {
               </div>
 
               {items.map((it) => (
-                <div
-                  key={it.id}
-                  className="d-flex flex-column flex-md-row align-items-md-center px-3 px-md-4 py-3"
-                  style={{ borderBottom: '1px solid var(--cc-border)', gap: '1rem' }}
-                >
-                  <div className="d-flex align-items-center" style={{ flex: 2, gap: '0.9rem', minWidth: 0 }}>
-                    <img
-                      src={u(it.img, 200, 200)}
-                      alt=""
-                      style={{ width: 70, height: 70, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
-                    />
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontFamily: "'Inter', system-ui, sans-serif", color: 'var(--cc-cocoa)', fontSize: '1rem' }}>
-                        {it.name}
+                <div key={it.id} className="cc-cart-item">
+                  {/* ── MOBILE LAYOUT (compact 2-row card) ── */}
+                  <div className="cc-cart-item__mobile d-md-none">
+                    <img src={u(it.img, 200, 200)} alt="" className="cc-cart-item__img" />
+                    <div className="cc-cart-item__main">
+                      <div className="cc-cart-item__head">
+                        <div className="cc-cart-item__name">{it.name}</div>
+                        <button
+                          className="cc-cart-item__remove"
+                          onClick={() => remove(it.id)}
+                          aria-label={`Remove ${it.name}`}
+                        >
+                          <FiTrash2 size={14} />
+                        </button>
                       </div>
-                      <button
-                        className="border-0 bg-transparent p-0 mt-1"
-                        onClick={() => remove(it.id)}
-                        style={{
-                          color: 'var(--cc-cocoa-soft)',
-                          fontSize: '0.75rem',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.3rem',
-                        }}
-                      >
-                        <FiTrash2 size={12} /> Remove
-                      </button>
+                      <div className="cc-cart-item__bottom">
+                        <div className="cc-cart-item__qty">
+                          <button className="qty-btn" onClick={() => decrement(it.id)} aria-label="Decrease"><FiMinus size={11} /></button>
+                          <span style={{ minWidth: 16, textAlign: 'center', fontWeight: 600, fontSize: '0.88rem' }}>{it.qty}</span>
+                          <button className="qty-btn" onClick={() => increment(it.id)} aria-label="Increase"><FiPlus size={11} /></button>
+                        </div>
+                        <div className="cc-cart-item__price-block">
+                          <span style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)' }}>{inr(it.price)} ea</span>
+                          <strong style={{ fontSize: '0.95rem', color: 'var(--cc-cocoa)' }}>{inr(it.price * it.qty)}</strong>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div style={{ flex: 1, textAlign: 'center', color: 'var(--cc-rose)', fontWeight: 700 }}>
-                    {inr(it.price)}
-                  </div>
-                  <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-                    <div className="d-inline-flex align-items-center" style={{ gap: '0.5rem' }}>
-                      <button className="qty-btn" onClick={() => decrement(it.id)} aria-label="Decrease">
-                        <FiMinus size={12} />
-                      </button>
-                      <span style={{ minWidth: 18, textAlign: 'center', fontWeight: 600 }}>{it.qty}</span>
-                      <button className="qty-btn" onClick={() => increment(it.id)} aria-label="Increase">
-                        <FiPlus size={12} />
-                      </button>
+
+                  {/* ── DESKTOP LAYOUT (original 4-column table row) ── */}
+                  <div
+                    className="d-none d-md-flex align-items-center px-md-4 py-3"
+                    style={{ gap: '1rem' }}
+                  >
+                    <div className="d-flex align-items-center" style={{ flex: 2, gap: '0.9rem', minWidth: 0 }}>
+                      <img
+                        src={u(it.img, 200, 200)}
+                        alt=""
+                        style={{ width: 70, height: 70, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
+                      />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontFamily: "'Inter', system-ui, sans-serif", color: 'var(--cc-cocoa)', fontSize: '1rem' }}>
+                          {it.name}
+                        </div>
+                        <button
+                          className="border-0 bg-transparent p-0 mt-1"
+                          onClick={() => remove(it.id)}
+                          style={{
+                            color: 'var(--cc-cocoa-soft)',
+                            fontSize: '0.75rem',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                          }}
+                        >
+                          <FiTrash2 size={12} /> Remove
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div style={{ flex: 1, textAlign: 'right', color: 'var(--cc-cocoa)', fontWeight: 700 }}>
-                    {inr(it.price * it.qty)}
+                    <div style={{ flex: 1, textAlign: 'center', color: 'var(--cc-rose)', fontWeight: 700 }}>
+                      {inr(it.price)}
+                    </div>
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                      <div className="d-inline-flex align-items-center" style={{ gap: '0.5rem' }}>
+                        <button className="qty-btn" onClick={() => decrement(it.id)} aria-label="Decrease">
+                          <FiMinus size={12} />
+                        </button>
+                        <span style={{ minWidth: 18, textAlign: 'center', fontWeight: 600 }}>{it.qty}</span>
+                        <button className="qty-btn" onClick={() => increment(it.id)} aria-label="Increase">
+                          <FiPlus size={12} />
+                        </button>
+                      </div>
+                    </div>
+                    <div style={{ flex: 1, textAlign: 'right', color: 'var(--cc-cocoa)', fontWeight: 700 }}>
+                      {inr(it.price * it.qty)}
+                    </div>
                   </div>
                 </div>
               ))}
 
-              <div className="d-flex flex-wrap justify-content-between align-items-center px-4 py-3" style={{ gap: '0.6rem' }}>
+              <div className="d-flex flex-wrap justify-content-between align-items-center px-3 px-md-4 py-3" style={{ gap: '0.6rem' }}>
                 <Link to="/shop" className="btn-outline-rose">
                   <FiShoppingBag size={14} /> Continue Shopping
                 </Link>
