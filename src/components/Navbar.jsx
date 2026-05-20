@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { NavLink, Link } from 'react-router-dom'
+import { NavLink, Link, useLocation } from 'react-router-dom'
 import {
   FiSearch, FiShoppingBag, FiHome, FiInfo, FiBook, FiImage,
   FiStar, FiPhone, FiFacebook, FiInstagram, FiMail, FiX,
@@ -27,30 +27,34 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false)
   const { count } = useCart()
 
+  // Force close on any route change so a navigation inside the menu can't
+  // leave it in a half-open state where the body lock outlives the panel.
+  // queueMicrotask defers the setState so it doesn't fire synchronously
+  // inside the effect body (which lint flags as a cascading-render risk).
+  const location = useLocation()
+  useEffect(() => {
+    queueMicrotask(() => setOpen(false))
+  }, [location.pathname])
+
   // Lock background scroll while the fullscreen mobile menu is open.
-  // Body gets position:fixed via the menu-open class. We save the current
-  // scrollY into a ref (NOT into body.style.top, because the cleanup
-  // function would clear that before the close branch could read it back —
-  // that's what caused the "header missing after tab click" bug).
+  // All unlock + scroll-restore logic lives in the cleanup function so it
+  // runs reliably whenever open flips back to false (or the component
+  // unmounts). This avoids the race condition where the NavLink click
+  // schedules setOpen(false) + navigation simultaneously and the old
+  // effect's "else" branch could miss running.
   const savedScrollY = useRef(0)
   useEffect(() => {
-    if (open) {
-      savedScrollY.current = window.scrollY
-      document.body.style.top = `-${savedScrollY.current}px`
-      document.body.classList.add('menu-open')
-    } else {
+    if (!open) return
+    savedScrollY.current = window.scrollY
+    document.body.style.top = `-${savedScrollY.current}px`
+    document.body.classList.add('menu-open')
+    return () => {
       document.body.classList.remove('menu-open')
       document.body.style.top = ''
       if (savedScrollY.current) {
         window.scrollTo(0, savedScrollY.current)
         savedScrollY.current = 0
       }
-    }
-    return () => {
-      // Defensive unmount cleanup — strip the lock so the body never gets
-      // left in position:fixed if the Navbar unmounts mid-open.
-      document.body.classList.remove('menu-open')
-      document.body.style.top = ''
     }
   }, [open])
 
