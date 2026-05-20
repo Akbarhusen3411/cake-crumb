@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Link } from 'react-router-dom'
-import { FiSearch, FiShoppingBag, FiMenu, FiX } from 'react-icons/fi'
+import { FiSearch, FiShoppingBag } from 'react-icons/fi'
 import Logo from './Logo.jsx'
+import { asset } from '../data/images.js'
 import { useCart } from '../context/CartContext.jsx'
 
 const links = [
@@ -91,27 +92,36 @@ export default function Navbar() {
               </span>
             </Link>
             <button
-              className="d-lg-none border-0 p-0"
+              type="button"
+              className={`cc-hamburger d-lg-none${open ? ' is-open' : ''}`}
               onClick={() => setOpen((o) => !o)}
               aria-label={open ? 'Close menu' : 'Open menu'}
               aria-expanded={open}
-              style={{ background: 'transparent', color: 'var(--cc-cocoa)' }}
             >
-              {open ? <FiX size={22} /> : <FiMenu size={22} />}
+              <span className="cc-hamburger__lines" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Fullscreen mobile menu overlay — sits at z:49 below the sticky header
-          (z:50) so the X stays clickable. Animated fade + stagger on links. */}
+          (z:50) so the close button stays clickable. Animated fade + stagger.
+          visibility:hidden in CSS handles a11y when closed (don't use
+          aria-hidden, since focus inside a closing overlay triggers a warning). */}
       <div
         className={`mobile-menu-overlay d-lg-none${open ? ' open' : ''}`}
-        aria-hidden={!open}
         onClick={() => setOpen(false)}
       >
         <div className="mobile-menu__header">
-          <Logo size="sm" />
+          <img
+            src={asset('logo-icon.png')}
+            alt="Cake & Crumb"
+            className="mobile-menu__logo"
+          />
           <p className="mobile-menu__quote">
             Baked with love. Loved by you. <span aria-hidden>♥</span>
           </p>

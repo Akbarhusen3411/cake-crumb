@@ -1,4 +1,8 @@
-import { asset } from '../data/images.js'
+// Use PNG directly for the brand mark — WebP compression introduces visible
+// artifacts on the small icon (3KB output isn't enough headroom). 17KB PNG is
+// still light, and the icon caches forever.
+const LOGO_BASE = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
+const LOGO_SRC = `${LOGO_BASE}/logo-icon.png`
 
 export default function Logo({ size = 'md' }) {
   const isLarge = size === 'lg'
@@ -26,7 +30,7 @@ export default function Logo({ size = 'md' }) {
   return (
     <span className="d-inline-flex align-items-center" style={{ gap: '0.65rem' }}>
       <img
-        src={asset('logo-icon.png')}
+        src={LOGO_SRC}
         alt=""
         aria-hidden="true"
         className={size === 'md' ? 'logo-icon' : ''}
