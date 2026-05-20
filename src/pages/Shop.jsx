@@ -165,10 +165,17 @@ export default function Shop() {
                 )}
               </div>
 
-              {/* Desktop: original sidebar layout */}
+              {/* Desktop: original sidebar layout, sticky beneath the header */}
               <div
-                className="d-none d-lg-block p-3 p-lg-4"
-                style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14 }}
+                className="d-none d-lg-block p-3 p-lg-4 sticky-lg-top"
+                style={{
+                  background: '#fff',
+                  border: '1px solid var(--cc-border)',
+                  borderRadius: 14,
+                  top: 'calc(var(--cc-header-h, 82px) + 1rem)',
+                  maxHeight: 'calc(100vh - var(--cc-header-h, 82px) - 2rem)',
+                  overflowY: 'auto',
+                }}
               >
                 <div className="tag-badge mb-3">Filter By</div>
 
@@ -322,9 +329,8 @@ export default function Shop() {
                   background: '#fff',
                   border: '1px solid var(--cc-border)',
                   borderRadius: 14,
-                  top: 150,
-                  marginTop: 20,
-                  maxHeight: 'calc(100vh - 170px)',
+                  top: 'calc(var(--cc-header-h, 82px) + 1rem)',
+                  maxHeight: 'calc(100vh - var(--cc-header-h, 82px) - 2rem)',
                   overflowY: 'auto',
                 }}
               >

@@ -871,7 +871,7 @@ export default function Checkout() {
             <div className="col-lg-5">
               <div
                 className="p-4 sticky-lg-top"
-                style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14, top: '140px' }}
+                style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14, top: 'calc(var(--cc-header-h, 82px) + 1rem)' }}
               >
                 <div className="tag-badge mb-3">Order Summary</div>
                 <div style={{ maxHeight: 280, overflowY: 'auto' }}>
