@@ -15,10 +15,25 @@ import { generateOrderId } from '../services/orderId.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
 import { sendOrderEmail, sendCustomerConfirmation } from '../services/emailNotify.js'
 import { computeDeliveryFromPincode } from '../services/delivery.js'
+import { MIN_ORDER_INR } from '../data/shopConfig.js'
 
 const UPI_ID = '9081668490@kotakbank'
 const PAYEE_NAME = 'Momin Akbarhusen Gulamali'
 const CUSTOMER_INFO_KEY = 'cc_customer_v1'
+// Separate key for partial / abandoned-cart drafts so they don't pollute
+// the "saved on success" customer info.
+const CUSTOMER_DRAFT_KEY = 'cc_customer_draft_v1'
+
+// Field-level validators — used both onBlur (for the live red border) and
+// on submit (for the disabled button check).
+const VALIDATORS = {
+  name: (v) => (v.trim() ? '' : 'Name is required'),
+  email: (v) => (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? '' : 'Enter a valid email'),
+  address: (v) => (v.trim() ? '' : 'Address is required'),
+  city: (v) => (v.trim() ? '' : 'City is required'),
+  pincode: (v) => (/^\d{6}$/.test(v.trim()) ? '' : 'Pincode must be 6 digits'),
+  deliveryDate: (v, minDate) => (v && v >= minDate ? '' : 'Please pick a future date'),
+}
 
 function getMinDeliveryDate() {
   const d = new Date()
@@ -36,6 +51,13 @@ function formatDateForDisplay(iso) {
 }
 
 function loadSavedCustomer() {
+  // Prefer the latest draft (auto-saved on blur), fall back to the
+  // success-saved customer profile. Drafts let an abandoned checkout
+  // restore typed-but-unsubmitted data on next visit.
+  try {
+    const draft = JSON.parse(localStorage.getItem(CUSTOMER_DRAFT_KEY) || 'null')
+    if (draft && (draft.name || draft.phone || draft.email)) return draft
+  } catch { /* ignore */ }
   try {
     return JSON.parse(localStorage.getItem(CUSTOMER_INFO_KEY) || '{}')
   } catch {
@@ -54,9 +76,25 @@ function saveCustomerInfo(form) {
       city: form.city,
       pincode: form.pincode,
     }))
-  } catch {
-    // storage full / blocked
-  }
+  } catch { /* ignore */ }
+}
+
+function saveCustomerDraft(form) {
+  try {
+    localStorage.setItem(CUSTOMER_DRAFT_KEY, JSON.stringify({
+      countryCode: form.countryCode,
+      name: form.name,
+      phone: form.phone,
+      email: form.email,
+      address: form.address,
+      city: form.city,
+      pincode: form.pincode,
+    }))
+  } catch { /* ignore */ }
+}
+
+function clearCustomerDraft() {
+  try { localStorage.removeItem(CUSTOMER_DRAFT_KEY) } catch { /* ignore */ }
 }
 
 export default function Checkout() {
@@ -89,7 +127,43 @@ export default function Checkout() {
     return Boolean(saved.name && saved.phone)
   })
 
+  // Per-field errors that show on blur (and on submit attempt). An empty
+  // string means "valid"; a non-empty string is the error message.
+  const [errors, setErrors] = useState({})
+  const [touched, setTouched] = useState({})
+
   const minDeliveryDate = useMemo(() => getMinDeliveryDate(), [])
+
+  // Auto-save the form as a draft on every change (debounced) so an
+  // abandoned checkout retains all typed data on next visit.
+  useEffect(() => {
+    const t = setTimeout(() => saveCustomerDraft(form), 400)
+    return () => clearTimeout(t)
+  }, [form])
+
+  function validateField(key, value) {
+    const validator = VALIDATORS[key]
+    if (!validator) return ''
+    return key === 'deliveryDate' ? validator(value, minDeliveryDate) : validator(value)
+  }
+
+  function onFieldBlur(key) {
+    setTouched((t) => ({ ...t, [key]: true }))
+    setErrors((e) => ({ ...e, [key]: validateField(key, form[key]) }))
+  }
+
+  // Live phone validation (special-case since it depends on country length)
+  function validatePhone() {
+    const len = form.phone.length
+    const selected = COUNTRY_CODES.find((c) => c.code === form.countryCode) || DEFAULT_COUNTRY
+    if (len === 0) return 'Phone is required'
+    if (len !== selected.len) return `Phone should be ${selected.len} digits`
+    return ''
+  }
+  function onPhoneBlur() {
+    setTouched((t) => ({ ...t, phone: true }))
+    setErrors((e) => ({ ...e, phone: validatePhone() }))
+  }
 
   // Distance-based delivery — recomputed when pincode changes (debounced).
   // Effect body is intentionally side-effect-free; the state mutations
@@ -158,7 +232,8 @@ export default function Checkout() {
   const isPaymentValid =
     form.payment === 'cod' || (form.payment === 'upi' && /^\d{12}$/.test(utr))
 
-  const isFormValid = isDetailsValid && isPaymentValid
+  const meetsMinOrder = subtotal >= MIN_ORDER_INR
+  const isFormValid = isDetailsValid && isPaymentValid && meetsMinOrder
 
   const [placedItems, setPlacedItems] = useState([])
   const [placedTotals, setPlacedTotals] = useState({ subtotal: 0, delivery: 0, total: 0 })
@@ -241,6 +316,7 @@ export default function Checkout() {
     sendOrderEmail(orderData)
     sendCustomerConfirmation(orderData)
     saveCustomerInfo(form)
+    clearCustomerDraft()
 
     setOrderId(id)
     setPlacedItems(snapshotItems)
@@ -333,6 +409,9 @@ export default function Checkout() {
             <Link to="/" className="btn-outline-rose">
               <FiHome /> Back to Home
             </Link>
+            <Link to={`/track-order?id=${orderId}`} className="btn-outline-rose">
+              <FiCalendar /> Track Order
+            </Link>
             <Link to="/shop" className="btn-rose">
               <FiShoppingBag /> Continue Shopping
             </Link>
@@ -391,8 +470,16 @@ export default function Checkout() {
                   <div className="col-12">
                     <input
                       className="cc-input" placeholder="Full Name *"
-                      value={form.name} onChange={(e) => update('name', e.target.value)} required
+                      value={form.name}
+                      onChange={(e) => update('name', e.target.value)}
+                      onBlur={() => onFieldBlur('name')}
+                      aria-invalid={Boolean(touched.name && errors.name)}
+                      style={{ borderColor: touched.name && errors.name ? '#cf3e63' : undefined }}
+                      required
                     />
+                    {touched.name && errors.name && (
+                      <div className="cc-field-error">{errors.name}</div>
+                    )}
                   </div>
 
                   {/* Phone with country code */}
@@ -414,32 +501,62 @@ export default function Checkout() {
                       <input
                         id="phone-input"
                         className="cc-input cc-phone-num"
-                        placeholder={`${selectedCountry.len}-digit number`}
+                        placeholder={selectedCountry.example || `${selectedCountry.len}-digit number`}
                         value={form.phone}
                         onChange={(e) => update('phone', e.target.value.replace(/\D/g, '').slice(0, 15))}
+                        onBlur={onPhoneBlur}
+                        aria-invalid={Boolean(touched.phone && errors.phone)}
+                        style={{ borderColor: touched.phone && errors.phone ? '#cf3e63' : undefined }}
                         inputMode="numeric"
                         required
                       />
                     </div>
+                    {touched.phone && errors.phone && (
+                      <div className="cc-field-error">{errors.phone}</div>
+                    )}
                   </div>
 
                   <div className="col-12">
                     <input
                       className="cc-input" placeholder="Email *" type="email"
-                      value={form.email} onChange={(e) => update('email', e.target.value)} required
+                      value={form.email}
+                      onChange={(e) => update('email', e.target.value)}
+                      onBlur={() => onFieldBlur('email')}
+                      aria-invalid={Boolean(touched.email && errors.email)}
+                      style={{ borderColor: touched.email && errors.email ? '#cf3e63' : undefined }}
+                      required
                     />
+                    {touched.email && errors.email && (
+                      <div className="cc-field-error">{errors.email}</div>
+                    )}
                   </div>
                   <div className="col-12">
                     <textarea
                       className="cc-input" rows={2} placeholder="Address (House, Street, Area) *"
-                      value={form.address} onChange={(e) => update('address', e.target.value)} required
+                      value={form.address}
+                      onChange={(e) => update('address', e.target.value)}
+                      onBlur={() => onFieldBlur('address')}
+                      aria-invalid={Boolean(touched.address && errors.address)}
+                      style={{ borderColor: touched.address && errors.address ? '#cf3e63' : undefined }}
+                      required
                     />
+                    {touched.address && errors.address && (
+                      <div className="cc-field-error">{errors.address}</div>
+                    )}
                   </div>
                   <div className="col-12 col-md-7">
                     <input
                       className="cc-input" placeholder="City *"
-                      value={form.city} onChange={(e) => update('city', e.target.value)} required
+                      value={form.city}
+                      onChange={(e) => update('city', e.target.value)}
+                      onBlur={() => onFieldBlur('city')}
+                      aria-invalid={Boolean(touched.city && errors.city)}
+                      style={{ borderColor: touched.city && errors.city ? '#cf3e63' : undefined }}
+                      required
                     />
+                    {touched.city && errors.city && (
+                      <div className="cc-field-error">{errors.city}</div>
+                    )}
                   </div>
                   <div className="col-12 col-md-5">
                     <div className="cc-input-with-status">
@@ -475,11 +592,18 @@ export default function Checkout() {
                       min={minDeliveryDate}
                       value={form.deliveryDate}
                       onChange={(e) => update('deliveryDate', e.target.value)}
+                      onBlur={() => onFieldBlur('deliveryDate')}
+                      aria-invalid={Boolean(touched.deliveryDate && errors.deliveryDate)}
+                      style={{ borderColor: touched.deliveryDate && errors.deliveryDate ? '#cf3e63' : undefined }}
                       required
                     />
-                    <p style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', margin: '0.35rem 0 0' }}>
-                      Earliest: {formatDateForDisplay(minDeliveryDate)}
-                    </p>
+                    {touched.deliveryDate && errors.deliveryDate ? (
+                      <div className="cc-field-error">{errors.deliveryDate}</div>
+                    ) : (
+                      <p style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', margin: '0.35rem 0 0' }}>
+                        Earliest: {formatDateForDisplay(minDeliveryDate)}
+                      </p>
+                    )}
                   </div>
                   <div className="col-12">
                     <textarea
@@ -793,6 +917,14 @@ export default function Checkout() {
                   </strong>
                 </div>
 
+                {!meetsMinOrder && (
+                  <div className="cc-notice mb-3" role="note" style={{ fontSize: '0.8rem' }}>
+                    <span className="cc-notice__icon"><FiAlertCircle size={14} /></span>
+                    <div>
+                      Minimum order is <strong>{inr(MIN_ORDER_INR)}</strong>. Add {inr(MIN_ORDER_INR - subtotal)} more to place this order.
+                    </div>
+                  </div>
+                )}
                 <button
                   type="submit"
                   className="btn-rose w-100 justify-content-center"

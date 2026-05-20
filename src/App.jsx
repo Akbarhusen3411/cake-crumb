@@ -3,9 +3,11 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import { CartProvider } from './context/CartContext.jsx'
 import Navbar from './components/Navbar.jsx'
 import Footer from './components/Footer.jsx'
+import MiniFooter from './components/MiniFooter.jsx'
 import CartToast from './components/CartToast.jsx'
 import ChatBot from './components/ChatBot.jsx'
 import FestivalBanner from './components/FestivalBanner.jsx'
+import BackToTop from './components/BackToTop.jsx'
 import Home from './pages/Home.jsx'
 import PageFallback from './components/skeletons/PageFallback.jsx'
 
@@ -22,6 +24,7 @@ const Checkout = lazy(() => import('./pages/Checkout.jsx'))
 const ReviewSubmit = lazy(() => import('./pages/ReviewSubmit.jsx'))
 const FAQ = lazy(() => import('./pages/FAQ.jsx'))
 const ConfirmOrder = lazy(() => import('./pages/ConfirmOrder.jsx'))
+const TrackOrder = lazy(() => import('./pages/TrackOrder.jsx'))
 
 // Routes inside the buying / admin-confirm flow render without the footer
 // so customers stay focused on the cart → checkout → done path.
@@ -35,10 +38,11 @@ function App() {
 
   return (
     <CartProvider>
+      <a href="#main" className="cc-skip-link">Skip to main content</a>
       <div className="d-flex flex-column min-vh-100">
         <FestivalBanner />
         <Navbar />
-        <main className="flex-grow-1">
+        <main id="main" className="flex-grow-1">
           <Suspense fallback={<PageFallback />}>
             <Routes>
               <Route path="/" element={<Home />} />
@@ -53,13 +57,15 @@ function App() {
               <Route path="/review" element={<ReviewSubmit />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/confirm-order" element={<ConfirmOrder />} />
+              <Route path="/track-order" element={<TrackOrder />} />
               <Route path="*" element={<Home />} />
             </Routes>
           </Suspense>
         </main>
-        {!hideFooter && <Footer />}
+        {hideFooter ? <MiniFooter /> : <Footer />}
         <CartToast />
         <ChatBot />
+        <BackToTop />
       </div>
     </CartProvider>
   )

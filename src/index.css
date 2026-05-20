@@ -92,7 +92,35 @@
   --cc-cocoa-soft: #7a584d;
   --cc-text: #6b5650;
   --cc-border: #f1d9d4;
+  --cc-header-h: 82px;
   color-scheme: light;
+}
+
+/* Skip-to-main-content — visible only when focused via keyboard tab */
+.cc-skip-link {
+  position: absolute;
+  top: -100px;
+  left: 1rem;
+  background: var(--cc-rose);
+  color: #fff;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  z-index: 100;
+  transition: top 0.2s ease;
+}
+.cc-skip-link:focus {
+  top: 0.5rem;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+@media (max-width: 991px) {
+  :root { --cc-header-h: 76px; }
+}
+@media (max-width: 575px) {
+  :root { --cc-header-h: 68px; }
 }
 
 * { box-sizing: border-box; }
@@ -657,18 +685,37 @@ a:hover { color: var(--cc-rose-deep); }
   font-size: 0.85rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  padding: 0.4rem 0;
+  padding: 0.5rem 1.05rem;
+  border-radius: 999px;
   position: relative;
+  text-decoration: none;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease,
+    -webkit-backdrop-filter 0.25s ease,
+    backdrop-filter 0.25s ease;
+}
+.nav-link-cc:hover {
+  color: var(--cc-rose);
+  background: rgba(207, 62, 99, 0.06);
 }
 .nav-link-cc.active {
-  color: var(--cc-rose);
+  color: var(--cc-rose-deep);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.55) 0%,
+      rgba(247, 227, 223, 0.65) 100%
+    );
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  backdrop-filter: blur(10px) saturate(160%);
+  box-shadow:
+    inset 0 0 0 1px rgba(207, 62, 99, 0.22),
+    0 4px 12px rgba(207, 62, 99, 0.12);
 }
-.nav-link-cc.active::after {
-  content: '';
-  position: absolute;
-  left: 0; right: 0; bottom: -4px;
-  height: 2px;
-  background: var(--cc-rose);
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nav-link-cc.active { background: var(--cc-blush); }
 }
 
 .icon-circle {
@@ -875,8 +922,15 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
 /* ─── Global responsiveness safety net ─── */
 img, video { max-width: 100%; height: auto; }
 
-/* Stop horizontal overflow at the page level — common mobile bug */
+/* Stop horizontal overflow at the page level — common mobile bug.
+   `overflow-x: hidden` on html/body turns body into a scroll container,
+   which kills position:sticky on the navbar. `overflow-x: clip` clips
+   horizontal overflow without creating a scroll context. Browsers that
+   don't support `clip` fall back to `hidden`. */
 html, body { overflow-x: hidden; }
+@supports (overflow-x: clip) {
+  html, body { overflow-x: clip; }
+}
 
 /* Default heading sizes scale down on small screens */
 @media (max-width: 576px) {
@@ -1091,6 +1145,49 @@ html, body { overflow-x: hidden; }
   justify-content: center;
 }
 
+/* ─── Header — glassmorphism, theme-matched, scroll-aware ────────────────── */
+.cc-header {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  /* Frosted glass with a faint warm rose tint so it reads as part of the
+     brand palette rather than a generic translucent white. */
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 252, 250, 0.78) 0%,
+      rgba(247, 227, 223, 0.62) 100%
+    );
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  border-bottom: 1px solid rgba(207, 62, 99, 0.08);
+  transition:
+    background 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease,
+    -webkit-backdrop-filter 0.25s ease,
+    backdrop-filter 0.25s ease;
+}
+.cc-header.is-scrolled {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 252, 250, 0.92) 0%,
+      rgba(247, 227, 223, 0.82) 100%
+    );
+  border-bottom-color: rgba(207, 62, 99, 0.16);
+  box-shadow: 0 8px 24px rgba(207, 62, 99, 0.10);
+}
+/* Solid fallback for browsers without backdrop-filter (older Firefox/etc.) */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .cc-header { background: #ffffff; }
+  .cc-header.is-scrolled {
+    background: #fffcfa;
+    box-shadow: 0 4px 14px rgba(207, 62, 99, 0.08);
+  }
+}
+
 /* ─── Hamburger button — circular, with CSS-morphing lines → X ──────────── */
 .cc-hamburger {
   width: 42px;
@@ -1152,37 +1249,84 @@ html, body { overflow-x: hidden; }
   width: 100%;
 }
 
-/* ─── Mobile menu overlay ──────────────────────────────────────────────────
-   Fullscreen drawer. Brand block fades in first, links stagger-slide in
-   from the left, footer block fades in last. */
+/* ─── Mobile menu — glassmorphism centered panel ──────────────────────────
+   Backdrop dims + blurs the page; the panel is a frosted-glass card that
+   floats centered on top. Scrolls internally if content exceeds viewport. */
 .mobile-menu-overlay {
   position: fixed;
   inset: 0;
-  background: linear-gradient(180deg, #ffffff 0%, var(--cc-cream) 40%, var(--cc-blush) 100%);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  background: rgba(40, 25, 30, 0.38);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   z-index: 49;
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-8px);
-  transition: opacity 0.32s ease, transform 0.32s ease, visibility 0s linear 0.32s;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  transition: opacity 0.28s ease, visibility 0s linear 0.28s;
 }
 .mobile-menu-overlay.open {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
-  transition: opacity 0.32s ease, transform 0.32s ease, visibility 0s;
+  transition: opacity 0.28s ease, visibility 0s;
 }
+
+.mobile-menu__panel {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  max-height: calc(100dvh - 2rem);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(247, 227, 223, 0.88) 100%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 24px;
+  box-shadow:
+    0 30px 60px rgba(120, 30, 60, 0.28),
+    0 0 0 1px rgba(207, 62, 99, 0.06);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  transform: scale(0.92) translateY(8px);
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+.mobile-menu-overlay.open .mobile-menu__panel {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.mobile-menu__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(207, 62, 99, 0.18);
+  color: var(--cc-rose);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: background 0.22s ease, color 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
+}
+.mobile-menu__close:hover,
+.mobile-menu__close:focus-visible {
+  background: var(--cc-rose);
+  border-color: var(--cc-rose);
+  color: #ffffff;
+  transform: rotate(90deg);
+}
+
 .mobile-menu__inner {
   width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 5rem 1.5rem 2.5rem;
+  padding: 2.6rem 1.4rem 1.4rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1207,18 +1351,18 @@ html, body { overflow-x: hidden; }
 }
 .mobile-menu__logo {
   width: auto;
-  height: 96px;
+  height: 74px;
   display: block;
-  filter: drop-shadow(0 8px 22px rgba(207, 62, 99, 0.16));
+  filter: drop-shadow(0 6px 18px rgba(207, 62, 99, 0.18));
 }
 .mobile-menu__wordmark {
   font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
   font-weight: 700;
-  font-size: 1.85rem;
+  font-size: 1.5rem;
   color: #1a1a1a;
   letter-spacing: 0.06em;
   line-height: 1.1;
-  margin-top: 0.6rem;
+  margin-top: 0.4rem;
 }
 .mobile-menu__amp {
   font-style: italic;
@@ -1229,7 +1373,7 @@ html, body { overflow-x: hidden; }
 }
 .mobile-menu__tagline {
   font-family: 'Allura', cursive;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   color: var(--cc-rose);
   line-height: 1;
 }
@@ -1254,7 +1398,7 @@ html, body { overflow-x: hidden; }
 .mobile-menu__quote {
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-style: italic;
-  font-size: 0.92rem;
+  font-size: 0.85rem;
   color: var(--cc-cocoa);
   margin: 0;
   letter-spacing: 0.02em;
@@ -1272,11 +1416,11 @@ html, body { overflow-x: hidden; }
 .mobile-menu__link {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  padding: 0.75rem 1rem;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
   border-radius: 12px;
   font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: var(--cc-cocoa);
   text-decoration: none;
@@ -1306,8 +1450,8 @@ html, body { overflow-x: hidden; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--cc-blush);
   color: var(--cc-rose);
@@ -1667,6 +1811,244 @@ body.menu-open { overflow: hidden; }
   letter-spacing: 0.06em;
 }
 
+/* ─── Mini-footer — used on cart / checkout / confirm-order ──────────────── */
+.cc-mini-footer {
+  background: linear-gradient(180deg, #fff 0%, var(--cc-cream) 100%);
+  border-top: 1px solid var(--cc-border);
+  padding: 0.85rem 0;
+}
+.cc-mini-footer__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.cc-mini-footer__copy {
+  font-size: 0.78rem;
+  color: var(--cc-cocoa-soft);
+  letter-spacing: 0.04em;
+}
+.cc-mini-footer__wa {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: #25D366;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 3px 10px rgba(37, 211, 102, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.cc-mini-footer__wa:hover { transform: translateY(-1px); }
+.cc-mini-footer__call {
+  display: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--cc-blush);
+  color: var(--cc-rose);
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+@media (max-width: 420px) {
+  .cc-mini-footer__copy { width: 100%; text-align: center; order: 2; }
+  .cc-mini-footer__wa { order: 1; margin: 0 auto; }
+}
+
+/* ─── Search overlay ─────────────────────────────────────────────────────── */
+.cc-search-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(40, 25, 30, 0.45);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  z-index: 60;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 5rem 1rem 2rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+}
+.cc-search-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.25s ease, visibility 0s;
+}
+.cc-search-overlay__panel {
+  width: 100%;
+  max-width: 640px;
+  background: rgba(255, 252, 250, 0.96);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 20px;
+  box-shadow: 0 30px 60px rgba(207, 62, 99, 0.20);
+  overflow: hidden;
+  transform: scale(0.95) translateY(-8px);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+}
+.cc-search-overlay.is-open .cc-search-overlay__panel {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+.cc-search-overlay__header {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--cc-border);
+}
+.cc-search-overlay__icon { color: var(--cc-rose); flex-shrink: 0; }
+.cc-search-overlay__input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--cc-cocoa);
+  outline: none;
+  padding: 0.3rem 0;
+}
+.cc-search-overlay__close {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--cc-blush);
+  color: var(--cc-rose);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.cc-search-overlay__close:hover {
+  background: var(--cc-rose);
+  color: #fff;
+  transform: rotate(90deg);
+}
+.cc-search-overlay__hint {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--cc-rose);
+  padding: 0.85rem 1.2rem 0.5rem;
+}
+.cc-search-overlay__results {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-bottom: 0.5rem;
+}
+.cc-search-overlay__result {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1.2rem;
+  border-top: 1px solid var(--cc-border);
+  text-decoration: none;
+  color: var(--cc-cocoa);
+  transition: background 0.2s ease;
+}
+.cc-search-overlay__result:hover { background: var(--cc-cream); }
+.cc-search-overlay__thumb {
+  width: 50px; height: 50px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.cc-search-overlay__meta { flex: 1; min-width: 0; }
+.cc-search-overlay__cat {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cc-rose);
+  font-weight: 700;
+}
+.cc-search-overlay__name {
+  color: var(--cc-cocoa);
+  font-weight: 600;
+  font-size: 0.92rem;
+  margin-top: 1px;
+}
+.cc-search-overlay__price { color: var(--cc-rose); font-size: 0.95rem; flex-shrink: 0; }
+.cc-search-overlay__empty {
+  padding: 2rem 1.2rem;
+  text-align: center;
+  color: var(--cc-cocoa-soft);
+  border-top: 1px solid var(--cc-border);
+}
+
+body.search-open { overflow: hidden; }
+
+/* ─── Track Order form ────────────────────────────────────────────────────── */
+.cc-track-form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.cc-track-form__field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.cc-track-form__field .cc-input { padding-left: 38px; text-transform: uppercase; letter-spacing: 0.04em; }
+.cc-track-form__icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--cc-rose);
+  pointer-events: none;
+}
+.cc-track-form .btn-rose {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* ─── Back-to-top floating button ───────────────────────────────────────── */
+.cc-back-to-top {
+  position: fixed;
+  left: 1.25rem;
+  bottom: 1.25rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: var(--cc-rose);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 80;
+  box-shadow: 0 8px 22px rgba(207, 62, 99, 0.30);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease;
+}
+.cc-back-to-top.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.cc-back-to-top:hover { background: var(--cc-rose-deep); }
+
+/* Push WhatsApp/Chatbot floats above the mini-footer on small screens */
+@media (max-width: 575px) {
+  .cc-back-to-top { left: 0.85rem; bottom: 0.85rem; width: 40px; height: 40px; }
+}
+
 /* ─── Mobile footer (cc-footer-m) ─────────────────────────────────────────
    Single-flow layout: brand block → inline links → info column → script
    line → newsletter card → copyright bar. No boxy sections, all centered,
@@ -1967,6 +2349,16 @@ body.menu-open { overflow: hidden; }
   color: var(--cc-rose);
 }
 .cc-notice--soft strong { color: var(--cc-cocoa); }
+
+/* Inline per-field error message — shown below an invalid input */
+.cc-field-error {
+  font-size: 0.72rem;
+  color: #cf3e63;
+  margin-top: 0.3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
 
 /* Inline label for form fields that need an icon + text caption */
 .cc-field-label {

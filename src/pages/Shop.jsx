@@ -50,11 +50,23 @@ export default function Shop() {
         '@type': 'Product',
         name: p.name,
         category: p.category,
+        description: `${p.name} — handcrafted ${p.category.toLowerCase()} from Cake & Crumb. Pre-order at least 1 day in advance.`,
+        image: typeof window !== 'undefined'
+          ? new URL(u(p.img, 800, 800), window.location.origin).href
+          : u(p.img, 800, 800),
+        brand: { '@type': 'Brand', name: 'Cake & Crumb' },
         offers: {
           '@type': 'Offer',
-          price: p.price,
+          price: p.slice || p.price,
           priceCurrency: 'INR',
           availability: 'https://schema.org/InStock',
+          itemCondition: 'https://schema.org/NewCondition',
+          seller: { '@type': 'Bakery', name: 'Cake & Crumb' },
+        },
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: '4.9',
+          reviewCount: '245',
         },
       },
     })),
@@ -235,7 +247,7 @@ export default function Shop() {
                 </div>
               </div>
 
-              <div className="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-2 g-md-3">
+              <div className="row row-cols-2 row-cols-md-3 row-cols-lg-3 row-cols-xl-4 g-2 g-md-3">
                 {filtered.map((p) => {
                   const hasNuts = p.allergens?.includes('contains-nuts')
                   const isEggless = p.allergens?.includes('eggless')

@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
 import {
-  FiShoppingBag, FiTrash2, FiPlus, FiMinus, FiArrowRight, FiHeart,
+  FiShoppingBag, FiTrash2, FiPlus, FiMinus, FiArrowRight, FiHeart, FiAlertCircle,
 } from 'react-icons/fi'
 import { useCart } from '../context/CartContext.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import RelatedProducts from '../components/RelatedProducts.jsx'
 import { inr } from '../data/format.js'
 import { u } from '../data/images.js'
+import { MIN_ORDER_INR } from '../data/shopConfig.js'
 
 export default function Cart() {
   usePageMeta({ title: 'Your Cart' })
@@ -169,9 +170,28 @@ export default function Cart() {
                   {inr(subtotal)}
                 </strong>
               </div>
-              <Link to="/checkout" className="btn-rose w-100 justify-content-center">
-                Proceed to Checkout <FiArrowRight />
-              </Link>
+              {subtotal < MIN_ORDER_INR && (
+                <div className="cc-notice mb-3" role="note" style={{ fontSize: '0.8rem' }}>
+                  <span className="cc-notice__icon"><FiAlertCircle size={14} /></span>
+                  <div>
+                    Minimum order is <strong>{inr(MIN_ORDER_INR)}</strong>. Add {inr(MIN_ORDER_INR - subtotal)} more to checkout.
+                  </div>
+                </div>
+              )}
+              {subtotal >= MIN_ORDER_INR ? (
+                <Link to="/checkout" className="btn-rose w-100 justify-content-center">
+                  Proceed to Checkout <FiArrowRight />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="btn-rose w-100 justify-content-center"
+                  style={{ opacity: 0.5, cursor: 'not-allowed' }}
+                >
+                  Proceed to Checkout <FiArrowRight />
+                </button>
+              )}
 
               <div className="mt-4 p-3" style={{ background: 'var(--cc-cream)', borderRadius: 10, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <FiHeart color="var(--cc-rose)" />
