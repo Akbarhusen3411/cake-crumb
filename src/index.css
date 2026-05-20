@@ -1171,13 +1171,14 @@ html, body { overflow-x: hidden; }
 }
 .cc-header.is-scrolled {
   /* Nearly opaque once scrolled — kills the see-through effect so cards
-     passing underneath never visually merge with the header. Subtle glass
-     stays only at the very top of the page. */
+     passing underneath never visually merge with the header. The 2px
+     rose hairline + double drop shadow build a clear "lid" effect. */
   background: linear-gradient(180deg, #fffcfa 0%, #fce4dc 100%);
-  border-bottom: 1px solid rgba(207, 62, 99, 0.28);
+  border-bottom: 2px solid rgba(207, 62, 99, 0.32);
   box-shadow:
-    0 12px 28px rgba(207, 62, 99, 0.18),
-    0 2px 6px rgba(207, 62, 99, 0.12);
+    0 4px 0 rgba(207, 62, 99, 0.08),
+    0 14px 32px rgba(207, 62, 99, 0.20),
+    0 2px 6px rgba(207, 62, 99, 0.14);
 }
 /* Solid fallback for browsers without backdrop-filter (older Firefox/etc.) */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -1255,9 +1256,9 @@ html, body { overflow-x: hidden; }
 .mobile-menu-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(40, 25, 30, 0.55);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  background: rgba(35, 20, 28, 0.68);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   z-index: 49;
   display: flex;
   align-items: center;
@@ -1274,22 +1275,32 @@ html, body { overflow-x: hidden; }
 }
 
 .mobile-menu__panel {
+  /* margin:auto + min-height:0 forces the flex parent to truly center
+     the panel even when its content gets long. */
   position: relative;
   width: 100%;
-  max-width: 360px;
-  max-height: calc(100dvh - 2rem);
+  max-width: 340px;
+  max-height: 88vh;
+  margin: auto;
+  min-height: 0;
+  /* Glassmorphism — translucent so the dim + blurred page reads through,
+     paired with a strong backdrop-filter blur for the frosted-glass look. */
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(247, 227, 223, 0.88) 100%);
-  -webkit-backdrop-filter: blur(22px) saturate(180%);
-  backdrop-filter: blur(22px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+    linear-gradient(180deg, rgba(255, 252, 250, 0.72) 0%, rgba(252, 228, 220, 0.62) 100%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 24px;
   box-shadow:
-    0 30px 60px rgba(120, 30, 60, 0.28),
-    0 0 0 1px rgba(207, 62, 99, 0.06);
+    0 30px 60px rgba(120, 30, 60, 0.42),
+    0 0 0 1px rgba(207, 62, 99, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  /* Prevent scroll chaining — when the panel's internal scroll hits its
+     edge, the wheel/touch event should NOT bubble up to scroll the body. */
+  overscroll-behavior: contain;
   transform: scale(0.92) translateY(8px);
   opacity: 0;
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
@@ -1326,7 +1337,7 @@ html, body { overflow-x: hidden; }
 
 .mobile-menu__inner {
   width: 100%;
-  padding: 2.6rem 1.4rem 1.4rem;
+  padding: 2.2rem 1.2rem 1.2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1338,8 +1349,8 @@ html, body { overflow-x: hidden; }
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 0.4rem;
-  margin-bottom: 1.5rem;
+  gap: 0.35rem;
+  margin-bottom: 1.1rem;
   opacity: 0;
   transform: translateY(8px);
   transition: opacity 0.45s ease, transform 0.45s ease;
@@ -1351,7 +1362,7 @@ html, body { overflow-x: hidden; }
 }
 .mobile-menu__logo {
   width: auto;
-  height: 74px;
+  height: 60px;
   display: block;
   filter: drop-shadow(0 6px 18px rgba(207, 62, 99, 0.18));
 }
@@ -1410,17 +1421,17 @@ html, body { overflow-x: hidden; }
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 0.2rem;
-  margin: 0.5rem 0 1.5rem;
+  gap: 0.15rem;
+  margin: 0.25rem 0 1rem;
 }
 .mobile-menu__link {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0.85rem;
+  gap: 0.7rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 12px;
   font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: var(--cc-cocoa);
   text-decoration: none;
@@ -1477,8 +1488,8 @@ html, body { overflow-x: hidden; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.85rem;
-  padding-top: 1.2rem;
+  gap: 0.7rem;
+  padding-top: 0.95rem;
   border-top: 1px dashed rgba(207, 62, 99, 0.25);
   opacity: 0;
   transform: translateY(8px);
@@ -1529,7 +1540,16 @@ html, body { overflow-x: hidden; }
 }
 .mobile-menu__cta:hover { transform: translateY(-1px); }
 
-body.menu-open { overflow: hidden; }
+/* When the mobile menu is open: lock the page in place. position:fixed
+   (paired with the saved scrollY in JS) prevents iOS Safari from scrolling
+   the body even when the user drags on the dimmed backdrop. */
+body.menu-open {
+  overflow: hidden;
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100%;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .mobile-menu-overlay,

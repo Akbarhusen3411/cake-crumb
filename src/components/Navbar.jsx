@@ -28,9 +28,25 @@ export default function Navbar() {
   const { count } = useCart()
 
   // Lock background scroll while the fullscreen mobile menu is open.
+  // Body gets position:fixed via the menu-open class — we save the current
+  // scrollY first and restore it on close so the user lands back exactly
+  // where they were. position:fixed is the only reliable scroll-lock that
+  // works on iOS Safari.
   useEffect(() => {
-    document.body.classList.toggle('menu-open', open)
-    return () => document.body.classList.remove('menu-open')
+    if (open) {
+      const y = window.scrollY
+      document.body.style.top = `-${y}px`
+      document.body.classList.add('menu-open')
+    } else {
+      const top = document.body.style.top
+      document.body.classList.remove('menu-open')
+      document.body.style.top = ''
+      if (top) window.scrollTo(0, Math.abs(parseInt(top, 10) || 0))
+    }
+    return () => {
+      document.body.classList.remove('menu-open')
+      document.body.style.top = ''
+    }
   }, [open])
 
   // Basic focus trap for the mobile menu — when open, Tab/Shift+Tab wrap
