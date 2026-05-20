@@ -1,18 +1,23 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Link } from 'react-router-dom'
-import { FiSearch, FiShoppingBag } from 'react-icons/fi'
+import {
+  FiSearch, FiShoppingBag, FiHome, FiInfo, FiBook, FiImage,
+  FiStar, FiPhone, FiFacebook, FiInstagram, FiMail,
+} from 'react-icons/fi'
+import { FaPinterestP, FaWhatsapp } from 'react-icons/fa'
 import Logo from './Logo.jsx'
 import { asset } from '../data/images.js'
 import { useCart } from '../context/CartContext.jsx'
+import { WHATSAPP_PHONE } from './WhatsAppButton.jsx'
 
 const links = [
-  { to: '/', label: 'Home' },
-  { to: '/about', label: 'About' },
-  { to: '/menu', label: 'Menu' },
-  { to: '/shop', label: 'Shop' },
-  { to: '/gallery', label: 'Gallery' },
-  { to: '/reviews', label: 'Reviews' },
-  { to: '/contact', label: 'Contact' },
+  { to: '/', label: 'Home', icon: FiHome },
+  { to: '/about', label: 'About', icon: FiInfo },
+  { to: '/menu', label: 'Menu', icon: FiBook },
+  { to: '/shop', label: 'Shop', icon: FiShoppingBag },
+  { to: '/gallery', label: 'Gallery', icon: FiImage },
+  { to: '/reviews', label: 'Reviews', icon: FiStar },
+  { to: '/contact', label: 'Contact', icon: FiPhone },
 ]
 
 export default function Navbar() {
@@ -110,35 +115,69 @@ export default function Navbar() {
 
       {/* Fullscreen mobile menu overlay — sits at z:49 below the sticky header
           (z:50) so the close button stays clickable. Animated fade + stagger.
-          visibility:hidden in CSS handles a11y when closed (don't use
-          aria-hidden, since focus inside a closing overlay triggers a warning). */}
+          visibility:hidden in CSS handles a11y when closed. */}
       <div
         className={`mobile-menu-overlay d-lg-none${open ? ' open' : ''}`}
         onClick={() => setOpen(false)}
       >
-        <div className="mobile-menu__header">
-          <img
-            src={asset('logo-icon.png')}
-            alt="Cake & Crumb"
-            className="mobile-menu__logo"
-          />
-          <p className="mobile-menu__quote">
-            Baked with love. Loved by you. <span aria-hidden>♥</span>
-          </p>
-        </div>
-        <nav className="mobile-menu__nav" aria-label="Mobile navigation">
-          {links.map((l) => (
-            <NavLink
-              key={l.to}
-              to={l.to}
-              end={l.to === '/'}
-              onClick={() => setOpen(false)}
-              className={({ isActive }) => 'mobile-menu__link' + (isActive ? ' active' : '')}
+        <div className="mobile-menu__inner" onClick={(e) => e.stopPropagation()}>
+          {/* Brand block — icon + wordmark + tagline + heart divider + quote */}
+          <div className="mobile-menu__header">
+            <img
+              src={asset('logo-icon.png')}
+              alt=""
+              aria-hidden="true"
+              className="mobile-menu__logo"
+            />
+            <div className="mobile-menu__wordmark">
+              CAKE<span className="mobile-menu__amp">&amp;</span>CRUMB
+            </div>
+            <div className="mobile-menu__tagline">The gourmet chocolate &amp; berry boutique</div>
+            <div className="mobile-menu__heart-divider" aria-hidden>
+              <span className="mobile-menu__heart-line" />
+              <span className="mobile-menu__heart">♥</span>
+              <span className="mobile-menu__heart-line" />
+            </div>
+            <p className="mobile-menu__quote">Baked with love. Loved by you.</p>
+          </div>
+
+          {/* Nav links — each with a small rose icon + grow-underline on active */}
+          <nav className="mobile-menu__nav" aria-label="Mobile navigation">
+            {links.map((l) => {
+              const Icon = l.icon
+              return (
+                <NavLink
+                  key={l.to}
+                  to={l.to}
+                  end={l.to === '/'}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) => 'mobile-menu__link' + (isActive ? ' active' : '')}
+                >
+                  <span className="mobile-menu__link-icon"><Icon size={15} /></span>
+                  <span>{l.label}</span>
+                </NavLink>
+              )
+            })}
+          </nav>
+
+          {/* Footer block — socials + WhatsApp CTA */}
+          <div className="mobile-menu__footer">
+            <div className="mobile-menu__socials">
+              <a href="#" aria-label="Facebook" className="mobile-menu__social"><FiFacebook size={15} /></a>
+              <a href="#" aria-label="Instagram" className="mobile-menu__social"><FiInstagram size={15} /></a>
+              <a href="#" aria-label="Pinterest" className="mobile-menu__social"><FaPinterestP size={13} /></a>
+              <a href="mailto:cakeandcrumb.in@gmail.com" aria-label="Email" className="mobile-menu__social"><FiMail size={15} /></a>
+            </div>
+            <a
+              href={`https://wa.me/${WHATSAPP_PHONE}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mobile-menu__cta"
             >
-              {l.label}
-            </NavLink>
-          ))}
-        </nav>
+              <FaWhatsapp size={16} /> +91 90816 68490
+            </a>
+          </div>
+        </div>
       </div>
     </header>
   )
