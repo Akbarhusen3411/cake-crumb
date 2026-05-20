@@ -1490,13 +1490,10 @@ body.menu-open { overflow: hidden; }
   font-size: 0.88rem;
   line-height: 1.3;
 }
-/* Visit Us pattern: row 1 = Phone (left) + Instagram (right); row 2 = Location full width. */
+/* Visit Us pattern: row 1 = Phone (left half) + Instagram (right half); row 2 = Location full width.
+   Both top-row items keep the icon on the left of the text. */
 .cc-footer__contact li:nth-child(1) { width: calc(50% - 0.5rem); }
-.cc-footer__contact li:nth-child(2) {
-  width: calc(50% - 0.5rem);
-  flex-direction: row-reverse;
-  text-align: right;
-}
+.cc-footer__contact li:nth-child(2) { width: calc(50% - 0.5rem); }
 .cc-footer__contact li:nth-child(3) { width: 100%; }
 
 /* Hours modifier — single centered item that ignores the 2-up pattern. */
@@ -1512,8 +1509,6 @@ body.menu-open { overflow: hidden; }
   .cc-footer__contact li:nth-child(1),
   .cc-footer__contact li:nth-child(2) {
     width: 100%;
-    flex-direction: row;
-    text-align: left;
   }
 }
 .cc-footer__contact-icon {
@@ -1565,5 +1560,168 @@ body.menu-open { overflow: hidden; }
   padding: 0.95rem 1rem;
   font-size: 0.78rem;
   letter-spacing: 0.06em;
+}
+
+/* ─── Checkout progress indicator ─────────────────────────────────────────── */
+.cc-progress {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin: 0 auto 1.75rem;
+  max-width: 520px;
+}
+.cc-progress__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+  position: relative;
+}
+.cc-progress__num {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--cc-border);
+  background: #fff;
+  color: var(--cc-cocoa-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: border-color 0.25s ease, background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+}
+.cc-progress__step.is-active .cc-progress__num {
+  border-color: var(--cc-rose);
+  background: var(--cc-rose);
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(207, 62, 99, 0.15);
+}
+.cc-progress__step.is-done .cc-progress__num {
+  border-color: var(--cc-rose);
+  background: var(--cc-rose);
+  color: #fff;
+}
+.cc-progress__label {
+  font-size: 0.7rem;
+  color: var(--cc-cocoa-soft);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.cc-progress__step.is-active .cc-progress__label,
+.cc-progress__step.is-done .cc-progress__label {
+  color: var(--cc-rose);
+}
+.cc-progress__line {
+  flex: 1 1 auto;
+  height: 2px;
+  background: var(--cc-border);
+  align-self: center;
+  margin: 14px 0.6rem 0; /* nudge to vertically center with the 30px circles */
+  min-width: 18px;
+  transition: background 0.3s ease;
+}
+.cc-progress__line.is-done {
+  background: var(--cc-rose);
+}
+@media (max-width: 575px) {
+  .cc-progress__num { width: 26px; height: 26px; font-size: 0.75rem; }
+  .cc-progress__label { font-size: 0.6rem; letter-spacing: 0.06em; }
+  .cc-progress__line { margin: 12px 0.35rem 0; }
+}
+
+/* ─── Notice banner (checkout warnings + welcome-back) ───────────────────── */
+.cc-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.85rem 1rem;
+  background: rgba(207, 62, 99, 0.08);
+  border: 1px solid rgba(207, 62, 99, 0.22);
+  border-radius: 12px;
+  color: var(--cc-cocoa);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+.cc-notice strong { color: var(--cc-rose-deep); }
+.cc-notice__icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--cc-rose);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.cc-notice--soft {
+  background: var(--cc-cream);
+  border-color: var(--cc-border);
+}
+.cc-notice--soft .cc-notice__icon {
+  background: var(--cc-blush);
+  color: var(--cc-rose);
+}
+.cc-notice--soft strong { color: var(--cc-cocoa); }
+
+/* Inline label for form fields that need an icon + text caption */
+.cc-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cc-cocoa-soft);
+  margin-bottom: 0.35rem;
+}
+
+/* ─── Sticky mobile checkout bar ─────────────────────────────────────────── */
+.cc-checkout-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: #fff;
+  border-top: 1px solid var(--cc-border);
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.06);
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.cc-checkout-bar__total {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  min-width: 0;
+  flex-shrink: 0;
+}
+.cc-checkout-bar__total-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--cc-cocoa-soft);
+  font-weight: 700;
+}
+.cc-checkout-bar__total strong {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 1.15rem;
+  color: var(--cc-cocoa);
+}
+.cc-checkout-bar__cta {
+  flex: 1;
+  justify-content: center;
+}
+
+/* Clear space below the form on mobile so the sticky bar doesn't cover content */
+@media (max-width: 991px) {
+  .cc-checkout-section { padding-bottom: 96px; }
 }
 
