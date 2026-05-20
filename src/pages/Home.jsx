@@ -40,13 +40,16 @@ export default function Home() {
         <div className="container-fluid p-0">
           <div className="row g-0 align-items-stretch">
             <div className="col-lg-6 d-flex align-items-center">
-              <div className="px-4 px-md-5 py-5" style={{ maxWidth: 560, marginLeft: 'auto', marginRight: 'auto' }}>
+              <div
+                className="px-4 px-md-5 py-5 text-center text-lg-start"
+                style={{ maxWidth: 560, marginLeft: 'auto', marginRight: 'auto' }}
+              >
                 <span className="eyebrow mb-3 d-inline-flex">Welcome to Cake & Crumb</span>
                 <h1 style={{ fontSize: 'clamp(2.4rem, 5vw, 3.6rem)', lineHeight: 1.05, margin: '1rem 0' }}>
                   Indulge in<br />Every Bite
                 </h1>
                 <Ornament />
-                <p style={{ marginTop: '1rem', maxWidth: 420 }}>
+                <p className="mx-auto mx-lg-0" style={{ marginTop: '1rem', maxWidth: 420 }}>
                   Handcrafted chocolate and berry delights made with the finest ingredients and a
                   passion for perfection.
                 </p>

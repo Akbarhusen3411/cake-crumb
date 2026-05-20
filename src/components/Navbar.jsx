@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Link } from 'react-router-dom'
 import { FiSearch, FiShoppingBag, FiMenu, FiX } from 'react-icons/fi'
 import Logo from './Logo.jsx'
@@ -17,6 +17,12 @@ const links = [
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const { count } = useCart()
+
+  // Lock background scroll while the fullscreen mobile menu is open.
+  useEffect(() => {
+    document.body.classList.toggle('menu-open', open)
+    return () => document.body.classList.remove('menu-open')
+  }, [open])
 
   return (
     <header
@@ -87,29 +93,42 @@ export default function Navbar() {
             <button
               className="d-lg-none border-0 p-0"
               onClick={() => setOpen((o) => !o)}
-              aria-label="Toggle menu"
+              aria-label={open ? 'Close menu' : 'Open menu'}
+              aria-expanded={open}
               style={{ background: 'transparent', color: 'var(--cc-cocoa)' }}
             >
               {open ? <FiX size={22} /> : <FiMenu size={22} />}
             </button>
           </div>
         </div>
+      </div>
 
-        {open && (
-          <nav className="d-lg-none mt-3 pb-2 d-flex flex-column" style={{ gap: '0.8rem' }}>
-            {links.map((l) => (
-              <NavLink
-                key={l.to}
-                to={l.to}
-                end={l.to === '/'}
-                onClick={() => setOpen(false)}
-                className={({ isActive }) => 'nav-link-cc' + (isActive ? ' active' : '')}
-              >
-                {l.label}
-              </NavLink>
-            ))}
-          </nav>
-        )}
+      {/* Fullscreen mobile menu overlay — sits at z:49 below the sticky header
+          (z:50) so the X stays clickable. Animated fade + stagger on links. */}
+      <div
+        className={`mobile-menu-overlay d-lg-none${open ? ' open' : ''}`}
+        aria-hidden={!open}
+        onClick={() => setOpen(false)}
+      >
+        <div className="mobile-menu__header">
+          <Logo size="sm" />
+          <p className="mobile-menu__quote">
+            Baked with love. Loved by you. <span aria-hidden>♥</span>
+          </p>
+        </div>
+        <nav className="mobile-menu__nav" aria-label="Mobile navigation">
+          {links.map((l) => (
+            <NavLink
+              key={l.to}
+              to={l.to}
+              end={l.to === '/'}
+              onClick={() => setOpen(false)}
+              className={({ isActive }) => 'mobile-menu__link' + (isActive ? ' active' : '')}
+            >
+              {l.label}
+            </NavLink>
+          ))}
+        </nav>
       </div>
     </header>
   )

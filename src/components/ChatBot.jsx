@@ -439,8 +439,29 @@ export default function ChatBot() {
   const [lastOrderTime, setLastOrderTime] = useState(null)
   const [orderInfo, setOrderInfo] = useState({ name: '', phone: '', address: '', date: '' })
   const scrollRef = useRef(null)
+  const chatPanelRef = useRef(null)
+  const chatToggleRef = useRef(null)
 
   const { count: mainCartCount } = useCart()
+
+  // Close the chat when the user clicks anywhere outside the panel/toggle.
+  // Only desktop matters in practice — on mobile the panel is fullscreen.
+  useEffect(() => {
+    if (!open) return
+    function onPointerDown(e) {
+      const panel = chatPanelRef.current
+      const toggle = chatToggleRef.current
+      if (panel && !panel.contains(e.target) && toggle && !toggle.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('touchstart', onPointerDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('touchstart', onPointerDown)
+    }
+  }, [open])
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -831,6 +852,7 @@ export default function ChatBot() {
     <>
       {/* Toggle button */}
       <button
+        ref={chatToggleRef}
         onClick={() => setOpen(!open)}
         aria-label={open ? 'Close chat' : 'Open Cake & Crumb chat'}
         className={`fixed bottom-6 right-6 z-[90] flex items-center justify-center transition-all duration-300 active:scale-90 ${
@@ -863,6 +885,7 @@ export default function ChatBot() {
 
       {/* Chat window */}
       <div
+        ref={chatPanelRef}
         className={`fixed z-[90] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
           bottom-0 right-0 left-0 sm:bottom-24 sm:right-6 sm:left-auto
           ${open ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-8 pointer-events-none'}`}

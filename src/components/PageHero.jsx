@@ -3,7 +3,7 @@ export default function PageHero({ eyebrow, title, text, cta, image, imageAlt = 
     <section className="fade-bg" style={{ overflow: 'hidden' }}>
       <div className="container py-5">
         <div className="row align-items-center g-4 g-lg-5">
-          <div className="col-lg-6">
+          <div className="col-lg-6 text-center text-lg-start">
             <span className="eyebrow mb-3 d-inline-flex">{eyebrow}</span>
             <h1
               style={{
@@ -14,10 +14,13 @@ export default function PageHero({ eyebrow, title, text, cta, image, imageAlt = 
             >
               {title}
             </h1>
-            <div className="heart-divider justify-content-start" style={{ maxWidth: 200 }}>
+            <div
+              className="heart-divider justify-content-center justify-content-lg-start mx-auto mx-lg-0"
+              style={{ maxWidth: 200 }}
+            >
               <span aria-hidden>♥</span>
             </div>
-            <p style={{ maxWidth: 460, marginTop: '1rem' }}>{text}</p>
+            <p className="mx-auto mx-lg-0" style={{ maxWidth: 460, marginTop: '1rem' }}>{text}</p>
             {cta}
           </div>
           <div className="col-lg-6">
