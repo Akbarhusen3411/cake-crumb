@@ -25,13 +25,6 @@ const CATEGORIES = [
   'Dessert Cups',
   'Drinks',
 ]
-const PRICES = [
-  { id: 'a', label: 'Under ₹500', test: (p) => p < 500 },
-  { id: 'b', label: '₹500 – ₹1,000', test: (p) => p >= 500 && p < 1000 },
-  { id: 'c', label: '₹1,000 – ₹1,500', test: (p) => p >= 1000 && p < 1500 },
-  { id: 'd', label: '₹1,500+', test: (p) => p >= 1500 },
-]
-const OCCASIONS = ['Birthday', 'Wedding', 'Anniversary', 'Thank You', 'Just Because', 'Other']
 
 export default function Shop() {
   usePageMeta({
@@ -72,23 +65,18 @@ export default function Shop() {
     })),
   })
   const [category, setCategory] = useState('All Products')
-  const [priceIds, setPriceIds] = useState([])
   const [sort, setSort] = useState('featured')
   const [quickView, setQuickView] = useState(null) // product object or null
   const { items, count, subtotal, add, increment, decrement, remove, clear } = useCart()
 
   const filtered = useMemo(() => {
-    let list = shopProducts.filter((p) => {
-      const okCat = category === 'All Products' || p.category === category
-      const okPrice =
-        priceIds.length === 0 ||
-        priceIds.some((id) => PRICES.find((x) => x.id === id)?.test(p.price))
-      return okCat && okPrice
-    })
+    let list = shopProducts.filter(
+      (p) => category === 'All Products' || p.category === category
+    )
     if (sort === 'lowhigh') list = [...list].sort((a, b) => a.price - b.price)
     else if (sort === 'highlow') list = [...list].sort((a, b) => b.price - a.price)
     return list
-  }, [category, priceIds, sort])
+  }, [category, sort])
 
   return (
     <>
@@ -104,137 +92,22 @@ export default function Shop() {
       <section className="py-5">
         <div className="container-fluid px-2 px-md-3 px-lg-4">
           <div className="row g-3">
-            <aside className="col-12 col-lg-2">
-              {/* Mobile: horizontal category chips + collapsible Price/Occasion */}
-              <div className="cc-filter-mobile d-lg-none">
-                <div className="cc-filter-mobile__chips" role="radiogroup" aria-label="Category">
-                  {CATEGORIES.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      role="radio"
-                      aria-checked={category === c}
-                      className={'cc-chip' + (category === c ? ' is-active' : '')}
-                      onClick={() => setCategory(c)}
-                    >
-                      {c === 'All Products' ? 'All' : c}
-                    </button>
-                  ))}
-                </div>
-
-                <details className="cc-filter-acc">
-                  <summary>Price Range {priceIds.length > 0 && <span className="cc-filter-acc__count">{priceIds.length}</span>}</summary>
-                  <div className="cc-filter-acc__body">
-                    {PRICES.map((p) => (
-                      <label key={p.id} className="filter-row">
-                        <input
-                          type="checkbox"
-                          checked={priceIds.includes(p.id)}
-                          onChange={(e) =>
-                            setPriceIds((prev) =>
-                              e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id)
-                            )
-                          }
-                        />
-                        {p.label}
-                      </label>
-                    ))}
-                  </div>
-                </details>
-
-                <details className="cc-filter-acc">
-                  <summary>Occasion</summary>
-                  <div className="cc-filter-acc__body">
-                    {OCCASIONS.map((o) => (
-                      <label key={o} className="filter-row">
-                        <input type="checkbox" />
-                        {o}
-                      </label>
-                    ))}
-                  </div>
-                </details>
-
-                {(category !== 'All Products' || priceIds.length > 0) && (
+            <div className="col-12 col-lg-10">
+              {/* Category chips — single horizontal row on all sizes */}
+              <div className="cc-filter-chips" role="radiogroup" aria-label="Category">
+                {CATEGORIES.map((c) => (
                   <button
+                    key={c}
                     type="button"
-                    className="cc-filter-clear"
-                    onClick={() => { setCategory('All Products'); setPriceIds([]) }}
+                    role="radio"
+                    aria-checked={category === c}
+                    className={'cc-chip' + (category === c ? ' is-active' : '')}
+                    onClick={() => setCategory(c)}
                   >
-                    Clear filters
+                    {c === 'All Products' ? 'All' : c}
                   </button>
-                )}
+                ))}
               </div>
-
-              {/* Desktop: original sidebar layout, sticky beneath the header */}
-              <div
-                className="d-none d-lg-block p-3 p-lg-4 sticky-lg-top"
-                style={{
-                  background: '#fff',
-                  border: '1px solid var(--cc-border)',
-                  borderRadius: 14,
-                  top: 'calc(var(--cc-header-h, 82px) + 1rem)',
-                  maxHeight: 'calc(100vh - var(--cc-header-h, 82px) - 2rem)',
-                  overflowY: 'auto',
-                }}
-              >
-                <div className="tag-badge mb-3">Filter By</div>
-
-                <div className="mb-4">
-                  <div className="filter-label">Category</div>
-                  {CATEGORIES.map((c) => (
-                    <label key={c} className="filter-row">
-                      <input
-                        type="radio"
-                        name="cat"
-                        checked={category === c}
-                        onChange={() => setCategory(c)}
-                      />
-                      {c}
-                    </label>
-                  ))}
-                </div>
-
-                <div className="mb-4">
-                  <div className="filter-label">Price Range</div>
-                  {PRICES.map((p) => (
-                    <label key={p.id} className="filter-row">
-                      <input
-                        type="checkbox"
-                        checked={priceIds.includes(p.id)}
-                        onChange={(e) =>
-                          setPriceIds((prev) =>
-                            e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id)
-                          )
-                        }
-                      />
-                      {p.label}
-                    </label>
-                  ))}
-                </div>
-
-                <div className="mb-4">
-                  <div className="filter-label">Occasion</div>
-                  {OCCASIONS.map((o) => (
-                    <label key={o} className="filter-row">
-                      <input type="checkbox" />
-                      {o}
-                    </label>
-                  ))}
-                </div>
-
-                <button
-                  className="btn-outline-rose w-100 justify-content-center"
-                  onClick={() => {
-                    setCategory('All Products')
-                    setPriceIds([])
-                  }}
-                >
-                  Clear Filters
-                </button>
-              </div>
-            </aside>
-
-            <div className="col-12 col-lg-8">
               <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
                 <div style={{ fontSize: '0.85rem' }}>
                   Showing 1–{filtered.length} of {shopProducts.length} results

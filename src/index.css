@@ -1170,18 +1170,14 @@ html, body { overflow-x: hidden; }
     backdrop-filter 0.25s ease;
 }
 .cc-header.is-scrolled {
-  /* More opaque + stronger shadow + visible hairline so content scrolling
-     beneath the glass header doesn't visually merge with it. */
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 252, 250, 0.97) 0%,
-      rgba(247, 227, 223, 0.94) 100%
-    );
-  border-bottom: 1px solid rgba(207, 62, 99, 0.22);
+  /* Nearly opaque once scrolled — kills the see-through effect so cards
+     passing underneath never visually merge with the header. Subtle glass
+     stays only at the very top of the page. */
+  background: linear-gradient(180deg, #fffcfa 0%, #fce4dc 100%);
+  border-bottom: 1px solid rgba(207, 62, 99, 0.28);
   box-shadow:
-    0 10px 28px rgba(207, 62, 99, 0.16),
-    0 2px 6px rgba(207, 62, 99, 0.10);
+    0 12px 28px rgba(207, 62, 99, 0.18),
+    0 2px 6px rgba(207, 62, 99, 0.12);
 }
 /* Solid fallback for browsers without backdrop-filter (older Firefox/etc.) */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -1259,9 +1255,9 @@ html, body { overflow-x: hidden; }
 .mobile-menu-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(40, 25, 30, 0.38);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  background: rgba(40, 25, 30, 0.55);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   z-index: 49;
   display: flex;
   align-items: center;
@@ -2514,6 +2510,24 @@ header[style*="sticky"] {
 }
 @media (hover: hover) {
   .cc-cart-link:hover { background: var(--cc-blush); }
+}
+
+/* ─── Shop filter — horizontal chip row, used on every breakpoint ───────── */
+.cc-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding: 0.5rem 0;
+}
+@media (max-width: 575px) {
+  /* Tight phone screens: scroll horizontally instead of wrapping */
+  .cc-filter-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.6rem;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* ─── Shop filter — mobile (chips + accordion) ───────────────────────────── */
