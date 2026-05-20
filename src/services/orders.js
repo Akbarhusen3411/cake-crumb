@@ -1,4 +1,6 @@
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
+import {
+  addDoc, collection, doc, getDocs, query, serverTimestamp, updateDoc, where,
+} from 'firebase/firestore'
 import { db, isFirebaseEnabled } from '../firebase.js'
 
 const COLLECTION = 'orders'
@@ -94,5 +96,48 @@ function slimItem(it) {
     price: Number(it.price) || 0,
     qty: Number(it.qty) || 1,
     img: typeof it.img === 'string' ? it.img : '',
+  }
+}
+
+/**
+ * Look up an order by its public orderId (e.g. CC-AB-200526-0001). Reads
+ * from Firestore; falls back to the local mirror when Firestore is off.
+ * Returns the order document with `firebaseId` attached, or null.
+ */
+export async function getOrderByOrderId(orderId) {
+  if (!orderId) return null
+
+  if (!isFirebaseEnabled || !db) {
+    const local = readLocal().find((o) => o.orderId === orderId)
+    return local ? { ...local, firebaseId: null } : null
+  }
+
+  try {
+    const q = query(collection(db, COLLECTION), where('orderId', '==', orderId))
+    const snap = await getDocs(q)
+    if (snap.empty) return null
+    const docSnap = snap.docs[0]
+    return { firebaseId: docSnap.id, ...docSnap.data() }
+  } catch (err) {
+    console.error('[orders] lookup failed:', err)
+    return null
+  }
+}
+
+/**
+ * Mark a Firestore order as confirmed. No-op when Firebase isn't configured
+ * or when we don't have the firebaseId. Idempotent — safe to call twice.
+ */
+export async function markOrderConfirmed(firebaseId) {
+  if (!isFirebaseEnabled || !db || !firebaseId) return false
+  try {
+    await updateDoc(doc(db, COLLECTION, firebaseId), {
+      status: 'confirmed',
+      confirmedAt: serverTimestamp(),
+    })
+    return true
+  } catch (err) {
+    console.error('[orders] confirm update failed:', err)
+    return false
   }
 }

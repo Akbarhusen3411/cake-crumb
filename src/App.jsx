@@ -21,6 +21,7 @@ const Cart = lazy(() => import('./pages/Cart.jsx'))
 const Checkout = lazy(() => import('./pages/Checkout.jsx'))
 const ReviewSubmit = lazy(() => import('./pages/ReviewSubmit.jsx'))
 const FAQ = lazy(() => import('./pages/FAQ.jsx'))
+const ConfirmOrder = lazy(() => import('./pages/ConfirmOrder.jsx'))
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/review" element={<ReviewSubmit />} />
               <Route path="/faq" element={<FAQ />} />
+              <Route path="/confirm-order" element={<ConfirmOrder />} />
               <Route path="*" element={<Home />} />
             </Routes>
           </Suspense>
