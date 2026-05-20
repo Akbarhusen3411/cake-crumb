@@ -28,22 +28,27 @@ export default function Navbar() {
   const { count } = useCart()
 
   // Lock background scroll while the fullscreen mobile menu is open.
-  // Body gets position:fixed via the menu-open class — we save the current
-  // scrollY first and restore it on close so the user lands back exactly
-  // where they were. position:fixed is the only reliable scroll-lock that
-  // works on iOS Safari.
+  // Body gets position:fixed via the menu-open class. We save the current
+  // scrollY into a ref (NOT into body.style.top, because the cleanup
+  // function would clear that before the close branch could read it back —
+  // that's what caused the "header missing after tab click" bug).
+  const savedScrollY = useRef(0)
   useEffect(() => {
     if (open) {
-      const y = window.scrollY
-      document.body.style.top = `-${y}px`
+      savedScrollY.current = window.scrollY
+      document.body.style.top = `-${savedScrollY.current}px`
       document.body.classList.add('menu-open')
     } else {
-      const top = document.body.style.top
       document.body.classList.remove('menu-open')
       document.body.style.top = ''
-      if (top) window.scrollTo(0, Math.abs(parseInt(top, 10) || 0))
+      if (savedScrollY.current) {
+        window.scrollTo(0, savedScrollY.current)
+        savedScrollY.current = 0
+      }
     }
     return () => {
+      // Defensive unmount cleanup — strip the lock so the body never gets
+      // left in position:fixed if the Navbar unmounts mid-open.
       document.body.classList.remove('menu-open')
       document.body.style.top = ''
     }
