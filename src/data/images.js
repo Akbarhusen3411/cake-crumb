@@ -24,6 +24,16 @@ export const img = {
   heroRoses: '/hero-roses.jpeg',
   pinkRoses: '/hero-roses.jpeg',
   rosesBouquet: '/hero-roses.jpeg',
+
+  // Verified Unsplash photo IDs — served via the u() helper. These are the
+  // boutique-quality hero images that match each page's theme.
+  heroAbout:    '1569289522127-c0452f372d46',  // pink cherry cake on white tray
+  heroMenu:     '1561940329-7382e6704231',     // assorted pastries on ceramic trays
+  heroShop:     '1572978577765-462b91a7f9e1',  // cupcakes on tiered display stands
+  heroReviews:  '1559373098-e1caaccae791',     // three-tier cake with pink flowers
+  heroGallery:  '1577222960414-17797ba82e98',  // flat-lay of decorated cookies
+  heroContact:  '1599785209758-243af93bd074',  // pink-frosted cupcakes on white plate
+
   pinkDripCake: p('cake-pink-letter.jpeg'),
   pinkDripCake2: p('milkcake-rose-pistachio.jpeg'),
   cakeStand: p('cake-yellow-flowers.jpeg'),

@@ -92,8 +92,8 @@ export default function Contact() {
             </div>
             <div className="col-lg-6">
               <img
-                src={u(img.cupcakesPink, 1000, 800)}
-                alt="Pink cupcakes ready for your celebration"
+                src={u(img.heroContact, 1000, 800)}
+                alt="Pink-frosted cupcakes on a white ceramic plate"
                 className="cc-contact-hero__img"
               />
             </div>

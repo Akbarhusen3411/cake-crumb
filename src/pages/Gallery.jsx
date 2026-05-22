@@ -33,8 +33,8 @@ export default function Gallery() {
             </div>
             <div className="col-lg-6">
               <img
-                src={u(img.trufflesHearts, 1000, 800)}
-                alt="Heart-shaped chocolate truffles — a glimpse of our gallery"
+                src={u(img.heroGallery, 1000, 800)}
+                alt="Beautifully decorated cookies — flat-lay artistic shot"
                 className="cc-gallery-hero__img"
               />
             </div>

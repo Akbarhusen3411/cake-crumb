@@ -196,8 +196,8 @@ export default function Reviews() {
             </div>
             <div className="col-lg-6">
               <img
-                src={u(img.milkcakeBlueberrySliced, 1000, 800)}
-                alt="Blueberry milk cake sliced — a customer favourite"
+                src={u(img.heroReviews, 1000, 800)}
+                alt="Three-tier celebration cake with pink fresh flowers"
                 className="cc-reviews-hero__img"
               />
             </div>

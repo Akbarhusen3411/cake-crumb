@@ -2906,7 +2906,7 @@ header[style*="sticky"] {
   width: 100%;
   border-radius: 18px;
   aspect-ratio: 5/4;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
   display: block;
   /* Same elevated pink-tinted glow as the About hero — keeps the boutique feel
@@ -3052,7 +3052,7 @@ header[style*="sticky"] {
   width: 100%;
   border-radius: 18px;
   aspect-ratio: 5/4;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
   display: block;
   /* Match the Home hero treatment — pink-tinted soft drop shadow gives the
@@ -3185,7 +3185,7 @@ header[style*="sticky"] {
   width: 100%;
   border-radius: 18px;
   aspect-ratio: 5/4;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
   display: block;
   box-shadow:
@@ -3388,7 +3388,7 @@ header[style*="sticky"] {
   width: 100%;
   border-radius: 18px;
   aspect-ratio: 5/4;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
   box-shadow:
     0 24px 60px -18px rgba(207, 62, 99, 0.28),
@@ -3892,7 +3892,7 @@ header[style*="sticky"] {
   width: 100%;
   border-radius: 18px;
   aspect-ratio: 5/4;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
   box-shadow:
     0 24px 60px -18px rgba(207, 62, 99, 0.28),
@@ -4310,7 +4310,7 @@ header[style*="sticky"] {
   width: 100%;
   border-radius: 18px;
   aspect-ratio: 5/4;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
   box-shadow:
     0 24px 60px -18px rgba(207, 62, 99, 0.28),

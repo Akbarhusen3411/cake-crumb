@@ -123,8 +123,8 @@ export default function Menu() {
             </div>
             <div className="col-lg-6">
               <img
-                src={u(img.cheesecakeQuartet, 1000, 800)}
-                alt="Assorted cheesecake quartet from Cake & Crumb's menu"
+                src={u(img.heroMenu, 1000, 800)}
+                alt="Assorted pastries arranged on ceramic trays"
                 className="cc-menu-hero__img"
               />
             </div>

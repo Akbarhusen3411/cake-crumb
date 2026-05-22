@@ -130,8 +130,8 @@ export default function Shop() {
             </div>
             <div className="col-lg-6">
               <img
-                src={u(img.cupcakesQuartet, 1000, 800)}
-                alt="Quartet of Cake & Crumb dessert tins"
+                src={u(img.heroShop, 1000, 800)}
+                alt="Cupcakes on tiered display stands"
                 className="cc-shop-hero__img"
               />
             </div>

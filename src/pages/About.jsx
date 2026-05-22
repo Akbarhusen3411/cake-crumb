@@ -54,8 +54,8 @@ export default function About() {
             </div>
             <div className="col-lg-6">
               <img
-                src={u(img.cupcakesRose, 1000, 800)}
-                alt="Pink rose cupcakes — handcrafted by Cake & Crumb"
+                src={u(img.heroAbout, 1000, 800)}
+                alt="Pink cherry cake on a white footed tray"
                 className="cc-about-hero__img"
               />
             </div>
