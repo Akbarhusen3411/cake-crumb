@@ -62,14 +62,11 @@ Cart page no longer shows delivery — Checkout computes it once the pincode res
 
 `src/context/CartContext.jsx` is the single source of truth, persisted to `localStorage` under `cc_cart_v1`. Item shape: `{ id, name, price, img, qty }`. Minimum order is **₹250** (`MIN_ORDER_INR` in `src/data/shopConfig.js`), enforced at both Cart (proceed-to-checkout button disabled) and Checkout (Place Order disabled).
 
-### Customer info pre-fill
+### Checkout form starts empty (pre-fill removed)
 
-Two localStorage keys, used in `Checkout.jsx`:
+Earlier, `Checkout.jsx` pre-filled the form from two localStorage keys (`cc_customer_v1`, saved on successful order; and `cc_customer_draft_v1`, auto-saved on every keystroke). Customers reported seeing stale data from past visits on a fresh checkout — confusing on mobile especially — so pre-fill was removed.
 
-- `cc_customer_v1` — saved on successful order. Long-term "remember me".
-- `cc_customer_draft_v1` — saved continuously on every form change (400ms debounced) so an abandoned checkout retains all typed data on next visit. Cleared after a successful order.
-
-`loadSavedCustomer()` prefers the draft (more recent), falls back to the success-saved profile.
+The form now always starts empty. `clearStoredCustomer()` runs once on mount and again on successful submit, deleting both legacy keys. **Don't reintroduce pre-fill** without checking with the user first — the explicit ask was "no old data in delivery details".
 
 ### Routing & lazy loading
 

@@ -19,9 +19,11 @@ import { MIN_ORDER_INR } from '../data/shopConfig.js'
 
 const UPI_ID = '9081668490@kotakbank'
 const PAYEE_NAME = 'Momin Akbarhusen Gulamali'
+// Legacy localStorage keys — used to pre-fill the form from the last order
+// and from auto-saved drafts. Pre-fill was removed (customers reported old
+// data appearing on a fresh checkout); the keys are still cleared on mount
+// so anyone with existing saved data gets a clean form.
 const CUSTOMER_INFO_KEY = 'cc_customer_v1'
-// Separate key for partial / abandoned-cart drafts so they don't pollute
-// the "saved on success" customer info.
 const CUSTOMER_DRAFT_KEY = 'cc_customer_draft_v1'
 
 // Field-level validators — used both onBlur (for the live red border) and
@@ -50,51 +52,11 @@ function formatDateForDisplay(iso) {
   })
 }
 
-function loadSavedCustomer() {
-  // Prefer the latest draft (auto-saved on blur), fall back to the
-  // success-saved customer profile. Drafts let an abandoned checkout
-  // restore typed-but-unsubmitted data on next visit.
+function clearStoredCustomer() {
   try {
-    const draft = JSON.parse(localStorage.getItem(CUSTOMER_DRAFT_KEY) || 'null')
-    if (draft && (draft.name || draft.phone || draft.email)) return draft
+    localStorage.removeItem(CUSTOMER_INFO_KEY)
+    localStorage.removeItem(CUSTOMER_DRAFT_KEY)
   } catch { /* ignore */ }
-  try {
-    return JSON.parse(localStorage.getItem(CUSTOMER_INFO_KEY) || '{}')
-  } catch {
-    return {}
-  }
-}
-
-function saveCustomerInfo(form) {
-  try {
-    localStorage.setItem(CUSTOMER_INFO_KEY, JSON.stringify({
-      countryCode: form.countryCode,
-      name: form.name,
-      phone: form.phone,
-      email: form.email,
-      address: form.address,
-      city: form.city,
-      pincode: form.pincode,
-    }))
-  } catch { /* ignore */ }
-}
-
-function saveCustomerDraft(form) {
-  try {
-    localStorage.setItem(CUSTOMER_DRAFT_KEY, JSON.stringify({
-      countryCode: form.countryCode,
-      name: form.name,
-      phone: form.phone,
-      email: form.email,
-      address: form.address,
-      city: form.city,
-      pincode: form.pincode,
-    }))
-  } catch { /* ignore */ }
-}
-
-function clearCustomerDraft() {
-  try { localStorage.removeItem(CUSTOMER_DRAFT_KEY) } catch { /* ignore */ }
 }
 
 export default function Checkout() {
@@ -107,25 +69,24 @@ export default function Checkout() {
   const [utr, setUtr] = useState('')
   const [copied, setCopied] = useState(false)
 
-  const [form, setForm] = useState(() => {
-    const saved = loadSavedCustomer()
-    return {
-      countryCode: saved.countryCode || DEFAULT_COUNTRY.code,
-      name: saved.name || '',
-      phone: saved.phone || '',
-      email: saved.email || '',
-      address: saved.address || '',
-      city: saved.city || '',
-      pincode: saved.pincode || '',
-      notes: '',
-      deliveryDate: '',
-      payment: 'upi',
-    }
+  // Form always starts empty — pre-fill was removed because customers were
+  // seeing stale data from past visits on a fresh checkout.
+  const [form, setForm] = useState({
+    countryCode: DEFAULT_COUNTRY.code,
+    name: '',
+    phone: '',
+    email: '',
+    address: '',
+    city: '',
+    pincode: '',
+    notes: '',
+    deliveryDate: '',
+    payment: 'upi',
   })
-  const [prefilled] = useState(() => {
-    const saved = loadSavedCustomer()
-    return Boolean(saved.name && saved.phone)
-  })
+
+  // One-time cleanup: clear any legacy customer/draft data left in
+  // localStorage from before pre-fill was removed.
+  useEffect(() => { clearStoredCustomer() }, [])
 
   // Per-field errors that show on blur (and on submit attempt). An empty
   // string means "valid"; a non-empty string is the error message.
@@ -133,13 +94,6 @@ export default function Checkout() {
   const [touched, setTouched] = useState({})
 
   const minDeliveryDate = useMemo(() => getMinDeliveryDate(), [])
-
-  // Auto-save the form as a draft on every change (debounced) so an
-  // abandoned checkout retains all typed data on next visit.
-  useEffect(() => {
-    const t = setTimeout(() => saveCustomerDraft(form), 400)
-    return () => clearTimeout(t)
-  }, [form])
 
   function validateField(key, value) {
     const validator = VALIDATORS[key]
@@ -315,8 +269,7 @@ export default function Checkout() {
     saveOrder(orderData)
     sendOrderEmail(orderData)
     sendCustomerConfirmation(orderData)
-    saveCustomerInfo(form)
-    clearCustomerDraft()
+    clearStoredCustomer()
 
     setOrderId(id)
     setPlacedItems(snapshotItems)
@@ -448,15 +401,6 @@ export default function Checkout() {
             <strong>Pre-order required.</strong> All orders are handcrafted to order — please choose a delivery date <strong>at least 1 day from today</strong>.
           </div>
         </div>
-
-        {prefilled && (
-          <div className="cc-notice cc-notice--soft mb-4" role="note">
-            <span className="cc-notice__icon"><FiCheckCircle size={16} /></span>
-            <div>
-              Welcome back! We pre-filled your details from your last order — edit anything you'd like.
-            </div>
-          </div>
-        )}
 
         <form id="checkout-form" onSubmit={placeOrder}>
           <div className="row g-4">
