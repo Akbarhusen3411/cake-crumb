@@ -4,7 +4,7 @@ import {
   FiCheckCircle, FiChevronDown,
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
-import PageHero from '../components/PageHero.jsx'
+import HeartDivider from '../components/HeartDivider.jsx'
 import { img, u } from '../data/images.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
@@ -75,14 +75,31 @@ export default function Contact() {
 
   return (
     <>
-      <PageHero
-        eyebrow="Get in Touch"
-        title={<>Let's Make Something<br />Sweet Together</>}
-        text="Tell us about your celebration and we'll send a quote on WhatsApp within a few hours."
-        cta={null}
-        image={u(img.cupcakesPink, 1000, 750)}
-        imageAlt="Cupcakes"
-      />
+      {/* ───── HERO — matches About/Menu/Shop/Reviews/Gallery ───── */}
+      <section className="cc-contact-hero">
+        <div className="container py-4 py-md-5">
+          <div className="row g-4 g-lg-5 align-items-center">
+            <div className="col-lg-6 text-center text-lg-start">
+              <span className="eyebrow mb-3 d-inline-flex">Get in Touch</span>
+              <h1 className="cc-contact-hero__title">
+                Let's Make Something<br />Sweet Together
+              </h1>
+              <HeartDivider width={50} />
+              <p className="cc-contact-hero__lede">
+                Tell us about your celebration and we'll send a quote on WhatsApp
+                within a few hours.
+              </p>
+            </div>
+            <div className="col-lg-6">
+              <img
+                src={u(img.cupcakesPink, 1000, 800)}
+                alt="Pink cupcakes ready for your celebration"
+                className="cc-contact-hero__img"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Horizontal contact strip — replaces the sticky left card.
           Sits below the hero, gives quick access to WhatsApp / Phone /

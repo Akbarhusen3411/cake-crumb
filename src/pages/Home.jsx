@@ -1,31 +1,25 @@
 import { Link } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import {
-  FiHeart, FiShoppingBag, FiGift, FiCoffee,
+  FiHeart, FiShoppingBag, FiGift, FiCoffee, FiInstagram,
 } from 'react-icons/fi'
-import InstagramFeed from '../components/InstagramFeed.jsx'
 import { TbLeaf } from 'react-icons/tb'
 import { featured } from '../data/products.js'
 import { img, u } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { useCart } from '../context/CartContext.jsx'
+import HeartDivider from '../components/HeartDivider.jsx'
 
-function Ornament() {
-  return (
-    <span className="ornament" aria-hidden>
-      <svg width="80" height="14" viewBox="0 0 80 14">
-        <path
-          d="M2 7 Q 14 -2 28 7 M 52 7 Q 66 -2 78 7"
-          stroke="currentColor"
-          strokeWidth="1"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <path d="M40 4 L37 9 L40 12 L43 9 Z" fill="currentColor" opacity="0.7" />
-      </svg>
-    </span>
-  )
-}
+// Instagram-style tile grid for the bottom of the home page.
+const IG_TILES = [
+  img.cupcakesRose,
+  img.cupcakesPink,
+  img.truffleBox,
+  img.cakeChocolateBirthday,
+  img.cookies,
+  img.cheesecakeStrawberry,
+  img.cupcakesQuartet,
+]
 
 export default function Home() {
   const { add } = useCart()
@@ -33,44 +27,41 @@ export default function Home() {
     title: 'Home',
     description: 'Cake & Crumb — handcrafted cheesecakes, milk cakes, cookies and desserts. Made with love. Order on WhatsApp.',
   })
+
   return (
     <>
-      {/* HERO --- full-bleed split */}
-      <section className="hero-split">
-        <div className="container-fluid p-0">
-          <div className="row g-0 align-items-stretch">
-            <div className="col-lg-6 d-flex align-items-center">
-              <div
-                className="px-4 px-md-5 py-5 text-center text-lg-start"
-                style={{ maxWidth: 560, marginLeft: 'auto', marginRight: 'auto' }}
-              >
-                <span className="eyebrow mb-3 d-inline-flex">Welcome to Cake & Crumb</span>
-                <h1 style={{ fontSize: 'clamp(2.4rem, 5vw, 3.6rem)', lineHeight: 1.05, margin: '1rem 0' }}>
-                  Indulge in<br />Every Bite
-                </h1>
-                <Ornament />
-                <p className="mx-auto mx-lg-0" style={{ marginTop: '1rem', maxWidth: 420 }}>
-                  Handcrafted chocolate and berry delights made with the finest ingredients and a
-                  passion for perfection.
-                </p>
-                <Link to="/shop" className="btn-rose mt-4">
-                  <FiShoppingBag /> Shop Now
-                </Link>
-              </div>
+      {/* ───── HERO — professional width, split: text left, rounded-card image right ───── */}
+      <section className="cc-home-hero">
+        <div className="container py-5">
+          <div className="row g-4 g-lg-5 align-items-center">
+            <div className="col-lg-6 text-center text-lg-start">
+              <span className="eyebrow mb-3 d-inline-flex">Welcome to Cake &amp; Crumb</span>
+              <h1 className="cc-home-hero__title">
+                Indulge in<br />Every Bite
+              </h1>
+              <HeartDivider width={50} />
+              <p className="cc-home-hero__lede">
+                Handcrafted chocolate and berry delights made with the finest ingredients
+                and a passion for perfection.
+              </p>
+              <Link to="/shop" className="btn-rose mt-3">
+                <FiShoppingBag /> Shop Now
+              </Link>
             </div>
             <div className="col-lg-6">
               <img
-                src={u(img.milkcakeBlueberry, 1100, 900)}
-                alt="Blueberry milk cake with lavender rosettes"
-                className="hero-img"
+                src={u(img.pinkRoses, 1100, 900)}
+                alt="Soft pink rose bouquet"
+                className="cc-home-hero__img"
+                fetchpriority="high"
               />
             </div>
           </div>
         </div>
       </section>
 
-      {/* FEATURE STRIP --- 3 cells with vertical dividers */}
-      <section style={{ background: 'var(--cc-cream)' }}>
+      {/* ───── FEATURE STRIP — 3 cells with vertical dividers ───── */}
+      <section className="cc-home-features">
         <div className="container py-4">
           <div className="feature-row">
             {[
@@ -82,7 +73,7 @@ export default function Home() {
                 <span className="feature-icon"><Icon size={22} /></span>
                 <div>
                   <div className="tag-badge mb-1">{title}</div>
-                  <p style={{ fontSize: '0.85rem', margin: 0 }}>{text}</p>
+                  <p style={{ fontSize: '0.88rem', margin: 0 }}>{text}</p>
                 </div>
               </div>
             ))}
@@ -90,27 +81,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SIGNATURE TREATS */}
-      <section className="bg-cream py-5">
-        <div className="container">
+      {/* ───── SIGNATURE TREATS — 4 product cards in a row ───── */}
+      <section className="cc-home-signature">
+        <div className="container py-5">
           <div className="text-center mb-5">
             <span className="eyebrow">Our Signature Treats</span>
             <h2 className="section-title mt-3">Handcrafted Just for You</h2>
-            <Ornament />
+            <HeartDivider width={50} />
           </div>
-          <div className="row g-4">
+          <div className="row g-3 g-md-4">
             {featured.map((p) => (
               <div className="col-6 col-lg-3" key={p.id}>
-                <article className="product-card">
+                <article className="product-card cc-treat-card">
                   <img src={u(p.img, 600, 600)} alt={p.name} loading="lazy" />
                   <div className="p-3 text-center">
-                    <h5 style={{ fontSize: '1.05rem', margin: '0 0 0.4rem' }}>{p.name}</h5>
-                    <div style={{ color: 'var(--cc-rose)', fontWeight: 700, marginBottom: '0.7rem' }}>
-                      {inr(p.price)}
-                    </div>
+                    <h5 className="cc-treat-card__name">{p.name}</h5>
+                    <div className="cc-treat-card__price">{inr(p.price)}</div>
                     <button
-                      className="btn-rose justify-content-center w-100"
-                      style={{ fontSize: '0.7rem', padding: '0.5rem 1rem' }}
+                      className="btn-rose justify-content-center w-100 cc-treat-card__btn"
                       onClick={() => add(p)}
                     >
                       <FiShoppingBag size={12} /> Add to Cart
@@ -123,92 +111,91 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ABOUT US --- 3 columns: image / text / icon stack */}
-      <section style={{ background: 'var(--cc-blush)' }} className="py-5">
-        <div className="container">
-          <div className="row g-4 align-items-center">
+      {/* ───── ABOUT — full-bleed split: image / text / icon stack ───── */}
+      <section className="cc-home-about">
+        <div className="container-fluid p-0">
+          <div className="row g-0 align-items-stretch">
             <div className="col-lg-4">
               <img
-                src={u(img.pinkRoses, 700, 600)}
-                alt="Pink roses"
-                style={{ width: '100%', borderRadius: 14, aspectRatio: '5/4', objectFit: 'cover' }}
-              />
-            </div>
-            <div className="col-lg-5 text-center text-lg-start">
-              <span className="eyebrow">About Us</span>
-              <h2 style={{ fontSize: 'clamp(1.7rem, 3vw, 2.3rem)', marginTop: '1rem' }}>
-                A little sweetness<br />for every moment
-              </h2>
-              <Ornament />
-              <p style={{ marginTop: '0.8rem' }}>
-                At Cake & Crumb, we believe every treat tells a story. From rich chocolate to
-                sweet berries, our creations are made with love, the finest ingredients, and a
-                passion for perfection.
-              </p>
-              <Link to="/about" className="btn-rose mt-2">
-                <FiHeart /> Learn More
-              </Link>
-            </div>
-            <div className="col-lg-3">
-              {[
-                { Icon: FiCoffee, title: 'Freshly Made', text: 'Every order is made fresh with love.' },
-                { Icon: TbLeaf, title: 'Quality First', text: 'We source the finest ingredients.' },
-                { Icon: FiHeart, title: 'Custom Orders', text: 'We create your dream treats.' },
-              ].map(({ Icon, title, text }) => (
-                <div key={title} className="d-flex align-items-start mb-3" style={{ gap: '0.8rem' }}>
-                  <span className="feature-icon" style={{ width: 48, height: 48 }}>
-                    <Icon size={18} />
-                  </span>
-                  <div>
-                    <div className="tag-badge mb-1">{title}</div>
-                    <p style={{ fontSize: '0.85rem', margin: 0 }}>{text}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SIGNATURE CAKE BANNER --- pink drip cake spotlight */}
-      <section className="hero-split">
-        <div className="container-fluid p-0">
-          <div className="row g-0 align-items-stretch flex-lg-row-reverse">
-            <div className="col-lg-7">
-              <img
-                src={u(img.pinkDripCake, 1100, 900)}
-                alt="Signature pink drip cake with roses and raspberries"
-                className="hero-img"
-                style={{ borderRadius: 0 }}
+                src={u(img.pinkRoses, 800, 700)}
+                alt="Soft pink roses bouquet"
+                className="cc-home-about__img"
               />
             </div>
             <div className="col-lg-5 d-flex align-items-center">
-              <div className="px-4 px-md-5 py-5" style={{ maxWidth: 520, marginLeft: 'auto', marginRight: 'auto' }}>
-                <span className="eyebrow mb-3 d-inline-flex">Our Signature</span>
-                <h2 style={{ fontSize: 'clamp(2rem, 4vw, 2.8rem)', lineHeight: 1.1, margin: '1rem 0' }}>
-                  Pink Drip Cake<br />with Roses
+              <div className="cc-home-about__text">
+                <span className="eyebrow">About Us</span>
+                <h2 className="cc-home-about__title">
+                  A little sweetness<br />for every moment
                 </h2>
-                <Ornament />
-                <p style={{ marginTop: '1rem' }}>
-                  A buttery vanilla milk cake draped in soft pink white-chocolate ganache, crowned
-                  with fresh roses and raspberries. Hand-decorated to order — perfect for birthdays,
-                  anniversaries, and every sweet celebration.
+                <HeartDivider width={50} />
+                <p className="cc-home-about__lede">
+                  At Cake &amp; Crumb, we believe every treat tells a story. From rich chocolate
+                  to sweet berries, our creations are made with love, the finest ingredients,
+                  and a passion for perfection.
                 </p>
-                <div className="d-flex flex-wrap mt-3" style={{ gap: '0.6rem' }}>
-                  <Link to="/shop" className="btn-rose">
-                    <FiShoppingBag /> Order Now
-                  </Link>
-                  <Link to="/menu" className="btn-outline-rose">
-                    View Full Menu
-                  </Link>
-                </div>
+                <Link to="/about" className="btn-rose">
+                  <FiHeart /> Learn More
+                </Link>
+              </div>
+            </div>
+            <div className="col-lg-3 d-flex align-items-center">
+              <div className="cc-home-about__features">
+                {[
+                  { Icon: FiCoffee, title: 'Freshly Made', text: 'Every order is made fresh with love.' },
+                  { Icon: TbLeaf, title: 'Quality First', text: 'We source the finest ingredients.' },
+                  { Icon: FiHeart, title: 'Custom Orders', text: 'We create your dream treats.' },
+                ].map(({ Icon, title, text }) => (
+                  <div key={title} className="cc-home-about__feature">
+                    <span className="feature-icon" style={{ width: 46, height: 46 }}>
+                      <Icon size={16} />
+                    </span>
+                    <div>
+                      <div className="tag-badge mb-1">{title}</div>
+                      <p style={{ fontSize: '0.85rem', margin: 0 }}>{text}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <InstagramFeed />
+      {/* ───── INSTAGRAM — 7 thumbs in a row + VIEW MORE ───── */}
+      <section className="cc-home-ig">
+        <div className="container py-5">
+          <div className="text-center mb-4">
+            <span className="eyebrow">Follow Us on Instagram</span>
+          </div>
+          <div className="cc-ig-grid">
+            {IG_TILES.map((src, i) => (
+              <a
+                key={i}
+                href="https://www.instagram.com/cake_and_crumb_1/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ig-tile"
+              >
+                <img src={u(src, 400, 400)} alt="" loading="lazy" />
+                <span className="ig-tile__hover">
+                  <FiInstagram size={22} />
+                </span>
+              </a>
+            ))}
+          </div>
+          <div className="text-center mt-4">
+            <a
+              href="https://www.instagram.com/cake_and_crumb_1/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-rose"
+            >
+              <FiInstagram /> View More
+            </a>
+          </div>
+        </div>
+      </section>
     </>
   )
 }

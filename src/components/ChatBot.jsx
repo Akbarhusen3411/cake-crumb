@@ -356,7 +356,7 @@ function PriceCard({ cat }) {
       <div className="px-3 py-2.5 bg-gradient-to-r from-gold/20 via-cream/80 to-soft-pink/40 border-b border-gold/15">
         <div className="flex items-center gap-1.5">
           <FiStar size={11} className="text-gold" />
-          <h4 className="text-[13px] font-bold text-chocolate" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>{cat.title}</h4>
+          <h4 className="text-[13px] font-bold text-chocolate" style={{ fontFamily: "'Lato', system-ui, sans-serif" }}>{cat.title}</h4>
         </div>
         <p className="text-[10px] text-chocolate-light/60 mt-0.5">{cat.subtitle}</p>
       </div>
@@ -924,7 +924,7 @@ export default function ChatBot() {
             <div className="flex-1 min-w-0 leading-tight">
               <h3
                 className="text-[20px] tracking-wide truncate"
-                style={{ fontFamily: "'Inter', system-ui, sans-serif", color: '#1a1a1a', fontWeight: 600, letterSpacing: '0.02em' }}
+                style={{ fontFamily: "'Lato', system-ui, sans-serif", color: '#1a1a1a', fontWeight: 600, letterSpacing: '0.02em' }}
               >
                 CAKE
                 <span style={{ color: '#1a1a1a', fontStyle: 'italic', fontWeight: 500, fontSize: '1.2em', margin: '0 0.06em', verticalAlign: '-0.04em' }}>&</span>
@@ -1007,7 +1007,7 @@ export default function ChatBot() {
                       )}
                       <div
                         className="text-[13.5px] leading-relaxed whitespace-pre-line"
-                        style={{ padding: '10px 14px', fontFamily: "'Inter', system-ui, sans-serif" }}
+                        style={{ padding: '10px 14px', fontFamily: "'Lato', system-ui, sans-serif" }}
                       >
                         {formatBold(msg.text)}
                       </div>

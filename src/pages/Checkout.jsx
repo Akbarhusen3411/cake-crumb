@@ -682,7 +682,7 @@ export default function Checkout() {
                             <div style={{ fontSize: '0.7rem', color: 'var(--cc-cocoa-soft)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
                               Amount to Pay
                             </div>
-                            <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: '1.4rem', color: 'var(--cc-cocoa)', lineHeight: 1 }}>
+                            <div style={{ fontFamily: "'Lato', system-ui, sans-serif", fontSize: '1.4rem', color: 'var(--cc-cocoa)', lineHeight: 1 }}>
                               {inr(total)}
                             </div>
                           </div>
@@ -912,7 +912,7 @@ export default function Checkout() {
                 <hr style={{ borderColor: 'var(--cc-border)' }} />
                 <div className="d-flex justify-content-between mb-3" style={{ fontSize: '1.05rem' }}>
                   <strong style={{ color: 'var(--cc-cocoa)' }}>Total</strong>
-                  <strong style={{ color: 'var(--cc-rose)', fontFamily: "'Inter', system-ui, sans-serif", fontSize: '1.3rem' }}>
+                  <strong style={{ color: 'var(--cc-rose)', fontFamily: "'Lato', system-ui, sans-serif", fontSize: '1.3rem' }}>
                     {inr(total)}
                   </strong>
                 </div>

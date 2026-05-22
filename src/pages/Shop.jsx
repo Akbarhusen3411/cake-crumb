@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   FiHeart, FiShoppingBag, FiX, FiPlus, FiMinus, FiCheckCircle,
-  FiShield, FiTruck, FiAward,
+  FiShield, FiTruck, FiAward, FiChevronLeft, FiChevronRight,
 } from 'react-icons/fi'
-import { TbLeaf } from 'react-icons/tb'
-import PageHero from '../components/PageHero.jsx'
+import { TbLeaf, TbToolsKitchen2 } from 'react-icons/tb'
+import HeartDivider from '../components/HeartDivider.jsx'
 import { shopProducts } from '../data/products.js'
 import { img, u } from '../data/images.js'
 import { inr } from '../data/format.js'
@@ -15,21 +15,40 @@ import { useJsonLd } from '../hooks/useJsonLd.js'
 import ProductQuickView from '../components/ProductQuickView.jsx'
 
 const CATEGORIES = [
-  'All Products',
-  'Cheesecakes',
-  'Milk Cakes',
-  'Cookies',
-  'Cupcakes',
-  'Bakes',
-  'Platters',
-  'Dessert Cups',
-  'Drinks',
+  'All Products', 'Cheesecakes', 'Milk Cakes', 'Cookies', 'Cupcakes', 'Bakes', 'Dessert Cups', 'Drinks',
 ]
+
+const PRICE_RANGES = [
+  { id: 'all',  label: 'All Prices',     test: () => true },
+  { id: '0-200',    label: '₹0 – ₹200',  test: (p) => (p.slice || p.price) <= 200 },
+  { id: '200-500',  label: '₹200 – ₹500',test: (p) => (p.slice || p.price) > 200 && (p.slice || p.price) <= 500 },
+  { id: '500-1000', label: '₹500 – ₹1000',test: (p) => (p.slice || p.price) > 500 && (p.slice || p.price) <= 1000 },
+  { id: '1000+',    label: '₹1000+',     test: (p) => (p.slice || p.price) > 1000 },
+]
+
+const OCCASIONS = [
+  'Birthday', 'Wedding', 'Anniversary', 'Thank You', 'Just Because', 'Other',
+]
+
+function Radio({ checked, onChange, label }) {
+  return (
+    <label className="cc-shop-radio">
+      <input
+        type="radio"
+        checked={checked}
+        onChange={onChange}
+        className="cc-shop-radio__input"
+      />
+      <span className="cc-shop-radio__dot" aria-hidden />
+      <span>{label}</span>
+    </label>
+  )
+}
 
 export default function Shop() {
   usePageMeta({
     title: 'Shop',
-    description: 'Order from our full menu — 23 cheesecake flavours, 7 milk cakes, cookies, cupcakes, dessert cups and drinks. UPI / Cash on Delivery.',
+    description: 'Order from our full menu — cheesecakes, milk cakes, cookies, cupcakes, dessert cups and drinks. UPI / Cash on Delivery.',
   })
   useJsonLd('shop-products', {
     '@context': 'https://schema.org',
@@ -43,7 +62,6 @@ export default function Shop() {
         '@type': 'Product',
         name: p.name,
         category: p.category,
-        description: `${p.name} — handcrafted ${p.category.toLowerCase()} from Cake & Crumb. Pre-order at least 1 day in advance.`,
         image: typeof window !== 'undefined'
           ? new URL(u(p.img, 800, 800), window.location.origin).href
           : u(p.img, 800, 800),
@@ -53,200 +71,277 @@ export default function Shop() {
           price: p.slice || p.price,
           priceCurrency: 'INR',
           availability: 'https://schema.org/InStock',
-          itemCondition: 'https://schema.org/NewCondition',
-          seller: { '@type': 'Bakery', name: 'Cake & Crumb' },
         },
-        aggregateRating: {
-          '@type': 'AggregateRating',
-          ratingValue: '4.9',
-          reviewCount: '245',
-        },
+        aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.9', reviewCount: '245' },
       },
     })),
   })
+
   const [category, setCategory] = useState('All Products')
+  const [priceRange, setPriceRange] = useState('all')
+  const [occasion, setOccasion] = useState(null) // visual only — no real product tagging
   const [sort, setSort] = useState('featured')
-  const [quickView, setQuickView] = useState(null) // product object or null
+  const [page, setPage] = useState(1)
+  const [quickView, setQuickView] = useState(null)
   const { items, count, subtotal, add, increment, decrement, remove, clear } = useCart()
 
+  const PAGE_SIZE = 12
+
   const filtered = useMemo(() => {
+    const priceTest = PRICE_RANGES.find((r) => r.id === priceRange)?.test ?? (() => true)
     let list = shopProducts.filter(
-      (p) => category === 'All Products' || p.category === category
+      (p) => (category === 'All Products' || p.category === category) && priceTest(p)
     )
-    if (sort === 'lowhigh') list = [...list].sort((a, b) => a.price - b.price)
-    else if (sort === 'highlow') list = [...list].sort((a, b) => b.price - a.price)
+    if (sort === 'lowhigh') list = [...list].sort((a, b) => (a.slice || a.price) - (b.slice || b.price))
+    else if (sort === 'highlow') list = [...list].sort((a, b) => (b.slice || b.price) - (a.slice || a.price))
     return list
-  }, [category, sort])
+  }, [category, priceRange, sort])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const rangeStart = filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
+  const rangeEnd = Math.min(page * PAGE_SIZE, filtered.length)
+
+  // Reset to page 1 whenever filters/sort change so users don't land on an empty page
+  useEffect(() => { setPage(1) }, [category, priceRange, sort])
+
+  const clearFilters = () => {
+    setCategory('All Products')
+    setPriceRange('all')
+    setOccasion(null)
+  }
 
   return (
     <>
-      <PageHero
-        eyebrow="Shop Our Treats"
-        title={<>Handcrafted<br />Just for You</>}
-        text="Discover our handmade cakes, cupcakes, cookies, and chocolates — made with the finest ingredients and a whole lot of love."
-        cta={null}
-        image={u(img.cheesecakeBoxesPair, 1000, 750)}
-        imageAlt="Pair of cheesecake boxes ready to ship"
-      />
+      {/* ───── HERO ───── */}
+      <section className="cc-shop-hero">
+        <div className="container py-4 py-md-5">
+          <div className="row g-4 g-lg-5 align-items-center">
+            <div className="col-lg-6 text-center text-lg-start">
+              <span className="eyebrow mb-3 d-inline-flex">Shop Our Treats</span>
+              <h1 className="cc-shop-hero__title">
+                Handcrafted<br />Just for You
+              </h1>
+              <HeartDivider width={50} />
+              <p className="cc-shop-hero__lede">
+                Discover our handmade cakes, cupcakes, cookies, and chocolates —
+                made with the finest ingredients and a whole lot of love.
+              </p>
+            </div>
+            <div className="col-lg-6">
+              <img
+                src={u(img.cupcakesQuartet, 1000, 800)}
+                alt="Quartet of Cake & Crumb dessert tins"
+                className="cc-shop-hero__img"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <section className="py-5">
-        <div className="container-fluid px-2 px-md-3 px-lg-4">
-          <div className="row g-3">
-            <div className="col-12 col-lg-10">
-              {/* Category chips — single horizontal row on all sizes */}
-              <div className="cc-filter-chips" role="radiogroup" aria-label="Category">
-                {CATEGORIES.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    role="radio"
-                    aria-checked={category === c}
-                    className={'cc-chip' + (category === c ? ' is-active' : '')}
-                    onClick={() => setCategory(c)}
-                  >
-                    {c === 'All Products' ? 'All' : c}
-                  </button>
-                ))}
-              </div>
-              <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
-                <div style={{ fontSize: '0.85rem' }}>
-                  Showing 1–{filtered.length} of {shopProducts.length} results
+      {/* ───── MAIN — filter / grid / cart ───── */}
+      <section className="cc-shop-main">
+        <div className="container py-4">
+          <div className="row g-4">
+
+            {/* FILTER SIDEBAR */}
+            <aside className="col-lg-3 col-xl-2">
+              <div className="cc-shop-filter">
+                <h6 className="cc-shop-filter__heading">Filter By</h6>
+
+                <div className="cc-shop-filter__group">
+                  <div className="cc-shop-filter__label">Category</div>
+                  {CATEGORIES.map((c) => (
+                    <Radio
+                      key={c}
+                      label={c}
+                      checked={category === c}
+                      onChange={() => setCategory(c)}
+                    />
+                  ))}
                 </div>
-                <div className="d-flex align-items-center" style={{ gap: '0.5rem', fontSize: '0.85rem' }}>
+
+                <div className="cc-shop-filter__group">
+                  <div className="cc-shop-filter__label">Price Range</div>
+                  {PRICE_RANGES.map((r) => (
+                    <Radio
+                      key={r.id}
+                      label={r.label}
+                      checked={priceRange === r.id}
+                      onChange={() => setPriceRange(r.id)}
+                    />
+                  ))}
+                </div>
+
+                <div className="cc-shop-filter__group">
+                  <div className="cc-shop-filter__label">Occasion</div>
+                  {OCCASIONS.map((o) => (
+                    <Radio
+                      key={o}
+                      label={o}
+                      checked={occasion === o}
+                      onChange={() => setOccasion(o)}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  className="cc-shop-filter__clear"
+                  onClick={clearFilters}
+                >
+                  Clear Filters
+                </button>
+              </div>
+            </aside>
+
+            {/* PRODUCT GRID */}
+            <div className="col-lg-6 col-xl-7">
+              <div className="cc-shop-toolbar">
+                <span className="cc-shop-toolbar__count">
+                  Showing {rangeStart}–{rangeEnd} of {filtered.length} results
+                </span>
+                <label className="cc-shop-toolbar__sort">
                   <span>Sort by:</span>
-                  <select
-                    className="cc-input"
-                    style={{ width: 'auto', padding: '0.35rem 0.6rem' }}
-                    value={sort}
-                    onChange={(e) => setSort(e.target.value)}
-                  >
+                  <select value={sort} onChange={(e) => setSort(e.target.value)}>
                     <option value="featured">Featured</option>
                     <option value="lowhigh">Price: low to high</option>
                     <option value="highlow">Price: high to low</option>
                   </select>
-                </div>
+                </label>
               </div>
 
-              <div className="row row-cols-2 row-cols-md-3 row-cols-lg-3 row-cols-xl-4 g-2 g-md-3">
-                {filtered.map((p) => {
-                  const hasNuts = p.allergens?.includes('contains-nuts')
-                  const isEggless = p.allergens?.includes('eggless')
-                  return (
-                    <div className="col" key={p.id}>
-                      <article className="shop-card-mini">
-                        {p.badge && (
-                          <span className="shop-card-mini__badge">{p.badge}</span>
-                        )}
-                        {(hasNuts || isEggless) && (
-                          <span
-                            className="shop-card-mini__diet"
-                            style={{
-                              background: hasNuts ? 'rgba(184, 134, 11, 0.85)' : 'rgba(34, 139, 81, 0.85)',
-                            }}
-                            title={hasNuts ? 'Contains nuts' : 'Eggless'}
-                          >
-                            {hasNuts ? '🌰' : '🌱'}
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setQuickView(p)}
-                          aria-label={`View ${p.name}`}
-                          className="shop-card-mini__img-btn"
-                        >
-                          <img
-                            src={u(p.img, 500, 500)}
-                            alt={p.name}
-                            loading="lazy"
-                          />
-                        </button>
-                        <div className="shop-card-mini__body text-center">
-                          <div className="shop-card-mini__cat">{p.category}</div>
-                          <h6
-                            className="shop-card-mini__name"
-                            onClick={() => setQuickView(p)}
-                            title={p.name}
-                          >
-                            {p.name}
-                          </h6>
-                          <div className="shop-card-mini__price">
-                            {p.slice ? `From ${inr(p.slice)}` : inr(p.price)}
-                          </div>
-                          <button
-                            aria-label={`Add ${p.name} to cart`}
-                            className="shop-card-mini__add-full"
-                            onClick={() => {
-                              if (p.slice) setQuickView(p)
-                              else add(p)
-                            }}
-                          >
-                            <FiShoppingBag size={12} /> Add to Cart
-                          </button>
-                        </div>
-                      </article>
+              <div className="cc-shop-grid">
+                {visible.map((p) => (
+                  <article key={p.id} className="cc-product-card">
+                    <button
+                      type="button"
+                      className="cc-product-card__heart"
+                      aria-label="Add to favorites"
+                    >
+                      <FiHeart size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuickView(p)}
+                      aria-label={`View ${p.name}`}
+                      className="cc-product-card__img-btn"
+                    >
+                      <img
+                        src={u(p.img, 500, 500)}
+                        alt={p.name}
+                        loading="lazy"
+                      />
+                    </button>
+                    <div className="cc-product-card__body">
+                      <div className="cc-product-card__cat">{p.category}</div>
+                      <h6
+                        className="cc-product-card__name"
+                        onClick={() => setQuickView(p)}
+                        title={p.name}
+                      >
+                        {p.name}
+                      </h6>
+                      <div className="cc-product-card__price">
+                        {p.slice ? `From ${inr(p.slice)}` : inr(p.price)}
+                      </div>
+                      <button
+                        className="cc-product-card__add"
+                        onClick={() => {
+                          if (p.slice) setQuickView(p)
+                          else add(p)
+                        }}
+                      >
+                        <FiShoppingBag size={12} /> Add to Cart
+                      </button>
                     </div>
-                  )
-                })}
+                  </article>
+                ))}
                 {filtered.length === 0 && (
-                  <div className="col-12 text-center py-5">
-                    <p>No products match your filters.</p>
+                  <div className="cc-shop-empty">
+                    No products match your filters.
                   </div>
                 )}
               </div>
+
+              {totalPages > 1 && (
+                <nav className="cc-shop-pagination" aria-label="Product pages">
+                  <button
+                    type="button"
+                    className="cc-shop-pagination__btn"
+                    onClick={() => setPage((n) => Math.max(1, n - 1))}
+                    disabled={page === 1}
+                    aria-label="Previous page"
+                  >
+                    <FiChevronLeft size={14} />
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      className={
+                        'cc-shop-pagination__btn cc-shop-pagination__num' +
+                        (n === page ? ' is-active' : '')
+                      }
+                      onClick={() => setPage(n)}
+                      aria-current={n === page ? 'page' : undefined}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="cc-shop-pagination__btn"
+                    onClick={() => setPage((n) => Math.min(totalPages, n + 1))}
+                    disabled={page === totalPages}
+                    aria-label="Next page"
+                  >
+                    <FiChevronRight size={14} />
+                  </button>
+                </nav>
+              )}
             </div>
 
-            <aside className="col-12 col-lg-2">
-              <div
-                className="p-3 sticky-lg-top"
-                style={{
-                  background: '#fff',
-                  border: '1px solid var(--cc-border)',
-                  borderRadius: 14,
-                  // Centered vertically in the viewport gap below the header.
-                  // max() falls back to "just below header" on short viewports
-                  // so the card never overlaps the sticky header.
-                  top: 'max(calc(var(--cc-header-h, 82px) + 1rem), 12vh)',
-                  maxHeight: '76vh',
-                  overflowY: 'auto',
-                }}
-              >
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <div className="tag-badge">Your Cart ({count})</div>
+            {/* CART SIDEBAR */}
+            <aside className="col-lg-3">
+              <div className="cc-shop-cart">
+                <div className="cc-shop-cart__head">
+                  <span className="cc-shop-cart__title">Your Cart ({count})</span>
                   {count > 0 && (
                     <button
-                      className="border-0 bg-transparent"
-                      aria-label="Clear cart"
+                      type="button"
+                      className="cc-shop-cart__clear"
                       onClick={clear}
-                      style={{ color: 'var(--cc-cocoa-soft)' }}
+                      aria-label="Clear cart"
                     >
-                      <FiX />
+                      <FiX size={16} />
                     </button>
                   )}
                 </div>
 
-                {count === 0 && <p style={{ fontSize: '0.85rem' }}>Your cart is empty.</p>}
+                {count === 0 && <p className="cc-shop-cart__empty">Your cart is empty.</p>}
 
                 {items.map((c) => (
-                  <div key={c.id} className="d-flex mb-3" style={{ gap: '0.7rem' }}>
+                  <div key={c.id} className="cc-shop-cart__item">
                     <img
                       src={u(c.img, 200, 200)}
                       alt=""
-                      style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
+                      className="cc-shop-cart__item-img"
                     />
-                    <div className="flex-grow-1" style={{ fontSize: '0.85rem', minWidth: 0 }}>
-                      <div className="d-flex justify-content-between">
-                        <strong style={{ color: 'var(--cc-cocoa)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</strong>
+                    <div className="cc-shop-cart__item-body">
+                      <div className="cc-shop-cart__item-top">
+                        <strong className="cc-shop-cart__item-name">{c.name}</strong>
                         <button
-                          className="border-0 bg-transparent p-0"
+                          type="button"
                           onClick={() => remove(c.id)}
                           aria-label="Remove"
-                          style={{ color: 'var(--cc-cocoa-soft)', flexShrink: 0, marginLeft: 6 }}
+                          className="cc-shop-cart__item-remove"
                         >
                           <FiX size={14} />
                         </button>
                       </div>
-                      <div style={{ color: 'var(--cc-rose)', fontWeight: 700 }}>{inr(c.price)}</div>
-                      <div className="d-inline-flex align-items-center mt-1" style={{ gap: '0.4rem' }}>
+                      <div className="cc-shop-cart__item-price">{inr(c.price)}</div>
+                      <div className="cc-shop-cart__qty">
                         <button className="qty-btn" onClick={() => decrement(c.id)} aria-label="Decrease">
                           <FiMinus size={12} />
                         </button>
@@ -259,12 +354,11 @@ export default function Shop() {
                   </div>
                 ))}
 
-                <hr style={{ borderColor: 'var(--cc-border)' }} />
-                <div className="d-flex justify-content-between mb-1" style={{ fontSize: '0.9rem' }}>
-                  <span>Subtotal</span>
-                  <strong style={{ color: 'var(--cc-cocoa)' }}>{inr(subtotal)}</strong>
+                <div className="cc-shop-cart__subtotal">
+                  <span>SUBTOTAL</span>
+                  <strong>{inr(subtotal)}</strong>
                 </div>
-                <p style={{ fontSize: '0.75rem', color: 'var(--cc-cocoa-soft)' }}>
+                <p className="cc-shop-cart__note">
                   Taxes and delivery calculated at checkout.
                 </p>
                 <Link
@@ -282,52 +376,32 @@ export default function Shop() {
                   <FiCheckCircle size={14} /> Checkout
                 </Link>
 
-                <div className="mt-4 p-3" style={{ background: 'var(--cc-cream)', borderRadius: 12 }}>
-                  <div className="tag-badge mb-1">
-                    <FiHeart size={12} style={{ marginRight: 4 }} /> Need Something Special?
-                  </div>
-                  <p style={{ fontSize: '0.8rem', margin: '0.3rem 0 0.6rem' }}>
+                {/* Need Something Special card */}
+                <div className="cc-shop-special">
+                  <span className="cc-shop-special__icon">
+                    <FiHeart size={16} />
+                  </span>
+                  <h6 className="cc-shop-special__title">Need Something Special?</h6>
+                  <p className="cc-shop-special__text">
                     We love creating custom treats for your special moments.
                   </p>
-                  <Link to="/contact" className="btn-outline-rose" style={{ fontSize: '0.7rem' }}>
+                  <Link to="/contact" className="cc-shop-special__btn">
                     Place Custom Order
                   </Link>
                 </div>
 
-                {/* Trust strip — vertical mini-list under the custom-order block */}
-                <ul className="list-unstyled mt-4 mb-0">
+                {/* Trust strip */}
+                <ul className="cc-shop-trust">
                   {[
                     { Icon: FiHeart, title: 'Handcrafted with Love', text: 'Made in small batches with care.' },
-                    { Icon: TbLeaf, title: 'Premium Ingredients', text: 'We use only the finest ingredients.' },
-                    { Icon: FiShield, title: 'Secure Packaging', text: 'Your treats arrive fresh and beautifully.' },
+                    { Icon: TbLeaf,  title: 'Premium Ingredients',   text: 'We use only the finest ingredients.' },
+                    { Icon: FiShield,title: 'Secure Packaging',      text: 'Your treats arrive fresh and beautiful.' },
                   ].map((it, i) => (
-                    <li
-                      key={i}
-                      className="d-flex align-items-start"
-                      style={{ gap: '0.6rem', padding: '0.6rem 0', borderTop: i ? '1px dashed var(--cc-border)' : 'none' }}
-                    >
-                      <span
-                        style={{
-                          width: 30,
-                          height: 30,
-                          borderRadius: '50%',
-                          background: 'var(--cc-blush)',
-                          color: 'var(--cc-rose)',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <it.Icon size={14} />
-                      </span>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--cc-rose)', textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.2 }}>
-                          {it.title}
-                        </div>
-                        <p style={{ fontSize: '0.72rem', margin: '0.15rem 0 0', color: 'var(--cc-cocoa-soft)', lineHeight: 1.3 }}>
-                          {it.text}
-                        </p>
+                    <li key={i} className="cc-shop-trust__row">
+                      <span className="cc-shop-trust__icon"><it.Icon size={14} /></span>
+                      <div>
+                        <div className="cc-shop-trust__title">{it.title}</div>
+                        <p className="cc-shop-trust__text">{it.text}</p>
                       </div>
                     </li>
                   ))}
@@ -335,33 +409,25 @@ export default function Shop() {
               </div>
             </aside>
           </div>
+        </div>
+      </section>
 
-          {/* Bottom-of-page promise strip — 4 across on desktop */}
-          <div className="row g-3 g-md-4 mt-2 mt-md-3 pt-3 pt-md-4" style={{ borderTop: '1px solid var(--cc-border)' }}>
+      {/* ───── BOTTOM PROMISE STRIP — 4 across ───── */}
+      <section className="cc-shop-promise">
+        <div className="container py-4 py-md-5">
+          <div className="feature-row">
             {[
-              { Icon: TbLeaf,    title: 'Fresh & Quality',  text: 'We source the freshest ingredients for the best taste and quality.' },
-              { Icon: FiAward,   title: 'Made to Order',    text: 'Every treat is made to order just for you.' },
-              { Icon: FiTruck,   title: 'On-Time Delivery', text: 'We deliver your treats fresh and on time, every time.' },
-              { Icon: FiShield,  title: 'Safe & Secure',    text: 'Secure checkout and careful packaging always.' },
+              { Icon: TbLeaf,           title: 'Fresh & Quality',  text: 'We source the freshest ingredients for the best taste and quality.' },
+              { Icon: TbToolsKitchen2,  title: 'Made to Order',    text: 'Every treat is made to order just for you.' },
+              { Icon: FiTruck,          title: 'On-Time Delivery', text: 'We deliver your treats fresh and on time, every time.' },
+              { Icon: FiShield,         title: 'Safe & Secure',    text: 'Secure checkout and careful packaging always.' },
             ].map((it, i) => (
-              <div key={i} className="col-6 col-lg-3 text-center px-3">
-                <span
-                  className="d-inline-flex align-items-center justify-content-center mb-2"
-                  style={{
-                    width: 50,
-                    height: 50,
-                    borderRadius: '50%',
-                    background: '#fff',
-                    border: '1.5px solid var(--cc-rose)',
-                    color: 'var(--cc-rose)',
-                  }}
-                >
-                  <it.Icon size={20} />
+              <div key={i} className="feature-cell text-center cc-shop-promise__cell">
+                <span className="cc-features-card__icon cc-features-card__icon--lg">
+                  <it.Icon size={22} />
                 </span>
-                <div className="tag-badge mb-1">{it.title}</div>
-                <p style={{ fontSize: '0.78rem', color: 'var(--cc-cocoa-soft)', maxWidth: 220, margin: '0 auto' }}>
-                  {it.text}
-                </p>
+                <div className="cc-features-card__heading mt-3">{it.title}</div>
+                <p className="cc-features-card__text mt-1">{it.text}</p>
               </div>
             ))}
           </div>

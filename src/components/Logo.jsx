@@ -1,8 +1,8 @@
-// Use PNG directly for the brand mark — WebP compression introduces visible
-// artifacts on the small icon (3KB output isn't enough headroom). 17KB PNG is
-// still light, and the icon caches forever.
+// Watercolor cupcake+cookie+roses illustration (logo_final.png in /public).
+// We serve the optimized WebP sibling — Sharp trims transparent edges and
+// downsizes to ~700px wide, bringing 2.4 MB down to ~168 KB.
 const LOGO_BASE = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
-const LOGO_SRC = `${LOGO_BASE}/logo-icon.png`
+const LOGO_SRC = `${LOGO_BASE}/logo_final.webp`
 
 export default function Logo({ size = 'md' }) {
   const isLarge = size === 'lg'
@@ -45,7 +45,7 @@ export default function Logo({ size = 'md' }) {
         <span
           className={size === 'md' ? 'logo-text' : ''}
           style={{
-            fontFamily: "'Cormorant Garamond', 'Playfair Display', serif",
+            fontFamily: "'Playfair Display', 'Cormorant Garamond', Georgia, serif",
             fontWeight: 700,
             color: '#1a1a1a',
             letterSpacing: '0.04em',

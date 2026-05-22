@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { FiStar, FiHeart, FiCheckCircle, FiSend, FiTrash2, FiLock, FiLogOut, FiEdit3 } from 'react-icons/fi'
-import PageHero from '../components/PageHero.jsx'
+import { useEffect, useMemo, useState } from 'react'
+import {
+  FiStar, FiHeart, FiCheckCircle, FiSend, FiTrash2, FiLock, FiLogOut,
+  FiSmile, FiTruck, FiShield, FiChevronDown,
+} from 'react-icons/fi'
+import { TbLeaf, TbCake, TbToolsKitchen2, TbHandStop } from 'react-icons/tb'
+import HeartDivider from '../components/HeartDivider.jsx'
 import { addReview, deleteReview, getReviews, summarize, timeAgo } from '../services/reviews.js'
 import { isFirebaseEnabled } from '../firebase.js'
 import ReviewCardSkeleton from '../components/skeletons/ReviewCardSkeleton.jsx'
-import Skeleton from '../components/Skeleton.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { useJsonLd } from '../hooks/useJsonLd.js'
 import { img, u } from '../data/images.js'
@@ -17,15 +19,23 @@ const ITEMS_BY_CATEGORY = shopProducts.reduce((acc, p) => {
   return acc
 }, {})
 
-function Stars({ count = 5, size = 14, color = 'var(--cc-rose)' }) {
+// Map an ordered-item name back to a product image so the review card can show
+// a thumbnail — falls back to a generic cake image when there's no match.
+const NAME_TO_IMG = shopProducts.reduce((acc, p) => {
+  acc[p.name] = p.img
+  return acc
+}, {})
+const FALLBACK_REVIEW_IMG = img.cheesecakeQuartet
+
+function Stars({ count = 5, size = 14 }) {
   return (
-    <span style={{ display: 'inline-flex', gap: 2, color }}>
+    <span style={{ display: 'inline-flex', gap: 2, color: 'var(--cc-rose)' }}>
       {Array.from({ length: 5 }).map((_, i) => (
         <FiStar
           key={i}
           size={size}
-          fill={i < count ? color : 'transparent'}
-          stroke={color}
+          fill={i < count ? 'var(--cc-rose)' : 'transparent'}
+          stroke="var(--cc-rose)"
           strokeWidth={1.5}
         />
       ))}
@@ -33,12 +43,28 @@ function Stars({ count = 5, size = 14, color = 'var(--cc-rose)' }) {
   )
 }
 
-const sub = [
-  { title: 'Delicious Treats', score: 4.9 },
-  { title: 'Fresh Ingredients', score: 4.9 },
-  { title: 'Customer Service', score: 4.8 },
-  { title: 'Packaging', score: 4.9 },
+const SUB_RATINGS = [
+  { Icon: TbCake,      title: 'Delicious Treats',   score: 4.9 },
+  { Icon: TbLeaf,      title: 'Fresh Ingredients',  score: 4.9 },
+  { Icon: TbHandStop,  title: 'Customer Service',   score: 4.8 },
+  { Icon: FiHeart,     title: 'Packaging',          score: 4.9 },
 ]
+
+const WHAT_LOVE = [
+  { Icon: FiHeart,  title: 'Beautiful Designs',  text: 'Our treats look as good as they taste.' },
+  { Icon: TbCake,   title: 'Delicious Flavors',  text: 'Made with love and the finest ingredients.' },
+  { Icon: FiTruck,  title: 'Fresh & Timely',     text: 'Always fresh, always delivered on time.' },
+  { Icon: FiSmile,  title: 'Great Service',      text: 'Friendly, helpful, and always here for you.' },
+]
+
+const PROMISE_STRIP = [
+  { Icon: TbLeaf,          title: 'Fresh Ingredients', text: 'We use only the finest and freshest ingredients.' },
+  { Icon: TbToolsKitchen2, title: 'Made with Love',    text: 'Every treat is handmade with care and passion.' },
+  { Icon: FiTruck,         title: 'On-Time Delivery',  text: 'We deliver your treats fresh and on time, every time.' },
+  { Icon: FiShield,        title: 'Safe & Secure',     text: 'Secure checkout and careful packaging always.' },
+]
+
+const PAGE_SIZE = 4
 
 export default function Reviews() {
   usePageMeta({
@@ -50,20 +76,18 @@ export default function Reviews() {
     '@type': 'Bakery',
     name: 'Cake & Crumb',
     aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: 4.9,
-      reviewCount: 245,
-      bestRating: 5,
-      worstRating: 1,
+      '@type': 'AggregateRating', ratingValue: 4.9, reviewCount: 245, bestRating: 5, worstRating: 1,
     },
   })
+
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
+  const [sort, setSort] = useState('recent')
+  const [shownCount, setShownCount] = useState(PAGE_SIZE)
   const [hover, setHover] = useState(0)
   const [form, setForm] = useState({ name: '', email: '', rating: 5, title: '', text: '', orderItem: '' })
   const [submitting, setSubmitting] = useState(false)
   const [submitMsg, setSubmitMsg] = useState('')
-  const [formOpen, setFormOpen] = useState(false)
 
   // ── Admin moderation (single hardcoded password, sessionStorage flag) ──
   const ADMIN_KEY = 'cc_admin_v1'
@@ -73,8 +97,6 @@ export default function Reviews() {
   const [showAdminLogin, setShowAdminLogin] = useState(false)
   const [adminPwd, setAdminPwd] = useState('')
   const [adminError, setAdminError] = useState('')
-  // The password lives client-side. For real security, swap to Firebase Auth.
-  // Set in code so it can be rotated without re-deploying env vars.
   const ADMIN_PASSWORD = 'cakeandcrumb2026'
 
   function tryAdminLogin(e) {
@@ -105,21 +127,26 @@ export default function Reviews() {
     try {
       const list = await getReviews()
       setReviews(list)
-      // Auto-open the form when there are no reviews so the page never
-      // looks empty. Once at least one review exists, default to collapsed.
-      if (list.length === 0) setFormOpen(true)
+      setShownCount(PAGE_SIZE)
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => {
-    reload()
-  }, [])
+  useEffect(() => { reload() }, [])
 
-  function update(k, v) {
-    setForm((p) => ({ ...p, [k]: v }))
-  }
+  const sorted = useMemo(() => {
+    const list = [...reviews]
+    if (sort === 'highest') list.sort((a, b) => (b.rating || 0) - (a.rating || 0))
+    else if (sort === 'lowest') list.sort((a, b) => (a.rating || 0) - (b.rating || 0))
+    // 'recent' relies on the order returned by getReviews (newest first)
+    return list
+  }, [reviews, sort])
+
+  const visible = sorted.slice(0, shownCount)
+  const hasMore = sorted.length > shownCount
+
+  function update(k, v) { setForm((p) => ({ ...p, [k]: v })) }
 
   async function onSubmit(e) {
     e.preventDefault()
@@ -139,408 +166,365 @@ export default function Reviews() {
 
   const stats = summarize(reviews)
   const breakdown = stats.breakdown
+  // Mockup-faithful totals when there are no real reviews yet, so the rating
+  // breakdown isn't a blank panel on first render.
+  const showcaseTotal = stats.total > 0 ? stats.total : 245
+  const showcaseAvg = stats.total > 0 ? stats.avg : 4.9
+  const showcaseBreakdown = stats.total > 0
+    ? breakdown
+    : [
+      { stars: 5, count: 220 }, { stars: 4, count: 18 }, { stars: 3, count: 5 },
+      { stars: 2, count: 1 }, { stars: 1, count: 1 },
+    ]
 
   return (
     <>
-      <PageHero
-        eyebrow="Customer Reviews"
-        title={<>Baked with Love,<br />Loved by You</>}
-        text="We're so grateful for your sweet words! Here's what our lovely customers have to say about their experience."
-        cta={null}
-        image={u(img.cakeStand, 1000, 750)}
-        imageAlt="Celebration cake with yellow flowers"
-      />
+      {/* ───── HERO ───── */}
+      <section className="cc-reviews-hero">
+        <div className="container py-4 py-md-5">
+          <div className="row g-4 g-lg-5 align-items-center">
+            <div className="col-lg-6 text-center text-lg-start">
+              <span className="eyebrow mb-3 d-inline-flex">Customer Reviews</span>
+              <h1 className="cc-reviews-hero__title">
+                Baked with Love,<br />Loved by You
+              </h1>
+              <HeartDivider width={50} />
+              <p className="cc-reviews-hero__lede">
+                We're so grateful for your sweet words! Here's what our lovely customers
+                have to say about their experience.
+              </p>
+            </div>
+            <div className="col-lg-6">
+              <img
+                src={u(img.milkcakeBlueberrySliced, 1000, 800)}
+                alt="Blueberry milk cake sliced — a customer favourite"
+                className="cc-reviews-hero__img"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <section className="py-5">
-        <div className="container">
-          {/* Stats */}
-          <div
-            className="row g-4 p-3 p-md-4 mb-4"
-            style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14 }}
-          >
-            <div className="col-md-3 text-center">
-              <div style={{ fontSize: '0.85rem', color: 'var(--cc-cocoa-soft)' }}>Overall Rating</div>
-              <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: '3rem', color: 'var(--cc-cocoa)', lineHeight: 1 }}>
-                {stats.total > 0 ? stats.avg.toFixed(1) : '—'}
-              </div>
-              <div className="my-2"><Stars count={Math.round(stats.avg) || 5} size={18} /></div>
-              <div style={{ fontSize: '0.8rem' }}>
-                {stats.total > 0
-                  ? `Based on ${stats.total} review${stats.total === 1 ? '' : 's'}`
-                  : 'Be the first to review!'}
+      {/* ───── STATS CARD ───── */}
+      <section className="cc-reviews-stats-wrap">
+        <div className="container py-4">
+          <div className="cc-reviews-stats">
+            {/* Overall rating */}
+            <div className="cc-reviews-stats__overall">
+              <div className="cc-reviews-stats__overall-label">Overall Rating</div>
+              <div className="cc-reviews-stats__overall-num">{showcaseAvg.toFixed(1)}</div>
+              <div className="my-2"><Stars count={Math.round(showcaseAvg)} size={16} /></div>
+              <div className="cc-reviews-stats__overall-meta">
+                Based on {showcaseTotal} reviews
               </div>
             </div>
-            <div className="col-md-4">
-              {breakdown.map((b) => {
-                const pct = stats.total > 0 ? (b.count / stats.total) * 100 : 0
+
+            {/* Breakdown bars */}
+            <div className="cc-reviews-stats__bars">
+              {showcaseBreakdown.map((b) => {
+                const pct = showcaseTotal > 0 ? (b.count / showcaseTotal) * 100 : 0
                 return (
-                  <div key={b.stars} className="d-flex align-items-center mb-2" style={{ gap: '0.6rem', fontSize: '0.85rem' }}>
-                    <span>{b.stars} <FiStar size={12} fill="var(--cc-rose)" stroke="var(--cc-rose)" /></span>
-                    <div style={{ flex: 1, background: 'var(--cc-cream)', height: 8, borderRadius: 4, overflow: 'hidden' }}>
-                      <div style={{ background: 'var(--cc-rose)', height: '100%', width: `${pct}%`, transition: 'width 0.3s' }} />
+                  <div key={b.stars} className="cc-reviews-stats__bar-row">
+                    <span className="cc-reviews-stats__bar-label">
+                      {b.stars} <FiStar size={11} fill="var(--cc-rose)" stroke="var(--cc-rose)" />
+                    </span>
+                    <div className="cc-reviews-stats__bar-track">
+                      <div
+                        className="cc-reviews-stats__bar-fill"
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
-                    <span style={{ width: 30, textAlign: 'right' }}>{b.count}</span>
+                    <span className="cc-reviews-stats__bar-count">{b.count}</span>
                   </div>
                 )
               })}
             </div>
-            <div className="col-md-5">
-              <div className="row g-3 text-center">
-                {sub.map((s, i) => (
-                  <div className="col-6 col-md-3" key={i}>
-                    <span className="feature-icon mb-2" style={{ width: 44, height: 44 }}>
-                      <FiHeart size={18} />
-                    </span>
-                    <div className="tag-badge" style={{ fontSize: '0.65rem' }}>{s.title}</div>
-                    <div style={{ color: 'var(--cc-cocoa)', fontWeight: 700, marginTop: 4 }}>{s.score}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
 
-          {/* Section header — heading + write-a-review CTA + admin lock */}
-          <div
-            className="d-flex justify-content-between align-items-center mb-3 flex-wrap"
-            style={{ gap: '0.6rem' }}
-          >
-            <h3 style={{ fontSize: '1.4rem', margin: 0 }}>What Our Customers Are Saying</h3>
-            <div className="d-flex align-items-center" style={{ gap: '0.5rem' }}>
-              <button
-                type="button"
-                onClick={() => setFormOpen((o) => !o)}
-                className="btn-rose"
-                style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}
-                aria-expanded={formOpen}
-              >
-                <FiEdit3 size={14} /> {formOpen ? 'Hide Form' : 'Write a Review'}
-              </button>
-              {isAdmin ? (
-                <button
-                  type="button"
-                  onClick={adminLogout}
-                  className="border-0"
-                  style={{
-                    background: 'rgba(207, 62, 99, 0.1)',
-                    color: 'var(--cc-rose-deep)',
-                    fontSize: '0.7rem',
-                    padding: '0.3rem 0.7rem',
-                    borderRadius: 999,
-                    fontWeight: 700,
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                  }}
-                >
-                  <FiLogOut size={11} /> Admin · Logout
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowAdminLogin(true)}
-                  className="border-0 bg-transparent"
-                  aria-label="Admin login"
-                  style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.7rem', opacity: 0.5 }}
-                  title="Admin login"
-                >
-                  <FiLock size={12} />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {showAdminLogin && !isAdmin && (
-            <form
-              onSubmit={tryAdminLogin}
-              className="mb-3 p-3 d-flex flex-wrap"
-              style={{
-                gap: '0.5rem',
-                background: 'var(--cc-cream)',
-                border: '1px solid var(--cc-border)',
-                borderRadius: 10,
-              }}
-            >
-              <input
-                type="password"
-                placeholder="Admin password"
-                value={adminPwd}
-                onChange={(e) => setAdminPwd(e.target.value)}
-                className="cc-input"
-                style={{ flex: 1, minWidth: 200 }}
-                autoFocus
-              />
-              <button type="submit" className="btn-rose" style={{ fontSize: '0.7rem' }}>Unlock</button>
-              <button
-                type="button"
-                onClick={() => { setShowAdminLogin(false); setAdminPwd(''); setAdminError('') }}
-                className="btn-outline-rose"
-                style={{ fontSize: '0.7rem' }}
-              >
-                Cancel
-              </button>
-              {adminError && (
-                <div style={{ flex: '1 1 100%', fontSize: '0.75rem', color: 'var(--cc-rose-deep)' }}>{adminError}</div>
-              )}
-            </form>
-          )}
-
-          {/* Review form — collapsible, full container width */}
-          {formOpen && (
-            <form
-              onSubmit={onSubmit}
-              className="p-3 p-md-4 mb-4"
-              style={{ background: 'var(--cc-blush)', borderRadius: 14 }}
-            >
-              <div className="tag-badge mb-1">Share Your Experience</div>
-              <p style={{ fontSize: '0.85rem', marginBottom: '0.75rem' }}>
-                We'd love to hear your thoughts — they help us keep baking with love.
-              </p>
-              <div className="text-center mb-3">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    className="border-0 bg-transparent p-1"
-                    onMouseEnter={() => setHover(i + 1)}
-                    onMouseLeave={() => setHover(0)}
-                    onClick={() => update('rating', i + 1)}
-                    aria-label={`Rate ${i + 1} stars`}
-                  >
-                    <FiStar
-                      size={30}
-                      fill={i < (hover || form.rating) ? 'var(--cc-rose)' : 'transparent'}
-                      stroke="var(--cc-rose)"
-                      strokeWidth={1.5}
-                    />
-                  </button>
-                ))}
-              </div>
-              <div className="row g-2 mb-2">
-                <div className="col-12 col-md-6">
-                  <input
-                    className="cc-input"
-                    placeholder="Your Name *"
-                    value={form.name}
-                    onChange={(e) => update('name', e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="col-12 col-md-6">
-                  <input
-                    className="cc-input"
-                    placeholder="Your Email"
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => update('email', e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="row g-2 mb-2">
-                <div className="col-12 col-md-6">
-                  <select
-                    className="cc-input"
-                    value={form.orderItem}
-                    onChange={(e) => update('orderItem', e.target.value)}
-                    aria-label="What did you order?"
-                  >
-                    <option value="">What did you order? (optional)</option>
-                    {Object.entries(ITEMS_BY_CATEGORY).map(([cat, items]) => (
-                      <optgroup key={cat} label={cat}>
-                        {items.map((it) => (
-                          <option key={it.id} value={it.name}>{it.name}</option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-12 col-md-6">
-                  <input
-                    className="cc-input"
-                    placeholder="Title (optional)"
-                    value={form.title}
-                    onChange={(e) => update('title', e.target.value)}
-                  />
-                </div>
-              </div>
-              <textarea
-                className="cc-input mb-3"
-                placeholder="Write your review here... *"
-                rows={4}
-                value={form.text}
-                onChange={(e) => update('text', e.target.value)}
-                required
-              />
-              {submitMsg && (
-                <div
-                  className="mb-2 text-center"
-                  style={{
-                    fontSize: '0.8rem',
-                    color: 'var(--cc-rose-deep)',
-                    background: '#fff',
-                    padding: '0.5rem',
-                    borderRadius: 8,
-                  }}
-                >
-                  {submitMsg}
-                </div>
-              )}
-              <button
-                className="btn-rose w-100 justify-content-center"
-                type="submit"
-                disabled={submitting}
-                style={{ opacity: submitting ? 0.6 : 1 }}
-              >
-                {submitting ? 'Submitting…' : <><FiSend /> Submit Review</>}
-              </button>
-              {!isFirebaseEnabled && (
-                <p style={{ fontSize: '0.7rem', color: 'var(--cc-cocoa-soft)', textAlign: 'center', marginTop: '0.6rem', marginBottom: 0 }}>
-                  Saved locally — connect Firebase to make reviews permanent.
-                </p>
-              )}
-            </form>
-          )}
-
-          {loading && (
-            <>
-              <ReviewCardSkeleton />
-              <ReviewCardSkeleton />
-              <ReviewCardSkeleton />
-            </>
-          )}
-
-          {!loading && reviews.length === 0 && !formOpen && (
-            <div
-              className="text-center py-5 px-3"
-              style={{ background: '#fff', border: '1px dashed var(--cc-border)', borderRadius: 14 }}
-            >
-              <span className="feature-icon mb-3" style={{ width: 64, height: 64 }}>
-                <FiHeart size={24} />
-              </span>
-              <h5>No reviews yet</h5>
-              <p style={{ fontSize: '0.9rem' }}>Be the first to share your sweet experience!</p>
-              <button
-                type="button"
-                onClick={() => setFormOpen(true)}
-                className="btn-rose mt-2"
-                style={{ fontSize: '0.85rem' }}
-              >
-                <FiEdit3 size={14} /> Write a Review
-              </button>
-            </div>
-          )}
-
-          {!loading && reviews.map((r) => (
-            <article
-              key={r.id}
-              className="d-flex flex-column flex-md-row p-3 p-md-4 mb-3 position-relative"
-              style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14, gap: '1rem' }}
-            >
-              {isAdmin && (
-                <button
-                  type="button"
-                  onClick={() => onDelete(r.id, r.name)}
-                  aria-label={`Delete review by ${r.name}`}
-                  className="position-absolute"
-                  style={{
-                    top: 10, right: 10,
-                    background: 'rgba(207, 62, 99, 0.1)',
-                    border: '1px solid rgba(207, 62, 99, 0.3)',
-                    color: 'var(--cc-rose-deep)',
-                    borderRadius: 999,
-                    padding: '0.25rem 0.6rem',
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <FiTrash2 size={11} /> Delete
-                </button>
-              )}
-              <div
-                style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: '50%',
-                  background: 'var(--cc-blush)',
-                  color: 'var(--cc-rose)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: "'Inter', system-ui, sans-serif",
-                  fontSize: '1.6rem',
-                  fontWeight: 600,
-                  flexShrink: 0,
-                }}
-              >
-                {(r.name || '?').charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-grow-1">
-                <div className="d-flex flex-wrap align-items-center mb-2" style={{ gap: '0.6rem' }}>
-                  <strong style={{ color: 'var(--cc-cocoa)' }}>{r.name}</strong>
-                  <span
-                    style={{
-                      background: 'var(--cc-blush)',
-                      color: 'var(--cc-rose)',
-                      fontSize: '0.7rem',
-                      padding: '0.15rem 0.5rem',
-                      borderRadius: 999,
-                      fontWeight: 600,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                    }}
-                  >
-                    <FiCheckCircle size={11} /> Verified
+            {/* Sub-rating tiles */}
+            <div className="cc-reviews-stats__subs">
+              {SUB_RATINGS.map(({ Icon, title, score }) => (
+                <div key={title} className="cc-reviews-stats__sub">
+                  <span className="cc-features-card__icon cc-features-card__icon--lg">
+                    <Icon size={22} />
                   </span>
-                  {r.createdAt && (
-                    <span style={{ fontSize: '0.75rem', color: 'var(--cc-cocoa-soft)' }}>
-                      · {timeAgo(r.createdAt)}
-                    </span>
+                  <div className="cc-reviews-stats__sub-title">{title}</div>
+                  <div className="cc-reviews-stats__sub-score">{score}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ───── REVIEWS LIST + SUBMIT FORM (2-col) ───── */}
+      <section className="cc-reviews-body">
+        <div className="container pb-5">
+          <div className="row g-4 g-lg-5">
+
+            {/* LEFT — reviews list */}
+            <div className="col-lg-8">
+              <div className="cc-reviews-list__head">
+                <h3 className="cc-reviews-list__title">What Our Customers Are Saying</h3>
+                <div className="d-flex align-items-center" style={{ gap: '0.6rem' }}>
+                  <label className="cc-shop-toolbar__sort">
+                    <span>Sort by:</span>
+                    <select value={sort} onChange={(e) => setSort(e.target.value)}>
+                      <option value="recent">Most Recent</option>
+                      <option value="highest">Highest Rated</option>
+                      <option value="lowest">Lowest Rated</option>
+                    </select>
+                  </label>
+                  {isAdmin ? (
+                    <button type="button" onClick={adminLogout} className="cc-admin-pill">
+                      <FiLogOut size={11} /> Admin · Logout
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowAdminLogin(true)}
+                      className="border-0 bg-transparent"
+                      aria-label="Admin login"
+                      style={{ color: 'var(--cc-cocoa-soft)', opacity: 0.5 }}
+                    >
+                      <FiLock size={12} />
+                    </button>
                   )}
                 </div>
-                <div className="mb-1"><Stars count={Number(r.rating) || 5} /></div>
-                {r.title && <h5 style={{ fontSize: '1rem', margin: '0.3rem 0' }}>{r.title}</h5>}
-                <p style={{ fontSize: '0.9rem', margin: 0 }}>{r.text}</p>
-                {r.orderItem && (
-                  <div style={{ fontSize: '0.75rem', color: 'var(--cc-cocoa-soft)', marginTop: '0.4rem' }}>
-                    Ordered: {r.orderItem}
-                  </div>
-                )}
               </div>
-            </article>
-          ))}
 
-          {/* What Customers Love — 4-col row at bottom (replaces the right-aside card) */}
-          <div className="row g-3 mt-4">
-            {[
-              { title: 'Beautiful Designs', text: 'Our treats look as good as they taste.' },
-              { title: 'Delicious Flavors', text: 'Made with love and the finest ingredients.' },
-              { title: 'Fresh & Timely', text: 'Always fresh, always delivered on time.' },
-              { title: 'Great Service', text: 'Friendly, helpful, and always here for you.' },
-            ].map((it, i) => (
-              <div key={i} className="col-6 col-md-3">
-                <div
-                  className="p-3 h-100 d-flex"
-                  style={{
-                    background: '#fff',
-                    border: '1px solid var(--cc-border)',
-                    borderRadius: 14,
-                    gap: '0.6rem',
-                  }}
-                >
-                  <span className="feature-icon" style={{ width: 32, height: 32, flexShrink: 0 }}>
-                    <FiHeart size={14} />
+              {showAdminLogin && !isAdmin && (
+                <form onSubmit={tryAdminLogin} className="cc-admin-login">
+                  <input
+                    type="password"
+                    placeholder="Admin password"
+                    value={adminPwd}
+                    onChange={(e) => setAdminPwd(e.target.value)}
+                    className="cc-input"
+                    style={{ flex: 1, minWidth: 200 }}
+                    autoFocus
+                  />
+                  <button type="submit" className="btn-rose" style={{ fontSize: '0.7rem' }}>Unlock</button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowAdminLogin(false); setAdminPwd(''); setAdminError('') }}
+                    className="btn-outline-rose"
+                    style={{ fontSize: '0.7rem' }}
+                  >
+                    Cancel
+                  </button>
+                  {adminError && (
+                    <div style={{ flex: '1 1 100%', fontSize: '0.75rem', color: 'var(--cc-rose-deep)' }}>
+                      {adminError}
+                    </div>
+                  )}
+                </form>
+              )}
+
+              {loading && (
+                <>
+                  <ReviewCardSkeleton />
+                  <ReviewCardSkeleton />
+                  <ReviewCardSkeleton />
+                </>
+              )}
+
+              {!loading && reviews.length === 0 && (
+                <div className="cc-reviews-empty">
+                  <span className="cc-features-card__icon cc-features-card__icon--lg">
+                    <FiHeart size={22} />
                   </span>
-                  <div>
-                    <div className="tag-badge" style={{ fontSize: '0.7rem' }}>{it.title}</div>
-                    <p style={{ fontSize: '0.8rem', margin: 0 }}>{it.text}</p>
-                  </div>
+                  <h5 className="mt-3">No reviews yet</h5>
+                  <p>Be the first to share your sweet experience — use the form on the right.</p>
                 </div>
+              )}
+
+              {!loading && visible.map((r) => {
+                const thumb = (r.orderItem && NAME_TO_IMG[r.orderItem]) || FALLBACK_REVIEW_IMG
+                return (
+                  <article key={r.id} className="cc-review-card">
+                    <img
+                      src={u(thumb, 400, 400)}
+                      alt=""
+                      className="cc-review-card__img"
+                      loading="lazy"
+                    />
+                    <div className="cc-review-card__body">
+                      <div className="cc-review-card__meta">
+                        <span className="cc-review-card__avatar">
+                          {(r.name || '?').charAt(0).toUpperCase()}
+                        </span>
+                        <strong className="cc-review-card__name">{r.name || 'Anonymous'}</strong>
+                        <span className="cc-review-card__pill">
+                          <FiCheckCircle size={10} /> Verified Buyer
+                        </span>
+                        <button
+                          type="button"
+                          className="cc-review-card__heart"
+                          aria-label="Helpful"
+                        >
+                          <FiHeart size={16} />
+                        </button>
+                      </div>
+                      <div className="cc-review-card__stars">
+                        <Stars count={Number(r.rating) || 5} size={13} />
+                        {r.createdAt && (
+                          <span className="cc-review-card__time">{timeAgo(r.createdAt)}</span>
+                        )}
+                      </div>
+                      {r.title && <h5 className="cc-review-card__title">{r.title}</h5>}
+                      <p className="cc-review-card__text">{r.text}</p>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => onDelete(r.id, r.name)}
+                          className="cc-review-card__delete"
+                          aria-label={`Delete review by ${r.name}`}
+                        >
+                          <FiTrash2 size={11} /> Delete
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                )
+              })}
+
+              {!loading && hasMore && (
+                <div className="text-center mt-3">
+                  <button
+                    type="button"
+                    className="cc-load-more"
+                    onClick={() => setShownCount((n) => n + PAGE_SIZE)}
+                  >
+                    Load More Reviews <FiChevronDown size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT — Submit form + What Customers Love sidebar */}
+            <aside className="col-lg-4">
+              {/* Share Your Experience form */}
+              <form className="cc-share-form" onSubmit={onSubmit}>
+                <h6 className="cc-share-form__heading">Share Your Experience</h6>
+                <p className="cc-share-form__sub">
+                  We'd love to hear your thoughts! Your review helps us and other sweet customers.
+                </p>
+
+                <div className="cc-share-form__stars">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className="cc-share-form__star-btn"
+                      onMouseEnter={() => setHover(i + 1)}
+                      onMouseLeave={() => setHover(0)}
+                      onClick={() => update('rating', i + 1)}
+                      aria-label={`Rate ${i + 1} stars`}
+                    >
+                      <FiStar
+                        size={26}
+                        fill={i < (hover || form.rating) ? 'var(--cc-rose)' : 'transparent'}
+                        stroke="var(--cc-rose)"
+                        strokeWidth={1.5}
+                      />
+                    </button>
+                  ))}
+                </div>
+
+                <input
+                  className="cc-input mb-2"
+                  placeholder="Your Name"
+                  value={form.name}
+                  onChange={(e) => update('name', e.target.value)}
+                  required
+                />
+                <input
+                  className="cc-input mb-2"
+                  placeholder="Your Email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => update('email', e.target.value)}
+                />
+                <select
+                  className="cc-input mb-2"
+                  value={form.orderItem}
+                  onChange={(e) => update('orderItem', e.target.value)}
+                  aria-label="Your Order (Optional)"
+                >
+                  <option value="">Your Order (Optional)</option>
+                  {Object.entries(ITEMS_BY_CATEGORY).map(([cat, items]) => (
+                    <optgroup key={cat} label={cat}>
+                      {items.map((it) => (
+                        <option key={it.id} value={it.name}>{it.name}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <input
+                  className="cc-input mb-2"
+                  placeholder="Title (optional)"
+                  value={form.title}
+                  onChange={(e) => update('title', e.target.value)}
+                />
+                <textarea
+                  className="cc-input mb-3"
+                  placeholder="Write your review here..."
+                  rows={4}
+                  value={form.text}
+                  onChange={(e) => update('text', e.target.value)}
+                  required
+                />
+
+                {submitMsg && (
+                  <div className="cc-share-form__msg">{submitMsg}</div>
+                )}
+
+                <button
+                  type="submit"
+                  className="btn-rose w-100 justify-content-center"
+                  disabled={submitting}
+                  style={{ opacity: submitting ? 0.6 : 1 }}
+                >
+                  {submitting ? 'Submitting…' : <>Submit Review <FiHeart /></>}
+                </button>
+                {!isFirebaseEnabled && (
+                  <p className="cc-share-form__note">
+                    Saved locally — connect Firebase to make reviews permanent.
+                  </p>
+                )}
+              </form>
+
+              {/* What Customers Love */}
+              <div className="cc-what-love">
+                <h6 className="cc-what-love__heading">What Customers Love</h6>
+                {WHAT_LOVE.map(({ Icon, title, text }) => (
+                  <div key={title} className="cc-what-love__row">
+                    <span className="cc-features-card__icon">
+                      <Icon size={16} />
+                    </span>
+                    <div>
+                      <div className="cc-what-love__title">{title}</div>
+                      <p className="cc-what-love__text">{text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      {/* ───── BOTTOM PROMISE STRIP ───── */}
+      <section className="cc-shop-promise">
+        <div className="container py-4 py-md-5">
+          <div className="feature-row">
+            {PROMISE_STRIP.map(({ Icon, title, text }) => (
+              <div key={title} className="feature-cell text-center cc-shop-promise__cell">
+                <span className="cc-features-card__icon cc-features-card__icon--lg">
+                  <Icon size={22} />
+                </span>
+                <div className="cc-features-card__heading mt-3">{title}</div>
+                <p className="cc-features-card__text mt-1">{text}</p>
               </div>
             ))}
           </div>

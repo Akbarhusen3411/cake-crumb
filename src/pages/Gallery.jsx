@@ -1,5 +1,5 @@
-import PageHero from '../components/PageHero.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
+import HeartDivider from '../components/HeartDivider.jsx'
 import { img, u } from '../data/images.js'
 
 const gallery = [
@@ -16,17 +16,35 @@ export default function Gallery() {
   })
   return (
     <>
-      <PageHero
-        eyebrow="Our Gallery"
-        title={<>A Sweet Look<br />at Our Creations</>}
-        text="Take a peek at the cakes, cupcakes, cookies, and chocolates we've handcrafted for our wonderful customers."
-        cta={null}
-        image={u(img.dessertTable, 1000, 750)}
-        imageAlt="Dessert table"
-      />
+      {/* ───── HERO — matches About/Menu/Shop/Reviews ───── */}
+      <section className="cc-gallery-hero">
+        <div className="container py-4 py-md-5">
+          <div className="row g-4 g-lg-5 align-items-center">
+            <div className="col-lg-6 text-center text-lg-start">
+              <span className="eyebrow mb-3 d-inline-flex">Our Gallery</span>
+              <h1 className="cc-gallery-hero__title">
+                A Sweet Look<br />at Our Creations
+              </h1>
+              <HeartDivider width={50} />
+              <p className="cc-gallery-hero__lede">
+                Take a peek at the cakes, cupcakes, cookies, and chocolates we've
+                handcrafted for our wonderful customers.
+              </p>
+            </div>
+            <div className="col-lg-6">
+              <img
+                src={u(img.trufflesHearts, 1000, 800)}
+                alt="Heart-shaped chocolate truffles — a glimpse of our gallery"
+                className="cc-gallery-hero__img"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <section className="py-5">
-        <div className="container">
+      {/* ───── GRID ───── */}
+      <section className="cc-gallery-grid-wrap">
+        <div className="container py-5">
           <div className="row g-3">
             {gallery.map((id, i) => (
               <div className="col-6 col-md-4 col-lg-3" key={i}>
@@ -34,15 +52,7 @@ export default function Gallery() {
                   src={u(id, 600, 600)}
                   alt=""
                   loading="lazy"
-                  style={{
-                    width: '100%',
-                    aspectRatio: '1/1',
-                    objectFit: 'cover',
-                    borderRadius: 12,
-                    transition: 'transform 0.3s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.03)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                  className="cc-gallery-tile"
                 />
               </div>
             ))}

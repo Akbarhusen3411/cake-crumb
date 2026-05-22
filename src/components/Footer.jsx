@@ -10,15 +10,16 @@ import { asset } from '../data/images.js'
 
 const QUICK_LINKS = [
   { to: '/',        label: 'Home' },
-  { to: '/about',   label: 'About' },
+  { to: '/about',   label: 'About Us' },
   { to: '/menu',    label: 'Menu' },
   { to: '/shop',    label: 'Shop' },
   { to: '/gallery', label: 'Gallery' },
-  { to: '/faq',     label: 'FAQ' },
-  { to: '/contact', label: 'Contact' },
+  { to: '/contact', label: 'Contact Us' },
 ]
 
 export default function Footer() {
+  const year = new Date().getFullYear()
+
   return (
     <footer className="cc-footer">
       {/* ───── MOBILE FOOTER (< lg) ───── */}
@@ -26,7 +27,7 @@ export default function Footer() {
         {/* Brand block — icon + wordmark + tagline + heart divider + quote + socials */}
         <div className="cc-footer-m__brand">
           <img
-            src={asset('logo-icon.png')}
+            src={asset('logo_final.webp')}
             alt=""
             aria-hidden="true"
             className="cc-footer-m__icon"
@@ -44,7 +45,7 @@ export default function Footer() {
 
           <div className="cc-footer-m__socials">
             <a href="#" aria-label="Facebook" className="cc-footer-m__social"><FiFacebook size={14} /></a>
-            <a href="#" aria-label="Instagram" className="cc-footer-m__social"><FiInstagram size={14} /></a>
+            <a href="https://www.instagram.com/cake_and_crumb_1/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="cc-footer-m__social"><FiInstagram size={14} /></a>
             <a href="#" aria-label="Pinterest" className="cc-footer-m__social"><FaPinterestP size={12} /></a>
             <a href="mailto:cakeandcrumb.in@gmail.com" aria-label="Email" className="cc-footer-m__social"><FiMail size={14} /></a>
           </div>
@@ -67,12 +68,12 @@ export default function Footer() {
             <span>+91 90816 68490 &nbsp;·&nbsp; +91 91731 83440</span>
           </li>
           <li>
-            <span className="cc-footer-m__info-icon"><FiInstagram size={12} /></span>
-            <span>@cake_and_crumb_1</span>
+            <span className="cc-footer-m__info-icon"><FiMail size={12} /></span>
+            <span>cakeandcrumb.in@gmail.com</span>
           </li>
           <li>
             <span className="cc-footer-m__info-icon"><FiMapPin size={12} /></span>
-            <span>Self-pickup &amp; home delivery</span>
+            <span>Vaso, Anand, Gujarat</span>
           </li>
           <li>
             <span className="cc-footer-m__info-icon"><FiClock size={12} /></span>
@@ -95,107 +96,90 @@ export default function Footer() {
 
         {/* Copyright bar */}
         <div className="cc-footer-m__copyright">
-          © {new Date().getFullYear()} Cake &amp; Crumb &nbsp;·&nbsp; Made with <span aria-hidden style={{ color: '#ffe0e8' }}>♥</span> in India
+          © {year} Cake &amp; Crumb &nbsp;·&nbsp; Made with <span aria-hidden style={{ color: '#ffe0e8' }}>♥</span> in India
         </div>
       </div>
 
-      {/* ───── DESKTOP FOOTER (lg+) — original 4-column layout ───── */}
-      <div className="d-none d-lg-block" style={{ background: '#fff' }}>
-        <div className="container py-5">
-          <div className="row g-4">
-            <div className="col-lg-3">
+      {/* ───── DESKTOP FOOTER (lg+) — matches mockup: brand / quick links / contact / hours ───── */}
+      <div className="cc-footer-d d-none d-lg-block">
+        <div className="container-fluid px-4 px-xl-5 py-5">
+          <div className="row g-4 align-items-start">
+
+            {/* 1. Brand + socials */}
+            <div className="col-lg-3 cc-footer-d__col">
               <Logo size="sm" />
-              <p className="mt-3 mb-3" style={{ fontSize: '0.85rem', maxWidth: 240 }}>
-                The gourmet chocolate and berry boutique.
+              <p className="cc-footer-d__tagline">
+                The gourmet chocolate and<br />berry boutique!
               </p>
-              <div className="d-flex" style={{ gap: '0.5rem' }}>
-                <a href="#" className="icon-circle" aria-label="Facebook"><FiFacebook size={16} /></a>
-                <a href="#" className="icon-circle" aria-label="Instagram"><FiInstagram size={16} /></a>
-                <a href="#" className="icon-circle" aria-label="Pinterest"><FaPinterestP size={14} /></a>
-                <a href="#" className="icon-circle" aria-label="Email"><FiMail size={16} /></a>
+              <div className="cc-footer-d__socials">
+                <a href="#" aria-label="Facebook" className="cc-footer-d__social">
+                  <FiFacebook size={14} />
+                </a>
+                <a href="https://www.instagram.com/cake_and_crumb_1/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="cc-footer-d__social">
+                  <FiInstagram size={14} />
+                </a>
+                <a href="#" aria-label="Pinterest" className="cc-footer-d__social">
+                  <FaPinterestP size={12} />
+                </a>
+                <a href="mailto:cakeandcrumb.in@gmail.com" aria-label="Email" className="cc-footer-d__social">
+                  <FiMail size={14} />
+                </a>
               </div>
             </div>
 
-            <div className="col-lg-2">
-              <h6 className="tag-badge mb-3">Quick Links</h6>
-              <ul className="list-unstyled" style={{ fontSize: '0.9rem' }}>
-                <li className="mb-2"><Link to="/">Home</Link></li>
-                <li className="mb-2"><Link to="/about">About Us</Link></li>
-                <li className="mb-2"><Link to="/menu">Menu</Link></li>
-                <li className="mb-2"><Link to="/shop">Shop</Link></li>
-                <li className="mb-2"><Link to="/gallery">Gallery</Link></li>
-                <li className="mb-2"><Link to="/faq">FAQ</Link></li>
-                <li className="mb-2"><Link to="/contact">Contact Us</Link></li>
+            {/* 2. Quick Links */}
+            <div className="col-lg-2 cc-footer-d__col">
+              <h6 className="cc-footer-d__heading">Quick Links</h6>
+              <ul className="cc-footer-d__links">
+                {QUICK_LINKS.map((l) => (
+                  <li key={l.to}>
+                    <Link to={l.to}>{l.label}</Link>
+                  </li>
+                ))}
               </ul>
             </div>
 
-            <div className="col-lg-4">
-              <h6 className="tag-badge mb-3">Contact Us</h6>
-              <ul className="list-unstyled" style={{ fontSize: '0.9rem' }}>
-                <li className="mb-2 d-flex align-items-center" style={{ gap: '0.6rem' }}>
-                  <span className="icon-circle" style={{ width: 28, height: 28, fontSize: 12 }}>
-                    <FiPhone size={12} />
-                  </span>
-                  <span>+91 90816 68490<br />+91 91731 83440</span>
+            {/* 3. Contact Us */}
+            <div className="col-lg-4 cc-footer-d__col">
+              <h6 className="cc-footer-d__heading">Contact Us</h6>
+              <ul className="cc-footer-d__info">
+                <li>
+                  <span className="cc-footer-d__info-icon"><FiMapPin size={14} /></span>
+                  <span>Vaso, Anand,<br />Gujarat — India</span>
                 </li>
-                <li className="mb-2 d-flex align-items-center" style={{ gap: '0.6rem' }}>
-                  <span className="icon-circle" style={{ width: 28, height: 28, fontSize: 12 }}>
-                    <FiInstagram size={12} />
-                  </span>
-                  <span>@cake_and_crumb_1</span>
+                <li>
+                  <span className="cc-footer-d__info-icon"><FiPhone size={14} /></span>
+                  <a href="tel:+919081668490">+91 90816 68490</a>
                 </li>
-                <li className="mb-2 d-flex align-items-start" style={{ gap: '0.6rem' }}>
-                  <span className="icon-circle" style={{ width: 28, height: 28, fontSize: 12 }}>
-                    <FiMapPin size={12} />
-                  </span>
-                  <span>Self-pickup &amp; home delivery<br />(charges apply)</span>
+                <li>
+                  <span className="cc-footer-d__info-icon"><FiMail size={14} /></span>
+                  <a href="mailto:cakeandcrumb.in@gmail.com">cakeandcrumb.in@gmail.com</a>
                 </li>
               </ul>
             </div>
 
-            <div className="col-lg-3">
-              <h6 className="tag-badge mb-3">Hours</h6>
-              <ul className="list-unstyled" style={{ fontSize: '0.9rem' }}>
-                <li className="mb-2 d-flex align-items-start" style={{ gap: '0.6rem' }}>
-                  <span className="icon-circle" style={{ width: 28, height: 28, fontSize: 12 }}>
-                    <FiClock size={12} />
+            {/* 4. Hours */}
+            <div className="col-lg-3 cc-footer-d__col">
+              <h6 className="cc-footer-d__heading">Hours</h6>
+              <ul className="cc-footer-d__info">
+                <li>
+                  <span className="cc-footer-d__info-icon"><FiClock size={14} /></span>
+                  <span>
+                    Mon – Sat: 9am – 9pm<br />
+                    Sunday: 10am – 7pm
                   </span>
-                  <span>Pre-order required<br />Order 1 day in advance</span>
                 </li>
               </ul>
-              <p className="script mt-3" style={{ fontSize: '1.4rem', lineHeight: 1.1 }}>
-                We can't wait to<br />sweeten your day!
+              <p className="cc-footer-d__script">
+                We can't wait to<br />sweeten your day! <span aria-hidden style={{ color: 'var(--cc-rose)' }}>♥</span>
               </p>
-            </div>
-          </div>
-
-          <div
-            className="mt-4 pt-4 row align-items-center g-3"
-            style={{ borderTop: '1px solid var(--cc-border)' }}
-          >
-            <div className="col-md-5">
-              <h6 className="tag-badge mb-1">Newsletter</h6>
-              <p style={{ fontSize: '0.82rem', color: 'var(--cc-cocoa-soft)', margin: 0 }}>
-                Sweet news, festival specials & treat-of-the-week — never spam.
-              </p>
-            </div>
-            <div className="col-md-7">
-              <Newsletter compact />
             </div>
           </div>
         </div>
 
-        <div
-          style={{
-            background: 'var(--cc-rose)',
-            color: '#fff',
-            textAlign: 'center',
-            padding: '0.8rem 1rem',
-            fontSize: '0.8rem',
-            letterSpacing: '0.06em',
-          }}
-        >
-          © {new Date().getFullYear()} Cake &amp; Crumb. All Rights Reserved. <span aria-hidden>♥</span>
+        {/* Rose ribbon */}
+        <div className="cc-footer-d__ribbon">
+          © {year} Cake &amp; Crumb. All Rights Reserved. <span aria-hidden>♥</span>
         </div>
       </div>
     </footer>

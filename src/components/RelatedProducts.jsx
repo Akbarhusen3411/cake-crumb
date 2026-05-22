@@ -90,7 +90,7 @@ export default function RelatedProducts() {
                 </div>
                 <div
                   style={{
-                    fontFamily: "'Inter', system-ui, sans-serif",
+                    fontFamily: "'Lato', system-ui, sans-serif",
                     fontSize: '0.9rem',
                     color: 'var(--cc-cocoa)',
                     overflow: 'hidden',

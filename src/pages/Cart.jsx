@@ -96,7 +96,7 @@ export default function Cart() {
                         style={{ width: 70, height: 70, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
                       />
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ fontFamily: "'Inter', system-ui, sans-serif", color: 'var(--cc-cocoa)', fontSize: '1rem' }}>
+                        <div style={{ fontFamily: "'Lato', system-ui, sans-serif", color: 'var(--cc-cocoa)', fontSize: '1rem' }}>
                           {it.name}
                         </div>
                         <button
@@ -166,7 +166,7 @@ export default function Cart() {
               <hr style={{ borderColor: 'var(--cc-border)' }} />
               <div className="d-flex justify-content-between mb-3" style={{ fontSize: '1.05rem' }}>
                 <span style={{ color: 'var(--cc-cocoa)' }}>Subtotal</span>
-                <strong style={{ color: 'var(--cc-rose)', fontFamily: "'Inter', system-ui, sans-serif", fontSize: '1.2rem' }}>
+                <strong style={{ color: 'var(--cc-rose)', fontFamily: "'Lato', system-ui, sans-serif", fontSize: '1.2rem' }}>
                   {inr(subtotal)}
                 </strong>
               </div>
