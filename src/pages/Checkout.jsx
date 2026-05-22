@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   FiCheckCircle, FiHome, FiArrowLeft, FiSmartphone, FiTruck,
-  FiCopy, FiShoppingBag, FiCalendar, FiAlertCircle, FiCheck, FiLoader,
+  FiCopy, FiShoppingBag, FiCalendar, FiAlertCircle, FiCheck,
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import { useCart } from '../context/CartContext.jsx'
@@ -14,8 +14,6 @@ import { saveOrder } from '../services/orders.js'
 import { generateOrderId } from '../services/orderId.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
 import { sendOrderEmail, sendCustomerConfirmation } from '../services/emailNotify.js'
-import { computeDeliveryFromPincode } from '../services/delivery.js'
-import { MIN_ORDER_INR } from '../data/shopConfig.js'
 
 const UPI_ID = '9081668490@kotakbank'
 const PAYEE_NAME = 'Momin Akbarhusen Gulamali'
@@ -82,6 +80,9 @@ export default function Checkout() {
     notes: '',
     deliveryDate: '',
     payment: 'upi',
+    // 'delivery' (home delivery, charges confirmed on WhatsApp) or 'pickup'
+    // (customer picks up from the bakery — free).
+    deliveryMethod: 'delivery',
   })
 
   // One-time cleanup: clear any legacy customer/draft data left in
@@ -119,36 +120,11 @@ export default function Checkout() {
     setErrors((e) => ({ ...e, phone: validatePhone() }))
   }
 
-  // Distance-based delivery — recomputed when pincode changes (debounced).
-  // Effect body is intentionally side-effect-free; the state mutations
-  // happen inside the timeout callback (after a 600ms debounce).
-  const [deliveryCharge, setDeliveryCharge] = useState(0)
-  const [deliveryStatus, setDeliveryStatus] = useState('idle') // idle | loading | ok | invalid
-  useEffect(() => {
-    const pin = form.pincode.trim()
-    let cancelled = false
-    const t = setTimeout(async () => {
-      if (cancelled) return
-      if (pin.length < 6) {
-        setDeliveryCharge(0)
-        setDeliveryStatus('idle')
-        return
-      }
-      setDeliveryStatus('loading')
-      const result = await computeDeliveryFromPincode(pin)
-      if (cancelled) return
-      if (result) {
-        setDeliveryCharge(result.charge)
-        setDeliveryStatus('ok')
-      } else {
-        setDeliveryCharge(0)
-        setDeliveryStatus('invalid')
-      }
-    }, 600)
-    return () => { cancelled = true; clearTimeout(t) }
-  }, [form.pincode])
-
-  const total = subtotal + deliveryCharge
+  // Delivery fee is intentionally not calculated here — bakery confirms the
+  // delivery charge on WhatsApp once they know the address. Total shown on
+  // checkout is just the subtotal; the WhatsApp message makes the
+  // "delivery charges apply, confirmed separately" expectation clear.
+  const total = subtotal
   const selectedCountry = useMemo(
     () => COUNTRY_CODES.find((c) => c.code === form.countryCode) || DEFAULT_COUNTRY,
     [form.countryCode]
@@ -175,19 +151,19 @@ export default function Checkout() {
       form.name.trim() &&
       phoneOk &&
       emailOk &&
-      form.address.trim() &&
-      form.city.trim() &&
-      /^\d{6}$/.test(form.pincode.trim()) &&
-      deliveryStatus === 'ok' &&
+      // For self-pickup, address fields are optional. Home delivery still
+      // needs address + city + 6-digit pincode so the bakery can quote a
+      // delivery charge on WhatsApp.
+      (form.deliveryMethod === 'pickup' ||
+        (form.address.trim() && form.city.trim() && /^\d{6}$/.test(form.pincode.trim()))) &&
       form.deliveryDate && form.deliveryDate >= minDeliveryDate
     )
-  }, [form, minDeliveryDate, selectedCountry, deliveryStatus])
+  }, [form, minDeliveryDate, selectedCountry])
 
   const isPaymentValid =
     form.payment === 'cod' || (form.payment === 'upi' && /^\d{12}$/.test(utr))
 
-  const meetsMinOrder = subtotal >= MIN_ORDER_INR
-  const isFormValid = isDetailsValid && isPaymentValid && meetsMinOrder
+  const isFormValid = isDetailsValid && isPaymentValid && subtotal > 0
 
   const [placedItems, setPlacedItems] = useState([])
   const [placedTotals, setPlacedTotals] = useState({ subtotal: 0, delivery: 0, total: 0 })
@@ -199,12 +175,21 @@ export default function Checkout() {
       ? `*💳 Payment:* UPI ✅ Paid\n*🧾 UTR:* ${utr}`
       : '*💳 Payment:* Cash on Delivery'
 
+    const isPickup = form.deliveryMethod === 'pickup'
+    const methodLine = isPickup
+      ? '*🚶 Order type:* Self-Pickup (free)'
+      : '*🚚 Order type:* Home Delivery — _please confirm delivery charge_'
+
+    // Address line is omitted for pickup orders (customer doesn't need to
+    // share home address). For delivery, include whatever they filled in.
+    const addressLine = isPickup
+      ? null
+      : `*📍 Address:* ${[form.address, form.city, form.pincode].filter(Boolean).join(', ')}`
+
     // Admin tap-able confirm URL — bakery owner opens this from WhatsApp.
-    // We include the customer's name + phone + total in the URL so the
-    // confirm page can still build a WhatsApp message back to them even
-    // when Firestore isn't configured (the customer's localStorage lives
-    // on their phone, not the admin's, so the cross-device lookup fails
-    // without Firestore).
+    // We include enough customer detail in the URL so the confirm + track
+    // pages work even when Firestore isn't configured (localStorage on the
+    // customer's device isn't reachable from the admin's).
     const siteOrigin = typeof window !== 'undefined' && window.location?.origin
       ? window.location.origin
       : 'https://akbarhusen3411.github.io'
@@ -215,8 +200,10 @@ export default function Checkout() {
       phone: `${form.countryCode}${form.phone}`,
       total: String(totals.total),
       date: deliveryDate || '',
+      method: form.deliveryMethod,
     })
     const confirmUrl = `${siteOrigin}${basePath}/confirm-order?${confirmParams.toString()}`
+    const trackUrl = `${siteOrigin}${basePath}/track-order?${confirmParams.toString()}`
 
     const lines = [
       `🎂 *NEW ORDER — ${id}*`,
@@ -225,16 +212,19 @@ export default function Checkout() {
       `*👤 Customer:* ${form.name}`,
       `*📞 Phone:* ${fullPhone}`,
       `*📧 Email:* ${form.email}`,
-      `*📍 Address:* ${form.address}, ${form.city} - ${form.pincode}`,
-      ...(deliveryDate ? [`*📅 Delivery date:* ${formatDateForDisplay(deliveryDate)}`] : []),
+      ...(addressLine ? [addressLine] : []),
+      ...(deliveryDate ? [`*📅 Preferred date:* ${formatDateForDisplay(deliveryDate)}`] : []),
+      methodLine,
       '',
       '━━━━━━━━━━━━━━━━━━━━',
       '*📋 Items:*',
       ...snapshotItems.map((it) => `  • ${it.name} × ${it.qty} = ${inr(it.price * it.qty)}`),
       '━━━━━━━━━━━━━━━━━━━━',
       `*Subtotal:* ${inr(totals.subtotal)}`,
-      `*Delivery:* ${totals.delivery === 0 ? 'FREE ✅' : inr(totals.delivery)}`,
-      `*💰 Total: ${inr(totals.total)}*`,
+      isPickup
+        ? '*Delivery:* FREE (pickup)'
+        : '*Delivery:* _will be confirmed by Cake & Crumb_',
+      `*💰 Total (excl. delivery): ${inr(totals.total)}*`,
       '',
       paymentLine,
       ...(form.notes ? ['', `*📝 Notes:* ${form.notes}`] : []),
@@ -244,6 +234,9 @@ export default function Checkout() {
       '━━━━━━━━━━━━━━━━━━━━',
       '✅ *Cake & Crumb team — tap below to confirm this order:*',
       confirmUrl,
+      '',
+      '📦 *Track your order anytime:*',
+      trackUrl,
     ]
     return lines.join('\n')
   }
@@ -258,7 +251,7 @@ export default function Checkout() {
 
     const id = generateOrderId(form.name)
     const snapshotItems = items.map((it) => ({ ...it }))
-    const snapshotTotals = { subtotal, delivery: deliveryCharge, total }
+    const snapshotTotals = { subtotal, delivery: 0, total }
 
     const msg = buildOrderMessage(id, snapshotItems, snapshotTotals, form.deliveryDate)
     try {
@@ -498,55 +491,89 @@ export default function Checkout() {
                       <div className="cc-field-error">{errors.email}</div>
                     )}
                   </div>
+                  {/* Delivery method — radio toggle + notice */}
+                  <div className="col-12">
+                    <label className="cc-field-label">How would you like to receive your order? *</label>
+                    <div className="cc-delivery-method">
+                      <label className={`cc-delivery-method__opt${form.deliveryMethod === 'delivery' ? ' is-active' : ''}`}>
+                        <input
+                          type="radio"
+                          name="deliveryMethod"
+                          value="delivery"
+                          checked={form.deliveryMethod === 'delivery'}
+                          onChange={() => update('deliveryMethod', 'delivery')}
+                        />
+                        <span className="cc-delivery-method__icon">🚚</span>
+                        <span>
+                          <strong>Home Delivery</strong>
+                          <span className="cc-delivery-method__sub">Charges depend on distance — we'll confirm on WhatsApp</span>
+                        </span>
+                      </label>
+                      <label className={`cc-delivery-method__opt${form.deliveryMethod === 'pickup' ? ' is-active' : ''}`}>
+                        <input
+                          type="radio"
+                          name="deliveryMethod"
+                          value="pickup"
+                          checked={form.deliveryMethod === 'pickup'}
+                          onChange={() => update('deliveryMethod', 'pickup')}
+                        />
+                        <span className="cc-delivery-method__icon">🚶</span>
+                        <span>
+                          <strong>Self-Pickup</strong>
+                          <span className="cc-delivery-method__sub">Free — pick up from Vaso, Anand</span>
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
                   <div className="col-12">
                     <textarea
-                      className="cc-input" rows={2} placeholder="Address (House, Street, Area) *"
+                      className="cc-input"
+                      rows={2}
+                      placeholder={form.deliveryMethod === 'pickup' ? 'Address (optional for pickup)' : 'Address (House, Street, Area) *'}
                       value={form.address}
                       onChange={(e) => update('address', e.target.value)}
                       onBlur={() => onFieldBlur('address')}
-                      aria-invalid={Boolean(touched.address && errors.address)}
-                      style={{ borderColor: touched.address && errors.address ? '#cf3e63' : undefined }}
-                      required
+                      aria-invalid={Boolean(form.deliveryMethod === 'delivery' && touched.address && errors.address)}
+                      style={{ borderColor: form.deliveryMethod === 'delivery' && touched.address && errors.address ? '#cf3e63' : undefined }}
+                      required={form.deliveryMethod === 'delivery'}
                     />
-                    {touched.address && errors.address && (
+                    {form.deliveryMethod === 'delivery' && touched.address && errors.address && (
                       <div className="cc-field-error">{errors.address}</div>
                     )}
                   </div>
                   <div className="col-12 col-md-7">
                     <input
-                      className="cc-input" placeholder="City *"
+                      className="cc-input"
+                      placeholder={form.deliveryMethod === 'pickup' ? 'City (optional)' : 'City *'}
                       value={form.city}
                       onChange={(e) => update('city', e.target.value)}
                       onBlur={() => onFieldBlur('city')}
-                      aria-invalid={Boolean(touched.city && errors.city)}
-                      style={{ borderColor: touched.city && errors.city ? '#cf3e63' : undefined }}
-                      required
+                      aria-invalid={Boolean(form.deliveryMethod === 'delivery' && touched.city && errors.city)}
+                      style={{ borderColor: form.deliveryMethod === 'delivery' && touched.city && errors.city ? '#cf3e63' : undefined }}
+                      required={form.deliveryMethod === 'delivery'}
                     />
-                    {touched.city && errors.city && (
+                    {form.deliveryMethod === 'delivery' && touched.city && errors.city && (
                       <div className="cc-field-error">{errors.city}</div>
                     )}
                   </div>
                   <div className="col-12 col-md-5">
-                    <div className="cc-input-with-status">
-                      <input
-                        className="cc-input" placeholder="Pincode (6-digit) *"
-                        value={form.pincode}
-                        onChange={(e) => update('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        inputMode="numeric" required
-                        style={{
-                          borderColor: deliveryStatus === 'invalid' ? '#cf3e63' : undefined,
-                        }}
-                      />
-                      <span className="cc-input-status">
-                        {deliveryStatus === 'loading' && <FiLoader className="cc-spin" size={16} color="var(--cc-rose)" />}
-                        {deliveryStatus === 'ok' && <FiCheckCircle size={16} color="#22a55a" />}
-                        {deliveryStatus === 'invalid' && <FiAlertCircle size={16} color="#cf3e63" />}
-                      </span>
-                    </div>
-                    {deliveryStatus === 'invalid' && (
-                      <div style={{ fontSize: '0.72rem', color: '#cf3e63', marginTop: 4 }}>
-                        We couldn't find this pincode. Please check and re-enter.
-                      </div>
+                    <input
+                      className="cc-input"
+                      placeholder={form.deliveryMethod === 'pickup' ? 'Pincode (optional)' : 'Pincode (6-digit) *'}
+                      value={form.pincode}
+                      onChange={(e) => update('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      inputMode="numeric"
+                      onBlur={() => onFieldBlur('pincode')}
+                      aria-invalid={Boolean(touched.pincode && errors.pincode && form.deliveryMethod === 'delivery')}
+                      style={{
+                        borderColor:
+                          form.deliveryMethod === 'delivery' && touched.pincode && errors.pincode ? '#cf3e63' : undefined,
+                      }}
+                      required={form.deliveryMethod === 'delivery'}
+                    />
+                    {form.deliveryMethod === 'delivery' && touched.pincode && errors.pincode && (
+                      <div className="cc-field-error">{errors.pincode}</div>
                     )}
                   </div>
                   <div className="col-12">
@@ -870,28 +897,21 @@ export default function Checkout() {
                 </div>
                 <div className="d-flex justify-content-between mb-2" style={{ fontSize: '0.9rem' }}>
                   <span>Delivery</span>
-                  <span>
-                    {deliveryStatus === 'loading' && <span style={{ color: 'var(--cc-cocoa-soft)' }}>Calculating…</span>}
-                    {deliveryStatus === 'idle' && <span style={{ color: 'var(--cc-cocoa-soft)' }}>Enter pincode</span>}
-                    {deliveryStatus === 'invalid' && <span style={{ color: '#cf3e63' }}>—</span>}
-                    {deliveryStatus === 'ok' && (deliveryCharge === 0 ? 'Free' : inr(deliveryCharge))}
+                  <span style={{ color: 'var(--cc-cocoa-soft)', fontStyle: 'italic' }}>
+                    {form.deliveryMethod === 'pickup' ? 'Free (pickup)' : 'Confirmed on WhatsApp'}
                   </span>
                 </div>
                 <hr style={{ borderColor: 'var(--cc-border)' }} />
-                <div className="d-flex justify-content-between mb-3" style={{ fontSize: '1.05rem' }}>
+                <div className="d-flex justify-content-between mb-1" style={{ fontSize: '1.05rem' }}>
                   <strong style={{ color: 'var(--cc-cocoa)' }}>Total</strong>
                   <strong style={{ color: 'var(--cc-rose)', fontFamily: "'Lato', system-ui, sans-serif", fontSize: '1.3rem' }}>
                     {inr(total)}
                   </strong>
                 </div>
-
-                {!meetsMinOrder && (
-                  <div className="cc-notice mb-3" role="note" style={{ fontSize: '0.8rem' }}>
-                    <span className="cc-notice__icon"><FiAlertCircle size={14} /></span>
-                    <div>
-                      Minimum order is <strong>{inr(MIN_ORDER_INR)}</strong>. Add {inr(MIN_ORDER_INR - subtotal)} more to place this order.
-                    </div>
-                  </div>
+                {form.deliveryMethod === 'delivery' && (
+                  <p style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', marginTop: 0, marginBottom: '1rem', textAlign: 'right' }}>
+                    + delivery charge (confirmed by us)
+                  </p>
                 )}
                 <button
                   type="submit"

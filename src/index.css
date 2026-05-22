@@ -1575,6 +1575,46 @@ html, body { overflow-x: hidden; }
 }
 .mobile-menu__cta:hover { transform: translateY(-1px); }
 
+/* ─── Checkout delivery-method picker ───────────────────────────────────── */
+.cc-delivery-method {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+@media (min-width: 576px) {
+  .cc-delivery-method { grid-template-columns: 1fr 1fr; }
+}
+.cc-delivery-method__opt {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.8rem 0.9rem;
+  border: 1.5px solid var(--cc-border);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.cc-delivery-method__opt input { display: none; }
+.cc-delivery-method__opt.is-active {
+  border-color: var(--cc-rose);
+  background: rgba(224, 97, 122, 0.06);
+}
+.cc-delivery-method__icon {
+  font-size: 1.3rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.cc-delivery-method__sub {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--cc-cocoa-soft);
+  font-weight: 400;
+  margin-top: 0.15rem;
+  line-height: 1.35;
+}
+
 /* Background scroll prevention is now handled by Navbar.jsx via touchmove
    and wheel event listeners on the document — we no longer mutate body/html
    styles because doing so causes iOS Safari to snap scroll position to 0.

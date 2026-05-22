@@ -359,7 +359,7 @@ export default function Shop() {
                   <strong>{inr(subtotal)}</strong>
                 </div>
                 <p className="cc-shop-cart__note">
-                  Taxes and delivery calculated at checkout.
+                  Home delivery charges confirmed on WhatsApp. Pickup is free.
                 </p>
                 <Link
                   to="/cart"

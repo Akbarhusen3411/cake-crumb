@@ -21,6 +21,27 @@ function formatDeliveryDate(iso) {
   })
 }
 
+// Fallback order built purely from URL params — used when Firestore + the
+// local mirror both come up empty (typical when the customer opens their
+// /track-order link from a different browser/device than where they placed
+// the order). The WhatsApp message bakery shares to the customer includes
+// every value we need here.
+function orderFromParams(params) {
+  const phone = params.get('phone') || ''
+  const id = params.get('id') || ''
+  if (!phone && !id) return null
+  return {
+    orderId: id,
+    customer: { name: params.get('name') || 'Customer', phone },
+    deliveryDate: params.get('date') || '',
+    totals: { subtotal: Number(params.get('total')) || 0, delivery: 0, total: Number(params.get('total')) || 0 },
+    items: [],
+    status: 'placed',
+    deliveryMethod: params.get('method') || 'delivery',
+    firebaseId: null,
+  }
+}
+
 // Map raw status → label + icon + colour
 function statusMeta(status) {
   switch (status) {
@@ -57,7 +78,12 @@ export default function TrackOrder() {
     setPhase('loading')
     setError('')
     try {
-      const found = await getOrderByOrderId(id)
+      let found = await getOrderByOrderId(id)
+      // Fallback: when the lookup misses but the URL itself carries the
+      // essential order info (id, name, phone, total, date, method), build
+      // a minimal order from those params so the customer still gets a
+      // confirmation screen on any device.
+      if (!found && params.get('phone')) found = orderFromParams(params)
       if (found) {
         setOrder(found)
         setPhase('found')
@@ -207,18 +233,21 @@ export default function TrackOrder() {
 
                 <hr style={{ borderColor: 'var(--cc-border)' }} />
 
-                {/* Items */}
-                <div className="mb-2" style={{ fontSize: '0.7rem', color: 'var(--cc-cocoa-soft)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700 }}>
-                  Your Items
-                </div>
-                {(order.items || []).map((it) => (
-                  <div key={it.id} className="d-flex justify-content-between align-items-center mb-2" style={{ fontSize: '0.9rem' }}>
-                    <span style={{ color: 'var(--cc-cocoa)' }}>{it.name} × {it.qty}</span>
-                    <strong style={{ color: 'var(--cc-cocoa)' }}>{inr((it.price || 0) * (it.qty || 1))}</strong>
-                  </div>
-                ))}
-
-                <hr style={{ borderColor: 'var(--cc-border)' }} />
+                {/* Items — hidden when running on URL-params fallback (items list not in URL) */}
+                {(order.items?.length || 0) > 0 && (
+                  <>
+                    <div className="mb-2" style={{ fontSize: '0.7rem', color: 'var(--cc-cocoa-soft)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700 }}>
+                      Your Items
+                    </div>
+                    {order.items.map((it) => (
+                      <div key={it.id} className="d-flex justify-content-between align-items-center mb-2" style={{ fontSize: '0.9rem' }}>
+                        <span style={{ color: 'var(--cc-cocoa)' }}>{it.name} × {it.qty}</span>
+                        <strong style={{ color: 'var(--cc-cocoa)' }}>{inr((it.price || 0) * (it.qty || 1))}</strong>
+                      </div>
+                    ))}
+                    <hr style={{ borderColor: 'var(--cc-border)' }} />
+                  </>
+                )}
 
                 {/* Totals */}
                 <div className="d-flex justify-content-between mb-1" style={{ fontSize: '0.88rem' }}>
@@ -227,12 +256,21 @@ export default function TrackOrder() {
                 </div>
                 <div className="d-flex justify-content-between mb-2" style={{ fontSize: '0.88rem' }}>
                   <span>Delivery</span>
-                  <span>{order.totals?.delivery === 0 ? 'Free' : inr(order.totals?.delivery || 0)}</span>
+                  <span style={{ color: 'var(--cc-cocoa-soft)' }}>
+                    {order.deliveryMethod === 'pickup'
+                      ? 'Free (pickup)'
+                      : (order.totals?.delivery > 0 ? inr(order.totals.delivery) : 'Confirmed on WhatsApp')}
+                  </span>
                 </div>
                 <div className="d-flex justify-content-between" style={{ fontSize: '1.05rem' }}>
                   <strong style={{ color: 'var(--cc-cocoa)' }}>Total</strong>
                   <strong style={{ color: 'var(--cc-rose)', fontSize: '1.2rem' }}>{inr(order.totals?.total || 0)}</strong>
                 </div>
+                {order.deliveryMethod === 'delivery' && order.totals?.delivery === 0 && (
+                  <p style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', textAlign: 'right', marginTop: 4, marginBottom: 0 }}>
+                    + delivery charge (confirmed by us)
+                  </p>
+                )}
               </div>
 
               {/* WhatsApp help footer */}

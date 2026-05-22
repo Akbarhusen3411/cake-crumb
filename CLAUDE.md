@@ -54,15 +54,15 @@ The confirm URL is built from `window.location.origin + BASE_URL + /confirm-orde
 
 Customers can look up their own orders at `/track-order?id=…` via `getOrderByOrderId()` (Firestore query by `orderId` field).
 
-### Distance-based delivery
+### Delivery is a choice, not a computed fee
 
-`src/services/delivery.js` resolves the user's Indian pincode → coords via OpenStreetMap Nominatim, computes Haversine distance from **Shia Masjid, Vaso (22.5687, 72.9598)**, and returns a charge at **₹5/km** with a floor of ₹30 and a cap of ₹500. The per-km rate is **intentionally not surfaced in the UI** — it's just shown as the computed delivery fee in the order summary. The lookup is debounced (600ms) and cached in-memory by pincode.
+Checkout asks the customer to pick **Home Delivery** or **Self-Pickup** (radio cards). For home delivery the customer fills in address + city + 6-digit pincode; for pickup all three are optional. The total shown on checkout is always just the subtotal — the actual delivery charge is **confirmed by the bakery on WhatsApp**, and the order WhatsApp message makes that explicit (`*Delivery:* will be confirmed by Cake & Crumb`).
 
-Cart page no longer shows delivery — Checkout computes it once the pincode resolves. Don't restore the old static `₹49 / Free` logic in `CartContext.jsx`.
+The old Haversine + Nominatim distance calculation in `src/services/delivery.js` is no longer called from `Checkout.jsx`. The file is kept around in case the bakery wants to bring back a per-km auto-quote later, but **don't reintroduce it without the user's explicit ask** — they removed it because customers found the auto-calculated number confusing when it didn't match the final quote.
 
 ### Cart
 
-`src/context/CartContext.jsx` is the single source of truth, persisted to `localStorage` under `cc_cart_v1`. Item shape: `{ id, name, price, img, qty }`. Minimum order is **₹250** (`MIN_ORDER_INR` in `src/data/shopConfig.js`), enforced at both Cart (proceed-to-checkout button disabled) and Checkout (Place Order disabled).
+`src/context/CartContext.jsx` is the single source of truth, persisted to `localStorage` under `cc_cart_v1`. Item shape: `{ id, name, price, img, qty }`. **There is no minimum order** — any non-empty cart can proceed to checkout. `MIN_ORDER_INR` still exists in `src/data/shopConfig.js` but is unused; don't re-wire it without checking with the user first.
 
 ### Checkout form starts empty (pre-fill removed)
 
