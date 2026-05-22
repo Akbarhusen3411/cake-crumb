@@ -1316,6 +1316,7 @@ html, body { overflow-x: hidden; }
     0 0 0 1px rgba(207, 62, 99, 0.10);
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   /* Prevent scroll chaining — when the panel's internal scroll hits its
      edge, the wheel/touch event should NOT bubble up to scroll the body. */
@@ -1574,13 +1575,11 @@ html, body { overflow-x: hidden; }
 }
 .mobile-menu__cta:hover { transform: translateY(-1px); }
 
-/* When the mobile menu is open: prevent background scroll.
-   Navbar.jsx sets html { overflow: hidden } too — together these stop
-   wheel + touch scroll without the brittle position:fixed dance. */
-body.menu-open {
-  overflow: hidden;
-  touch-action: none;
-}
+/* Background scroll prevention is now handled by Navbar.jsx via touchmove
+   and wheel event listeners on the document — we no longer mutate body/html
+   styles because doing so causes iOS Safari to snap scroll position to 0.
+   Keeping .mobile-menu__panel's overscroll-behavior contained ensures the
+   panel's own scroll doesn't chain to the body. */
 
 @media (prefers-reduced-motion: reduce) {
   .mobile-menu-overlay,

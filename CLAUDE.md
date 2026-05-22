@@ -81,7 +81,7 @@ Two localStorage keys, used in `Checkout.jsx`:
 
 `src/data/products.js` is hand-maintained — `featured` (Home cards) and `shopProducts` (the full Shop + Menu list). Each entry references `img.someName` from `src/data/images.js`. Some products have a `slice` field for a second price tier (rendered as a second add-to-cart button). Sourced from the original menu PDF; prices in INR.
 
-The Shop page surfaces categories as a horizontal chip row at the top (`.cc-filter-chips` in `index.css`) — the old desktop filter sidebar was removed. Search is wired to the navbar magnifier icon (`SearchOverlay.jsx`).
+The Shop page is a 3-column layout (lg+): **left filter sidebar** (Category radio + Price Range radio + Occasion visual-only radio + Clear Filters button), **center product grid** (3 columns of `.cc-product-card`), **right sticky cart sidebar** with subtotal + View Cart / Checkout buttons + "Need Something Special?" CTA + 3 trust badges. Pagination shows 12 products per page with prev/next + numbered buttons. Filter state lives in component state; changing any filter resets to page 1. The old `.cc-filter-chips` row CSS is still in `index.css` but unused. Search is wired to the navbar magnifier icon (`SearchOverlay.jsx`).
 
 ### Festival banner
 
@@ -97,23 +97,48 @@ The `.cc-header::after` is a 16px cream→transparent gradient that sticks with 
 
 ### Mobile menu — keep it simple
 
-Mobile hamburger opens a glassmorphism centered panel (`.mobile-menu-overlay`, `.mobile-menu__panel`). Scroll lock is intentionally minimal — `Navbar.jsx` toggles `html { overflow: hidden }` and `body.menu-open { overflow: hidden; touch-action: none }`. Plus a `useEffect` on `location.pathname` that force-closes the menu on every route change.
+Mobile hamburger opens a glassmorphism centered panel (`.mobile-menu-overlay`, `.mobile-menu__panel`). A `useEffect` on `location.pathname` force-closes the menu on every route change so a link click can't leave the menu stuck open.
 
-**Do not reintroduce the `position: fixed` + saved-`scrollY` body lock** — it was repeatedly desynced on rapid open/close and mid-navigation. The current simple lock can't be desynced because the body never moves.
+**Scroll lock is event-based, not style-based.** When `open` becomes true, Navbar.jsx attaches `touchmove` + `wheel` listeners to `document` and calls `e.preventDefault()` when the event target is outside `panelRef`. The panel's own `overflow-y: auto` + `overscroll-behavior: contain` lets users scroll within the menu without chaining to the body.
+
+**Do not reintroduce any of these older approaches** — each caused real bugs:
+- `position: fixed` + saved-`scrollY` body lock → desynced on rapid open/close and mid-navigation
+- Setting `html.style.overflow = 'hidden'` → iOS Safari snaps scroll position to 0 (the "page jumps to top, then menu opens" bug)
+- `body.menu-open { overflow: hidden }` CSS class → same iOS jump problem
+
+The current event-listener approach can't desync because nothing mutates the body — the page sits exactly where the user left it; only events outside the panel are swallowed.
 
 ### Image pipeline
 
 Drop raster files into `/public` (or `/public/products`), then run `npm run optimize-images`. `scripts/convert-to-webp.js` walks the tree, skips files whose `.webp` is newer than the source, and writes WebP at quality 78. The original `.jpeg/.png` is kept as fallback but the runtime helper in `images.js` always requests `.webp`.
 
-Logo uses `logo-icon.webp` (a crop of the watercolor brand mark) and bypasses `asset()` because the path is built from `BASE_URL` inline. The old artifact-prone 3 KB icon was replaced by the larger watercolor crop (~25 KB WebP), which has enough detail to tolerate WebP compression cleanly.
+Logo uses `logo_final.webp` (the watercolor cupcake+cookie+roses brand mark, ~168 KB) and bypasses `asset()` because the path is built from `BASE_URL` inline. The source `logo_final.png` (~2.5 MB) is kept in `/public` and `src/assets/` as the high-res original; the WebP sibling is what every component actually loads. The old `logo-icon.{png,webp}` files (a different older crop) still exist as fallbacks for any direct references.
+
+### Brand kit & page heroes
+
+The site uses a consistent "boutique pink" brand kit. **Don't deviate without a reason** — page heroes especially are templated so all 7 (Home / About / Menu / Shop / Reviews / Gallery / Contact) feel like the same site.
+
+- **Fonts** — `Playfair Display` (serif) for h1–h5 + the logo wordmark, `Lato` (sans) for body, `Allura` (script) for accents like the footer flourish and tagline. Loaded via Google Fonts link in `index.html`. CSS vars `--font-heading` / `--font-body` / `--font-script` in `index.css` mirror these.
+- **Palette CSS vars** (defined on `:root` in `index.css`):
+  - `--cc-rose: #e0617a` — primary CTAs, links, eyebrow text
+  - `--cc-rose-deep: #cf3e63` — hover state
+  - `--cc-rose-soft: #d7a7ae` — dusty rose accents (dividers, heart bullets, soft borders)
+  - `--cc-blush-soft: #f3d7d9` — light pink (badges, soft chip bg)
+  - `--cc-cream: #fff6f2`, `--cc-blush: #f7e3df`, `--cc-cocoa: #5b3e36`, `--cc-cocoa-soft: #7a584d` — surfaces and text
+- **Hero pattern** — every page hero uses `.cc-{page}-hero` with a soft warm-pink gradient bg (`linear-gradient(180deg, #fbe6df 0%, #f5d9d2 100%)`), `.container py-4 py-md-5`, a 2-column row (text left, rounded-card image right). The image uses `aspect-ratio: 5/4`, `object-fit: cover`, `border-radius: 18px`, and a 2-layer pink-tinted soft drop shadow. Don't use `object-fit: contain` on heroes — earlier attempts left awkward gaps; cover with the right photo is cleaner.
+- **HeartDivider** — `src/components/HeartDivider.jsx` is the small `— ♥ —` divider used under every hero h1 and several section headings. Accepts a `width` prop (default 60). Prefer this over the older `.heart-divider` class for any new heading.
+- **Hero photos** — Home uses the local `hero-roses.jpeg`. The other 6 heroes use Unsplash photo IDs (`heroAbout`, `heroMenu`, `heroShop`, `heroReviews`, `heroGallery`, `heroContact` in `images.js`) served through the existing `u()` helper. Use **standard images.unsplash.com IDs only** — premium.unsplash.com / plus.unsplash.com URLs require a paid license and the `u()` helper doesn't support them.
+
+The Reviews page also has its own non-hero patterns worth knowing: a 3-section stats card at the top (overall rating + 5⭐ breakdown bars + 4 sub-ratings with circular icons), a 2-column body (review list left with sort dropdown + Load More, Share-Your-Experience form right + What Customers Love card), and a bottom 4-feature promise strip — the same `.feature-row` pattern Shop uses.
 
 ### Conventions worth following
 
 - `usePageMeta({ title, description })` from `src/hooks/usePageMeta.js` updates `<title>` and OG/Twitter meta per route. Call it at the top of every page.
 - `useJsonLd(id, jsonObj)` from `src/hooks/useJsonLd.js` injects structured data — Shop adds per-product `Product` JSON-LD with rating, brand, image; Home has `Bakery`; Reviews has `AggregateRating`.
 - `<SmartImage>` is the drop-in `<img>` with shimmer skeleton + lazy loading.
+- `<HeartDivider width={50} />` is the small heart-on-a-line component used under hero h1s — see Brand kit section.
 - INR formatting goes through `inr()` in `src/data/format.js`.
-- Per-icon imports from `react-icons/fi` are tree-shaken by Vite — `import { FiHome } from 'react-icons/fi'` is fine, don't try deep imports (the package doesn't expose them).
+- Per-icon imports from `react-icons/fi` and `react-icons/tb` are tree-shaken by Vite — `import { FiHome } from 'react-icons/fi'` is fine, don't try deep imports (the package doesn't expose them).
 
 ## Environment
 

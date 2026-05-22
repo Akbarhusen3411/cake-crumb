@@ -34,26 +34,26 @@ export default function Navbar() {
     queueMicrotask(() => setOpen(false))
   }, [location.pathname])
 
-  // Scroll lock — kept as simple as possible. No position:fixed dance,
-  // no scrollY ref, no restore math. Just disable html overflow while the
-  // menu is open. Scroll position is preserved automatically because we
-  // never move the body. Works the same across every browser and can't
-  // desync on rapid open/close or mid-navigation.
+  // Scroll lock — event-based, not style-based. Mutating html.style.overflow
+  // or body.style on mobile browsers (especially iOS Safari) snaps scroll
+  // position back to 0, which is why opening the menu used to "jump to top".
+  // Instead we cancel touchmove/wheel events whose target is outside the
+  // panel; the panel's own internal scroll keeps working untouched.
+  const panelRef = useRef(null)
   useEffect(() => {
     if (!open) return
-    const html = document.documentElement
-    const prevOverflow = html.style.overflow
-    html.style.overflow = 'hidden'
-    document.body.classList.add('menu-open')
+    const isOutsidePanel = (target) => !panelRef.current?.contains(target)
+    const blockOutside = (e) => { if (isOutsidePanel(e.target)) e.preventDefault() }
+    document.addEventListener('touchmove', blockOutside, { passive: false })
+    document.addEventListener('wheel', blockOutside, { passive: false })
     return () => {
-      html.style.overflow = prevOverflow
-      document.body.classList.remove('menu-open')
+      document.removeEventListener('touchmove', blockOutside)
+      document.removeEventListener('wheel', blockOutside)
     }
   }, [open])
 
   // Basic focus trap for the mobile menu — when open, Tab/Shift+Tab wrap
   // around within the panel; Escape closes the menu.
-  const panelRef = useRef(null)
   useEffect(() => {
     if (!open) return
     const onKey = (e) => {
