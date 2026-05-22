@@ -48,7 +48,9 @@ Placing an order triggers **four parallel side-effects**, any of which can fail 
 
 Order IDs come from `services/orderId.js` and look like `CC-AB-DDMMYY-NNNN` (initials + date + per-day counter in localStorage).
 
-There is **also an admin confirmation flow** at `/confirm-order?id=…` — the admin clicks a button in the admin email, the page calls `markOrderConfirmed()` (updates Firestore `status` to `'confirmed'`), then opens WhatsApp pre-filled with a confirmation message to the customer's phone. No third EmailJS template needed (free-tier cap is 2 templates).
+There is **also an admin confirmation flow** at `/confirm-order?id=…`. The confirm URL is included as a tap-able link at the bottom of every order's WhatsApp message (and in the admin email if EmailJS is configured). When the bakery owner taps the link, `ConfirmOrder.jsx` calls `markOrderConfirmed()` (updates Firestore `status` to `'confirmed'`), then opens WhatsApp pre-filled with a confirmation message to the customer's phone. No third EmailJS template needed (free-tier cap is 2 templates).
+
+The confirm URL is built from `window.location.origin + BASE_URL + /confirm-order?id={ORDER_ID}` in `Checkout.jsx::buildOrderMessage()`. Don't remove this link from the WhatsApp body — it's currently the only way the bakery owner reaches the confirm page if EmailJS isn't set up.
 
 Customers can look up their own orders at `/track-order?id=…` via `getOrderByOrderId()` (Firestore query by `orderId` field).
 

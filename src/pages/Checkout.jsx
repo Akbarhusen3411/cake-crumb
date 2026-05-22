@@ -198,6 +198,16 @@ export default function Checkout() {
     const paymentLine = form.payment === 'upi'
       ? `*💳 Payment:* UPI ✅ Paid\n*🧾 UTR:* ${utr}`
       : '*💳 Payment:* Cash on Delivery'
+
+    // Admin tap-able confirm URL — bakery owner opens this from WhatsApp,
+    // ConfirmOrder.jsx marks the order confirmed in Firestore + opens
+    // WhatsApp with a confirmation message pre-filled for the customer.
+    const siteOrigin = typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : 'https://akbarhusen3411.github.io'
+    const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
+    const confirmUrl = `${siteOrigin}${basePath}/confirm-order?id=${encodeURIComponent(id)}`
+
     const lines = [
       `🎂 *NEW ORDER — ${id}*`,
       '━━━━━━━━━━━━━━━━━━━━',
@@ -220,6 +230,10 @@ export default function Checkout() {
       ...(form.notes ? ['', `*📝 Notes:* ${form.notes}`] : []),
       '',
       'Please confirm my order. Thank you! 🙏',
+      '',
+      '━━━━━━━━━━━━━━━━━━━━',
+      '✅ *Cake & Crumb team — tap below to confirm this order:*',
+      confirmUrl,
     ]
     return lines.join('\n')
   }
