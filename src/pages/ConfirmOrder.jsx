@@ -52,6 +52,23 @@ function buildConfirmMessage(order) {
 
 // ── Page ───────────────────────────────────────────────────────────────────
 
+// Fallback order built purely from URL params, used when Firestore isn't
+// configured and the customer's localStorage isn't reachable from the admin's
+// device. Just enough to send a confirmation WhatsApp back to the customer.
+function orderFromParams(params) {
+  const phone = params.get('phone') || ''
+  if (!phone) return null
+  return {
+    orderId: params.get('id') || '',
+    customer: { name: params.get('name') || 'there', phone },
+    deliveryDate: params.get('date') || '',
+    totals: { total: Number(params.get('total')) || 0 },
+    items: [],
+    status: 'placed',
+    firebaseId: null,
+  }
+}
+
 export default function ConfirmOrder() {
   usePageMeta({ title: 'Confirm Order — Admin' })
 
@@ -74,8 +91,14 @@ export default function ConfirmOrder() {
       }
 
       try {
-        const found = await getOrderByOrderId(orderId)
+        let found = await getOrderByOrderId(orderId)
         if (cancelled) return
+
+        // Fallback — the URL itself carries enough customer data to send a
+        // confirmation message back. Use it when Firestore/localStorage
+        // can't find the order (typical when the admin device is different
+        // from the customer's).
+        if (!found) found = orderFromParams(params)
 
         if (!found) {
           setPhase('error')
@@ -84,7 +107,7 @@ export default function ConfirmOrder() {
         }
 
         const wasAlreadyConfirmed = found.status === 'confirmed'
-        if (!wasAlreadyConfirmed) {
+        if (found.firebaseId && !wasAlreadyConfirmed) {
           await markOrderConfirmed(found.firebaseId)
           if (cancelled) return
         }

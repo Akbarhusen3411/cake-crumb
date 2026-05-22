@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { CartProvider } from './context/CartContext.jsx'
 import Navbar from './components/Navbar.jsx'
@@ -30,6 +30,17 @@ const TrackOrder = lazy(() => import('./pages/TrackOrder.jsx'))
 // so customers stay focused on the cart → checkout → done path.
 const NO_FOOTER_ROUTES = ['/cart', '/checkout', '/confirm-order']
 
+// Scroll the window back to the top on every route change. React Router
+// preserves scroll across navigations by default, which leaves users at
+// the bottom of the previous page when they tap a header/footer link.
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [pathname])
+  return null
+}
+
 function App() {
   const { pathname } = useLocation()
   const hideFooter = NO_FOOTER_ROUTES.some(
@@ -38,6 +49,7 @@ function App() {
 
   return (
     <CartProvider>
+      <ScrollToTop />
       <a href="#main" className="cc-skip-link">Skip to main content</a>
       <div className="d-flex flex-column min-vh-100">
         <FestivalBanner />

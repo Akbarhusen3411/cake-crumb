@@ -199,14 +199,24 @@ export default function Checkout() {
       ? `*💳 Payment:* UPI ✅ Paid\n*🧾 UTR:* ${utr}`
       : '*💳 Payment:* Cash on Delivery'
 
-    // Admin tap-able confirm URL — bakery owner opens this from WhatsApp,
-    // ConfirmOrder.jsx marks the order confirmed in Firestore + opens
-    // WhatsApp with a confirmation message pre-filled for the customer.
+    // Admin tap-able confirm URL — bakery owner opens this from WhatsApp.
+    // We include the customer's name + phone + total in the URL so the
+    // confirm page can still build a WhatsApp message back to them even
+    // when Firestore isn't configured (the customer's localStorage lives
+    // on their phone, not the admin's, so the cross-device lookup fails
+    // without Firestore).
     const siteOrigin = typeof window !== 'undefined' && window.location?.origin
       ? window.location.origin
       : 'https://akbarhusen3411.github.io'
     const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
-    const confirmUrl = `${siteOrigin}${basePath}/confirm-order?id=${encodeURIComponent(id)}`
+    const confirmParams = new URLSearchParams({
+      id,
+      name: form.name,
+      phone: `${form.countryCode}${form.phone}`,
+      total: String(totals.total),
+      date: deliveryDate || '',
+    })
+    const confirmUrl = `${siteOrigin}${basePath}/confirm-order?${confirmParams.toString()}`
 
     const lines = [
       `🎂 *NEW ORDER — ${id}*`,
