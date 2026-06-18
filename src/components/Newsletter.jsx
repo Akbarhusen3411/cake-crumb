@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { FiMail, FiCheckCircle, FiSend } from 'react-icons/fi'
 import { subscribeNewsletter } from '../services/newsletter.js'
+import { sendNewsletterNotification } from '../services/emailNotify.js'
 
 /**
  * Compact newsletter signup. Slot it into the footer or any inline section.
@@ -15,7 +16,10 @@ export default function Newsletter({ compact = false }) {
     setStatus('loading')
     setErrorMsg('')
     try {
-      await subscribeNewsletter(email, compact ? 'footer' : 'inline')
+      const source = compact ? 'footer' : 'inline'
+      await subscribeNewsletter(email, source)
+      // Fire-and-forget: email the subscriber's address to the bakery inbox.
+      sendNewsletterNotification(email, source)
       setStatus('done')
       setEmail('')
     } catch (err) {

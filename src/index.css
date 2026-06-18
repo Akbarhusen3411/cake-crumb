@@ -2131,9 +2131,8 @@ html, body { overflow-x: hidden; }
   font-size: 0.88rem;
   font-weight: 600;
   margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 /* ─── Search overlay ─────────────────────────────────────────────────────── */
@@ -3303,12 +3302,15 @@ header[style*="sticky"] {
   padding: 0.55rem 0;
   border-bottom: 1px solid rgba(224, 97, 122, 0.10);
   font-size: 0.92rem;
+  min-width: 0;
 }
 .cc-menu-row:last-child { border-bottom: none; }
 .cc-menu-row__name {
   color: var(--cc-cocoa);
+  /* flex-basis 0 so the name only takes leftover space and always yields
+     to the price — long names truncate instead of pushing the price off. */
+  flex: 1 1 0;
   min-width: 0;
-  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3317,6 +3319,9 @@ header[style*="sticky"] {
   color: var(--cc-rose);
   font-weight: 700;
   white-space: nowrap;
+  /* Never shrink or clip the price, whatever the row width. */
+  flex: 0 0 auto;
+  padding-left: 0.25rem;
 }
 .cc-menu-row__badge {
   margin-left: 0.55rem;

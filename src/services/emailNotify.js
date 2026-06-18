@@ -72,6 +72,49 @@ export async function sendOrderEmail(order) {
 }
 
 /**
+ * Notify the bakery inbox of a new newsletter subscriber.
+ * Reuses the admin order template (Template #1) — EmailJS free tier caps at
+ * 2 templates, so we overload the order fields with newsletter-flavoured
+ * values rather than adding a third template. The admin template's fixed
+ * recipient (cakeandcrumb.in@gmail.com) receives it. Fires-and-forgets.
+ */
+export async function sendNewsletterNotification(email, source = 'footer') {
+  if (!isEmailNotifyEnabled) {
+    if (import.meta.env.DEV) {
+      console.warn('[email] newsletter notification disabled — set VITE_EMAILJS_* in .env.')
+    }
+    return { ok: false, reason: 'disabled' }
+  }
+  ensureInit()
+  try {
+    const params = {
+      order_id: 'Newsletter signup',
+      customer_name: 'New subscriber',
+      customer_phone: '—',
+      customer_email: email,
+      customer_address: '—',
+      items: 'Newsletter subscription — festival specials & treat-of-the-week updates',
+      subtotal: '—',
+      delivery: '—',
+      total: '—',
+      payment_method: '—',
+      utr: '—',
+      delivery_date: '—',
+      notes: `New newsletter subscriber: ${email} (via ${source})`,
+      source: `newsletter:${source}`,
+      order_time: new Date().toLocaleString('en-IN', { hour12: true }),
+      to_email: '',
+      to_name: 'Cake & Crumb',
+    }
+    const res = await emailjs.send(SERVICE_ID, TEMPLATE_ID, params)
+    return { ok: true, status: res.status }
+  } catch (err) {
+    console.error('[email] newsletter notification failed:', err)
+    return { ok: false, reason: err.message || 'send failed' }
+  }
+}
+
+/**
  * Send a confirmation email to the customer (only if they provided one).
  * Requires a separate EmailJS template configured with {{to_email}} as the
  * recipient. Set VITE_EMAILJS_CUSTOMER_TEMPLATE_ID to enable.
