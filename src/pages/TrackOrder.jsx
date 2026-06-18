@@ -5,7 +5,7 @@ import {
   FiCalendar, FiUser, FiPhone, FiHome, FiShoppingBag, FiLoader,
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
-import { getOrderByOrderId } from '../services/orders.js'
+import { getOrderTracking } from '../services/orders.js'
 import { inr } from '../data/format.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { WHATSAPP_PHONE } from '../components/WhatsAppButton.jsx'
@@ -78,7 +78,7 @@ export default function TrackOrder() {
     setPhase('loading')
     setError('')
     try {
-      let found = await getOrderByOrderId(id)
+      let found = await getOrderTracking(id)
       // Fallback: when the lookup misses but the URL itself carries the
       // essential order info (id, name, phone, total, date, method), build
       // a minimal order from those params so the customer still gets a
@@ -120,44 +120,42 @@ export default function TrackOrder() {
         eyebrow="Track Your Order"
         title={<>Where is My<br />Sweet Treat?</>}
         text="Paste your Order ID below and we'll show you exactly where your order stands."
-        cta={null}
         image={u(img.pinkDripCake, 1000, 750)}
         imageAlt="Pink letter cake"
+        cta={
+          <>
+            <form onSubmit={onSubmit} className="cc-track-form mt-4">
+              <div className="cc-track-form__field">
+                <FiSearch className="cc-track-form__icon" />
+                <input
+                  type="text"
+                  placeholder="Order ID (e.g. CC-AB-200526-0001)"
+                  value={inputId}
+                  onChange={(e) => setInputId(e.target.value.toUpperCase())}
+                  className="cc-input"
+                  aria-label="Order ID"
+                />
+              </div>
+              <button type="submit" className="btn-rose" disabled={phase === 'loading'}>
+                {phase === 'loading' ? <FiLoader className="cc-spin" size={16} /> : <FiSearch size={16} />}
+                {phase === 'loading' ? 'Looking up…' : 'Track'}
+              </button>
+            </form>
+            <p className="mt-2 mb-0" style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.82rem' }}>
+              Your Order ID is in the WhatsApp message you sent us.
+            </p>
+          </>
+        }
       />
 
-      <section className="py-5">
+      {phase !== 'idle' && (
+      <section className="py-4 py-md-5">
         <div className="container" style={{ maxWidth: 720 }}>
-          {/* Lookup form */}
-          <form onSubmit={onSubmit} className="cc-track-form mb-4">
-            <div className="cc-track-form__field">
-              <FiSearch className="cc-track-form__icon" />
-              <input
-                type="text"
-                placeholder="Order ID (e.g. CC-AB-200526-0001)"
-                value={inputId}
-                onChange={(e) => setInputId(e.target.value.toUpperCase())}
-                className="cc-input"
-                aria-label="Order ID"
-                autoFocus
-              />
-            </div>
-            <button type="submit" className="btn-rose" disabled={phase === 'loading'}>
-              {phase === 'loading' ? <FiLoader className="cc-spin" size={16} /> : <FiSearch size={16} />}
-              {phase === 'loading' ? 'Looking up…' : 'Track'}
-            </button>
-          </form>
-
-          {phase === 'idle' && (
-            <p className="text-center" style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.9rem' }}>
-              Your Order ID is printed in the confirmation email we sent you.
-            </p>
-          )}
-
           {phase === 'not_found' && (
             <div className="cc-notice" role="note">
               <span className="cc-notice__icon"><FiAlertCircle size={16} /></span>
               <div>
-                We couldn't find that order. Double-check the ID, or message us on WhatsApp at <strong>+91 90816 68490</strong> for help.
+                We couldn't find that order. Double-check the ID, or message us on WhatsApp at <strong>+91 91731 83440</strong> for help.
               </div>
             </div>
           )}
@@ -221,17 +219,22 @@ export default function TrackOrder() {
 
                 <hr style={{ borderColor: 'var(--cc-border)' }} />
 
-                {/* Customer */}
-                <div style={{ fontSize: '0.9rem', color: 'var(--cc-cocoa)', marginBottom: '0.85rem' }}>
-                  <div className="d-flex align-items-center" style={{ gap: '0.5rem', marginBottom: 4 }}>
-                    <FiUser size={13} color="var(--cc-rose)" /> {order.customer?.name}
-                  </div>
-                  <div className="d-flex align-items-center" style={{ gap: '0.5rem', color: 'var(--cc-cocoa-soft)' }}>
-                    <FiPhone size={13} color="var(--cc-rose)" /> {order.customer?.phone}
-                  </div>
-                </div>
-
-                <hr style={{ borderColor: 'var(--cc-border)' }} />
+                {/* Customer — only when available (the public tracking record carries no personal info) */}
+                {order.customer?.name && (
+                  <>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--cc-cocoa)', marginBottom: '0.85rem' }}>
+                      <div className="d-flex align-items-center" style={{ gap: '0.5rem', marginBottom: 4 }}>
+                        <FiUser size={13} color="var(--cc-rose)" /> {order.customer.name}
+                      </div>
+                      {order.customer?.phone && (
+                        <div className="d-flex align-items-center" style={{ gap: '0.5rem', color: 'var(--cc-cocoa-soft)' }}>
+                          <FiPhone size={13} color="var(--cc-rose)" /> {order.customer.phone}
+                        </div>
+                      )}
+                    </div>
+                    <hr style={{ borderColor: 'var(--cc-border)' }} />
+                  </>
+                )}
 
                 {/* Items — hidden when running on URL-params fallback (items list not in URL) */}
                 {(order.items?.length || 0) > 0 && (
@@ -294,6 +297,7 @@ export default function TrackOrder() {
           )}
         </div>
       </section>
+      )}
     </>
   )
 }

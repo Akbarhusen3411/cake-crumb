@@ -58,6 +58,19 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /tracking/{orderId} {
+      // Public, PII-FREE order status mirror so customers can track an order
+      // from any device. Holds only orderId, status, items, totals, dates —
+      // never name/phone/email/address. Anyone may read; the customer creates
+      // it when ordering; only the signed-in admin updates the status.
+      allow read: if true;
+      allow create: if
+        request.resource.data.orderId is string &&
+        request.resource.data.orderId.size() > 4;
+      allow update: if request.auth != null;
+      allow delete: if false;
+    }
+
     match /newsletter/{subscription} {
       // Anyone can subscribe; nobody reads/edits via the browser.
       allow create: if

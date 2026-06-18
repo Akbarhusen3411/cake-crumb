@@ -123,15 +123,8 @@ export default function Contact() {
             <a href="tel:+919173183440" className="cc-contact-strip__item">
               <span className="cc-contact-strip__icon"><FiPhone size={14} /></span>
               <div>
-                <div className="cc-contact-strip__label">Call (primary)</div>
+                <div className="cc-contact-strip__label">Call</div>
                 <div className="cc-contact-strip__value">+91 91731 83440</div>
-              </div>
-            </a>
-            <a href="tel:+919081668490" className="cc-contact-strip__item">
-              <span className="cc-contact-strip__icon"><FiPhone size={14} /></span>
-              <div>
-                <div className="cc-contact-strip__label">Call (alternate)</div>
-                <div className="cc-contact-strip__value">+91 90816 68490</div>
               </div>
             </a>
             <a

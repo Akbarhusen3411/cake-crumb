@@ -245,6 +245,7 @@ export default function Checkout() {
         utr: form.payment === 'upi' ? utr : '',
       },
       deliveryDate: form.deliveryDate,
+      deliveryMethod: form.deliveryMethod,
       notes: form.notes,
       source: 'checkout',
     }

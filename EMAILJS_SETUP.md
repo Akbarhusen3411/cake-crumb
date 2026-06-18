@@ -120,7 +120,7 @@ Payment:   {{payment_method}}
 
 We'll confirm everything on WhatsApp shortly. If you need to make
 any changes, just reply to this email or message us on WhatsApp
-at +91 90816 68490.
+at +91 91731 83440.
 
 Baked with love,
 Cake & Crumb

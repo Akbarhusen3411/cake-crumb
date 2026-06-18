@@ -165,8 +165,8 @@ export default function AdminOrders() {
     const key = order.firebaseId || order.orderId
     setBusyId(key)
     const update = kind === 'confirmed'
-      ? markOrderConfirmed(order.firebaseId)
-      : markOrderCancelled(order.firebaseId)
+      ? markOrderConfirmed(order.firebaseId, order.orderId)
+      : markOrderCancelled(order.firebaseId, order.orderId)
     Promise.resolve(update).finally(() => setBusyId(null))
   }
 

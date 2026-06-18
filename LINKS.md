@@ -50,8 +50,7 @@
 | — Firestore rules | https://console.firebase.google.com/project/cake-and-crumb-92f72/firestore/rules |
 
 ## Contact details on the site
-- **Primary phone / WhatsApp:** +91 91731 83440
-- **Alternate phone:** +91 90816 68490
+- **Phone / WhatsApp:** +91 91731 83440
 - **Email:** cakeandcrumb.in@gmail.com
 - **Instagram:** https://www.instagram.com/cake_and_crumb_1/
 - **Address:** Vaso, Kheda, Gujarat 387380, India

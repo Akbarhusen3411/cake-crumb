@@ -41,7 +41,7 @@ The app works entirely client-side via `localStorage`; cloud services are progre
 
 Placing an order triggers **four parallel side-effects**, any of which can fail without breaking the others:
 
-1. **WhatsApp** — `buildWhatsAppLink()` in `WhatsAppButton.jsx` opens `https://wa.me/919081668490` pre-filled. Primary channel. `WHATSAPP_PHONE` constant.
+1. **WhatsApp** — `buildWhatsAppLink()` in `WhatsAppButton.jsx` opens `https://wa.me/919173183440` pre-filled. Primary channel. `WHATSAPP_PHONE` constant.
 2. **Firestore + localStorage mirror** — `saveOrder()` writes the `orders` collection and a last-50 local mirror.
 3. **Admin email** — `sendOrderEmail()` (EmailJS Template #1) to the bakery's inbox.
 4. **Customer email** — `sendCustomerConfirmation()` (EmailJS Template #2, optional) to the customer if they entered an email.

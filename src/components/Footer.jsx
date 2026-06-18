@@ -62,7 +62,7 @@ export default function Footer() {
         <ul className="cc-footer-m__info">
           <li>
             <span className="cc-footer-m__info-icon"><FiPhone size={12} /></span>
-            <span>+91 90816 68490 &nbsp;·&nbsp; +91 91731 83440</span>
+            <span>+91 91731 83440</span>
           </li>
           <li>
             <span className="cc-footer-m__info-icon"><FiMail size={12} /></span>
@@ -140,11 +140,7 @@ export default function Footer() {
                 </li>
                 <li>
                   <span className="cc-footer-d__info-icon"><FiPhone size={14} /></span>
-                  <a href="tel:+919173183440"><strong>+91 91731 83440</strong></a>
-                </li>
-                <li>
-                  <span className="cc-footer-d__info-icon"><FiPhone size={14} /></span>
-                  <a href="tel:+919081668490">+91 90816 68490</a>
+                  <a href="tel:+919173183440">+91 91731 83440</a>
                 </li>
                 <li>
                   <span className="cc-footer-d__info-icon"><FiMail size={14} /></span>

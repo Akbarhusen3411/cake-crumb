@@ -1,6 +1,9 @@
 import { getDb, isFirebaseEnabled } from '../firebase.js'
 
 const COLLECTION = 'orders'
+// Public, PII-free status mirror so customers can track an order from any
+// device. Holds NO name/phone/email/address — only status + items + totals.
+const TRACKING = 'tracking'
 const STORAGE_KEY = 'cc_orders_local_v1'
 
 function readLocal() {
@@ -60,6 +63,8 @@ export async function saveOrder(input) {
     },
     source: input.source || 'checkout',
     notes: String(input.notes || ''),
+    deliveryDate: String(input.deliveryDate || ''),
+    deliveryMethod: String(input.deliveryMethod || ''),
     status: 'placed',
   }
 
@@ -76,11 +81,25 @@ export async function saveOrder(input) {
   }
 
   try {
-    const { addDoc, collection, serverTimestamp } = await import('firebase/firestore')
+    const { addDoc, collection, doc, serverTimestamp, setDoc } = await import('firebase/firestore')
     const docRef = await addDoc(collection(db, COLLECTION), {
       ...order,
       createdAt: serverTimestamp(),
     })
+    // Public, PII-free tracking mirror (keyed by orderId for direct lookup).
+    try {
+      await setDoc(doc(db, TRACKING, order.orderId), {
+        orderId: order.orderId,
+        status: order.status,
+        items: order.items,
+        totals: order.totals,
+        deliveryDate: order.deliveryDate,
+        deliveryMethod: order.deliveryMethod,
+        createdAt: serverTimestamp(),
+      })
+    } catch (e) {
+      console.error('[orders] tracking mirror write failed:', e)
+    }
     return { ...local, firebaseId: docRef.id }
   } catch (err) {
     console.error('[orders] Firestore save failed:', err)
@@ -129,18 +148,18 @@ export async function getOrderByOrderId(orderId) {
  * Mark a Firestore order as confirmed. No-op when Firebase isn't configured
  * or when we don't have the firebaseId. Idempotent — safe to call twice.
  */
-export async function markOrderConfirmed(firebaseId) {
-  return setOrderStatus(firebaseId, 'confirmed', 'confirmedAt')
+export async function markOrderConfirmed(firebaseId, orderId) {
+  return setOrderStatus(firebaseId, orderId, 'confirmed', 'confirmedAt')
 }
 
 /**
  * Mark a Firestore order as cancelled. Same contract as markOrderConfirmed.
  */
-export async function markOrderCancelled(firebaseId) {
-  return setOrderStatus(firebaseId, 'cancelled', 'cancelledAt')
+export async function markOrderCancelled(firebaseId, orderId) {
+  return setOrderStatus(firebaseId, orderId, 'cancelled', 'cancelledAt')
 }
 
-async function setOrderStatus(firebaseId, status, tsField) {
+async function setOrderStatus(firebaseId, orderId, status, tsField) {
   if (!isFirebaseEnabled || !firebaseId) return false
   const db = await getDb()
   if (!db) return false
@@ -150,10 +169,43 @@ async function setOrderStatus(firebaseId, status, tsField) {
       status,
       [tsField]: serverTimestamp(),
     })
+    // Mirror the new status to the public tracking doc so customers see it.
+    if (orderId) {
+      try {
+        await updateDoc(doc(db, TRACKING, orderId), { status, [tsField]: serverTimestamp() })
+      } catch (e) {
+        console.error('[orders] tracking status mirror failed:', e)
+      }
+    }
     return true
   } catch (err) {
     console.error(`[orders] status update (${status}) failed:`, err)
     return false
+  }
+}
+
+/**
+ * Public order tracking lookup by orderId — reads the PII-free `tracking`
+ * mirror, so it works for any customer on any device (no auth needed).
+ * Returns { orderId, status, items, totals, deliveryDate, deliveryMethod } or null.
+ */
+export async function getOrderTracking(orderId) {
+  if (!orderId) return null
+  const db = await getDb()
+  if (!db) {
+    // Local fallback: the customer's own-device order mirror.
+    const local = readLocal().find((o) => o.orderId === orderId)
+    return local || null
+  }
+  try {
+    const { doc, getDoc } = await import('firebase/firestore')
+    const snap = await getDoc(doc(db, TRACKING, orderId))
+    if (snap.exists()) return snap.data()
+    // Fall back to the local mirror if the tracking doc isn't there.
+    return readLocal().find((o) => o.orderId === orderId) || null
+  } catch (err) {
+    console.error('[orders] tracking lookup failed:', err)
+    return readLocal().find((o) => o.orderId === orderId) || null
   }
 }
 
