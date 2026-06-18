@@ -186,25 +186,10 @@ export default function Checkout() {
       ? null
       : `*📍 Address:* ${[form.address, form.city, form.pincode].filter(Boolean).join(', ')}`
 
-    // Admin tap-able confirm URL — bakery owner opens this from WhatsApp.
-    // We include enough customer detail in the URL so the confirm + track
-    // pages work even when Firestore isn't configured (localStorage on the
-    // customer's device isn't reachable from the admin's).
-    const siteOrigin = typeof window !== 'undefined' && window.location?.origin
-      ? window.location.origin
-      : 'https://akbarhusen3411.github.io'
-    const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
-    const confirmParams = new URLSearchParams({
-      id,
-      name: form.name,
-      phone: `${form.countryCode}${form.phone}`,
-      total: String(totals.total),
-      date: deliveryDate || '',
-      method: form.deliveryMethod,
-    })
-    const confirmUrl = `${siteOrigin}${basePath}/confirm-order?${confirmParams.toString()}`
-    const trackUrl = `${siteOrigin}${basePath}/track-order?${confirmParams.toString()}`
-
+    // The customer is the sender of this message, so it intentionally carries
+    // NO admin links — only the order + price. The bakery confirms/cancels from
+    // the password-protected admin dashboard (/admin/orders), which then
+    // messages the customer back on WhatsApp.
     const lines = [
       `🎂 *NEW ORDER — ${id}*`,
       '━━━━━━━━━━━━━━━━━━━━',
@@ -230,13 +215,6 @@ export default function Checkout() {
       ...(form.notes ? ['', `*📝 Notes:* ${form.notes}`] : []),
       '',
       'Please confirm my order. Thank you! 🙏',
-      '',
-      '━━━━━━━━━━━━━━━━━━━━',
-      '✅ *Cake & Crumb team — tap below to confirm this order:*',
-      confirmUrl,
-      '',
-      '📦 *Track your order anytime:*',
-      trackUrl,
     ]
     return lines.join('\n')
   }

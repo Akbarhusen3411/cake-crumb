@@ -130,18 +130,56 @@ export async function getOrderByOrderId(orderId) {
  * or when we don't have the firebaseId. Idempotent — safe to call twice.
  */
 export async function markOrderConfirmed(firebaseId) {
+  return setOrderStatus(firebaseId, 'confirmed', 'confirmedAt')
+}
+
+/**
+ * Mark a Firestore order as cancelled. Same contract as markOrderConfirmed.
+ */
+export async function markOrderCancelled(firebaseId) {
+  return setOrderStatus(firebaseId, 'cancelled', 'cancelledAt')
+}
+
+async function setOrderStatus(firebaseId, status, tsField) {
   if (!isFirebaseEnabled || !firebaseId) return false
   const db = await getDb()
   if (!db) return false
   try {
     const { doc, serverTimestamp, updateDoc } = await import('firebase/firestore')
     await updateDoc(doc(db, COLLECTION, firebaseId), {
-      status: 'confirmed',
-      confirmedAt: serverTimestamp(),
+      status,
+      [tsField]: serverTimestamp(),
     })
     return true
   } catch (err) {
-    console.error('[orders] confirm update failed:', err)
+    console.error(`[orders] status update (${status}) failed:`, err)
     return false
+  }
+}
+
+/**
+ * List all orders, newest first. Reads from Firestore (admin dashboard);
+ * falls back to the local mirror when Firestore is off. Never throws.
+ */
+export async function getAllOrders() {
+  const db = await getDb()
+  if (!db) {
+    return readLocal().map((o) => ({ ...o, firebaseId: null }))
+  }
+  try {
+    const { collection, getDocs, orderBy, query } = await import('firebase/firestore')
+    const q = query(collection(db, COLLECTION), orderBy('createdAt', 'desc'))
+    const snap = await getDocs(q)
+    return snap.docs.map((d) => {
+      const data = d.data()
+      return {
+        firebaseId: d.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString?.() ?? null,
+      }
+    })
+  } catch (err) {
+    console.error('[orders] list failed, falling back to local:', err)
+    return readLocal().map((o) => ({ ...o, firebaseId: null }))
   }
 }

@@ -25,6 +25,7 @@ const ReviewSubmit = lazy(() => import('./pages/ReviewSubmit.jsx'))
 const FAQ = lazy(() => import('./pages/FAQ.jsx'))
 const ConfirmOrder = lazy(() => import('./pages/ConfirmOrder.jsx'))
 const TrackOrder = lazy(() => import('./pages/TrackOrder.jsx'))
+const AdminOrders = lazy(() => import('./pages/AdminOrders.jsx'))
 
 // Routes inside the buying / admin-confirm flow render without the footer
 // so customers stay focused on the cart → checkout → done path.
@@ -70,6 +71,7 @@ function App() {
               <Route path="/faq" element={<FAQ />} />
               <Route path="/confirm-order" element={<ConfirmOrder />} />
               <Route path="/track-order" element={<TrackOrder />} />
+              <Route path="/admin/orders" element={<AdminOrders />} />
               <Route path="*" element={<Home />} />
             </Routes>
           </Suspense>

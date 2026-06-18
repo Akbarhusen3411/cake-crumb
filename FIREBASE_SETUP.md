@@ -44,15 +44,28 @@ service cloud.firestore {
     }
 
     match /orders/{order} {
-      // Customer can write their own order; admin reads via Firebase console.
+      // Customer can write their own order.
       allow create: if
         request.resource.data.orderId is string &&
         request.resource.data.orderId.size() > 4 &&
         request.resource.data.totals.total is number &&
         request.resource.data.totals.total > 0 &&
         request.resource.data.totals.total < 200000;
+      // Default: locked down (admin reads via Firebase console only).
       allow read, update, delete: if false;
     }
+    // ── Admin Orders dashboard (/admin/orders) ──
+    // The in-app dashboard LISTS orders and UPDATES their status (confirm/cancel).
+    // Firestore can't read the client-side admin password, so enabling it means
+    // changing the line above to:
+    //   allow read, update: if true;
+    // ⚠️ WARNING: with no Firebase Auth this makes ALL order data — customer
+    // name, phone, email, address — publicly readable by anyone who queries the
+    // collection. The page's password only hides the UI, not the data. For real
+    // protection use Firebase Auth and gate the rule on request.auth != null.
+    // If you leave the rule as `if false`, the dashboard still works for orders
+    // placed on the same device (localStorage mirror) and confirm/cancel will
+    // still message the customer on WhatsApp — it just won't persist status.
 
     match /newsletter/{subscription} {
       // Anyone can subscribe; nobody reads/edits via the browser.
