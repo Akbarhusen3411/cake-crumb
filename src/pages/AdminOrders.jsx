@@ -149,20 +149,25 @@ export default function AdminOrders() {
     setOrders([])
   }
 
-  async function act(order, kind) {
+  function act(order, kind) {
+    const num = waNumber(order.customer?.phone)
+    if (!num) {
+      alert('No customer phone number on this order — cannot message the customer.')
+      return
+    }
+    // Open WhatsApp synchronously inside the tap. Mobile browsers block
+    // window.open() once an `await` has run, so this MUST come before the
+    // (async) Firestore status update — otherwise the message never opens on phones.
+    const msg = buildCustomerMessage(order, kind)
+    window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer')
+
+    // Persist the status change in the background; the live listener refreshes the badge.
     const key = order.firebaseId || order.orderId
     setBusyId(key)
-    if (kind === 'confirmed') await markOrderConfirmed(order.firebaseId)
-    else await markOrderCancelled(order.firebaseId)
-    setBusyId(null)
-
-    const num = waNumber(order.customer?.phone)
-    if (num) {
-      const msg = buildCustomerMessage(order, kind)
-      window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer')
-    } else {
-      alert('No customer phone number on this order — cannot message the customer.')
-    }
+    const update = kind === 'confirmed'
+      ? markOrderConfirmed(order.firebaseId)
+      : markOrderCancelled(order.firebaseId)
+    Promise.resolve(update).finally(() => setBusyId(null))
   }
 
   // ── Login gate ──
