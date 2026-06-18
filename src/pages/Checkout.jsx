@@ -170,7 +170,6 @@ export default function Checkout() {
   const [placedDeliveryDate, setPlacedDeliveryDate] = useState('')
 
   function buildOrderMessage(id, snapshotItems, totals, deliveryDate) {
-    const fullPhone = `${form.countryCode} ${form.phone}`
     const paymentLine = form.payment === 'upi'
       ? `*💳 Payment:* UPI ✅ Paid\n*🧾 UTR:* ${utr}`
       : '*💳 Payment:* Cash on Delivery'
@@ -178,30 +177,18 @@ export default function Checkout() {
     const isPickup = form.deliveryMethod === 'pickup'
     const methodLine = isPickup
       ? '*🚶 Order type:* Self-Pickup (free)'
-      : '*🚚 Order type:* Home Delivery — _please confirm delivery charge_'
+      : '*🚚 Order type:* Home Delivery'
 
-    // Address line is omitted for pickup orders (customer doesn't need to
-    // share home address). For delivery, include whatever they filled in.
-    const addressLine = isPickup
-      ? null
-      : `*📍 Address:* ${[form.address, form.city, form.pincode].filter(Boolean).join(', ')}`
-
-    // The customer is the sender of this message, so it intentionally carries
-    // NO admin links — only the order + price. The bakery confirms/cancels from
-    // the password-protected admin dashboard (/admin/orders), which then
-    // messages the customer back on WhatsApp.
+    // Clean CUSTOMER receipt — order + price only, no admin links and no repeated
+    // personal details. The bakery sees the full name / phone / address in the
+    // /admin/orders dashboard (matched to this message by the order ID) and
+    // confirms or cancels from there, which messages the customer back.
     const lines = [
-      `🎂 *NEW ORDER — ${id}*`,
+      `🎂 *My Order — ${id}*`,
       '━━━━━━━━━━━━━━━━━━━━',
-      '',
-      `*👤 Customer:* ${form.name}`,
-      `*📞 Phone:* ${fullPhone}`,
-      `*📧 Email:* ${form.email}`,
-      ...(addressLine ? [addressLine] : []),
       ...(deliveryDate ? [`*📅 Preferred date:* ${formatDateForDisplay(deliveryDate)}`] : []),
       methodLine,
       '',
-      '━━━━━━━━━━━━━━━━━━━━',
       '*📋 Items:*',
       ...snapshotItems.map((it) => `  • ${it.name} × ${it.qty} = ${inr(it.price * it.qty)}`),
       '━━━━━━━━━━━━━━━━━━━━',
