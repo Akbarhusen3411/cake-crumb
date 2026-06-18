@@ -708,7 +708,7 @@ export default function ChatBot() {
       case 'user_cancel': {
         setOptions([])
         if (lastOrderTime && Date.now() - lastOrderTime > 30 * 60 * 1000) {
-          await addBotMessage('⏰ Sorry! The 30-minute cancellation window has expired. This order can no longer be cancelled.\n\nFor help, contact: +91 90816 68490')
+          await addBotMessage('⏰ Sorry! The 30-minute cancellation window has expired. This order can no longer be cancelled.\n\nFor help, contact: +91 91731 83440')
           setOptions([{ label: '🏠 Main Menu', action: 'home' }])
         } else {
           const cancelRequest =
@@ -741,7 +741,7 @@ export default function ChatBot() {
         break
       case 'contact':
         setOptions([])
-        await addBotMessage('*Contact Us*\n\n📱 *WhatsApp:* +91 90816 68490\n📱 *WhatsApp:* +91 91731 83440\n📞 *Call:* +91 90816 68490\n📷 *Instagram:* @cake_and_crumb_1')
+        await addBotMessage('*Contact Us*\n\n📱 *WhatsApp:* +91 91731 83440\n📱 *WhatsApp (alt):* +91 90816 68490\n📞 *Call:* +91 91731 83440\n📷 *Instagram:* @cake_and_crumb_1')
         setOptions([{ label: '💬 Open WhatsApp', action: 'whatsapp' }, { label: '🏠 Main Menu', action: 'home' }])
         break
       default:
