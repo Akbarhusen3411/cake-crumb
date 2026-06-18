@@ -2,9 +2,9 @@ import { useEffect, useState, useRef } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import {
   FiSearch, FiShoppingBag, FiHome, FiInfo, FiBook, FiImage,
-  FiStar, FiPhone, FiFacebook, FiInstagram, FiMail, FiX,
+  FiStar, FiPhone, FiInstagram, FiMail, FiX,
 } from 'react-icons/fi'
-import { FaPinterestP, FaWhatsapp } from 'react-icons/fa'
+import { FaWhatsapp } from 'react-icons/fa'
 import Logo from './Logo.jsx'
 import SearchOverlay from './SearchOverlay.jsx'
 import { asset } from '../data/images.js'
@@ -235,9 +235,7 @@ export default function Navbar() {
           {/* Footer block — socials + WhatsApp CTA */}
           <div className="mobile-menu__footer">
             <div className="mobile-menu__socials">
-              <a href="#" aria-label="Facebook" className="mobile-menu__social"><FiFacebook size={15} /></a>
-              <a href="#" aria-label="Instagram" className="mobile-menu__social"><FiInstagram size={15} /></a>
-              <a href="#" aria-label="Pinterest" className="mobile-menu__social"><FaPinterestP size={13} /></a>
+              <a href="https://www.instagram.com/cake_and_crumb_1/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="mobile-menu__social"><FiInstagram size={15} /></a>
               <a href="mailto:cakeandcrumb.in@gmail.com" aria-label="Email" className="mobile-menu__social"><FiMail size={15} /></a>
             </div>
             <a
@@ -246,7 +244,7 @@ export default function Navbar() {
               rel="noopener noreferrer"
               className="mobile-menu__cta"
             >
-              <FaWhatsapp size={16} /> +91 90816 68490
+              <FaWhatsapp size={16} /> +91 91731 83440
             </a>
           </div>
           </div>{/* /.mobile-menu__inner */}

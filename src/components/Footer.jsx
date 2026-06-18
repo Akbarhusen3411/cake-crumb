@@ -1,9 +1,8 @@
 import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  FiMapPin, FiPhone, FiMail, FiClock, FiInstagram, FiFacebook,
+  FiMapPin, FiPhone, FiMail, FiClock, FiInstagram,
 } from 'react-icons/fi'
-import { FaPinterestP } from 'react-icons/fa'
 import Newsletter from './Newsletter.jsx'
 import Logo from './Logo.jsx'
 import { asset } from '../data/images.js'
@@ -44,9 +43,7 @@ export default function Footer() {
           <p className="cc-footer-m__quote">Where every bite tells a sweet story</p>
 
           <div className="cc-footer-m__socials">
-            <a href="#" aria-label="Facebook" className="cc-footer-m__social"><FiFacebook size={14} /></a>
             <a href="https://www.instagram.com/cake_and_crumb_1/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="cc-footer-m__social"><FiInstagram size={14} /></a>
-            <a href="#" aria-label="Pinterest" className="cc-footer-m__social"><FaPinterestP size={12} /></a>
             <a href="mailto:cakeandcrumb.in@gmail.com" aria-label="Email" className="cc-footer-m__social"><FiMail size={14} /></a>
           </div>
         </div>
@@ -112,14 +109,8 @@ export default function Footer() {
                 The gourmet chocolate and<br />berry boutique!
               </p>
               <div className="cc-footer-d__socials">
-                <a href="#" aria-label="Facebook" className="cc-footer-d__social">
-                  <FiFacebook size={14} />
-                </a>
                 <a href="https://www.instagram.com/cake_and_crumb_1/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="cc-footer-d__social">
                   <FiInstagram size={14} />
-                </a>
-                <a href="#" aria-label="Pinterest" className="cc-footer-d__social">
-                  <FaPinterestP size={12} />
                 </a>
                 <a href="mailto:cakeandcrumb.in@gmail.com" aria-label="Email" className="cc-footer-d__social">
                   <FiMail size={14} />

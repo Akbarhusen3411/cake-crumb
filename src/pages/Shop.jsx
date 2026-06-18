@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   FiHeart, FiShoppingBag, FiX, FiPlus, FiMinus, FiCheckCircle,
-  FiShield, FiTruck, FiAward, FiChevronLeft, FiChevronRight,
+  FiShield, FiTruck, FiChevronLeft, FiChevronRight,
 } from 'react-icons/fi'
 import { TbLeaf, TbToolsKitchen2 } from 'react-icons/tb'
 import HeartDivider from '../components/HeartDivider.jsx'

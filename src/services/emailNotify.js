@@ -28,7 +28,8 @@ function buildParams(order) {
   return {
     order_id: order.orderId || '',
     customer_name: c.name || '',
-    customer_phone: c.phone ? `+91 ${c.phone}` : '',
+    // c.phone already includes the country code (e.g. "+919173183440") from Checkout.
+    customer_phone: c.phone || '',
     customer_email: c.email || '—',
     customer_address: [c.address, c.city, c.pincode].filter(Boolean).join(', '),
     items: itemsText,

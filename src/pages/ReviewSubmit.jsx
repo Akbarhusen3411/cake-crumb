@@ -121,6 +121,7 @@ export default function ReviewSubmit() {
               <input
                 className="cc-input"
                 placeholder="Your Name *"
+                aria-label="Your name"
                 value={form.name}
                 onChange={(e) => update('name', e.target.value)}
                 required
@@ -131,6 +132,7 @@ export default function ReviewSubmit() {
               <input
                 className="cc-input"
                 placeholder="Email (optional)"
+                aria-label="Email (optional)"
                 type="email"
                 value={form.email}
                 onChange={(e) => update('email', e.target.value)}
@@ -141,6 +143,7 @@ export default function ReviewSubmit() {
               <input
                 className="cc-input"
                 placeholder="What did you order? (e.g. Pistachio Cheesecake)"
+                aria-label="What did you order?"
                 value={form.orderItem}
                 onChange={(e) => update('orderItem', e.target.value)}
                 maxLength={120}
@@ -150,6 +153,7 @@ export default function ReviewSubmit() {
               <input
                 className="cc-input"
                 placeholder="Review Title (e.g. Absolutely Perfect!)"
+                aria-label="Review title"
                 value={form.title}
                 onChange={(e) => update('title', e.target.value)}
                 maxLength={100}
@@ -160,6 +164,7 @@ export default function ReviewSubmit() {
                 className="cc-input"
                 rows={5}
                 placeholder="Tell us about your experience... *"
+                aria-label="Your review"
                 value={form.text}
                 onChange={(e) => update('text', e.target.value)}
                 required

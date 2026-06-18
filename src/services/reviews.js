@@ -1,7 +1,4 @@
-import {
-  addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, serverTimestamp,
-} from 'firebase/firestore'
-import { db, isFirebaseEnabled } from '../firebase.js'
+import { getDb } from '../firebase.js'
 
 const COLLECTION = 'reviews'
 const STORAGE_KEY = 'cc_reviews_local_v1'
@@ -35,7 +32,9 @@ export async function addReview(input) {
     throw new Error('Name and review text are required.')
   }
 
-  if (isFirebaseEnabled && db) {
+  const db = await getDb()
+  if (db) {
+    const { addDoc, collection, serverTimestamp } = await import('firebase/firestore')
     const docRef = await addDoc(collection(db, COLLECTION), {
       ...review,
       createdAt: serverTimestamp(),
@@ -56,8 +55,10 @@ export async function addReview(input) {
  * Fetch all reviews, newest first.
  */
 export async function getReviews() {
-  if (isFirebaseEnabled && db) {
+  const db = await getDb()
+  if (db) {
     try {
+      const { collection, getDocs, orderBy, query } = await import('firebase/firestore')
       const q = query(collection(db, COLLECTION), orderBy('createdAt', 'desc'))
       const snap = await getDocs(q)
       return snap.docs.map((d) => {
@@ -84,13 +85,17 @@ export async function getReviews() {
 export async function deleteReview(id) {
   if (!id) return false
 
-  if (isFirebaseEnabled && db && !id.startsWith('local-')) {
-    try {
-      await deleteDoc(doc(db, COLLECTION, id))
-      return true
-    } catch (err) {
-      console.error('[reviews] delete failed:', err)
-      return false
+  if (!id.startsWith('local-')) {
+    const db = await getDb()
+    if (db) {
+      try {
+        const { deleteDoc, doc } = await import('firebase/firestore')
+        await deleteDoc(doc(db, COLLECTION, id))
+        return true
+      } catch (err) {
+        console.error('[reviews] delete failed:', err)
+        return false
+      }
     }
   }
 

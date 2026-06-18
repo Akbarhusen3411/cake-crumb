@@ -1,7 +1,4 @@
-import {
-  addDoc, collection, doc, getDocs, query, serverTimestamp, updateDoc, where,
-} from 'firebase/firestore'
-import { db, isFirebaseEnabled } from '../firebase.js'
+import { getDb, isFirebaseEnabled } from '../firebase.js'
 
 const COLLECTION = 'orders'
 const STORAGE_KEY = 'cc_orders_local_v1'
@@ -73,11 +70,13 @@ export async function saveOrder(input) {
   list.unshift(local)
   writeLocal(list.slice(0, 50)) // keep last 50
 
-  if (!isFirebaseEnabled || !db) {
+  const db = await getDb()
+  if (!db) {
     return { ...local, firebaseId: null }
   }
 
   try {
+    const { addDoc, collection, serverTimestamp } = await import('firebase/firestore')
     const docRef = await addDoc(collection(db, COLLECTION), {
       ...order,
       createdAt: serverTimestamp(),
@@ -107,12 +106,14 @@ function slimItem(it) {
 export async function getOrderByOrderId(orderId) {
   if (!orderId) return null
 
-  if (!isFirebaseEnabled || !db) {
+  const db = await getDb()
+  if (!db) {
     const local = readLocal().find((o) => o.orderId === orderId)
     return local ? { ...local, firebaseId: null } : null
   }
 
   try {
+    const { collection, getDocs, query, where } = await import('firebase/firestore')
     const q = query(collection(db, COLLECTION), where('orderId', '==', orderId))
     const snap = await getDocs(q)
     if (snap.empty) return null
@@ -129,8 +130,11 @@ export async function getOrderByOrderId(orderId) {
  * or when we don't have the firebaseId. Idempotent — safe to call twice.
  */
 export async function markOrderConfirmed(firebaseId) {
-  if (!isFirebaseEnabled || !db || !firebaseId) return false
+  if (!isFirebaseEnabled || !firebaseId) return false
+  const db = await getDb()
+  if (!db) return false
   try {
+    const { doc, serverTimestamp, updateDoc } = await import('firebase/firestore')
     await updateDoc(doc(db, COLLECTION, firebaseId), {
       status: 'confirmed',
       confirmedAt: serverTimestamp(),

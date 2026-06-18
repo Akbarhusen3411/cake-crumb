@@ -8,6 +8,7 @@ import { FaWhatsapp } from 'react-icons/fa'
 import PageHero from '../components/PageHero.jsx'
 import { img, u } from '../data/images.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
+import { useJsonLd } from '../hooks/useJsonLd.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
 
 const SECTIONS = [
@@ -45,7 +46,7 @@ const SECTIONS = [
       },
       {
         q: 'Is there a delivery fee?',
-        a: 'Free delivery on orders above ₹999 within the local zone. ₹49 for orders below that. Long-distance deliveries are quoted individually.',
+        a: 'The delivery charge depends on your location and is confirmed by Cake & Crumb on WhatsApp once you share your address. Self-pickup is always free. Your checkout total shows the item subtotal only.',
       },
       {
         q: 'Can I pick up the order myself?',
@@ -224,6 +225,16 @@ export default function FAQ() {
   usePageMeta({
     title: 'FAQ',
     description: 'Frequently asked questions about Cake & Crumb — allergens, delivery, customization, payment, cancellation, and storage.',
+  })
+
+  useJsonLd('faq-page', {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: SECTIONS.flatMap((s) => s.questions).map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
   })
 
   const [expanded, setExpanded] = useState('allergens')

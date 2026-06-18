@@ -3,10 +3,22 @@ import HeartDivider from '../components/HeartDivider.jsx'
 import { img, u } from '../data/images.js'
 
 const gallery = [
-  img.pinkDripCake, img.cupcakesPink, img.truffleBox, img.berryCake,
-  img.cookies, img.cupcakesRose, img.macarons, img.chocolateCake,
-  img.cakePops, img.pinkDripCake2, img.brownies, img.cheesecake,
-  img.bakerPiping, img.dessertTable, img.cakeStand, img.redVelvet,
+  { id: img.pinkDripCake, alt: 'Pink drip celebration cake' },
+  { id: img.cupcakesPink, alt: 'Pink-frosted cupcakes' },
+  { id: img.truffleBox, alt: 'Assorted chocolate truffle box' },
+  { id: img.berryCake, alt: 'Fresh berry-topped cake' },
+  { id: img.cookies, alt: 'Freshly baked cookies' },
+  { id: img.cupcakesRose, alt: 'Rose-decorated cupcakes' },
+  { id: img.macarons, alt: 'Colourful French macarons' },
+  { id: img.chocolateCake, alt: 'Rich chocolate cake' },
+  { id: img.cakePops, alt: 'Decorated cake pops' },
+  { id: img.pinkDripCake2, alt: 'Pink drip cake with toppings' },
+  { id: img.brownies, alt: 'Fudgy chocolate brownies' },
+  { id: img.cheesecake, alt: 'Creamy cheesecake slice' },
+  { id: img.bakerPiping, alt: 'Baker piping frosting onto a cake' },
+  { id: img.dessertTable, alt: 'Dessert table spread of treats' },
+  { id: img.cakeStand, alt: 'Tiered cake on a display stand' },
+  { id: img.redVelvet, alt: 'Red velvet cake' },
 ]
 
 export default function Gallery() {
@@ -47,11 +59,11 @@ export default function Gallery() {
       <section className="cc-gallery-grid-wrap">
         <div className="container py-5">
           <div className="row g-3">
-            {gallery.map((id, i) => (
+            {gallery.map((g, i) => (
               <div className="col-6 col-md-4 col-lg-3" key={i}>
                 <img
-                  src={u(id, 600, 600)}
-                  alt=""
+                  src={u(g.id, 600, 600)}
+                  alt={g.alt}
                   loading="lazy"
                   className="cc-gallery-tile"
                 />

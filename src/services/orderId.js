@@ -15,7 +15,7 @@ export function generateOrderId(name = '') {
   const dateKey = `${dd}${mm}${yy}`
 
   const storageKey = COUNTER_PREFIX + dateKey
-  let next = 1
+  let next
   try {
     next = (Number(localStorage.getItem(storageKey)) || 0) + 1
     localStorage.setItem(storageKey, String(next))

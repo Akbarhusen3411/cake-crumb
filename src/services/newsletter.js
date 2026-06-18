@@ -1,5 +1,4 @@
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
-import { db, isFirebaseEnabled } from '../firebase.js'
+import { getDb } from '../firebase.js'
 
 const COLLECTION = 'newsletter'
 const STORAGE_KEY = 'cc_newsletter_local_v1'
@@ -10,8 +9,10 @@ export async function subscribeNewsletter(email, source = 'footer') {
     throw new Error('Please enter a valid email address.')
   }
 
-  if (isFirebaseEnabled && db) {
+  const db = await getDb()
+  if (db) {
     try {
+      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore')
       const docRef = await addDoc(collection(db, COLLECTION), {
         email: cleaned,
         source,
@@ -31,6 +32,6 @@ export async function subscribeNewsletter(email, source = 'footer') {
       list.push(cleaned)
       localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
     }
-  } catch {}
+  } catch { /* storage blocked — best effort only */ }
   return { ok: true, id: 'local' }
 }

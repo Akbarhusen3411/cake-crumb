@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  FiStar, FiHeart, FiCheckCircle, FiSend, FiTrash2, FiLock, FiLogOut,
+  FiStar, FiHeart, FiCheckCircle, FiTrash2, FiLock, FiLogOut,
   FiSmile, FiTruck, FiShield, FiChevronDown,
 } from 'react-icons/fi'
 import { TbLeaf, TbCake, TbToolsKitchen2, TbHandStop } from 'react-icons/tb'
@@ -102,7 +102,7 @@ export default function Reviews() {
   function tryAdminLogin(e) {
     e.preventDefault()
     if (adminPwd === ADMIN_PASSWORD) {
-      try { sessionStorage.setItem(ADMIN_KEY, '1') } catch {}
+      try { sessionStorage.setItem(ADMIN_KEY, '1') } catch { /* storage blocked */ }
       setIsAdmin(true)
       setShowAdminLogin(false)
       setAdminPwd('')
@@ -112,7 +112,7 @@ export default function Reviews() {
     }
   }
   function adminLogout() {
-    try { sessionStorage.removeItem(ADMIN_KEY) } catch {}
+    try { sessionStorage.removeItem(ADMIN_KEY) } catch { /* storage blocked */ }
     setIsAdmin(false)
   }
   async function onDelete(id, name) {

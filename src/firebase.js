@@ -1,6 +1,3 @@
-import { initializeApp } from 'firebase/app'
-import { getFirestore } from 'firebase/firestore'
-
 // Read from Vite env (.env file). All vars must start with VITE_ to reach the browser.
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -11,22 +8,41 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 }
 
+// Cheap, synchronous env check — safe to import anywhere without pulling the SDK.
 export const isFirebaseEnabled =
   !!firebaseConfig.apiKey && !!firebaseConfig.projectId
 
-let _db = null
-if (isFirebaseEnabled) {
-  try {
-    const app = initializeApp(firebaseConfig)
-    _db = getFirestore(app)
-  } catch (err) {
-    console.error('[firebase] init failed:', err)
-  }
-} else if (import.meta.env.DEV) {
-  console.warn(
-    '[firebase] Not configured — reviews will use localStorage. ' +
-      'Add VITE_FIREBASE_* vars to .env to enable Firestore.'
-  )
-}
+let _dbPromise = null
 
-export const db = _db
+/**
+ * Lazily import + initialise Firebase only on first use, then memoise.
+ * Keeps the ~80KB Firebase SDK out of the main bundle so it never loads on
+ * pages that don't touch Firestore. Resolves to a Firestore `db` or `null`.
+ */
+export async function getDb() {
+  if (!isFirebaseEnabled) {
+    if (import.meta.env.DEV) {
+      console.warn(
+        '[firebase] Not configured — data falls back to localStorage. ' +
+          'Add VITE_FIREBASE_* vars to .env to enable Firestore.'
+      )
+    }
+    return null
+  }
+  if (!_dbPromise) {
+    _dbPromise = (async () => {
+      try {
+        const [{ initializeApp }, { getFirestore }] = await Promise.all([
+          import('firebase/app'),
+          import('firebase/firestore'),
+        ])
+        const app = initializeApp(firebaseConfig)
+        return getFirestore(app)
+      } catch (err) {
+        console.error('[firebase] init failed:', err)
+        return null
+      }
+    })()
+  }
+  return _dbPromise
+}

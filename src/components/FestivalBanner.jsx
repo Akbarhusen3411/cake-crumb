@@ -20,7 +20,7 @@ export default function FestivalBanner() {
         // Dismissals are scoped to the festival id — a new festival re-shows the banner.
         dismissed = parsed.id === f.id
       }
-    } catch {}
+    } catch { /* ignore malformed storage */ }
     if (!dismissed) {
       setFestival(f)
       setHidden(false)
@@ -31,7 +31,7 @@ export default function FestivalBanner() {
     if (!festival) return
     try {
       localStorage.setItem(DISMISS_KEY, JSON.stringify({ id: festival.id, t: Date.now() }))
-    } catch {}
+    } catch { /* storage blocked */ }
     setHidden(true)
   }
 

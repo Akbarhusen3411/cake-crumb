@@ -5,9 +5,6 @@ import { img } from './images.js'
 // Default allergen sets per category — most baked goods share these.
 const A_BAKED   = ['contains-egg', 'contains-dairy', 'contains-gluten', 'eggless-option']
 const A_NUTS    = [...A_BAKED, 'contains-nuts']
-const A_DRINK   = []
-const A_SHAKE   = ['contains-dairy']
-const A_VEGGY   = ['eggless']
 
 // Featured cards on Home — visually distinctive picks across categories.
 export const featured = [

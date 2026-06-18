@@ -21,6 +21,11 @@ export function usePageMeta({ title, description } = {}) {
     setMeta('name', 'twitter:title', fullTitle)
     setMeta('name', 'twitter:description', desc)
 
+    // Per-route canonical + og:url so each SPA route has a distinct, correct URL.
+    const url = window.location.origin + window.location.pathname
+    setLink('canonical', url)
+    setMeta('property', 'og:url', url)
+
     return () => {
       // restore defaults on unmount so the next page (if it doesn't call this) is sensible
       document.title = DEFAULT_TITLE
@@ -36,4 +41,14 @@ function setMeta(attrKey, attrValue, content) {
     document.head.appendChild(el)
   }
   el.setAttribute('content', content)
+}
+
+function setLink(rel, href) {
+  let el = document.head.querySelector(`link[rel="${rel}"]`)
+  if (!el) {
+    el = document.createElement('link')
+    el.setAttribute('rel', rel)
+    document.head.appendChild(el)
+  }
+  el.setAttribute('href', href)
 }

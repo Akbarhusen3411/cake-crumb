@@ -171,7 +171,7 @@ const MENU_DATA = {
       { name: 'Cupcakes', items: [{ n: 'Chocolate', p: '₹100' }, { n: 'Vanilla', p: '₹100' }] },
       { name: 'Bakes', items: [
         { n: 'Brownie', p: '₹80' }, { n: 'Blondie', p: '₹80' }, { n: 'Cakesicle', p: '₹120' },
-        { n: 'Cake Pop', p: '₹90' }, { n: 'Choc Strawberry', p: '₹70' },
+        { n: 'Cake Pop', p: '₹90' }, { n: 'Choc Covered Strawberry', p: '₹70' },
       ]},
       { name: 'Milk Cake 6"', items: [
         { n: 'Biscoff', s: '₹100', w: '₹800' }, { n: 'Rose', s: '₹100', w: '₹800' },
@@ -204,8 +204,8 @@ const VISITED_KEY = 'cake-crumb-chatbot-visited'
 
 function getInitialMessages() {
   let isReturning = false
-  try { isReturning = localStorage.getItem(VISITED_KEY) === '1' } catch {}
-  try { localStorage.setItem(VISITED_KEY, '1') } catch {}
+  try { isReturning = localStorage.getItem(VISITED_KEY) === '1' } catch { /* storage blocked */ }
+  try { localStorage.setItem(VISITED_KEY, '1') } catch { /* storage blocked */ }
   if (isReturning) {
     return [
       { from: 'bot', text: "Welcome back to *Cake & Crumb*! 🎂", delay: 0 },
@@ -566,17 +566,16 @@ export default function ChatBot() {
   const sendOrderToWhatsApp = () => {
     const items = Object.entries(orderCart).filter(([, v]) => v.qty > 0)
     const total = getCartTotal()
-    const deliveryFee = total >= 499 ? 0 : 49
-    const grandTotal = total + deliveryFee
     const orderId = generateOrderId(orderInfo.name)
     setLastOrderId(orderId)
     setLastOrderTime(Date.now())
 
     // Persist to Firestore (fire-and-forget, never blocks WhatsApp open).
+    // Delivery is NOT auto-charged — the bakery confirms it on WhatsApp, matching Checkout.
     saveOrder({
       orderId,
       items: items.map(([name, { qty, price }]) => ({ name, qty, price, id: name.toLowerCase().replace(/\s+/g, '-') })),
-      totals: { subtotal: total, delivery: deliveryFee, total: grandTotal },
+      totals: { subtotal: total, delivery: 0, total },
       customer: {
         name: orderInfo.name,
         phone: orderInfo.phone,
@@ -615,8 +614,8 @@ export default function ChatBot() {
       `*📋 Order Items:*${orderLines}\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `*Subtotal:* ₹${total}\n` +
-      `*Delivery:* ${deliveryFee === 0 ? 'FREE ✅' : '₹' + deliveryFee}\n` +
-      `*💰 Total: ₹${grandTotal}*\n\n` +
+      `*Delivery:* will be confirmed by Cake & Crumb\n` +
+      `*💰 Total: ₹${total}* _(+ delivery, if any)_\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `⚠️ *Cancel window:* 30 min from order time.\n\n` +
       `Please confirm my order. Thank you! 🙏`
@@ -732,7 +731,7 @@ export default function ChatBot() {
         break
       case 'delivery':
         setOptions([])
-        await addBotMessage('*Delivery Information*\n\n📍 *Area:* All Gujarat districts\n⏰ *Notice:* Please order 24 hours in advance\n🚗 *Free delivery* on orders above ₹499\n💰 *Delivery fee:* ₹49 (under ₹499)\n📦 *Packaging:* Included in price')
+        await addBotMessage('*Delivery Information*\n\n📍 *Area:* All Gujarat districts\n⏰ *Notice:* Please order 24 hours in advance\n🚗 *Delivery:* Home delivery or free self-pickup — the charge (if any) is confirmed by Cake & Crumb on WhatsApp\n📦 *Packaging:* Included in price')
         setOptions([{ label: '🛒 Place Order', action: 'order' }, { label: '🏠 Main Menu', action: 'home' }])
         break
       case 'location':
@@ -848,6 +847,14 @@ export default function ChatBot() {
     return () => { document.body.style.overflow = '' }
   }, [open])
 
+  // Close the chat on Escape for keyboard users
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
   return (
     <>
       {/* Toggle button */}
@@ -891,6 +898,9 @@ export default function ChatBot() {
           ${open ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-8 pointer-events-none'}`}
       >
         <div
+          role="dialog"
+          aria-modal="false"
+          aria-label="Cake & Crumb chat assistant"
           className="sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[100dvh] sm:h-[560px] sm:w-[380px] border border-gold/20"
           style={{ background: '#fffcfa' }}
         >
@@ -956,6 +966,9 @@ export default function ChatBot() {
           {/* Messages */}
           <div
             ref={scrollRef}
+            role="log"
+            aria-live="polite"
+            aria-label="Chat messages"
             className="flex-1 overflow-y-auto px-3 py-4 space-y-2.5 chat-bg-pattern"
             style={{ background: 'linear-gradient(to bottom, #fffcfa, #fff6f2, rgba(252, 228, 233, 0.3))' }}
           >
@@ -1119,6 +1132,7 @@ export default function ChatBot() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && input.trim()) handleTextInput(input) }}
                 placeholder={orderStep ? 'Type here…' : 'Ask about our menu…'}
+                aria-label="Type your message"
                 className="w-full rounded-full pl-4 pr-3 py-2.5 text-sm outline-none transition-all"
                 style={{ background: '#fff6f2', color: '#1a1a1a', border: '1px solid #f1d9d4' }}
                 onFocus={(e) => (e.currentTarget.style.borderColor = '#e0617a')}

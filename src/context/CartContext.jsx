@@ -69,8 +69,10 @@ export function CartProvider({ children }) {
   const value = useMemo(() => {
     const count = items.reduce((s, p) => s + p.qty, 0)
     const subtotal = items.reduce((s, p) => s + p.price * p.qty, 0)
-    const delivery = subtotal > 0 && subtotal < 999 ? 49 : 0
-    const total = subtotal + delivery
+    // Delivery is never auto-charged — the bakery confirms it on WhatsApp.
+    // Kept as 0 so any consumer of `total` matches the subtotal shown at checkout.
+    const delivery = 0
+    const total = subtotal
     return { items, count, subtotal, delivery, total, add, remove, updateQty, increment, decrement, clear, toast }
   }, [items, toast])
 
