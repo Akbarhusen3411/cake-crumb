@@ -51,21 +51,12 @@ service cloud.firestore {
         request.resource.data.totals.total is number &&
         request.resource.data.totals.total > 0 &&
         request.resource.data.totals.total < 200000;
-      // Default: locked down (admin reads via Firebase console only).
-      allow read, update, delete: if false;
+      // Admin dashboard (/admin/orders) reads + updates orders, but ONLY when a
+      // Firebase-authenticated admin is signed in. Customer PII stays private —
+      // anonymous visitors can create an order but cannot read any.
+      allow read, update: if request.auth != null;
+      allow delete: if false;
     }
-    // ── Admin Orders dashboard (/admin/orders) ──
-    // The in-app dashboard LISTS orders and UPDATES their status (confirm/cancel).
-    // Firestore can't read the client-side admin password, so enabling it means
-    // changing the line above to:
-    //   allow read, update: if true;
-    // ⚠️ WARNING: with no Firebase Auth this makes ALL order data — customer
-    // name, phone, email, address — publicly readable by anyone who queries the
-    // collection. The page's password only hides the UI, not the data. For real
-    // protection use Firebase Auth and gate the rule on request.auth != null.
-    // If you leave the rule as `if false`, the dashboard still works for orders
-    // placed on the same device (localStorage mirror) and confirm/cancel will
-    // still message the customer on WhatsApp — it just won't persist status.
 
     match /newsletter/{subscription} {
       // Anyone can subscribe; nobody reads/edits via the browser.
@@ -114,6 +105,29 @@ but nobody can edit/delete them from the browser — only you, via Firebase cons
 2. Check the Firebase console → Firestore Database → you should see a `reviews` collection
    with the document.
 3. Open `/reviews` — your test review appears in the list.
+
+## 6. Admin login for the Orders dashboard (Firebase Auth)
+
+The `/admin/orders` page lists every order with Confirm / Cancel buttons. To keep
+customer data private, it requires a Firebase-authenticated admin login (the
+`allow read, update: if request.auth != null;` rule above enforces this).
+
+1. **Enable Email/Password sign-in.** Firebase console → **Build → Authentication
+   → Get started** (first time only) → **Sign-in method** tab → click
+   **Email/Password** → toggle **Enable** → **Save**.
+2. **Create your admin account.** Authentication → **Users** tab → **Add user** →
+   enter an email + a password you'll remember → **Add user**. This is the login
+   you'll use on the dashboard. (Add more users the same way for multiple staff.)
+3. **Publish the orders rule** from section 3 (`allow read, update: if request.auth != null;`).
+4. **Test.** Visit `/admin/orders`, sign in with that account — all orders appear,
+   from every device. Tap **Confirm**/**Cancel** to update status and message the
+   customer on WhatsApp.
+
+Notes:
+- Email/Password sign-in works from any domain, so no "authorized domains" change
+  is needed for GitHub Pages.
+- The login is real auth — there's no hardcoded password in the code.
+- To revoke access, delete or disable the user in Authentication → Users.
 
 ## The shareable customer link
 

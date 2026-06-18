@@ -7,12 +7,9 @@ import { FaWhatsapp } from 'react-icons/fa'
 import {
   getAllOrders, markOrderConfirmed, markOrderCancelled,
 } from '../services/orders.js'
+import { getFirebaseAuth, isFirebaseEnabled } from '../firebase.js'
 import { inr } from '../data/format.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
-
-// Single shared admin session (same key/password as the Reviews moderation panel).
-const ADMIN_KEY = 'cc_admin_v1'
-const ADMIN_PASSWORD = 'cakeandcrumb2026'
 
 // Strip to digits; assume India (+91) for bare 10-digit numbers, so wa.me works.
 function waNumber(raw) {
@@ -80,15 +77,37 @@ export default function AdminOrders() {
     return () => m.remove()
   }, [])
 
-  const [isAdmin, setIsAdmin] = useState(() => {
-    try { return sessionStorage.getItem(ADMIN_KEY) === '1' } catch { return false }
-  })
+  // Firebase Auth admin session — only a signed-in admin can read order data
+  // (enforced by Firestore rules), so customer PII stays private.
+  const [user, setUser] = useState(null)
+  const [authReady, setAuthReady] = useState(false)
+  const [email, setEmail] = useState('')
   const [pwd, setPwd] = useState('')
   const [pwdError, setPwdError] = useState('')
+  const [signingIn, setSigningIn] = useState(false)
 
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(false)
   const [busyId, setBusyId] = useState(null)
+
+  const isAdmin = !!user
+
+  // Subscribe to auth state once.
+  useEffect(() => {
+    let unsub = () => {}
+    let active = true
+    ;(async () => {
+      const auth = await getFirebaseAuth()
+      if (!auth) { if (active) setAuthReady(true); return }
+      const { onAuthStateChanged } = await import('firebase/auth')
+      unsub = onAuthStateChanged(auth, (u) => {
+        if (!active) return
+        setUser(u)
+        setAuthReady(true)
+      })
+    })()
+    return () => { active = false; unsub() }
+  }, [])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -101,21 +120,34 @@ export default function AdminOrders() {
     if (isAdmin) load()
   }, [isAdmin, load])
 
-  function login(e) {
+  async function login(e) {
     e.preventDefault()
-    if (pwd === ADMIN_PASSWORD) {
-      try { sessionStorage.setItem(ADMIN_KEY, '1') } catch { /* storage blocked */ }
-      setIsAdmin(true)
+    setPwdError('')
+    setSigningIn(true)
+    try {
+      const auth = await getFirebaseAuth()
+      if (!auth) throw new Error('Firebase is not configured.')
+      const { signInWithEmailAndPassword } = await import('firebase/auth')
+      await signInWithEmailAndPassword(auth, email.trim(), pwd)
       setPwd('')
-      setPwdError('')
-    } else {
-      setPwdError('Incorrect password.')
+    } catch (err) {
+      setPwdError(
+        err?.code === 'auth/invalid-credential' || err?.code === 'auth/wrong-password'
+          ? 'Incorrect email or password.'
+          : (err?.message || 'Sign-in failed.')
+      )
+    } finally {
+      setSigningIn(false)
     }
   }
 
-  function logout() {
-    try { sessionStorage.removeItem(ADMIN_KEY) } catch { /* storage blocked */ }
-    setIsAdmin(false)
+  async function logout() {
+    const auth = await getFirebaseAuth()
+    if (auth) {
+      const { signOut } = await import('firebase/auth')
+      await signOut(auth)
+    }
+    setOrders([])
   }
 
   async function act(order, kind) {
@@ -154,24 +186,44 @@ export default function AdminOrders() {
           <FiLock size={28} style={{ color: 'var(--cc-rose)' }} />
           <h1 className="h4 mt-2" style={{ fontFamily: 'var(--font-heading)' }}>Admin — Orders</h1>
           <p style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.9rem' }}>
-            Enter the admin password to manage orders.
+            Sign in with your bakery admin account to manage orders.
           </p>
         </div>
-        <form onSubmit={login}>
-          <input
-            type="password"
-            className="cc-input mb-2"
-            placeholder="Admin password"
-            aria-label="Admin password"
-            value={pwd}
-            onChange={(e) => setPwd(e.target.value)}
-            autoFocus
-          />
-          {pwdError && (
-            <p style={{ color: '#cf3e63', fontSize: '0.8rem' }}>{pwdError}</p>
-          )}
-          <button type="submit" className="btn-rose w-100 mt-2">Log in</button>
-        </form>
+        {!isFirebaseEnabled ? (
+          <p style={{ color: '#cf3e63', fontSize: '0.85rem', textAlign: 'center' }}>
+            Firebase isn’t configured, so the admin dashboard is unavailable.
+          </p>
+        ) : !authReady ? (
+          <p style={{ color: 'var(--cc-cocoa-soft)', textAlign: 'center' }}>Loading…</p>
+        ) : (
+          <form onSubmit={login}>
+            <input
+              type="email"
+              className="cc-input mb-2"
+              placeholder="Admin email"
+              aria-label="Admin email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="username"
+              autoFocus
+            />
+            <input
+              type="password"
+              className="cc-input mb-2"
+              placeholder="Password"
+              aria-label="Admin password"
+              value={pwd}
+              onChange={(e) => setPwd(e.target.value)}
+              autoComplete="current-password"
+            />
+            {pwdError && (
+              <p style={{ color: '#cf3e63', fontSize: '0.8rem' }}>{pwdError}</p>
+            )}
+            <button type="submit" className="btn-rose w-100 mt-2" disabled={signingIn}>
+              {signingIn ? 'Signing in…' : 'Log in'}
+            </button>
+          </form>
+        )}
       </section>
     )
   }

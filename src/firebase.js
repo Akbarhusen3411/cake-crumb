@@ -12,14 +12,11 @@ const firebaseConfig = {
 export const isFirebaseEnabled =
   !!firebaseConfig.apiKey && !!firebaseConfig.projectId
 
-let _dbPromise = null
+let _appPromise = null
 
-/**
- * Lazily import + initialise Firebase only on first use, then memoise.
- * Keeps the ~80KB Firebase SDK out of the main bundle so it never loads on
- * pages that don't touch Firestore. Resolves to a Firestore `db` or `null`.
- */
-export async function getDb() {
+// Lazily import + initialise the Firebase app once, then memoise. Keeps the SDK
+// out of the main bundle so it only loads on pages that actually use it.
+async function getFirebaseApp() {
   if (!isFirebaseEnabled) {
     if (import.meta.env.DEV) {
       console.warn(
@@ -29,20 +26,42 @@ export async function getDb() {
     }
     return null
   }
-  if (!_dbPromise) {
-    _dbPromise = (async () => {
+  if (!_appPromise) {
+    _appPromise = (async () => {
       try {
-        const [{ initializeApp }, { getFirestore }] = await Promise.all([
-          import('firebase/app'),
-          import('firebase/firestore'),
-        ])
-        const app = initializeApp(firebaseConfig)
-        return getFirestore(app)
+        const { initializeApp } = await import('firebase/app')
+        return initializeApp(firebaseConfig)
       } catch (err) {
         console.error('[firebase] init failed:', err)
         return null
       }
     })()
   }
-  return _dbPromise
+  return _appPromise
+}
+
+/** Resolve a Firestore `db` (or null). */
+export async function getDb() {
+  const app = await getFirebaseApp()
+  if (!app) return null
+  try {
+    const { getFirestore } = await import('firebase/firestore')
+    return getFirestore(app)
+  } catch (err) {
+    console.error('[firebase] firestore load failed:', err)
+    return null
+  }
+}
+
+/** Resolve a Firebase Auth instance (or null). Used by the admin dashboard. */
+export async function getFirebaseAuth() {
+  const app = await getFirebaseApp()
+  if (!app) return null
+  try {
+    const { getAuth } = await import('firebase/auth')
+    return getAuth(app)
+  } catch (err) {
+    console.error('[firebase] auth load failed:', err)
+    return null
+  }
 }
