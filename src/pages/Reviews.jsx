@@ -199,6 +199,7 @@ export default function Reviews() {
                 src={u(img.heroReviews, 1000, 800)}
                 alt="Three-tier celebration cake with pink fresh flowers"
                 className="cc-reviews-hero__img"
+                fetchpriority="high"
               />
             </div>
           </div>

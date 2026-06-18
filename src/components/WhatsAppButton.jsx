@@ -1,8 +1,8 @@
 import { useLocation } from 'react-router-dom'
 import { FaWhatsapp } from 'react-icons/fa'
 
-// Phone in E.164 (no plus, no spaces).
-export const WHATSAPP_PHONE = '919081668490'
+// Phone in E.164 (no plus, no spaces). Primary number.
+export const WHATSAPP_PHONE = '919173183440'
 
 export function buildWhatsAppLink(message = '') {
   const text = encodeURIComponent(message || "Hi! I'd like to order from Cake & Crumb.")

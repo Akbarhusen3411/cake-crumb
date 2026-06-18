@@ -149,6 +149,10 @@ export default function Footer() {
                 </li>
                 <li>
                   <span className="cc-footer-d__info-icon"><FiPhone size={14} /></span>
+                  <a href="tel:+919173183440"><strong>+91 91731 83440</strong></a>
+                </li>
+                <li>
+                  <span className="cc-footer-d__info-icon"><FiPhone size={14} /></span>
                   <a href="tel:+919081668490">+91 90816 68490</a>
                 </li>
                 <li>

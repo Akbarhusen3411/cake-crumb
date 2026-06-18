@@ -133,6 +133,7 @@ export default function Shop() {
                 src={u(img.heroShop, 1000, 800)}
                 alt="Cupcakes on tiered display stands"
                 className="cc-shop-hero__img"
+                fetchpriority="high"
               />
             </div>
           </div>

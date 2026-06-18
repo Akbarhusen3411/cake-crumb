@@ -36,6 +36,7 @@ export default function Gallery() {
                 src={u(img.heroGallery, 1000, 800)}
                 alt="Beautifully decorated cookies — flat-lay artistic shot"
                 className="cc-gallery-hero__img"
+                fetchpriority="high"
               />
             </div>
           </div>

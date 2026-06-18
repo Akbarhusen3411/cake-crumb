@@ -50,9 +50,15 @@ Order IDs come from `services/orderId.js` and look like `CC-AB-DDMMYY-NNNN` (ini
 
 There is **also an admin confirmation flow** at `/confirm-order?id=…`. The confirm URL is included as a tap-able link at the bottom of every order's WhatsApp message (and in the admin email if EmailJS is configured). When the bakery owner taps the link, `ConfirmOrder.jsx` calls `markOrderConfirmed()` (updates Firestore `status` to `'confirmed'`), then opens WhatsApp pre-filled with a confirmation message to the customer's phone. No third EmailJS template needed (free-tier cap is 2 templates).
 
-The confirm URL is built from `window.location.origin + BASE_URL + /confirm-order?id={ORDER_ID}` in `Checkout.jsx::buildOrderMessage()`. Don't remove this link from the WhatsApp body — it's currently the only way the bakery owner reaches the confirm page if EmailJS isn't set up.
+The confirm URL is built from `window.location.origin + BASE_URL + /confirm-order?id={ORDER_ID}` in `Checkout.jsx::buildOrderMessage()`. The same builder also emits a tap-able `/track-order?...` link for the customer. **Don't remove either link from the WhatsApp body** — they're currently the only paths to the confirm/track pages if EmailJS isn't set up.
 
-Customers can look up their own orders at `/track-order?id=…` via `getOrderByOrderId()` (Firestore query by `orderId` field).
+**URL-params fallback** — both `ConfirmOrder.jsx` and `TrackOrder.jsx` accept `id`, `name`, `phone`, `total`, `date`, `method` as query params and build a minimal order from them when the Firestore + localStorage lookup returns nothing. This matters because the customer's localStorage mirror lives on their own phone — the admin opening a confirm link from a different device would otherwise see "Order not found". The items list isn't in the URL, so it's hidden in the fallback path. If you change `buildOrderMessage()`, keep these params in the URL or both pages start failing across devices.
+
+Customers can also look up their own orders at `/track-order?id=…` via the lookup form on that page — same fallback chain applies.
+
+### ChatBot is a second, independent order path
+
+`src/components/ChatBot.jsx` (mounted globally in `App.jsx`, ~1150 lines) is a conversational ordering assistant — not just a help widget. It can place a complete order on its own: it walks the customer through category → item selection → contact details, then calls the same `saveOrder()` + `generateOrderId()` + `wa.me/{WHATSAPP_PHONE}` machinery as Checkout. **It keeps its own `orderCart` in component state** — completely separate from `CartContext`; it only reads `useCart().count` to show a badge. Adding to the ChatBot cart does **not** touch the main cart and vice-versa. The menu/price data shown in the bot (`CAT_IMAGES`, price cards) is hand-embedded in the file, **not** sourced from `src/data/products.js` — so a price or item change in `products.js` won't propagate to the bot. Keep them in sync manually when prices change.
 
 ### Delivery is a choice, not a computed fee
 
@@ -72,9 +78,11 @@ The form now always starts empty. `clearStoredCustomer()` runs once on mount and
 
 ### Routing & lazy loading
 
-`src/App.jsx` uses `lazy()` for every route except `Home`. Firebase loads on `/reviews`, `/review`, `/checkout`, `/confirm-order`, and `/track-order` (anything that hits Firestore). The wildcard `<Route path="*" element={<Home />} />` makes the GitHub Pages 404 fallback land users somewhere sensible.
+`src/App.jsx` uses `lazy()` for every route except `Home`. The routed pages are `/about`, `/menu`, `/shop`, `/gallery`, `/reviews`, `/contact`, `/cart`, `/checkout`, `/review` (review submit), `/faq`, `/confirm-order`, and `/track-order`. Firebase loads on `/reviews`, `/review`, `/checkout`, `/confirm-order`, and `/track-order` (anything that hits Firestore). Note the globally-mounted `ChatBot` also pulls in `saveOrder` → Firebase once a customer orders through it. The wildcard `<Route path="*" element={<Home />} />` makes the GitHub Pages 404 fallback land users somewhere sensible.
 
 `NO_FOOTER_ROUTES = ['/cart', '/checkout', '/confirm-order']` — on these routes App.jsx renders `<MiniFooter />` (slim copyright + WhatsApp ribbon) instead of the full `<Footer />` so the buying flow stays focused.
+
+A small `<ScrollToTop />` component inside `<CartProvider>` listens to `useLocation().pathname` and calls `window.scrollTo({ top: 0 })` on every route change — without it, React Router preserves scroll position and users end up at the bottom of the new page when they tap a header/footer link from a scrolled page.
 
 ### Product catalog
 
@@ -137,7 +145,7 @@ The Reviews page also has its own non-hero patterns worth knowing: a 3-section s
 - `<SmartImage>` is the drop-in `<img>` with shimmer skeleton + lazy loading.
 - `<HeartDivider width={50} />` is the small heart-on-a-line component used under hero h1s — see Brand kit section.
 - INR formatting goes through `inr()` in `src/data/format.js`.
-- Per-icon imports from `react-icons/fi` and `react-icons/tb` are tree-shaken by Vite — `import { FiHome } from 'react-icons/fi'` is fine, don't try deep imports (the package doesn't expose them).
+- Per-icon imports from `react-icons/fi`, `react-icons/tb`, and `react-icons/fa` are tree-shaken by Vite — `import { FiHome } from 'react-icons/fi'` is fine, don't try deep imports (the package doesn't expose them).
 
 ## Environment
 

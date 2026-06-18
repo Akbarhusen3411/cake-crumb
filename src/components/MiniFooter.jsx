@@ -21,9 +21,9 @@ export default function MiniFooter() {
             rel="noopener noreferrer"
             className="cc-mini-footer__wa"
           >
-            <FaWhatsapp size={14} /> +91 90816 68490
+            <FaWhatsapp size={14} /> +91 91731 83440
           </a>
-          <a href="tel:+919081668490" className="cc-mini-footer__call" aria-label="Call Cake & Crumb">
+          <a href="tel:+919173183440" className="cc-mini-footer__call" aria-label="Call Cake & Crumb">
             <FiPhone size={14} />
           </a>
         </div>
