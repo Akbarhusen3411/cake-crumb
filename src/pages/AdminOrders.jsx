@@ -1,11 +1,10 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import {
-  FiCheckCircle, FiXCircle, FiRefreshCw, FiLock, FiLogOut, FiClock,
-  FiUser, FiPhone, FiMail, FiMapPin, FiCalendar,
+  FiXCircle, FiRefreshCw, FiLock, FiLogOut, FiChevronDown,
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import {
-  getAllOrders, markOrderConfirmed, markOrderCancelled,
+  subscribeOrders, getAllOrders, markOrderConfirmed, markOrderCancelled,
 } from '../services/orders.js'
 import { getFirebaseAuth, isFirebaseEnabled } from '../firebase.js'
 import { inr } from '../data/format.js'
@@ -23,7 +22,7 @@ function formatDate(iso) {
   if (!iso) return ''
   const d = new Date(iso)
   if (isNaN(d.getTime())) return iso
-  return d.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+  return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
 function buildCustomerMessage(order, kind) {
@@ -31,30 +30,18 @@ function buildCustomerMessage(order, kind) {
   const items = (order.items || []).map((i) => `  • ${i.name} × ${i.qty}`)
   if (kind === 'cancelled') {
     return [
-      `🎂 *Order Update* — ${order.orderId}`,
-      '',
-      `Hi ${name},`,
-      '',
+      `🎂 *Order Update* — ${order.orderId}`, '',
+      `Hi ${name},`, '',
       `We're sorry — your order has been *cancelled*. If this is unexpected or you'd like to reorder, just reply here and we'll help. 🙏`,
-      '',
-      '*Your Items:*',
-      ...items,
-      '',
-      `— Cake & Crumb`,
+      '', '*Your Items:*', ...items, '', `— Cake & Crumb`,
     ].join('\n')
   }
   return [
-    `🎂 *Order Confirmed!* — ${order.orderId}`,
-    '',
-    `Hi ${name}!`,
-    '',
-    `Great news — your order is *confirmed* and we're getting ready to bake. ♥`,
-    '',
-    `💰 *Total (excl. delivery):* ${inr(order.totals?.total || 0)}`,
-    '',
-    '*Your Items:*',
-    ...items,
-    '',
+    `🎂 *Order Confirmed!* — ${order.orderId}`, '',
+    `Hi ${name}!`, '',
+    `Great news — your order is *confirmed* and we're getting ready to bake. ♥`, '',
+    `💰 *Total (excl. delivery):* ${inr(order.totals?.total || 0)}`, '',
+    '*Your Items:*', ...items, '',
     `We'll be in touch closer to your delivery date. Thank you for choosing Cake & Crumb! 🙏`,
   ].join('\n')
 }
@@ -64,6 +51,8 @@ const STATUS_STYLES = {
   confirmed: { label: 'Confirmed', bg: '#d6f5e0', fg: '#1d7a44' },
   cancelled: { label: 'Cancelled', bg: '#f8d7da', fg: '#a32530' },
 }
+
+const FILTERS = ['all', 'placed', 'confirmed', 'cancelled']
 
 export default function AdminOrders() {
   usePageMeta({ title: 'Admin · Orders', description: 'Cake & Crumb order management.' })
@@ -77,8 +66,7 @@ export default function AdminOrders() {
     return () => m.remove()
   }, [])
 
-  // Firebase Auth admin session — only a signed-in admin can read order data
-  // (enforced by Firestore rules), so customer PII stays private.
+  // ── Firebase Auth admin session ──
   const [user, setUser] = useState(null)
   const [authReady, setAuthReady] = useState(false)
   const [email, setEmail] = useState('')
@@ -89,10 +77,11 @@ export default function AdminOrders() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(false)
   const [busyId, setBusyId] = useState(null)
+  const [expandedId, setExpandedId] = useState(null)
+  const [filter, setFilter] = useState('all')
 
   const isAdmin = !!user
 
-  // Subscribe to auth state once.
   useEffect(() => {
     let unsub = () => {}
     let active = true
@@ -109,16 +98,26 @@ export default function AdminOrders() {
     return () => { active = false; unsub() }
   }, [])
 
-  const load = useCallback(async () => {
+  // Live order feed — updates automatically as orders arrive / change status.
+  useEffect(() => {
+    if (!isAdmin) return
+    let unsub = () => {}
+    let active = true
+    setLoading(true)
+    subscribeOrders((list) => {
+      if (!active) return
+      setOrders(list)
+      setLoading(false)
+    }).then((u) => { if (active) unsub = u; else u() })
+    return () => { active = false; unsub() }
+  }, [isAdmin])
+
+  async function refresh() {
     setLoading(true)
     const list = await getAllOrders()
     setOrders(list)
     setLoading(false)
-  }, [])
-
-  useEffect(() => {
-    if (isAdmin) load()
-  }, [isAdmin, load])
+  }
 
   async function login(e) {
     e.preventDefault()
@@ -153,21 +152,9 @@ export default function AdminOrders() {
   async function act(order, kind) {
     const key = order.firebaseId || order.orderId
     setBusyId(key)
-    const ok = kind === 'confirmed'
-      ? await markOrderConfirmed(order.firebaseId)
-      : await markOrderCancelled(order.firebaseId)
+    if (kind === 'confirmed') await markOrderConfirmed(order.firebaseId)
+    else await markOrderCancelled(order.firebaseId)
     setBusyId(null)
-
-    // Reflect the new status locally even if the write failed (e.g. local-only
-    // mirror with no firebaseId) so the admin sees the action took effect.
-    setOrders((prev) => prev.map((o) =>
-      (o.firebaseId || o.orderId) === key ? { ...o, status: kind } : o
-    ))
-
-    if (!ok) {
-      // No Firestore id — status couldn't be persisted, but still notify the customer.
-      console.warn('[admin] status not persisted (no Firestore id); messaging customer anyway.')
-    }
 
     const num = waNumber(order.customer?.phone)
     if (num) {
@@ -198,27 +185,16 @@ export default function AdminOrders() {
         ) : (
           <form onSubmit={login}>
             <input
-              type="email"
-              className="cc-input mb-2"
-              placeholder="Admin email"
-              aria-label="Admin email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="username"
-              autoFocus
+              type="email" className="cc-input mb-2" placeholder="Admin email"
+              aria-label="Admin email" value={email}
+              onChange={(e) => setEmail(e.target.value)} autoComplete="username" autoFocus
             />
             <input
-              type="password"
-              className="cc-input mb-2"
-              placeholder="Password"
-              aria-label="Admin password"
-              value={pwd}
-              onChange={(e) => setPwd(e.target.value)}
-              autoComplete="current-password"
+              type="password" className="cc-input mb-2" placeholder="Password"
+              aria-label="Admin password" value={pwd}
+              onChange={(e) => setPwd(e.target.value)} autoComplete="current-password"
             />
-            {pwdError && (
-              <p style={{ color: '#cf3e63', fontSize: '0.8rem' }}>{pwdError}</p>
-            )}
+            {pwdError && <p style={{ color: '#cf3e63', fontSize: '0.8rem' }}>{pwdError}</p>}
             <button type="submit" className="btn-rose w-100 mt-2" disabled={signingIn}>
               {signingIn ? 'Signing in…' : 'Log in'}
             </button>
@@ -229,15 +205,23 @@ export default function AdminOrders() {
   }
 
   // ── Dashboard ──
+  const counts = orders.reduce((acc, o) => {
+    const s = o.status || 'placed'
+    acc[s] = (acc[s] || 0) + 1
+    return acc
+  }, {})
+  const shown = filter === 'all' ? orders : orders.filter((o) => (o.status || 'placed') === filter)
+
   return (
-    <section className="container py-5">
-      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+    <section className="container py-4 py-md-5">
+      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <h1 className="h4 m-0" style={{ fontFamily: 'var(--font-heading)' }}>
           Orders <span style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.9rem' }}>({orders.length})</span>
+          {loading && <span style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.8rem' }}> · loading…</span>}
         </h1>
         <div className="d-flex gap-2">
-          <button className="btn-outline-rose" onClick={load} disabled={loading}>
-            <FiRefreshCw size={14} /> {loading ? 'Loading…' : 'Refresh'}
+          <button className="btn-outline-rose" onClick={refresh} disabled={loading}>
+            <FiRefreshCw size={14} /> Refresh
           </button>
           <button className="btn-outline-rose" onClick={logout}>
             <FiLogOut size={14} /> Log out
@@ -245,75 +229,110 @@ export default function AdminOrders() {
         </div>
       </div>
 
-      {!loading && orders.length === 0 && (
-        <p style={{ color: 'var(--cc-cocoa-soft)' }}>No orders yet.</p>
+      {/* Filter tabs */}
+      <div className="d-flex flex-wrap gap-2 mb-3">
+        {FILTERS.map((f) => {
+          const n = f === 'all' ? orders.length : (counts[f] || 0)
+          const on = filter === f
+          return (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              style={{
+                border: '1px solid var(--cc-rose-soft)',
+                background: on ? 'var(--cc-rose)' : '#fff',
+                color: on ? '#fff' : 'var(--cc-cocoa)',
+                borderRadius: 999, padding: '4px 14px', fontSize: '0.8rem',
+                fontWeight: 700, textTransform: 'capitalize', cursor: 'pointer',
+              }}
+            >
+              {f} ({n})
+            </button>
+          )
+        })}
+      </div>
+
+      {!loading && shown.length === 0 && (
+        <p style={{ color: 'var(--cc-cocoa-soft)' }}>No orders{filter !== 'all' ? ` (${filter})` : ''} yet.</p>
       )}
 
-      <div className="d-flex flex-column gap-3">
-        {orders.map((o) => {
+      {/* Compact collapsible rows */}
+      <div className="d-flex flex-column gap-2">
+        {shown.map((o) => {
           const st = STATUS_STYLES[o.status] || STATUS_STYLES.placed
           const key = o.firebaseId || o.orderId
+          const open = expandedId === key
           const busy = busyId === key
-          const done = o.status === 'confirmed' || o.status === 'cancelled'
           return (
-            <div key={key} className="cc-admin-order" style={{
-              border: '1px solid var(--cc-border, #f0d9d4)', borderRadius: 14,
-              padding: '1rem 1.1rem', background: '#fff',
+            <div key={key} style={{
+              border: '1px solid var(--cc-border, #f0d9d4)', borderRadius: 12,
+              background: '#fff', overflow: 'hidden',
             }}>
-              <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-                <strong style={{ color: 'var(--cc-cocoa)' }}>{o.orderId}</strong>
+              {/* Header (always visible, click to expand) */}
+              <button
+                onClick={() => setExpandedId(open ? null : key)}
+                style={{
+                  width: '100%', border: 'none', background: 'transparent',
+                  display: 'flex', alignItems: 'center', gap: '0.6rem',
+                  padding: '0.7rem 0.9rem', cursor: 'pointer', textAlign: 'left',
+                }}
+              >
                 <span style={{
-                  background: st.bg, color: st.fg, fontWeight: 700,
-                  fontSize: '0.72rem', padding: '3px 10px', borderRadius: 999,
-                  textTransform: 'uppercase', letterSpacing: '0.05em',
+                  background: st.bg, color: st.fg, fontWeight: 700, fontSize: '0.62rem',
+                  padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase',
+                  letterSpacing: '0.05em', flex: '0 0 auto',
                 }}>{st.label}</span>
-              </div>
+                <strong style={{ color: 'var(--cc-cocoa)', fontSize: '0.85rem', flex: '0 0 auto' }}>{o.orderId}</strong>
+                <span style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.82rem', flex: '1 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {o.customer?.name || '—'}
+                </span>
+                <strong style={{ color: 'var(--cc-rose-deep)', fontSize: '0.85rem', flex: '0 0 auto' }}>{inr(o.totals?.total || 0)}</strong>
+                <span style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.72rem', flex: '0 0 auto' }} className="d-none d-sm-inline">{formatDate(o.createdAt)}</span>
+                <FiChevronDown size={16} style={{ flex: '0 0 auto', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', color: 'var(--cc-cocoa-soft)' }} />
+              </button>
 
-              <div style={{ fontSize: '0.86rem', color: 'var(--cc-cocoa)', lineHeight: 1.7 }}>
-                <div><FiUser size={13} /> {o.customer?.name || '—'} &nbsp;
-                  <FiPhone size={13} /> {o.customer?.phone || '—'}</div>
-                {o.customer?.email && <div><FiMail size={13} /> {o.customer.email}</div>}
-                {o.customer?.address && (
-                  <div><FiMapPin size={13} /> {[o.customer.address, o.customer.city, o.customer.pincode].filter(Boolean).join(', ')}</div>
-                )}
-                {o.deliveryDate && <div><FiCalendar size={13} /> {o.deliveryDate}</div>}
-                <div><FiClock size={13} /> {formatDate(o.createdAt)} · {o.source || 'checkout'}</div>
-              </div>
+              {/* Body */}
+              {open && (
+                <div style={{ padding: '0 0.9rem 0.9rem', borderTop: '1px solid #f4e6e2' }}>
+                  <div style={{ fontSize: '0.84rem', color: 'var(--cc-cocoa)', lineHeight: 1.7, paddingTop: '0.6rem' }}>
+                    <div>📞 {o.customer?.phone || '—'}{o.customer?.email ? ` · ✉️ ${o.customer.email}` : ''}</div>
+                    {o.customer?.address && (
+                      <div>📍 {[o.customer.address, o.customer.city, o.customer.pincode].filter(Boolean).join(', ')}</div>
+                    )}
+                    {o.deliveryDate && <div>📅 {o.deliveryDate}</div>}
+                    <div style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.78rem' }}>{formatDate(o.createdAt)} · {o.source || 'checkout'}</div>
+                  </div>
 
-              <ul style={{ margin: '0.6rem 0', paddingLeft: '1.1rem', fontSize: '0.86rem', color: 'var(--cc-cocoa-soft)' }}>
-                {(o.items || []).map((it, i) => (
-                  <li key={i}>{it.name} × {it.qty} = {inr((it.price || 0) * (it.qty || 1))}</li>
-                ))}
-              </ul>
+                  <ul style={{ margin: '0.5rem 0', paddingLeft: '1.1rem', fontSize: '0.84rem', color: 'var(--cc-cocoa-soft)' }}>
+                    {(o.items || []).map((it, i) => (
+                      <li key={i}>{it.name} × {it.qty} = {inr((it.price || 0) * (it.qty || 1))}</li>
+                    ))}
+                  </ul>
 
-              <div style={{ fontSize: '0.86rem', color: 'var(--cc-cocoa)' }}>
-                <strong>Total (excl. delivery): {inr(o.totals?.total || 0)}</strong>
-                {' · '}{o.payment?.method === 'upi' ? `UPI${o.payment?.utr ? ` · UTR ${o.payment.utr}` : ''}` : 'Cash on Delivery'}
-                {o.notes ? ` · Notes: ${o.notes}` : ''}
-              </div>
+                  <div style={{ fontSize: '0.84rem', color: 'var(--cc-cocoa)' }}>
+                    <strong>Total (excl. delivery): {inr(o.totals?.total || 0)}</strong>
+                    {' · '}{o.payment?.method === 'upi' ? `UPI${o.payment?.utr ? ` · UTR ${o.payment.utr}` : ''}` : 'Cash on Delivery'}
+                    {o.notes ? ` · Notes: ${o.notes}` : ''}
+                  </div>
 
-              <div className="d-flex gap-2 mt-3">
-                <button
-                  className="btn-rose"
-                  disabled={busy}
-                  onClick={() => act(o, 'confirmed')}
-                  style={{ opacity: o.status === 'confirmed' ? 0.6 : 1 }}
-                >
-                  <FaWhatsapp size={14} /> <FiCheckCircle size={14} /> {o.status === 'confirmed' ? 'Confirmed' : 'Confirm'}
-                </button>
-                <button
-                  className="btn-outline-rose"
-                  disabled={busy}
-                  onClick={() => { if (confirm(`Cancel order ${o.orderId}?`)) act(o, 'cancelled') }}
-                >
-                  <FiXCircle size={14} /> Cancel
-                </button>
-                {done && (
-                  <span style={{ alignSelf: 'center', fontSize: '0.78rem', color: 'var(--cc-cocoa-soft)' }}>
-                    re-tap to message the customer again
-                  </span>
-                )}
-              </div>
+                  <div className="d-flex gap-2 mt-3" style={{ maxWidth: 420 }}>
+                    <button className="btn-rose" disabled={busy} onClick={() => act(o, 'confirmed')}
+                      style={{ flex: '1 1 0', justifyContent: 'center', gap: '0.4rem', opacity: o.status === 'confirmed' ? 0.6 : 1 }}>
+                      <FaWhatsapp size={14} /> {o.status === 'confirmed' ? 'Confirmed' : 'Confirm'}
+                    </button>
+                    <button className="btn-outline-rose" disabled={busy}
+                      onClick={() => { if (confirm(`Cancel order ${o.orderId}?`)) act(o, 'cancelled') }}
+                      style={{ flex: '1 1 0', justifyContent: 'center', gap: '0.4rem' }}>
+                      <FiXCircle size={14} /> Cancel
+                    </button>
+                  </div>
+                  {(o.status === 'confirmed' || o.status === 'cancelled') && (
+                    <p style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', margin: '0.4rem 0 0' }}>
+                      Re-tap to message the customer again.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           )
         })}

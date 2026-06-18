@@ -158,6 +158,44 @@ async function setOrderStatus(firebaseId, status, tsField) {
 }
 
 /**
+ * Subscribe to all orders in real time (admin dashboard), newest first.
+ * Calls onData(orders[]) on every change. Returns a Promise of an unsubscribe
+ * function. Falls back to a one-shot local read when Firestore is off.
+ */
+export async function subscribeOrders(onData, onError) {
+  const db = await getDb()
+  if (!db) {
+    onData(readLocal().map((o) => ({ ...o, firebaseId: null })))
+    return () => {}
+  }
+  try {
+    const { collection, onSnapshot, orderBy, query } = await import('firebase/firestore')
+    const q = query(collection(db, COLLECTION), orderBy('createdAt', 'desc'))
+    return onSnapshot(
+      q,
+      (snap) => {
+        onData(snap.docs.map((d) => {
+          const data = d.data()
+          return {
+            firebaseId: d.id,
+            ...data,
+            createdAt: data.createdAt?.toDate?.()?.toISOString?.() ?? null,
+          }
+        }))
+      },
+      (err) => {
+        console.error('[orders] live subscription failed:', err)
+        if (onError) onError(err)
+      }
+    )
+  } catch (err) {
+    console.error('[orders] subscribe failed:', err)
+    if (onError) onError(err)
+    return () => {}
+  }
+}
+
+/**
  * List all orders, newest first. Reads from Firestore (admin dashboard);
  * falls back to the local mirror when Firestore is off. Never throws.
  */
