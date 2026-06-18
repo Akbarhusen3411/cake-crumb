@@ -46,11 +46,16 @@ function orderFromParams(params) {
 function statusMeta(status) {
   switch (status) {
     case 'confirmed':
-      return { label: 'Confirmed — baking', icon: FiCheckCircle, color: '#22a55a', tint: 'rgba(34,165,90,0.10)' }
+      return { label: 'Confirmed — baking your order', icon: FiCheckCircle, color: '#1d4ed8', tint: 'rgba(29,78,216,0.10)' }
+    case 'ready_for_pickup':
+      return { label: 'Ready for pickup 🎉', icon: FiCheckCircle, color: '#5b2a9e', tint: 'rgba(91,42,158,0.10)' }
     case 'out_for_delivery':
-      return { label: 'Out for delivery', icon: FiTruck, color: '#cf3e63', tint: 'rgba(207,62,99,0.10)' }
+      return { label: 'Out for delivery', icon: FiTruck, color: '#b25316', tint: 'rgba(178,83,22,0.10)' }
+    case 'completed':
     case 'delivered':
-      return { label: 'Delivered', icon: FiCheckCircle, color: '#22a55a', tint: 'rgba(34,165,90,0.10)' }
+      return { label: 'Completed — enjoy! 🎂', icon: FiCheckCircle, color: '#22a55a', tint: 'rgba(34,165,90,0.10)' }
+    case 'cancelled':
+      return { label: 'Cancelled', icon: FiAlertCircle, color: '#a32530', tint: 'rgba(163,37,48,0.10)' }
     default:
       return { label: 'Order received — awaiting confirmation', icon: FiClock, color: '#b27300', tint: 'rgba(178,115,0,0.10)' }
   }

@@ -4,8 +4,11 @@ import {
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import {
-  subscribeOrders, getAllOrders, markOrderConfirmed, markOrderCancelled,
+  subscribeOrders, getAllOrders, updateOrderStatus,
 } from '../services/orders.js'
+
+const PICKUP_LOCATION = 'Cake & Crumb, Vaso, Kheda, Gujarat 387380'
+const REVIEW_LINK = 'https://akbarhusen3411.github.io/cake-crumb/review'
 import { getFirebaseAuth, isFirebaseEnabled } from '../firebase.js'
 import { inr } from '../data/format.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
@@ -25,34 +28,103 @@ function formatDate(iso) {
   return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
-function buildCustomerMessage(order, kind) {
+function buildCustomerMessage(order, status) {
   const name = order.customer?.name || 'there'
+  const id = order.orderId
   const items = (order.items || []).map((i) => `  • ${i.name} × ${i.qty}`)
-  if (kind === 'cancelled') {
-    return [
-      `🎂 *Order Update* — ${order.orderId}`, '',
-      `Hi ${name},`, '',
-      `We're sorry — your order has been *cancelled*. If this is unexpected or you'd like to reorder, just reply here and we'll help. 🙏`,
-      '', '*Your Items:*', ...items, '', `— Cake & Crumb`,
-    ].join('\n')
+  switch (status) {
+    case 'cancelled':
+      return [
+        `🎂 *Order Update* — ${id}`, '',
+        `Hi ${name},`, '',
+        `We're sorry — your order has been *cancelled*. If this is unexpected or you'd like to reorder, just reply here and we'll help. 🙏`,
+        '', '*Your Items:*', ...items, '', `— Cake & Crumb`,
+      ].join('\n')
+    case 'ready_for_pickup':
+      return [
+        `🎉 *Your order is READY!* — ${id}`, '',
+        `Hi ${name}!`, '',
+        `Your treats are freshly made and ready for *pickup* 🛍️`, '',
+        `📍 *Collect from:* ${PICKUP_LOCATION}`, '',
+        '*Your Items:*', ...items, '',
+        `See you soon! 🎂`,
+      ].join('\n')
+    case 'out_for_delivery':
+      return [
+        `🚚 *Out for delivery!* — ${id}`, '',
+        `Hi ${name}!`, '',
+        `Great news — your order is ready and *on its way* to you now. 🎂`, '',
+        '*Your Items:*', ...items, '',
+        `Thank you for ordering from Cake & Crumb!`,
+      ].join('\n')
+    case 'completed':
+      return [
+        `💛 *Thank you!* — ${id}`, '',
+        `Hi ${name}!`, '',
+        `We hope you love your treats! 🎂 If you have a moment, we'd be so grateful for a quick review:`,
+        REVIEW_LINK, '',
+        `With love, Cake & Crumb`,
+      ].join('\n')
+    case 'confirmed':
+    default:
+      return [
+        `🎂 *Order Confirmed!* — ${id}`, '',
+        `Hi ${name}!`, '',
+        `Great news — your order is *confirmed* and we're getting ready to bake. ♥`, '',
+        `💰 *Total (excl. delivery):* ${inr(order.totals?.total || 0)}`, '',
+        '*Your Items:*', ...items, '',
+        `We'll message you again once it's ready. Thank you for choosing Cake & Crumb! 🙏`,
+      ].join('\n')
   }
-  return [
-    `🎂 *Order Confirmed!* — ${order.orderId}`, '',
-    `Hi ${name}!`, '',
-    `Great news — your order is *confirmed* and we're getting ready to bake. ♥`, '',
-    `💰 *Total (excl. delivery):* ${inr(order.totals?.total || 0)}`, '',
-    '*Your Items:*', ...items, '',
-    `We'll be in touch closer to your delivery date. Thank you for choosing Cake & Crumb! 🙏`,
-  ].join('\n')
 }
 
 const STATUS_STYLES = {
   placed: { label: 'Placed', bg: '#fff3cd', fg: '#8a6d00' },
-  confirmed: { label: 'Confirmed', bg: '#d6f5e0', fg: '#1d7a44' },
+  confirmed: { label: 'Confirmed', bg: '#d9e8ff', fg: '#1d4ed8' },
+  ready_for_pickup: { label: 'Ready · Pickup', bg: '#e7defb', fg: '#5b2a9e' },
+  out_for_delivery: { label: 'Out for delivery', bg: '#ffe6d6', fg: '#b25316' },
+  completed: { label: 'Done', bg: '#d6f5e0', fg: '#1d7a44' },
   cancelled: { label: 'Cancelled', bg: '#f8d7da', fg: '#a32530' },
 }
 
-const FILTERS = ['all', 'placed', 'confirmed', 'cancelled']
+const FILTERS = ['all', 'placed', 'confirmed', 'ready', 'done', 'cancelled']
+
+// Match a UI filter tab to one or more raw statuses.
+function matchesFilter(o, f) {
+  const s = o.status || 'placed'
+  if (f === 'all') return true
+  if (f === 'ready') return s === 'ready_for_pickup' || s === 'out_for_delivery'
+  if (f === 'done') return s === 'completed'
+  return s === f
+}
+
+// The action buttons available for an order, based on its current status + type.
+function actionsFor(o) {
+  const s = o.status || 'placed'
+  const isPickup = o.deliveryMethod === 'pickup'
+  if (s === 'placed') {
+    return [
+      { status: 'confirmed', label: 'Confirm', kind: 'primary' },
+      { status: 'cancelled', label: 'Cancel', kind: 'danger' },
+    ]
+  }
+  if (s === 'confirmed') {
+    return [
+      isPickup
+        ? { status: 'ready_for_pickup', label: 'Ready for Pickup', kind: 'primary' }
+        : { status: 'out_for_delivery', label: 'Out for Delivery', kind: 'primary' },
+      { status: 'cancelled', label: 'Cancel', kind: 'danger' },
+    ]
+  }
+  if (s === 'ready_for_pickup' || s === 'out_for_delivery') {
+    return [
+      { status: 'completed', label: 'Mark Done', kind: 'primary' },
+      { status: 'cancelled', label: 'Cancel', kind: 'danger' },
+    ]
+  }
+  // completed / cancelled — allow re-sending the final message
+  return [{ status: s, label: 'Re-send message', kind: 'outline' }]
+}
 
 export default function AdminOrders() {
   usePageMeta({ title: 'Admin · Orders', description: 'Cake & Crumb order management.' })
@@ -149,7 +221,7 @@ export default function AdminOrders() {
     setOrders([])
   }
 
-  function act(order, kind) {
+  function act(order, status) {
     const num = waNumber(order.customer?.phone)
     if (!num) {
       alert('No customer phone number on this order — cannot message the customer.')
@@ -158,16 +230,14 @@ export default function AdminOrders() {
     // Open WhatsApp synchronously inside the tap. Mobile browsers block
     // window.open() once an `await` has run, so this MUST come before the
     // (async) Firestore status update — otherwise the message never opens on phones.
-    const msg = buildCustomerMessage(order, kind)
+    const msg = buildCustomerMessage(order, status)
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer')
 
     // Persist the status change in the background; the live listener refreshes the badge.
     const key = order.firebaseId || order.orderId
     setBusyId(key)
-    const update = kind === 'confirmed'
-      ? markOrderConfirmed(order.firebaseId, order.orderId)
-      : markOrderCancelled(order.firebaseId, order.orderId)
-    Promise.resolve(update).finally(() => setBusyId(null))
+    Promise.resolve(updateOrderStatus(order.firebaseId, order.orderId, status))
+      .finally(() => setBusyId(null))
   }
 
   // ── Login gate ──
@@ -210,12 +280,11 @@ export default function AdminOrders() {
   }
 
   // ── Dashboard ──
-  const counts = orders.reduce((acc, o) => {
-    const s = o.status || 'placed'
-    acc[s] = (acc[s] || 0) + 1
+  const counts = FILTERS.reduce((acc, f) => {
+    acc[f] = orders.filter((o) => matchesFilter(o, f)).length
     return acc
   }, {})
-  const shown = filter === 'all' ? orders : orders.filter((o) => (o.status || 'placed') === filter)
+  const shown = orders.filter((o) => matchesFilter(o, filter))
 
   return (
     <section className="container py-4 py-md-5">
@@ -237,7 +306,7 @@ export default function AdminOrders() {
       {/* Filter tabs */}
       <div className="d-flex flex-wrap gap-2 mb-3">
         {FILTERS.map((f) => {
-          const n = f === 'all' ? orders.length : (counts[f] || 0)
+          const n = counts[f] || 0
           const on = filter === f
           return (
             <button
@@ -320,22 +389,30 @@ export default function AdminOrders() {
                     {o.notes ? ` · Notes: ${o.notes}` : ''}
                   </div>
 
-                  <div className="d-flex gap-2 mt-3" style={{ maxWidth: 420 }}>
-                    <button className="btn-rose" disabled={busy} onClick={() => act(o, 'confirmed')}
-                      style={{ flex: '1 1 0', justifyContent: 'center', gap: '0.4rem', opacity: o.status === 'confirmed' ? 0.6 : 1 }}>
-                      <FaWhatsapp size={14} /> {o.status === 'confirmed' ? 'Confirmed' : 'Confirm'}
-                    </button>
-                    <button className="btn-outline-rose" disabled={busy}
-                      onClick={() => { if (confirm(`Cancel order ${o.orderId}?`)) act(o, 'cancelled') }}
-                      style={{ flex: '1 1 0', justifyContent: 'center', gap: '0.4rem' }}>
-                      <FiXCircle size={14} /> Cancel
-                    </button>
+                  <div className="d-flex gap-2 mt-3 flex-wrap" style={{ maxWidth: 460 }}>
+                    {actionsFor(o).map((a) => {
+                      const isDanger = a.kind === 'danger'
+                      const isOutline = a.kind === 'outline'
+                      const onClick = isDanger
+                        ? () => { if (confirm(`Cancel order ${o.orderId}?`)) act(o, a.status) }
+                        : () => act(o, a.status)
+                      return (
+                        <button
+                          key={a.label}
+                          disabled={busy}
+                          className={isDanger || isOutline ? 'btn-outline-rose' : 'btn-rose'}
+                          onClick={onClick}
+                          style={{ flex: '1 1 0', justifyContent: 'center', gap: '0.4rem' }}
+                        >
+                          {a.kind === 'primary' ? <FaWhatsapp size={14} /> : (isDanger ? <FiXCircle size={14} /> : null)}
+                          {a.label}
+                        </button>
+                      )
+                    })}
                   </div>
-                  {(o.status === 'confirmed' || o.status === 'cancelled') && (
-                    <p style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', margin: '0.4rem 0 0' }}>
-                      Re-tap to message the customer again.
-                    </p>
-                  )}
+                  <p style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', margin: '0.4rem 0 0' }}>
+                    Each button updates the status and opens WhatsApp to message the customer.
+                  </p>
                 </div>
               )}
             </div>

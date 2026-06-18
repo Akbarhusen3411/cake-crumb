@@ -159,6 +159,23 @@ export async function markOrderCancelled(firebaseId, orderId) {
   return setOrderStatus(firebaseId, orderId, 'cancelled', 'cancelledAt')
 }
 
+// Timestamp field recorded for each status transition.
+const STATUS_TS = {
+  confirmed: 'confirmedAt',
+  ready_for_pickup: 'readyAt',
+  out_for_delivery: 'readyAt',
+  completed: 'completedAt',
+  cancelled: 'cancelledAt',
+}
+
+/**
+ * Generic order status transition used by the admin dashboard.
+ * status ∈ placed | confirmed | ready_for_pickup | out_for_delivery | completed | cancelled
+ */
+export async function updateOrderStatus(firebaseId, orderId, status) {
+  return setOrderStatus(firebaseId, orderId, status, STATUS_TS[status] || 'updatedAt')
+}
+
 async function setOrderStatus(firebaseId, orderId, status, tsField) {
   if (!isFirebaseEnabled || !firebaseId) return false
   const db = await getDb()
