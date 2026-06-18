@@ -520,7 +520,7 @@ export default function Checkout() {
                         <span className="cc-delivery-method__icon">🚶</span>
                         <span>
                           <strong>Self-Pickup</strong>
-                          <span className="cc-delivery-method__sub">Free — pick up from Vaso, Anand</span>
+                          <span className="cc-delivery-method__sub">Free — pick up from Vaso, Kheda</span>
                         </span>
                       </label>
                     </div>

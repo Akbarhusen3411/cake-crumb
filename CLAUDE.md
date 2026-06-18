@@ -17,7 +17,7 @@ There are no automated tests; verify UI changes by running `npm run dev` and cli
 
 ## Architecture
 
-Single-page React storefront for **Cake & Crumb**, a bakery in Vaso (Anand, Gujarat). Stack: Vite + React 19 + React Router v7 + Bootstrap 5 + Tailwind 4 (both loaded — Bootstrap for layout, Tailwind utilities for one-off styling). Deployed to GitHub Pages.
+Single-page React storefront for **Cake & Crumb**, a bakery in Vaso (Kheda, Gujarat — PIN 387380). Stack: Vite + React 19 + React Router v7 + Bootstrap 5 + Tailwind 4 (both loaded — Bootstrap for layout, Tailwind utilities for one-off styling). Deployed to GitHub Pages.
 
 ### GitHub Pages base path
 

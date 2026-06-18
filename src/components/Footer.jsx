@@ -73,7 +73,7 @@ export default function Footer() {
           </li>
           <li>
             <span className="cc-footer-m__info-icon"><FiMapPin size={12} /></span>
-            <span>Vaso, Anand, Gujarat</span>
+            <span>Vaso, Kheda, Gujarat 387380, India</span>
           </li>
           <li>
             <span className="cc-footer-m__info-icon"><FiClock size={12} /></span>
@@ -145,7 +145,7 @@ export default function Footer() {
               <ul className="cc-footer-d__info">
                 <li>
                   <span className="cc-footer-d__info-icon"><FiMapPin size={14} /></span>
-                  <span>Vaso, Anand,<br />Gujarat — India</span>
+                  <span>Vaso, Kheda,<br />Gujarat 387380 — India</span>
                 </li>
                 <li>
                   <span className="cc-footer-d__info-icon"><FiPhone size={14} /></span>
