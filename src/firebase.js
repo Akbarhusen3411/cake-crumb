@@ -58,8 +58,12 @@ export async function getFirebaseAuth() {
   const app = await getFirebaseApp()
   if (!app) return null
   try {
-    const { getAuth } = await import('firebase/auth')
-    return getAuth(app)
+    const { getAuth, setPersistence, browserSessionPersistence } = await import('firebase/auth')
+    const auth = getAuth(app)
+    // Session-only login: the admin stays signed in while the tab is open, but
+    // closing the tab/browser clears it — reopening requires email + password.
+    try { await setPersistence(auth, browserSessionPersistence) } catch { /* keep default */ }
+    return auth
   } catch (err) {
     console.error('[firebase] auth load failed:', err)
     return null
