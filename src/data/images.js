@@ -21,9 +21,7 @@ const p = (name) => `/products/${name}`
 
 export const img = {
   // ───── Hero / decorative ─────
-  heroRoses: '/hero-roses.jpeg',
   pinkRoses: '/hero-roses.jpeg',
-  rosesBouquet: '/hero-roses.jpeg',
 
   // Verified Unsplash photo IDs — served via the u() helper. These are the
   // boutique-quality hero images that match each page's theme.
@@ -35,69 +33,44 @@ export const img = {
   heroContact:  '1599785209758-243af93bd074',  // pink-frosted cupcakes on white plate
 
   pinkDripCake: p('cake-pink-letter.jpeg'),
-  pinkDripCake2: p('milkcake-rose-pistachio.jpeg'),
   cakeStand: p('cake-yellow-flowers.jpeg'),
-  dessertTable: p('cheesecake-trio-flavors.jpeg'),
   pipingBags: p('piping-bags.jpeg'),
-  baker: p('piping-bags.jpeg'),
-  bakerPiping: p('piping-bags.jpeg'),
   flourSplash: p('bakes-plain.jpeg'),
 
   // ───── Cheesecakes ─────
-  cheesecake: p('cheesecake-quartet.jpeg'),
-  cheesecakeAssorted: p('cheesecake-assortment.jpeg'),
   cheesecakeQuartet: p('cheesecake-quartet.jpeg'),
   cheesecakeStrawberry: p('cheesecake-strawberry-rose.jpeg'),
-  cheesecakeBlueberry: p('cheesecake-blueberry.jpeg'),
-  cheesecakeBlueberrySlate: p('cheesecake-blueberry-slate.jpeg'),
   cheesecakeMango: p('cheesecake-mango-bowl.jpeg'),
   cheesecakeChocMango: p('cheesecake-choc-mango.jpeg'),
-  cheesecakeBoxesPair: p('cheesecake-boxes-pair.jpeg'),
   cheesecakeNutella: p('cheesecake-nutella.jpeg'),
   cheesecakeCookiesCream: p('cheesecake-cookies-cream.jpeg'),
   cheesecakeCaramel: p('cheesecake-caramel.jpeg'),
   cheesecakeCoffee: p('cheesecake-trio-flavors.jpeg'),
   cheesecakePistachio: p('cheesecake-pistachio-cup.jpeg'),
-  cheesecakePistachioSlices: p('cheesecake-pistachio-slices.jpeg'),
   cheesecakeChocRose: p('cheesecake-chocolate-rose.jpeg'),
   cheesecakeChocRoseBowl: p('cheesecake-chocolate-rose-bowl.jpeg'),
   cheesecakeChocPistachio: p('cheesecake-chocolate-pistachio.jpeg'),
   cheesecakeStrawberryCups: p('cheesecake-strawberry-cups.jpeg'),
   berryCake: p('milkcake-pomegranate.jpeg'),
-  chocolateCake: p('cake-chocolate-birthday.jpeg'),
-  chocolateBerryCake: p('cake-chocolate-birthday.jpeg'),
 
   // ───── Milk cakes ─────
-  milkcakeBiscoff: p('cake-naked-yellow.jpeg'),
-  milkcakeTres: p('cake-naked-yellow.jpeg'),
   milkcakeRose: p('milkcake-rose-purple.jpeg'),
   milkcakeRosePistachio: p('milkcake-rose-pistachio.jpeg'),
-  milkcakeTurkish: p('cake-yellow-flowers.jpeg'),
-  milkcakeChoc: p('cake-chocolate-birthday.jpeg'),
-  milkcakeRaspberry: p('milkcake-pomegranate.jpeg'),
-  milkcakePistachio: p('cheesecake-pistachio-slices.jpeg'),
-  milkcakeBlueberry: p('milkcake-blueberry.jpeg'),
-  milkcakeBlueberrySliced: p('milkcake-blueberry-sliced.jpeg'),
-  milkcakeLemon: p('cake-lemon-drip.jpeg'),
 
   // ───── Cookies ─────
   cookies: p('cookies-chocolate-board.jpeg'),
   cookiesTripleChoc: p('cookies-triple-choc-pan.jpeg'),
   cookiesChunky: p('cookies-chunky.jpeg'),
-  cookiesBoard: p('cookies-chocolate-board.jpeg'),
 
   // ───── Cupcakes ─────
   cupcakesPink: p('cupcakes-pink-purple.jpeg'),
   cupcakesRose: p('cupcakes-rose-pink.jpeg'),
-  cupcakesAssorted: p('cupcakes-assorted.jpeg'),
   cupcakesQuartet: p('cupcakes-quartet.jpeg'),
   cupcakesBox: p('cupcakes-box-pink-purple.jpeg'),
   cupcakesBoxLarge: p('cupcakes-box-large.jpeg'),
   cupcakesGiftBox: p('cupcakes-gift-box.jpeg'),
-  cupcakesPlain: p('cupcakes-plain.jpeg'),
 
   // ───── Bakes ─────
-  brownies: p('bakes-chocolate-square.jpeg'),
   bakesPlain: p('bakes-plain.jpeg'),
   bakesChocolateSquare: p('bakes-chocolate-square.jpeg'),
   bakesChocolateLava: p('bakes-chocolate-lava.jpeg'),
@@ -105,22 +78,15 @@ export const img = {
   bakesRosePetal: p('bakes-rose-petal-bars.jpeg'),
   bakesCreamCones: p('bakes-cream-cones.jpeg'),
   cakePops: p('cake-pink-letter.jpeg'),
-  redVelvet: p('cake-chocolate-birthday.jpeg'),
-  cakeSlice: p('cheesecake-pistachio-slices.jpeg'),
   cakeYellowFlowers: p('cake-yellow-flowers.jpeg'),
   cakeNakedYellow: p('cake-naked-yellow.jpeg'),
   cakeChocolateBirthday: p('cake-chocolate-birthday.jpeg'),
   cakePinkLetter: p('cake-pink-letter.jpeg'),
-  cakeLemonDrip: p('cake-lemon-drip.jpeg'),
 
   // ───── Truffles / Chocolates ─────
-  truffles: p('truffles-box.jpeg'),
   truffleBox: p('truffles-hearts.jpeg'),
-  trufflesHearts: p('truffles-hearts.jpeg'),
 
   // ───── Dessert cups ─────
-  dessertCupsTrio: p('dessert-cups-trio.jpeg'),
-  dessertCupsChocolate: p('dessert-cups-chocolate.jpeg'),
   dessertCupsLemon: p('dessert-cups-lemon.jpeg'),
   jellyCupsRainbow: p('jelly-cups-rainbow.jpeg'),
 
@@ -129,8 +95,78 @@ export const img = {
   drinkBlueLagoon: p('drink-blue-lagoon.jpeg'),
   drinkStrawberryMojito: p('drink-strawberry-mojito.jpeg'),
 
-  // ───── Misc ─────
-  riceKrispies: p('rice-krispies.jpeg'),
-  macarons: p('bakes-rose-petal-bars.jpeg'),
-  cheesecakeChocPistachioBox: p('cheesecake-chocolate-pistachio.jpeg'),
+  // ═════════════════════════════════════════════════════════════════════
+  // Real Cake & Crumb product photos (added 2026-07). `rc*` = real-catalog.
+  // These are actual bakery shots — prefer them over the reused placeholders.
+  // ═════════════════════════════════════════════════════════════════════
+
+  // Cheesecakes
+  rcCheesecakePistachio:   p('cheesecake-pistachio-slices-board.jpeg'),
+  rcCheesecakePomegranate: p('cheesecake-pomegranate-berry.jpeg'),
+  rcCheesecakeBlueberry:   p('cheesecake-blueberry-whole.jpeg'),
+
+  // Milk cakes (bento)
+  rcMilkcakeTresRose:          p('milkcake-tres-leche-rose.jpeg'),
+  rcMilkcakeTresDish:          p('milkcake-tres-leche-dish.jpeg'),
+  rcMilkcakeRosePistachioDomes: p('milkcake-rose-pistachio-domes.jpeg'),
+
+  // Cookies
+  rcCookiesPistachioRose:   p('cookies-pistachio-rose.jpeg'),
+  rcCookiesChocChunkNut:    p('cookies-choc-chunk-nut.jpeg'),
+  rcCookiesChocolateNutBoard: p('cookies-chocolate-nut-board.jpeg'),
+  rcCookiesDoubleChocolate: p('cookies-double-chocolate.jpeg'),
+
+  // Cupcakes
+  rcCupcakesRainbow:          p('cupcakes-rainbow-sprinkle.jpeg'),
+  rcCupcakesRedVelvet:        p('cupcakes-red-velvet.jpeg'),
+  rcCupcakesFunfetti:         p('cupcakes-funfetti-box.jpeg'),
+  rcCupcakesFloralMothersDay: p('cupcakes-floral-mothers-day.jpeg'),
+  rcCupcakesFloralRose:       p('cupcakes-floral-rose-box.jpeg'),
+  rcCupcakesChocolate:        p('cupcakes-chocolate-box.jpeg'),
+  rcCupcakesMintGoldLeaf:     p('cupcakes-mint-gold-leaf.jpeg'),
+  rcCupcakesPinkPurpleSwirl:  p('cupcakes-pink-purple-swirl.jpeg'),
+
+  // Sponge / celebration cakes
+  rcCakePinkNumber:       p('cake-pink-number-rosette.jpeg'),
+  rcCakeChocolateCaramel: p('cake-chocolate-caramel-birthday.jpeg'),
+  rcCakeYellowRose:       p('cake-yellow-rose-buttercream.jpeg'),
+  rcCakeRedVelvetHearts:  p('cake-red-velvet-hearts.jpeg'),
+  rcCakeBlueberryLavender: p('cake-blueberry-lavender-slice.jpeg'),
+  rcCakeHeartMa:          p('cake-heart-ma-pink-roses.jpeg'),
+  rcCakePinkRoseMothers:  p('cake-pink-rose-mothers-day.jpeg'),
+  rcCakeCoffeeCaramel:    p('cake-coffee-caramel-birthday.jpeg'),
+
+  // Brownies
+  rcBrownieBoxes: p('brownie-chocolate-boxes.jpeg'),
+  rcBrownieLava:  p('brownie-lava-tub.jpeg'),
+  rcBrownieFudgy: p('brownie-fudgy-slab.jpeg'),
+
+  // Dessert cups
+  rcCupRedVelvetCream:      p('dessertcup-red-velvet-cream.jpeg'),
+  rcCupRedVelvetPair:       p('dessertcup-red-velvet-pair.jpeg'),
+  rcCupChocolateGanache:    p('dessertcup-chocolate-ganache.jpeg'),
+  rcCupOreo:                p('dessertcup-oreo-cookies-cream.jpeg'),
+  rcCupChocolateRosette:    p('dessertcup-chocolate-rosette.jpeg'),
+  rcCupStrawberrySprinkles: p('dessertcup-strawberry-sprinkles.jpeg'),
+  rcCupChocolateMousseTray: p('dessertcup-chocolate-mousse-tray.jpeg'),
+  rcCupMangoCustard:        p('dessertcup-mango-custard.jpeg'),
+  rcCupBiscoffCream:        p('dessertcup-biscoff-cream.jpeg'),
+  rcCupChocolateMangoDuo:   p('dessertcup-chocolate-mango-duo.jpeg'),
+  rcCupAssortedFlatlay:     p('dessertcup-assorted-flatlay.jpeg'),
+  rcCupAssortedFour:        p('dessertcup-assorted-four.jpeg'),
+  rcCupChocolatePudding:    p('dessertcup-chocolate-pudding.jpeg'),
+  rcCupPistachioCream:      p('dessertcup-pistachio-cream.jpeg'),
+  rcCupRoseCream:           p('dessertcup-rose-cream.jpeg'),
+  rcCupNutella:             p('dessertcup-nutella.jpeg'),
+
+  // Jelly
+  rcJellyRainbow: p('jellycups-rainbow-layered.jpeg'),
+
+  // Truffles
+  rcTrufflesChocolateHearts: p('truffles-chocolate-hearts.jpeg'),
+  rcTrufflesDarkBox:         p('truffles-dark-heart-box.jpeg'),
+  rcTrufflesRosePistachio:   p('truffles-rose-pistachio-hearts.jpeg'),
+
+  // Platter
+  rcPlatterPancakeStrawberry: p('platter-pancake-strawberry.jpeg'),
 }

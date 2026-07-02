@@ -13,7 +13,7 @@ const CARDS = [
   {
     title: 'Cheesecakes',
     category: 'Cheesecakes',
-    image: img.cheesecakeStrawberry,
+    image: img.rcCheesecakeBlueberry,
     items: [
       { n: 'Strawberry', p: 350 },
       { n: 'Mango', p: 350 },
@@ -25,7 +25,7 @@ const CARDS = [
   {
     title: 'Sponge Cakes',
     category: 'Sponge Cakes',
-    image: img.cakeNakedYellow,
+    image: img.rcCakeYellowRose,
     items: [
       { n: 'Vanilla (Bento)', p: 450 },
       { n: 'Chocolate (Bento)', p: 470 },
@@ -38,19 +38,20 @@ const CARDS = [
   {
     title: 'Milk Cakes',
     category: 'Milk Cakes',
-    image: img.milkcakeRosePistachio,
+    image: img.rcMilkcakeRosePistachioDomes,
     items: [
-      { n: 'Rose', p: 800 },
-      { n: 'Biscoff', p: 800 },
-      { n: 'Chocolate', p: 850 },
-      { n: 'Raspberry', p: 900 },
-      { n: 'Pistachio', p: 950, badge: 'Premium' },
+      { n: 'Trés Léches (Bento)', p: 420 },
+      { n: 'Rose (Bento)', p: 420 },
+      { n: 'Mango (Bento)', p: 440 },
+      { n: 'Biscoff (Bento)', p: 480 },
+      { n: 'Pistachio (Bento)', p: 520, badge: 'Premium' },
     ],
+    note: '♥ Also available as single-serve tubs from ₹120.',
   },
   {
     title: 'Cupcakes',
     category: 'Cupcakes',
-    image: img.cupcakesRose,
+    image: img.rcCupcakesRedVelvet,
     items: [
       { n: 'Vanilla (Box of 6)', p: 150 },
       { n: 'Chocolate (Box of 6)', p: 170 },
@@ -63,7 +64,7 @@ const CARDS = [
   {
     title: 'Cookies',
     category: 'Cookies',
-    image: img.cookies,
+    image: img.rcCookiesDoubleChocolate,
     items: [
       { n: 'Classic (Box of 6)', p: 280 },
       { n: 'White Choc (Box of 6)', p: 280 },
@@ -75,11 +76,11 @@ const CARDS = [
   {
     title: 'Dessert Cups',
     category: 'Dessert Cups',
-    image: img.dessertCupsTrio,
+    image: img.rcCupAssortedFlatlay,
     items: [
+      { n: 'Ghas (Milk Pudding) Cup', p: 40 },
       { n: 'Jelly Cup', p: 50 },
-      { n: 'Custard Cup', p: 90 },
-      { n: 'Grass Cup (Ghas)', p: 90 },
+      { n: 'Vanilla Custard Cup', p: 60 },
       { n: 'Trifle Cup', p: 100 },
       { n: 'Cheesecake Cup', p: 150 },
     ],
@@ -87,14 +88,14 @@ const CARDS = [
 ]
 
 const SWEET_TREATS_LEFT = [
-  { n: 'Macarons (Box of 6)', p: '₹449' },
-  { n: 'Cake Pops (Each)', p: '₹99' },
-  { n: 'Brownies', p: '₹120' },
+  { n: 'Brownies', p: 'from ₹60' },
+  { n: 'Blondies', p: 'from ₹60' },
+  { n: 'Cake Pops (Box of 6)', p: '₹120' },
 ]
 const SWEET_TREATS_RIGHT = [
-  { n: 'Mini Cheesecake', p: '₹150' },
-  { n: 'Seasonal Specials', p: 'Market Price' },
-  { n: 'Gift Boxes', p: '₹799+' },
+  { n: 'Cakesicles', p: 'from ₹110' },
+  { n: 'Choc Covered Strawberry', p: '₹40' },
+  { n: 'Custom Orders', p: 'Message us' },
 ]
 
 function PriceRow({ name, price, badge }) {
@@ -205,8 +206,8 @@ export default function Menu() {
           <div className="row g-4 align-items-center mt-5">
             <div className="col-md-4">
               <img
-                src={u(img.macarons, 700, 600)}
-                alt="Sweet Treats — macarons and cake pops"
+                src={u(img.rcBrownieBoxes, 700, 600)}
+                alt="Sweet Treats — brownies, blondies and cake pops"
                 className="cc-menu-sweet__img"
               />
             </div>
