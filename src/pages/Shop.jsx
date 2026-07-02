@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   FiHeart, FiShoppingBag, FiX, FiPlus, FiMinus, FiCheckCircle,
-  FiShield, FiTruck, FiChevronLeft, FiChevronRight,
+  FiShield, FiTruck, FiChevronLeft, FiChevronRight, FiChevronDown, FiSliders,
 } from 'react-icons/fi'
 import { TbLeaf, TbToolsKitchen2 } from 'react-icons/tb'
 import HeartDivider from '../components/HeartDivider.jsx'
@@ -88,6 +88,14 @@ export default function Shop() {
   const [sort, setSort] = useState('featured')
   const [page, setPage] = useState(1)
   const [quickView, setQuickView] = useState(null)
+  const [filtersOpen, setFiltersOpen] = useState(false) // mobile-only collapse
+
+  // Count of applied filters — shown on the mobile toggle so users know filters
+  // are active even while the panel is collapsed.
+  const activeFilterCount =
+    (category !== 'All Products' ? 1 : 0) +
+    (priceRange !== 'all' ? 1 : 0) +
+    (occasion ? 1 : 0)
   const { items, count, subtotal, add, increment, decrement, remove, clear } = useCart()
 
   const PAGE_SIZE = 12
@@ -160,6 +168,27 @@ export default function Shop() {
               <div className="cc-shop-filter">
                 <h6 className="cc-shop-filter__heading">Filter By</h6>
 
+                {/* Mobile-only toggle — collapses the long filter list by default */}
+                <button
+                  type="button"
+                  className="cc-shop-filter__toggle"
+                  onClick={() => setFiltersOpen((o) => !o)}
+                  aria-expanded={filtersOpen}
+                >
+                  <span className="cc-shop-filter__toggle-label">
+                    <FiSliders size={15} />
+                    Filters
+                    {activeFilterCount > 0 && (
+                      <span className="cc-shop-filter__count">{activeFilterCount}</span>
+                    )}
+                  </span>
+                  <FiChevronDown
+                    size={18}
+                    className={'cc-shop-filter__chevron' + (filtersOpen ? ' is-open' : '')}
+                  />
+                </button>
+
+                <div className={'cc-shop-filter__body' + (filtersOpen ? ' is-open' : '')}>
                 <div className="cc-shop-filter__group">
                   <div className="cc-shop-filter__label">Category</div>
                   {CATEGORIES.map((c) => (
@@ -203,6 +232,7 @@ export default function Shop() {
                 >
                   Clear Filters
                 </button>
+                </div>
               </div>
             </aside>
 
