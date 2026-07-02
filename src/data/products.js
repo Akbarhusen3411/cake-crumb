@@ -54,9 +54,6 @@ export const shopProducts = [
   { id: 'mc-nutella', name: 'Nutella Milk Cake', price: 480, slice: 130, img: img.cakeChocolateBirthday, category: 'Milk Cakes', sizeLabel: 'Bento', sliceLabel: 'Tub' },
   { id: 'mc-turkish', name: 'Turkish (Caramel) Milk Cake', price: 480, slice: 130, img: img.cakeYellowFlowers, category: 'Milk Cakes', sizeLabel: 'Bento', sliceLabel: 'Tub' },
   { id: 'mc-pistachio', name: 'Pistachio Milk Cake', price: 520, slice: 140, img: img.milkcakeRosePistachio, category: 'Milk Cakes', sizeLabel: 'Bento', sliceLabel: 'Tub', badge: 'Premium' },
-  // Kept from earlier menu (not on the current 2-page menu) — 6" whole / per slice
-  { id: 'mc-chocolate', name: 'Chocolate Milk Cake', price: 850, slice: 110, img: img.cakeChocolateBirthday, category: 'Milk Cakes', sizeLabel: '6"' },
-  { id: 'mc-raspberry', name: 'Raspberry Milk Cake', price: 900, slice: 115, img: img.berryCake, category: 'Milk Cakes', sizeLabel: '6"' },
 
   // ───── SPONGE CAKES — Whole (Bento) / Tub ─────
   { id: 'sp-vanilla', name: 'Vanilla Sponge Cake', price: 450, slice: 100, img: img.rcCakeYellowRose, category: 'Sponge Cakes', sizeLabel: 'Whole (Bento)', sliceLabel: 'Tub' },
@@ -87,7 +84,6 @@ export const shopProducts = [
   { id: 'cup-biscoff', name: 'Biscoff Cupcakes (6 pcs)', price: 180, img: img.cupcakesBox, category: 'Cupcakes', sizeLabel: 'Box of 6' },
   { id: 'cup-nutella', name: 'Nutella Cupcakes (6 pcs)', price: 170, img: img.cupcakesBoxLarge, category: 'Cupcakes', sizeLabel: 'Box of 6' },
   { id: 'cup-strawberry', name: 'Strawberry Cupcakes (6 pcs)', price: 170, img: img.rcCupcakesFloralRose, category: 'Cupcakes', sizeLabel: 'Box of 6' },
-  { id: 'cup-mango', name: 'Mango Cupcakes (6 pcs)', price: 170, img: img.cupcakesGiftBox, category: 'Cupcakes', sizeLabel: 'Box of 6' },
 
   // ───── BROWNIES — 1 pc / Box of 6 (also sold in 4 & 12) ─────
   { id: 'bk-brownie-classic', name: 'Classic Brownie', price: 60, slice: 350, img: img.rcBrownieFudgy, category: 'Bakes', sizeLabel: '1 pc', sliceLabel: 'Box of 6' },
@@ -123,27 +119,51 @@ export const shopProducts = [
   { id: 'dc-custard-vanilla', name: 'Vanilla Custard Cup', price: 60, img: img.dessertCupsLemon, category: 'Dessert Cups', sizeLabel: '150ml' },
   { id: 'dc-custard-chocolate', name: 'Chocolate Custard Cup', price: 70, img: img.rcCupChocolatePudding, category: 'Dessert Cups', sizeLabel: '150ml' },
   { id: 'dc-custard-mango', name: 'Mango Custard Cup', price: 80, img: img.rcCupMangoCustard, category: 'Dessert Cups', sizeLabel: '150ml' },
-  { id: 'dc-cheesecake', name: 'Cheesecake Cup', price: 150, img: img.rcCupAssortedFour, category: 'Dessert Cups', sizeLabel: '150ml' },
   { id: 'dc-trifle', name: 'Trifle Cup', price: 100, img: img.rcCupAssortedFlatlay, category: 'Dessert Cups', sizeLabel: '150ml' },
   { id: 'dc-jelly', name: 'Jelly Cup', price: 50, img: img.rcJellyRainbow, category: 'Dessert Cups', sizeLabel: '150ml' },
   { id: 'dc-grass', name: 'Milk Pudding (Ghas) Cup', price: 40, img: img.jellyCupsRainbow, category: 'Dessert Cups', sizeLabel: '150ml' },
 
   // ───── DRINKS — Mojitos ─────
-  { id: 'dr-virginmojito', name: 'Virgin Mojito', price: 120, img: img.drinkVirginMojito, category: 'Drinks' },
-  { id: 'dr-bluemojito', name: 'Blue Lagoon Mojito', price: 120, img: img.drinkBlueLagoon, category: 'Drinks' },
-  { id: 'dr-strawberrymojito', name: 'Strawberry Mojito', price: 120, img: img.drinkStrawberryMojito, category: 'Drinks' },
-  { id: 'dr-fruitmojito', name: 'Fruit Flavour Mojito', price: 130, img: img.drinkStrawberryMojito, category: 'Drinks' },
-
-  // ───── DRINKS — Coffee ─────
-  { id: 'dr-icedcoffee', name: 'Iced Coffee', price: 100, img: img.drinkBlueLagoon, category: 'Drinks' },
-  { id: 'dr-hotcoffee', name: 'Hot Coffee', price: 90, img: img.drinkVirginMojito, category: 'Drinks' },
+  { id: 'dr-virginmojito', name: 'Virgin Mojito', price: 180, img: img.drinkVirginMojito, category: 'Drinks' },
+  { id: 'dr-bluelagoon', name: 'Blue Lagoon Mojito', price: 190, img: img.drinkBlueLagoon, category: 'Drinks' },
+  { id: 'dr-strawberrydelight', name: 'Strawberry Delight Mojito', price: 200, img: img.drinkStrawberryMojito, category: 'Drinks' },
+  { id: 'dr-watermelonwave', name: 'Watermelon Wave Mojito', price: 200, img: img.drinkStrawberryMojito, category: 'Drinks' },
+  { id: 'dr-mangodream', name: 'Mango Dream Mojito', price: 190, img: img.drinkBlueLagoon, category: 'Drinks' },
+  { id: 'dr-blueberrybliss', name: 'Blueberry Bliss Mojito', price: 190, img: img.drinkBlueLagoon, category: 'Drinks' },
+  { id: 'dr-lycheemist', name: 'Lychee Mist Mojito', price: 190, img: img.drinkVirginMojito, category: 'Drinks' },
 
   // ───── DRINKS — Milkshakes ─────
-  { id: 'dr-fruitshake', name: 'Fruit Flavour Milkshake', price: 160, img: img.drinkStrawberryMojito, category: 'Drinks' },
-  { id: 'dr-biscoff-shake', name: 'Biscoff Milkshake', price: 180, img: img.drinkVirginMojito, category: 'Drinks' },
-  { id: 'dr-nutella-shake', name: 'Nutella Milkshake', price: 180, img: img.drinkVirginMojito, category: 'Drinks' },
-  { id: 'dr-oreo-shake', name: 'Oreo Milkshake', price: 180, img: img.drinkBlueLagoon, category: 'Drinks' },
-  { id: 'dr-choc-shake', name: 'Choc Flavour Milkshake', price: 180, img: img.drinkVirginMojito, category: 'Drinks' },
+  { id: 'dr-lotus-shake', name: 'Lotus Luxury Milkshake (Biscoff)', price: 240, img: img.drinkVirginMojito, category: 'Drinks' },
+  { id: 'dr-hazelnut-shake', name: 'Hazelnut Heaven Milkshake (Nutella)', price: 240, img: img.drinkVirginMojito, category: 'Drinks' },
+  { id: 'dr-oreo-shake', name: 'Oreo Monster Milkshake', price: 240, img: img.drinkBlueLagoon, category: 'Drinks' },
+  { id: 'dr-strawberry-shake', name: 'Strawberry Cheesecake Milkshake', price: 230, img: img.drinkStrawberryMojito, category: 'Drinks' },
+  { id: 'dr-blueberry-shake', name: 'Blueberry Bomb Milkshake', price: 230, img: img.drinkBlueLagoon, category: 'Drinks' },
+  { id: 'dr-mango-shake', name: 'Golden Velvet Milkshake (Mango)', price: 220, img: img.drinkStrawberryMojito, category: 'Drinks' },
+  { id: 'dr-pistachio-shake', name: 'Pistachio Paradise Milkshake', price: 250, img: img.drinkVirginMojito, category: 'Drinks' },
+
+  // ───── DRINKS — Iced Coffee ─────
+  { id: 'dr-iced-classic', name: 'Classic Iced Coffee', price: 220, img: img.drinkBlueLagoon, category: 'Drinks' },
+  { id: 'dr-iced-mocha', name: 'Mocha Madness Iced Latte', price: 240, img: img.drinkBlueLagoon, category: 'Drinks' },
+  { id: 'dr-iced-caramel', name: 'Caramel Craze Latte', price: 230, img: img.drinkBlueLagoon, category: 'Drinks' },
+  { id: 'dr-iced-vanilla', name: 'Vanilla Bean Dream (Iced)', price: 230, img: img.drinkBlueLagoon, category: 'Drinks' },
+  { id: 'dr-iced-strawberry', name: 'Strawberry Silk Latte', price: 230, img: img.drinkStrawberryMojito, category: 'Drinks' },
+  { id: 'dr-iced-cookie', name: 'Cookie Monster Brew', price: 240, img: img.drinkBlueLagoon, category: 'Drinks' },
+
+  // ───── DRINKS — Hot Coffee (+₹10 for cream) ─────
+  { id: 'dr-hot-classic', name: 'Classic Hot Coffee', price: 200, img: img.drinkVirginMojito, category: 'Drinks' },
+  { id: 'dr-hot-mochaccino', name: 'Mochaccino', price: 210, img: img.drinkVirginMojito, category: 'Drinks' },
+  { id: 'dr-hot-macchiato', name: 'Caramel Macchiato', price: 210, img: img.drinkVirginMojito, category: 'Drinks' },
+  { id: 'dr-hot-vanilla', name: 'Vanilla Bean Dream (Hot)', price: 210, img: img.drinkVirginMojito, category: 'Drinks' },
+
+  // ───── LOOK OUT FOR — new additions ─────
+  { id: 'lo-cookie-fries', name: 'Cookie Fries', price: 200, img: img.cookiesChunky, category: 'Bakes', sizeLabel: 'Serving' },
+  { id: 'lo-macarons', name: 'Macarons', price: 120, img: img.bakesCreamCones, category: 'Bakes', sizeLabel: 'Per piece' },
+  { id: 'lo-rice-krispies', name: 'Rice Krispies Treats', price: 90, img: img.bakesPlain, category: 'Bakes', sizeLabel: 'Per piece' },
+  { id: 'lo-brownie-cheesecake', name: 'Brownie Cheesecake (Whole)', price: 750, img: img.cheesecakeChocRose, category: 'Cheesecakes', sizeLabel: 'Whole' },
+  { id: 'lo-dipped-slice', name: 'Dipped Cheesecake Slice', price: 200, img: img.cheesecakeStrawberry, category: 'Cheesecakes', sizeLabel: 'Per slice' },
+  { id: 'lo-cookie-box', name: 'Cookie Dipping Box', price: 420, img: img.rcCookiesChocolateNutBoard, category: 'Bakes', sizeLabel: 'Box' },
+  { id: 'lo-brownie-box', name: 'Brownie Dipping Box', price: 450, img: img.rcBrownieBoxes, category: 'Bakes', sizeLabel: 'Box' },
+  { id: 'lo-brookie-box', name: 'Brookie Dipping Box', price: 470, img: img.rcCookiesChocChunkNut, category: 'Bakes', sizeLabel: 'Box' },
 ].map(attachAllergens)
 
 // Auto-attach allergen tags based on product category + name keywords.
@@ -172,8 +192,10 @@ function attachAllergens(p) {
       else tags = ['contains-egg', 'contains-dairy', 'eggless-option']
       break
     case 'Drinks':
-      if (isShake) tags = ['contains-dairy']
-      else if (isMojito || isCoffee) tags = []
+      if (isShake) {
+        tags = ['contains-dairy']
+        if (hasNuts) tags.push('contains-nuts')
+      } else if (isMojito || isCoffee) tags = []
       break
     default:
       tags = []
