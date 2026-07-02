@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/webp" href="%BASE_URL%favicon.webp" />
     <link rel="apple-touch-icon" href="%BASE_URL%favicon.webp" />
+    <!-- Preload the header logo so it starts downloading immediately, in parallel with
+         the JS bundle — otherwise the <img> request only fires after React mounts,
+         making the logo pop in a moment late on first load. -->
+    <link rel="preload" as="image" href="%BASE_URL%logo_final.webp" fetchpriority="high" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#e0617a" />
 
