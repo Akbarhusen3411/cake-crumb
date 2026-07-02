@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   FiHeart, FiShoppingBag, FiX, FiPlus, FiMinus, FiCheckCircle,
   FiShield, FiTruck, FiChevronLeft, FiChevronRight,
@@ -15,7 +15,7 @@ import { useJsonLd } from '../hooks/useJsonLd.js'
 import ProductQuickView from '../components/ProductQuickView.jsx'
 
 const CATEGORIES = [
-  'All Products', 'Cheesecakes', 'Milk Cakes', 'Cookies', 'Cupcakes', 'Bakes', 'Dessert Cups', 'Drinks',
+  'All Products', 'Cheesecakes', 'Milk Cakes', 'Sponge Cakes', 'Cookies', 'Cupcakes', 'Bakes', 'Dessert Cups', 'Drinks',
 ]
 
 const PRICE_RANGES = [
@@ -77,7 +77,12 @@ export default function Shop() {
     })),
   })
 
-  const [category, setCategory] = useState('All Products')
+  // Allow deep-linking to a filtered view, e.g. /shop?category=Cheesecakes (from the Menu page).
+  const [searchParams] = useSearchParams()
+  const paramCategory = searchParams.get('category')
+  const [category, setCategory] = useState(
+    paramCategory && CATEGORIES.includes(paramCategory) ? paramCategory : 'All Products'
+  )
   const [priceRange, setPriceRange] = useState('all')
   const [occasion, setOccasion] = useState(null) // visual only — no real product tagging
   const [sort, setSort] = useState('featured')
@@ -101,6 +106,11 @@ export default function Shop() {
   const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
   const rangeStart = filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
   const rangeEnd = Math.min(page * PAGE_SIZE, filtered.length)
+
+  // Follow the URL ?category= param (e.g. navigating between Menu "View All" links)
+  useEffect(() => {
+    if (paramCategory && CATEGORIES.includes(paramCategory)) setCategory(paramCategory)
+  }, [paramCategory])
 
   // Reset to page 1 whenever filters/sort change so users don't land on an empty page
   useEffect(() => { setPage(1) }, [category, priceRange, sort])
@@ -211,6 +221,12 @@ export default function Shop() {
                   </select>
                 </label>
               </div>
+
+              {category === 'Cupcakes' && (
+                <p className="cc-shop-note">
+                  <FiHeart size={12} /> Cupcakes are sold by the box of 6. Add ₹20 for floral or additional decoration.
+                </p>
+              )}
 
               <div className="cc-shop-grid">
                 {visible.map((p) => (

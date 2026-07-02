@@ -9,7 +9,7 @@ const A_NUTS    = [...A_BAKED, 'contains-nuts']
 // Featured cards on Home — visually distinctive picks across categories.
 export const featured = [
   { id: 'feat-1', name: 'Strawberry Cheesecake', price: 350, img: img.cheesecakeStrawberry, category: 'Cheesecakes', allergens: A_BAKED },
-  { id: 'feat-2', name: 'Pink Rose Cupcakes', price: 100, img: img.cupcakesRose, category: 'Cupcakes', allergens: A_BAKED },
+  { id: 'feat-2', name: 'Red Velvet Cupcakes (6 pcs)', price: 180, img: img.cupcakesRose, category: 'Cupcakes', allergens: A_BAKED },
   { id: 'feat-3', name: 'Triple Choc Cookies (Box of 6)', price: 340, img: img.cookiesTripleChoc, category: 'Cookies', allergens: A_BAKED },
   { id: 'feat-4', name: 'Pistachio Milk Cake 6"', price: 950, img: img.milkcakeRosePistachio, category: 'Milk Cakes', allergens: A_NUTS },
 ]
@@ -55,6 +55,18 @@ export const shopProducts = [
   { id: 'mc-raspberry', name: 'Raspberry Milk Cake', price: 900, slice: 115, img: img.milkcakePomegranate || img.berryCake, category: 'Milk Cakes', sizeLabel: '6"' },
   { id: 'mc-pistachio', name: 'Pistachio Milk Cake', price: 950, slice: 120, img: img.cheesecakePistachioSlices, category: 'Milk Cakes', sizeLabel: '6"', badge: 'Premium' },
 
+  // ───── SPONGE CAKES — Whole (Bento) / Tub ─────
+  { id: 'sp-vanilla', name: 'Vanilla Sponge Cake', price: 450, slice: 100, img: img.cakeNakedYellow, category: 'Sponge Cakes', sizeLabel: 'Whole (Bento)', sliceLabel: 'Tub' },
+  { id: 'sp-chocolate', name: 'Chocolate Sponge Cake', price: 470, slice: 100, img: img.cakeChocolateBirthday, category: 'Sponge Cakes', sizeLabel: 'Whole (Bento)', sliceLabel: 'Tub' },
+  { id: 'sp-strawberry', name: 'Strawberry Sponge Cake', price: 470, slice: 110, img: img.cakePinkLetter, category: 'Sponge Cakes', sizeLabel: 'Whole (Bento)', sliceLabel: 'Tub' },
+  { id: 'sp-redvelvet', name: 'Red Velvet Sponge Cake', price: 470, slice: 110, img: img.redVelvet, category: 'Sponge Cakes', sizeLabel: 'Whole (Bento)', sliceLabel: 'Tub' },
+  { id: 'sp-mango', name: 'Mango Sponge Cake', price: 480, slice: 120, img: img.cakeYellowFlowers, category: 'Sponge Cakes', sizeLabel: 'Whole (Bento)', sliceLabel: 'Tub' },
+  { id: 'sp-blueberry', name: 'Blueberry Sponge Cake', price: 480, slice: 120, img: img.milkcakeBlueberry, category: 'Sponge Cakes', sizeLabel: 'Whole (Bento)', sliceLabel: 'Tub' },
+  { id: 'sp-biscoff', name: 'Biscoff Sponge Cake', price: 490, slice: 130, img: img.cakeNakedYellow, category: 'Sponge Cakes', sizeLabel: 'Whole (Bento)', sliceLabel: 'Tub' },
+  { id: 'sp-nutella', name: 'Nutella Sponge Cake', price: 490, slice: 130, img: img.cakeChocolateBirthday, category: 'Sponge Cakes', sizeLabel: 'Whole (Bento)', sliceLabel: 'Tub' },
+  { id: 'sp-pistachio', name: 'Pistachio Sponge Cake', price: 510, slice: 150, img: img.milkcakeRosePistachio, category: 'Sponge Cakes', sizeLabel: 'Whole (Bento)', sliceLabel: 'Tub' },
+  { id: 'sp-choc-chunk', name: 'Chocolate Chunk Sponge Cake', price: 480, slice: 120, img: img.cakeChocolateBirthday, category: 'Sponge Cakes', sizeLabel: 'Whole (Bento)', sliceLabel: 'Tub' },
+
   // ───── COOKIES — Box of 6 / Box of 12 ─────
   { id: 'ck-triple', name: 'Triple Choc Cookies', price: 340, slice: 700, img: img.cookiesTripleChoc, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12' },
   { id: 'ck-white', name: 'White Choc Cookies', price: 280, slice: 580, img: img.cookiesChunky, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12' },
@@ -64,9 +76,15 @@ export const shopProducts = [
   { id: 'ck-coconut', name: 'Coconut Cookies', price: 340, slice: 700, img: img.cookies, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12' },
   { id: 'ck-pistachio', name: 'Pistachio & Rose Cookies', price: 400, slice: 820, img: img.cookiesChunky, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12', badge: 'Special' },
 
-  // ───── CUPCAKES — per piece ─────
-  { id: 'cup-chocolate', name: 'Chocolate Cupcake', price: 100, img: img.cupcakesAssorted, category: 'Cupcakes' },
-  { id: 'cup-vanilla', name: 'Vanilla Cupcake', price: 100, img: img.cupcakesPink, category: 'Cupcakes' },
+  // ───── CUPCAKES — box of 6 (₹20 extra for floral / additional decoration) ─────
+  { id: 'cup-vanilla', name: 'Vanilla Cupcakes (6 pcs)', price: 150, img: img.cupcakesPlain, category: 'Cupcakes', sizeLabel: 'Box of 6' },
+  { id: 'cup-redvelvet', name: 'Red Velvet Cupcakes (6 pcs)', price: 180, img: img.cupcakesRose, category: 'Cupcakes', sizeLabel: 'Box of 6' },
+  { id: 'cup-chocolate', name: 'Chocolate Cupcakes (6 pcs)', price: 170, img: img.cupcakesAssorted, category: 'Cupcakes', sizeLabel: 'Box of 6' },
+  { id: 'cup-pistachio', name: 'Pistachio Cupcakes (6 pcs)', price: 190, img: img.cupcakesQuartet, category: 'Cupcakes', sizeLabel: 'Box of 6' },
+  { id: 'cup-biscoff', name: 'Biscoff Cupcakes (6 pcs)', price: 180, img: img.cupcakesBox, category: 'Cupcakes', sizeLabel: 'Box of 6' },
+  { id: 'cup-nutella', name: 'Nutella Cupcakes (6 pcs)', price: 180, img: img.cupcakesBoxLarge, category: 'Cupcakes', sizeLabel: 'Box of 6' },
+  { id: 'cup-strawberry', name: 'Strawberry Cupcakes (6 pcs)', price: 170, img: img.cupcakesPink, category: 'Cupcakes', sizeLabel: 'Box of 6' },
+  { id: 'cup-mango', name: 'Mango Cupcakes (6 pcs)', price: 170, img: img.cupcakesGiftBox, category: 'Cupcakes', sizeLabel: 'Box of 6' },
 
   // ───── BAKES — per piece ─────
   { id: 'bk-brownie', name: 'Brownie', price: 80, img: img.bakesChocolateSquare, category: 'Bakes' },
@@ -84,7 +102,7 @@ export const shopProducts = [
   { id: 'dc-custard', name: 'Custard Cup', price: 90, img: img.dessertCupsLemon, category: 'Dessert Cups' },
   { id: 'dc-cheesecake', name: 'Cheesecake Cup', price: 150, img: img.dessertCupsTrio, category: 'Dessert Cups' },
   { id: 'dc-trifle', name: 'Trifle Cup', price: 100, img: img.dessertCupsLemon, category: 'Dessert Cups' },
-  { id: 'dc-jelly', name: 'Jelly Cup', price: 80, img: img.jellyCupsRainbow, category: 'Dessert Cups' },
+  { id: 'dc-jelly', name: 'Jelly Cup', price: 50, img: img.jellyCupsRainbow, category: 'Dessert Cups' },
   { id: 'dc-grass', name: 'Grass Cup (Ghas)', price: 90, img: img.jellyCupsRainbow, category: 'Dessert Cups' },
 
   // ───── DRINKS — Mojitos ─────
@@ -118,6 +136,7 @@ function attachAllergens(p) {
   switch (p.category) {
     case 'Cheesecakes':
     case 'Milk Cakes':
+    case 'Sponge Cakes':
     case 'Cookies':
     case 'Cupcakes':
     case 'Bakes':
@@ -194,10 +213,31 @@ export const milkCakes = [
   { name: 'Pistachio', whole: 950, slice: 120, badge: 'Premium' },
 ]
 
+// Sponge cakes — Tub (single-serve) / Whole (Bento).
+export const spongeCakes = [
+  { name: 'Vanilla', tub: 100, whole: 450 },
+  { name: 'Chocolate', tub: 100, whole: 470 },
+  { name: 'Strawberry', tub: 110, whole: 470 },
+  { name: 'Red Velvet', tub: 110, whole: 470 },
+  { name: 'Mango', tub: 120, whole: 480 },
+  { name: 'Blueberry', tub: 120, whole: 480 },
+  { name: 'Biscoff', tub: 130, whole: 490 },
+  { name: 'Nutella', tub: 130, whole: 490 },
+  { name: 'Pistachio', tub: 150, whole: 510 },
+  { name: 'Chocolate Chunk', tub: 120, whole: 480 },
+]
+
 export const cakesAndBakes = {
+  // Cupcakes sold by the box of 6. ₹20 extra for floral / additional decoration.
   cupcakes: [
-    { name: 'Chocolate', price: 100 },
-    { name: 'Vanilla', price: 100 },
+    { name: 'Vanilla', price: 150 },
+    { name: 'Red Velvet', price: 180 },
+    { name: 'Chocolate', price: 170 },
+    { name: 'Pistachio', price: 190 },
+    { name: 'Biscoff', price: 180 },
+    { name: 'Nutella', price: 180 },
+    { name: 'Strawberry', price: 170 },
+    { name: 'Mango', price: 170 },
   ],
   bakes: [
     { name: 'Brownie', price: 80 },
@@ -217,7 +257,7 @@ export const dessertCups = [
   { name: 'Custard Cup', price: 90 },
   { name: 'Cheesecake Cup', price: 150 },
   { name: 'Trifle Cup', price: 100 },
-  { name: 'Jelly Cup', price: 80 },
+  { name: 'Jelly Cup', price: 50 },
   { name: 'Grass Cup (Ghas)', price: 90 },
 ]
 

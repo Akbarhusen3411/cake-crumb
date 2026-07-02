@@ -8,53 +8,80 @@ import { usePageMeta } from '../hooks/usePageMeta.js'
 import { useJsonLd } from '../hooks/useJsonLd.js'
 
 // Curated 5-item lists per card — keeps the page light. Full lists live in /shop.
+// Each card maps to a real Shop category — "View All" deep-links to /shop?category=…
 const CARDS = [
   {
-    title: 'Cakes',
-    image: img.milkcakeRosePistachio,
-    link: '/shop',
+    title: 'Cheesecakes',
+    category: 'Cheesecakes',
+    image: img.cheesecakeStrawberry,
     items: [
-      { n: 'Rose Milk Cake', p: 800 },
-      { n: 'Biscoff Milk Cake', p: 800 },
-      { n: 'Trés Léches Milk Cake', p: 800 },
-      { n: 'Chocolate Milk Cake', p: 850 },
-      { n: 'Pistachio Milk Cake', p: 950, badge: 'Premium' },
+      { n: 'Strawberry', p: 350 },
+      { n: 'Mango', p: 350 },
+      { n: 'Blueberry', p: 410 },
+      { n: 'Nutella', p: 440 },
+      { n: 'Pistachio', p: 470, badge: 'Premium' },
+    ],
+  },
+  {
+    title: 'Sponge Cakes',
+    category: 'Sponge Cakes',
+    image: img.cakeNakedYellow,
+    items: [
+      { n: 'Vanilla (Bento)', p: 450 },
+      { n: 'Chocolate (Bento)', p: 470 },
+      { n: 'Mango (Bento)', p: 480 },
+      { n: 'Biscoff (Bento)', p: 490 },
+      { n: 'Pistachio (Bento)', p: 510, badge: 'Premium' },
+    ],
+    note: '♥ Also available as single-serve tubs from ₹100.',
+  },
+  {
+    title: 'Milk Cakes',
+    category: 'Milk Cakes',
+    image: img.milkcakeRosePistachio,
+    items: [
+      { n: 'Rose', p: 800 },
+      { n: 'Biscoff', p: 800 },
+      { n: 'Chocolate', p: 850 },
+      { n: 'Raspberry', p: 900 },
+      { n: 'Pistachio', p: 950, badge: 'Premium' },
     ],
   },
   {
     title: 'Cupcakes',
+    category: 'Cupcakes',
     image: img.cupcakesRose,
-    link: '/shop',
     items: [
-      { n: 'Chocolate Cupcake', p: 100 },
-      { n: 'Vanilla Cupcake', p: 100 },
-      { n: 'Pink Rose Cupcake', p: 110 },
-      { n: 'Red Velvet Cupcake', p: 110 },
-      { n: 'Pistachio & Rose', p: 120, badge: 'Special' },
+      { n: 'Vanilla (Box of 6)', p: 150 },
+      { n: 'Chocolate (Box of 6)', p: 170 },
+      { n: 'Strawberry (Box of 6)', p: 170 },
+      { n: 'Red Velvet (Box of 6)', p: 180 },
+      { n: 'Pistachio (Box of 6)', p: 190, badge: 'Premium' },
     ],
+    note: '♥ Add ₹20 for floral or additional decoration.',
   },
   {
     title: 'Cookies',
+    category: 'Cookies',
     image: img.cookies,
-    link: '/shop',
     items: [
-      { n: 'Triple Choc', p: 60 },
-      { n: 'Double Chocolate', p: 60 },
-      { n: 'White Choc Berry', p: 60 },
-      { n: 'Almond', p: 70 },
-      { n: 'Pistachio & Rose', p: 70, badge: 'Special' },
+      { n: 'Classic (Box of 6)', p: 280 },
+      { n: 'White Choc (Box of 6)', p: 280 },
+      { n: 'Triple Choc (Box of 6)', p: 340 },
+      { n: 'Almond (Box of 6)', p: 400 },
+      { n: 'Pistachio & Rose', p: 400, badge: 'Special' },
     ],
   },
   {
-    title: 'Chocolates',
-    image: img.truffleBox,
-    link: '/shop',
+    title: 'Dessert Cups',
+    category: 'Dessert Cups',
+    image: img.dessertCupsTrio,
     items: [
-      { n: 'Classic Truffles (Box of 6)', p: 340 },
-      { n: 'Berry Truffles (Box of 6)', p: 360 },
-      { n: 'Heart Truffles (Box of 6)', p: 380 },
-      { n: 'Chocolate Hearts', p: 60 },
-      { n: 'Assorted Box', p: 599, badge: 'Gift' },
+      { n: 'Jelly Cup', p: 50 },
+      { n: 'Custard Cup', p: 90 },
+      { n: 'Grass Cup (Ghas)', p: 90 },
+      { n: 'Trifle Cup', p: 100 },
+      { n: 'Cheesecake Cup', p: 150 },
     ],
   },
 ]
@@ -160,7 +187,13 @@ export default function Menu() {
                       <PriceRow key={it.n} name={it.n} price={it.p} badge={it.badge} />
                     ))}
                   </div>
-                  <Link to={card.link} className="cc-menu-card__viewall">
+                  {card.note && (
+                    <p className="cc-menu-card__note">{card.note}</p>
+                  )}
+                  <Link
+                    to={`/shop?category=${encodeURIComponent(card.category)}`}
+                    className="cc-menu-card__viewall"
+                  >
                     View All {card.title} <FiArrowRight />
                   </Link>
                 </div>

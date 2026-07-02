@@ -32,29 +32,33 @@ Single-page React storefront for **Cake & Crumb**, a bakery in Vaso (Kheda, Guja
 
 The app works entirely client-side via `localStorage`; cloud services are progressive enhancements:
 
-- `src/firebase.js` reads `VITE_FIREBASE_*`. If any are missing, `isFirebaseEnabled` is false; the bundle still imports Firebase but no network calls fire.
-- Services in `src/services/` (`orders.js`, `reviews.js`, `newsletter.js`) follow the same shape: try Firestore if enabled → always mirror to `localStorage` → never throw. UI must not block on them.
-- Firestore security rules live in `FIREBASE_SETUP.md` (not in code). When changing the shape of `orders`, `reviews`, or `newsletter` documents, update the rules too or writes will be rejected in production.
-- `src/services/emailNotify.js` exposes `sendOrderEmail()` (admin) and `sendCustomerConfirmation()` (customer, gated on a separate `VITE_EMAILJS_CUSTOMER_TEMPLATE_ID`). Both fire-and-forget. See `EMAILJS_SETUP.md` for the two-template setup walkthrough.
+- `src/firebase.js` reads `VITE_FIREBASE_*`. `isFirebaseEnabled` is a cheap synchronous env check, safe to import anywhere. The SDK is **lazy-loaded**: `getDb()` and `getFirebaseAuth()` `await import('firebase/...')` on first use and memoise the app. **Never statically `import 'firebase/firestore'`** in a module reachable from the eager bundle (ChatBot + footer Newsletter are eager) — it would pull the ~100KB-gz SDK onto every page's critical path. Services dynamic-import the specific Firestore functions inside each async call.
+- Services in `src/services/` (`orders.js`, `reviews.js`, `newsletter.js`) follow the same shape: `await getDb()` → if present, dynamic-import + write to Firestore → always mirror to `localStorage` → never throw. UI must not block on them.
+- Firestore security rules live in `FIREBASE_SETUP.md` (not in code). `orders` are admin-only reads (`if request.auth != null`); the public `tracking` mirror and `reviews` are world-readable; all are validated-create. When you change a collection's shape **or add a collection**, update the rules in the Firebase console or writes/reads fail in production.
+- `src/services/emailNotify.js` exposes `sendOrderEmail()` (admin, Template #1), `sendCustomerConfirmation()` (customer, Template #2, gated on `VITE_EMAILJS_CUSTOMER_TEMPLATE_ID`), and `sendNewsletterNotification()` (reuses Template #1 to notify the bakery of a new subscriber). All fire-and-forget. See `EMAILJS_SETUP.md`. The customer template's recipient is `{{to_email}}`; its Bcc must stay empty or the bakery gets a duplicate of every customer email.
 
 ### Order flow (the load-bearing feature)
 
-Placing an order triggers **four parallel side-effects**, any of which can fail without breaking the others:
+The flow is deliberately **split so the customer's WhatsApp message stays clean and the admin manages orders from a private dashboard** — not from links inside the customer's message.
 
-1. **WhatsApp** — `buildWhatsAppLink()` in `WhatsAppButton.jsx` opens `https://wa.me/919173183440` pre-filled. Primary channel. `WHATSAPP_PHONE` constant.
-2. **Firestore + localStorage mirror** — `saveOrder()` writes the `orders` collection and a last-50 local mirror.
-3. **Admin email** — `sendOrderEmail()` (EmailJS Template #1) to the bakery's inbox.
-4. **Customer email** — `sendCustomerConfirmation()` (EmailJS Template #2, optional) to the customer if they entered an email.
+Placing an order (`Checkout.jsx::placeOrder`) triggers parallel fire-and-forget side-effects, any of which can fail without breaking the others:
 
-Order IDs come from `services/orderId.js` and look like `CC-AB-DDMMYY-NNNN` (initials + date + per-day counter in localStorage).
+1. **WhatsApp** — `buildWhatsAppLink()` (`WhatsAppButton.jsx`, `WHATSAPP_PHONE = 919173183440`) opens `wa.me` pre-filled with a **clean customer receipt** built by `buildOrderMessage()`: order ID + items + price only. **No admin/confirm/track links and no repeated personal details** — the bakery reads name/phone/address from the dashboard, matched by order ID. Don't re-add links or PII to this message.
+2. **`saveOrder()`** writes the `orders` collection (full PII, admin-only) **and** a public PII-free `tracking/{orderId}` mirror (status/items/totals/date — never name/phone/email/address) **and** a last-50 `localStorage` mirror.
+3. **Admin email** — `sendOrderEmail()` (EmailJS Template #1) to the bakery inbox.
+4. **Customer email** — `sendCustomerConfirmation()` (Template #2, optional).
 
-There is **also an admin confirmation flow** at `/confirm-order?id=…`. The confirm URL is included as a tap-able link at the bottom of every order's WhatsApp message (and in the admin email if EmailJS is configured). When the bakery owner taps the link, `ConfirmOrder.jsx` calls `markOrderConfirmed()` (updates Firestore `status` to `'confirmed'`), then opens WhatsApp pre-filled with a confirmation message to the customer's phone. No third EmailJS template needed (free-tier cap is 2 templates).
+Order IDs come from `services/orderId.js`: `CC-AB-DDMMYY-NNNN` (initials + date + per-day localStorage counter).
 
-The confirm URL is built from `window.location.origin + BASE_URL + /confirm-order?id={ORDER_ID}` in `Checkout.jsx::buildOrderMessage()`. The same builder also emits a tap-able `/track-order?...` link for the customer. **Don't remove either link from the WhatsApp body** — they're currently the only paths to the confirm/track pages if EmailJS isn't set up.
+**Admin dashboard — `/admin/orders` (`AdminOrders.jsx`).** Password is real **Firebase Auth** (Email/Password user created in the console; `getFirebaseAuth()` sets `browserSessionPersistence` so login is required again after the tab closes). It subscribes live (`subscribeOrders()` → `onSnapshot`) to all orders and steps each through a **status lifecycle**: `placed → confirmed → ready_for_pickup | out_for_delivery → completed` (+ `cancelled`). The "Ready" action is **method-aware** (pickup vs delivery, from `order.deliveryMethod`). Every action calls `updateOrderStatus(firebaseId, orderId, status)` — which updates both the `orders` doc and the `tracking` mirror — then **opens WhatsApp synchronously** (before any `await`, or mobile browsers block `window.open`) with a status-appropriate message to the customer.
 
-**URL-params fallback** — both `ConfirmOrder.jsx` and `TrackOrder.jsx` accept `id`, `name`, `phone`, `total`, `date`, `method` as query params and build a minimal order from them when the Firestore + localStorage lookup returns nothing. This matters because the customer's localStorage mirror lives on their own phone — the admin opening a confirm link from a different device would otherwise see "Order not found". The items list isn't in the URL, so it's hidden in the fallback path. If you change `buildOrderMessage()`, keep these params in the URL or both pages start failing across devices.
+**Customer tracking — `/track-order` (`TrackOrder.jsx`).** Reads the public `tracking/{orderId}` doc via `getOrderTracking()`, so it works cross-device with no auth and no PII exposed; falls back to the local mirror. `statusMeta()` maps each status to a label/icon for the customer.
 
-Customers can also look up their own orders at `/track-order?id=…` via the lookup form on that page — same fallback chain applies.
+**Legacy:** `/confirm-order` (`ConfirmOrder.jsx`) and the URL-params fallback (`id/name/phone/total/date/method`) still exist but are no longer linked from the customer message — the dashboard supersedes them. Don't rely on them for the primary flow.
+
+### Contact + payment constants
+
+One public phone/WhatsApp number site-wide: **+91 91731 83440** (`WHATSAPP_PHONE` in `WhatsAppButton.jsx`, mirrored in `index.html` meta/JSON-LD and the Footer/Contact/ChatBot). Email everywhere is `cakeandcrumb.in@gmail.com`; address is *Vaso, Kheda, Gujarat 387380, India*. The checkout **UPI handle is `9081668490@kotakbank`** (`UPI_ID` in `Checkout.jsx`) — that's a bank payment address, **not** a contact number, so it intentionally still contains the old digits; don't "fix" it. All routes/links are catalogued in `LINKS.md`.
 
 ### ChatBot is a second, independent order path
 
@@ -78,9 +82,9 @@ The form now always starts empty. `clearStoredCustomer()` runs once on mount and
 
 ### Routing & lazy loading
 
-`src/App.jsx` uses `lazy()` for every route except `Home`. The routed pages are `/about`, `/menu`, `/shop`, `/gallery`, `/reviews`, `/contact`, `/cart`, `/checkout`, `/review` (review submit), `/faq`, `/confirm-order`, and `/track-order`. Firebase loads on `/reviews`, `/review`, `/checkout`, `/confirm-order`, and `/track-order` (anything that hits Firestore). Note the globally-mounted `ChatBot` also pulls in `saveOrder` → Firebase once a customer orders through it. The wildcard `<Route path="*" element={<Home />} />` makes the GitHub Pages 404 fallback land users somewhere sensible.
+`src/App.jsx` uses `lazy()` for every route except `Home`. Routed pages: `/about`, `/menu`, `/shop`, `/gallery`, `/reviews`, `/contact`, `/cart`, `/checkout`, `/review`, `/faq`, `/confirm-order`, `/track-order`, and `/admin/orders`. Firebase is loaded **on demand** (see the lazy-loading note above) rather than per-route, so the SDK only downloads when a page actually performs a Firestore/Auth call. `vite.config.js` splits a `react-vendor` chunk via `manualChunks`; Firebase emits its own async chunk because it's dynamically imported. The wildcard `<Route path="*" element={<Home />} />` + the `predeploy` 404.html copy make GitHub Pages deep links resolve to the SPA (a harmless 404 is logged on first load — inherent to GH Pages project-page SPAs).
 
-`NO_FOOTER_ROUTES = ['/cart', '/checkout', '/confirm-order']` — on these routes App.jsx renders `<MiniFooter />` (slim copyright + WhatsApp ribbon) instead of the full `<Footer />` so the buying flow stays focused.
+`NO_FOOTER_ROUTES = ['/cart', '/checkout', '/confirm-order']` — on these routes App.jsx renders `<MiniFooter />` instead of the full `<Footer />`.
 
 A small `<ScrollToTop />` component inside `<CartProvider>` listens to `useLocation().pathname` and calls `window.scrollTo({ top: 0 })` on every route change — without it, React Router preserves scroll position and users end up at the bottom of the new page when they tap a header/footer link from a scrolled page.
 

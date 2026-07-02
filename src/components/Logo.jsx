@@ -75,6 +75,7 @@ export default function Logo({ size = 'md' }) {
             color: '#1a1a1a',
             marginTop: '0.05em',
             whiteSpace: 'nowrap',
+            textAlign: 'center',
             ...taglineStyle,
           }}
         >

@@ -3368,6 +3368,12 @@ header[style*="sticky"] {
   color: var(--cc-rose-deep);
   gap: 0.7rem;
 }
+.cc-menu-card__note {
+  margin: 0.7rem 0 0;
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--cc-cocoa-soft);
+}
 
 /* Sweet Treats & More — wider image + 2-column items below the heading */
 .cc-menu-sweet__img {
@@ -3586,6 +3592,21 @@ header[style*="sticky"] {
   padding: 3rem 0;
   color: var(--cc-cocoa-soft);
 }
+
+/* Contextual note above the grid (e.g. cupcake box + decoration pricing) */
+.cc-shop-note {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: -0.4rem 0 1rem;
+  padding: 0.6rem 0.85rem;
+  background: var(--cc-blush-soft);
+  border: 1px solid var(--cc-rose-soft);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: var(--cc-cocoa);
+}
+.cc-shop-note svg { color: var(--cc-rose); flex-shrink: 0; }
 
 /* Pagination — small rose-bordered page buttons under the grid */
 .cc-shop-pagination {
