@@ -825,6 +825,27 @@ export default function Checkout() {
                     </div>
                   </div>
                 )}
+
+                {/* Advance-payment note for large / custom orders */}
+                <div
+                  className="d-flex align-items-start mt-3"
+                  style={{
+                    gap: '0.6rem',
+                    background: 'var(--cc-cream)',
+                    border: '1px dashed var(--cc-rose-soft)',
+                    borderRadius: 12,
+                    padding: '0.7rem 0.9rem',
+                    fontSize: '0.78rem',
+                    color: 'var(--cc-cocoa-soft)',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <FiAlertCircle size={16} style={{ flexShrink: 0, marginTop: 2, color: 'var(--cc-rose)' }} />
+                  <span>
+                    For <strong>large or custom orders</strong>, Cake &amp; Crumb may confirm a small
+                    advance on WhatsApp before baking. The balance is settled on pickup / delivery.
+                  </span>
+                </div>
               </div>
             </div>
 

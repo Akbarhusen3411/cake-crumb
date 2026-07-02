@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  FiXCircle, FiRefreshCw, FiLock, FiLogOut, FiChevronDown,
+  FiXCircle, FiRefreshCw, FiLock, FiLogOut, FiChevronDown, FiAlertTriangle,
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import {
@@ -388,6 +388,28 @@ export default function AdminOrders() {
                     {' · '}{o.payment?.method === 'upi' ? `UPI${o.payment?.utr ? ` · UTR ${o.payment.utr}` : ''}` : 'Cash on Delivery'}
                     {o.notes ? ` · Notes: ${o.notes}` : ''}
                   </div>
+
+                  {o.payment?.method === 'upi' && (
+                    <div
+                      className="d-flex align-items-start mt-2"
+                      style={{
+                        gap: '0.5rem',
+                        background: '#fff7ed',
+                        border: '1px solid #fcd9b6',
+                        borderRadius: 10,
+                        padding: '0.55rem 0.7rem',
+                        fontSize: '0.76rem',
+                        color: '#9a5b12',
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      <FiAlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+                      <span>
+                        <strong>Verify this UTR in your bank / UPI app before confirming.</strong>{' '}
+                        The customer entered it themselves — "Paid" here is a claim, not proof.
+                      </span>
+                    </div>
+                  )}
 
                   <div className="d-flex gap-2 mt-3 flex-wrap" style={{ maxWidth: 460 }}>
                     {actionsFor(o).map((a) => {
