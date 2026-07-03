@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   FiStar, FiHeart, FiCheckCircle, FiTrash2, FiLock, FiLogOut,
-  FiSmile, FiTruck, FiShield, FiChevronDown,
+  FiSmile, FiTruck, FiShield, FiChevronDown, FiCamera, FiX,
 } from 'react-icons/fi'
+import { compressImage } from '../utils/compressImage.js'
 import { TbLeaf, TbCake, TbToolsKitchen2, TbHandStop } from 'react-icons/tb'
 import HeartDivider from '../components/HeartDivider.jsx'
 import { addReview, deleteReview, getReviews, summarize, timeAgo } from '../services/reviews.js'
@@ -85,9 +86,26 @@ export default function Reviews() {
   const [sort, setSort] = useState('recent')
   const [shownCount, setShownCount] = useState(PAGE_SIZE)
   const [hover, setHover] = useState(0)
-  const [form, setForm] = useState({ name: '', email: '', rating: 5, title: '', text: '', orderItem: '' })
+  const [form, setForm] = useState({ name: '', email: '', rating: 5, title: '', text: '', orderItem: '', photo: '' })
   const [submitting, setSubmitting] = useState(false)
   const [submitMsg, setSubmitMsg] = useState('')
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const fileRef = useRef(null)
+
+  async function onPickPhoto(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setPhotoBusy(true)
+    setSubmitMsg('')
+    try {
+      update('photo', await compressImage(file))
+    } catch (err) {
+      setSubmitMsg(err.message || 'Could not use that image.')
+    } finally {
+      setPhotoBusy(false)
+    }
+  }
 
   // ── Admin moderation (single hardcoded password, sessionStorage flag) ──
   const ADMIN_KEY = 'cc_admin_v1'
@@ -154,7 +172,7 @@ export default function Reviews() {
     setSubmitMsg('')
     try {
       await addReview(form)
-      setForm({ name: '', email: '', rating: 5, title: '', text: '', orderItem: '' })
+      setForm({ name: '', email: '', rating: 5, title: '', text: '', orderItem: '', photo: '' })
       setSubmitMsg('Thank you! Your review was submitted.')
       reload()
     } catch (err) {
@@ -340,11 +358,14 @@ export default function Reviews() {
               )}
 
               {!loading && visible.map((r) => {
+                // A customer-uploaded photo (data URL) wins; otherwise fall back
+                // to the ordered item's catalog image, then a generic cake shot.
                 const thumb = (r.orderItem && NAME_TO_IMG[r.orderItem]) || FALLBACK_REVIEW_IMG
+                const imgSrc = r.photo ? r.photo : u(thumb, 400, 400)
                 return (
                   <article key={r.id} className="cc-review-card">
                     <img
-                      src={u(thumb, 400, 400)}
+                      src={imgSrc}
                       alt=""
                       className="cc-review-card__img"
                       loading="lazy"
@@ -475,6 +496,42 @@ export default function Reviews() {
                   onChange={(e) => update('text', e.target.value)}
                   required
                 />
+
+                {/* Optional photo */}
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={onPickPhoto}
+                  style={{ display: 'none' }}
+                />
+                {form.photo ? (
+                  <div className="cc-review-photo mb-3">
+                    <img src={form.photo} alt="Your review" className="cc-review-photo__preview" />
+                    <div className="cc-review-photo__meta">
+                      <span className="cc-review-photo__ok">
+                        <FiCheckCircle size={14} /> Photo added
+                      </span>
+                      <button
+                        type="button"
+                        className="cc-review-photo__remove"
+                        onClick={() => update('photo', '')}
+                      >
+                        <FiX size={13} /> Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="cc-review-photo__drop mb-3"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={photoBusy}
+                  >
+                    <FiCamera size={18} />
+                    <span>{photoBusy ? 'Processing…' : 'Add a photo (optional)'}</span>
+                  </button>
+                )}
 
                 {submitMsg && (
                   <div className="cc-share-form__msg">{submitMsg}</div>

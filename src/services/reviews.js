@@ -17,7 +17,8 @@ function writeLocal(list) {
 
 /**
  * Submit a review.
- * Shape: { name, email?, rating (1-5), title?, text, orderItem? }
+ * Shape: { name, email?, rating (1-5), title?, text, orderItem?, photo? }
+ * `photo` is an optional compressed data URL (see utils/compressImage.js).
  */
 export async function addReview(input) {
   const review = {
@@ -27,6 +28,7 @@ export async function addReview(input) {
     title: String(input.title || '').trim(),
     text: String(input.text || '').trim(),
     orderItem: String(input.orderItem || '').trim(),
+    photo: String(input.photo || ''),
   }
   if (!review.name || !review.text) {
     throw new Error('Name and review text are required.')

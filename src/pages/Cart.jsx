@@ -76,7 +76,13 @@ export default function Cart() {
                           <button className="qty-btn" onClick={() => increment(it.id)} aria-label="Increase"><FiPlus size={11} /></button>
                         </div>
                         <div className="cc-cart-item__price-block">
-                          <span style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)' }}>{inr(it.price)} ea</span>
+                          {/* Per-unit hint only helps when there's more than one — at
+                              qty 1 it just duplicates the line total below it. */}
+                          {it.qty > 1 && (
+                            <span style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)' }}>
+                              {inr(it.price)} × {it.qty}
+                            </span>
+                          )}
                           <strong style={{ fontSize: '0.95rem', color: 'var(--cc-cocoa)' }}>{inr(it.price * it.qty)}</strong>
                         </div>
                       </div>

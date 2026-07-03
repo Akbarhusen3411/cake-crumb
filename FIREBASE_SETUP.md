@@ -94,6 +94,14 @@ service cloud.firestore {
 Click **Publish**. This lets anyone submit a review (with sane validation) and read reviews,
 but nobody can edit/delete them from the browser — only you, via Firebase console.
 
+> **Optional review photo.** Reviews may include an optional `photo` field — a client-side
+> compressed JPEG **data URL** (see `src/utils/compressImage.js`, downscaled to ≤1000px so it
+> stays well under Firestore's 1 MB doc limit). No storage bucket is used; the image rides
+> inside the review document. The `create` rule above validates only name/text/rating, so the
+> extra `photo` field is accepted as-is — no rule change needed. On the Reviews page a stored
+> `photo` is shown as the review thumbnail; when absent it falls back to the ordered item's
+> catalog image, then a generic cake photo.
+
 ## 4. Plug the credentials into the site
 
 1. In the project root, copy `.env.example` to a new file called `.env`:

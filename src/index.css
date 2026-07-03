@@ -2750,6 +2750,192 @@ header[style*="sticky"] {
   overflow: visible;
 }
 
+/* ─── Add-to-cart toast — floating pill with product thumbnail ────────────── */
+.cc-cart-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 200;
+  width: max-content;
+  max-width: calc(100vw - 28px);
+  pointer-events: none;
+}
+.cc-cart-toast__card {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #fff;
+  border: 1px solid var(--cc-blush, #f7e3df);
+  border-radius: 999px;
+  padding: 0.5rem 0.6rem 0.5rem 0.5rem;
+  box-shadow: 0 14px 40px rgba(203, 62, 99, 0.22), 0 2px 8px rgba(91, 62, 54, 0.08);
+  max-width: 100%;
+  animation: cc-toast-pop 0.32s cubic-bezier(0.22, 1.2, 0.4, 1) both;
+}
+@keyframes cc-toast-pop {
+  0%   { opacity: 0; transform: translateY(14px) scale(0.94); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.cc-cart-toast__thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: visible;
+}
+.cc-cart-toast__thumb img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+  border: 2px solid var(--cc-blush-soft, #f3d7d9);
+}
+.cc-cart-toast__thumb--icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cc-blush-soft, #f3d7d9);
+  color: var(--cc-rose);
+  border-radius: 50%;
+}
+.cc-cart-toast__check {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--cc-rose);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  animation: cc-toast-check 0.4s ease 0.12s both;
+}
+@keyframes cc-toast-check {
+  0%   { transform: scale(0); }
+  60%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+.cc-cart-toast__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+  padding-right: 0.15rem;
+}
+.cc-cart-toast__label {
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--cc-rose);
+}
+.cc-cart-toast__name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--cc-cocoa);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 46vw;
+}
+.cc-cart-toast__cta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--cc-rose);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: background 0.15s, transform 0.15s;
+}
+.cc-cart-toast__cta:hover {
+  background: var(--cc-rose-deep);
+  color: #fff;
+  transform: translateY(-1px);
+}
+@media (max-width: 400px) {
+  .cc-cart-toast__name { max-width: 40vw; }
+  .cc-cart-toast__cta span { display: none; }
+}
+
+/* ─── Review photo upload (ReviewSubmit + Reviews share form) ─────────────── */
+.cc-review-photo__drop {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 1.1rem 1rem;
+  background: #fff;
+  border: 1.5px dashed var(--cc-rose-soft, #d7a7ae);
+  border-radius: 12px;
+  color: var(--cc-rose);
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.cc-review-photo__drop:hover:not(:disabled) {
+  background: var(--cc-cream, #fff6f2);
+  border-color: var(--cc-rose);
+}
+.cc-review-photo__drop:disabled { opacity: 0.6; cursor: default; }
+.cc-review-photo__drop span { font-size: 0.85rem; font-weight: 600; color: var(--cc-cocoa); }
+.cc-review-photo__drop small { font-size: 0.68rem; color: var(--cc-cocoa-soft); }
+.cc-review-photo {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.6rem;
+  background: #fff;
+  border: 1px solid var(--cc-blush, #f7e3df);
+  border-radius: 12px;
+}
+.cc-review-photo__preview {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.cc-review-photo__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.cc-review-photo__ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--cc-rose-deep);
+}
+.cc-review-photo__remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--cc-cocoa-soft);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.cc-review-photo__remove:hover { color: var(--cc-rose-deep); }
+
 /* ─── Phone with country-code dropdown ───────────────────────────────────── */
 .cc-phone-row {
   display: flex;
@@ -2758,14 +2944,18 @@ header[style*="sticky"] {
 .cc-phone-cc {
   width: auto;
   flex: 0 0 auto;
-  max-width: 130px;
-  padding-right: 0.4rem !important;
+  /* Fits "🇦🇪 +971 UAE" (the widest compact label) plus the native dropdown
+     arrow without clipping — short ISO codes keep this narrow. */
+  max-width: 150px;
+  padding-left: 0.6rem !important;
+  padding-right: 1.6rem !important;
   font-size: 0.85rem !important;
+  text-overflow: clip;
 }
 .cc-phone-num { flex: 1 1 auto; min-width: 0; }
 @media (max-width: 480px) {
   /* Keep the country-code dropdown from eating the phone field on small phones */
-  .cc-phone-cc { max-width: 96px; font-size: 0.78rem !important; }
+  .cc-phone-cc { max-width: 122px; font-size: 0.8rem !important; padding-right: 1.4rem !important; }
 }
 
 /* Pincode field with inline loading/check/error icon */
@@ -3269,27 +3459,59 @@ header[style*="sticky"] {
   .cc-menu-grid { grid-template-columns: 1fr 1fr; }
 }
 
-/* Flat menu card — image left, text right; no border, sits on the section bg */
+/* Boutique menu card — image left, text right on tablet/desktop; a white
+   rounded card with a soft pink shadow. Stacks to image-on-top on phones. */
 .cc-menu-card {
   display: flex;
-  gap: 1.25rem;
-  background: transparent;
+  gap: 1.1rem;
+  background: #fff;
+  border: 1px solid var(--cc-blush, #f7e3df);
+  border-radius: 18px;
+  padding: 0.85rem;
+  box-shadow: 0 8px 26px rgba(203, 62, 99, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.cc-menu-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(203, 62, 99, 0.12);
 }
 .cc-menu-card__img {
   flex-shrink: 0;
-  width: 200px;
+  width: 190px;
   aspect-ratio: 4/5;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 14px;
 }
-@media (max-width: 575px) {
-  .cc-menu-card__img { width: 130px; }
+/* Desktop: give the photo more width so it reads properly and crops less on
+   the sides — there's plenty of room next to the price list at this size. */
+@media (min-width: 992px) {
+  .cc-menu-card__img { width: 260px; }
 }
 .cc-menu-card__body {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
+  padding: 0.2rem 0.4rem 0.35rem 0;
+}
+/* Phones: stack the card — full-width image on top, details below. Fixes the
+   cramped side-by-side layout that clipped prices/images on narrow screens. */
+@media (max-width: 575.98px) {
+  .cc-menu-grid { gap: 1.5rem; }
+  .cc-menu-card {
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  .cc-menu-card__img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: 0;
+  }
+  .cc-menu-card__body {
+    padding: 1.05rem 1.2rem 1.3rem;
+  }
 }
 .cc-menu-card__title {
   font-family: 'Playfair Display', Georgia, serif;

@@ -420,8 +420,8 @@ export default function Checkout() {
                         aria-label="Country code"
                       >
                         {COUNTRY_CODES.map((c) => (
-                          <option key={c.code} value={c.code}>
-                            {c.flag} {c.code} {c.name}
+                          <option key={c.code} value={c.code} title={c.name}>
+                            {c.flag} {c.code} {c.short}
                           </option>
                         ))}
                       </select>

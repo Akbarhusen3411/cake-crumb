@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   FiHeart, FiShoppingBag, FiX, FiPlus, FiMinus, FiCheckCircle,
@@ -129,6 +129,26 @@ export default function Shop() {
     setOccasion(null)
   }
 
+  // On phones/tablets the filter sidebar sits ABOVE the product grid, so after
+  // picking a filter the user would otherwise have to scroll down to see the
+  // results. Auto-scroll to the top of the grid (offset for the sticky header)
+  // so the filtered products come straight into view. No-op on desktop (lg+),
+  // where the sidebar is beside the grid and already visible.
+  const gridRef = useRef(null)
+  function scrollToProducts() {
+    if (typeof window === 'undefined' || window.innerWidth >= 992) return
+    requestAnimationFrame(() => {
+      const el = gridRef.current
+      if (!el) return
+      const headerH =
+        parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cc-header-h'), 10) || 82
+      const y = el.getBoundingClientRect().top + window.scrollY - headerH - 12
+      window.scrollTo({ top: y, behavior: 'smooth' })
+    })
+  }
+  const selectCategory = (c) => { setCategory(c); scrollToProducts() }
+  const selectPriceRange = (id) => { setPriceRange(id); scrollToProducts() }
+
   return (
     <>
       {/* ───── HERO ───── */}
@@ -196,7 +216,7 @@ export default function Shop() {
                       key={c}
                       label={c}
                       checked={category === c}
-                      onChange={() => setCategory(c)}
+                      onChange={() => selectCategory(c)}
                     />
                   ))}
                 </div>
@@ -208,7 +228,7 @@ export default function Shop() {
                       key={r.id}
                       label={r.label}
                       checked={priceRange === r.id}
-                      onChange={() => setPriceRange(r.id)}
+                      onChange={() => selectPriceRange(r.id)}
                     />
                   ))}
                 </div>
@@ -237,7 +257,7 @@ export default function Shop() {
             </aside>
 
             {/* PRODUCT GRID */}
-            <div className="col-lg-6 col-xl-7">
+            <div className="col-lg-6 col-xl-7" ref={gridRef}>
               <div className="cc-shop-toolbar">
                 <span className="cc-shop-toolbar__count">
                   Showing {rangeStart}–{rangeEnd} of {filtered.length} results

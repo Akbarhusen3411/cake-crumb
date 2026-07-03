@@ -1,8 +1,18 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FiStar, FiHeart, FiCheckCircle, FiSend } from 'react-icons/fi'
+import { FiStar, FiHeart, FiCheckCircle, FiSend, FiCamera, FiX } from 'react-icons/fi'
 import { addReview } from '../services/reviews.js'
+import { shopProducts } from '../data/products.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
+import { compressImage } from '../utils/compressImage.js'
+
+// Grouped item list for the "What did you order?" dropdown — sourced from the
+// live product catalog so it stays in sync with the Shop.
+const ITEMS_BY_CATEGORY = shopProducts.reduce((acc, p) => {
+  if (!acc[p.category]) acc[p.category] = []
+  acc[p.category].push({ id: p.id, name: p.name })
+  return acc
+}, {})
 
 function StarPicker({ value, onChange }) {
   const [hover, setHover] = useState(0)
@@ -42,12 +52,35 @@ export default function ReviewSubmit() {
     title: '',
     text: '',
     orderItem: '',
+    photo: '',
   })
   const [status, setStatus] = useState('idle') // idle | submitting | success | error
   const [errorMsg, setErrorMsg] = useState('')
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const fileRef = useRef(null)
 
   function update(k, v) {
     setForm((p) => ({ ...p, [k]: v }))
+  }
+
+  async function onPickPhoto(e) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-selecting the same file later
+    if (!file) return
+    setPhotoBusy(true)
+    setErrorMsg('')
+    try {
+      const dataUrl = await compressImage(file)
+      update('photo', dataUrl)
+    } catch (err) {
+      setErrorMsg(err.message || 'Could not use that image. Try another one.')
+    } finally {
+      setPhotoBusy(false)
+    }
+  }
+
+  function removePhoto() {
+    update('photo', '')
   }
 
   async function onSubmit(e) {
@@ -140,14 +173,66 @@ export default function ReviewSubmit() {
               />
             </div>
             <div className="col-12">
-              <input
+              <label className="cc-field-label" htmlFor="review-order-item">
+                What did you order?
+              </label>
+              <select
+                id="review-order-item"
                 className="cc-input"
-                placeholder="What did you order? (e.g. Pistachio Cheesecake)"
                 aria-label="What did you order?"
                 value={form.orderItem}
                 onChange={(e) => update('orderItem', e.target.value)}
-                maxLength={120}
+              >
+                <option value="">Select your treat (optional)</option>
+                {Object.entries(ITEMS_BY_CATEGORY).map(([cat, items]) => (
+                  <optgroup key={cat} label={cat}>
+                    {items.map((it) => (
+                      <option key={it.id} value={it.name}>{it.name}</option>
+                    ))}
+                  </optgroup>
+                ))}
+                <option value="Custom / Other">Custom / Other</option>
+              </select>
+            </div>
+
+            {/* Optional review photo */}
+            <div className="col-12">
+              <label className="cc-field-label">Add a photo (optional)</label>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                onChange={onPickPhoto}
+                style={{ display: 'none' }}
               />
+              {form.photo ? (
+                <div className="cc-review-photo">
+                  <img src={form.photo} alt="Your review" className="cc-review-photo__preview" />
+                  <div className="cc-review-photo__meta">
+                    <span className="cc-review-photo__ok">
+                      <FiCheckCircle size={14} /> Photo added
+                    </span>
+                    <button
+                      type="button"
+                      className="cc-review-photo__remove"
+                      onClick={removePhoto}
+                    >
+                      <FiX size={13} /> Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="cc-review-photo__drop"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={photoBusy}
+                >
+                  <FiCamera size={20} />
+                  <span>{photoBusy ? 'Processing…' : 'Tap to add a photo of your treat'}</span>
+                  <small>JPG or PNG — we'll pick one for you if you skip this.</small>
+                </button>
+              )}
             </div>
             <div className="col-12">
               <input

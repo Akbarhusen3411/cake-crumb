@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 const CartContext = createContext(null)
 const STORAGE_KEY = 'cc_cart_v1'
@@ -16,7 +16,10 @@ function loadInitial() {
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState(loadInitial)
+  // Toast is a rich object { name, img, qty } so the CartToast can render a
+  // product thumbnail — falls back gracefully when only a message is passed.
   const [toast, setToast] = useState(null)
+  const toastTimer = useRef(null)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
@@ -30,7 +33,7 @@ export function CartProvider({ children }) {
       }
       return [...prev, { id: product.id, name: product.name, price: product.price, img: product.img, qty }]
     })
-    showToast(`${product.name} added to cart`)
+    showToast({ name: product.name, img: product.img, qty })
   }
 
   function remove(id) {
@@ -61,9 +64,11 @@ export function CartProvider({ children }) {
     setItems([])
   }
 
-  function showToast(msg) {
-    setToast(msg)
-    setTimeout(() => setToast(null), 1800)
+  function showToast(payload) {
+    const data = typeof payload === 'string' ? { name: payload } : payload
+    setToast({ ...data, _t: Date.now() })
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(null), 2400)
   }
 
   const value = useMemo(() => {
