@@ -1,19 +1,15 @@
-// Distance-based delivery charge.
+// Distance-based delivery — geocoding half.
 //
 // Resolves an Indian pincode to lat/lng via the free OpenStreetMap Nominatim
-// API, computes Haversine distance from the bakery in Vaso (Shia Masjid),
-// and returns a charge based on a per-km rate that is intentionally NOT
-// exposed in the UI. Falls back gracefully on any error.
+// API and returns the straight-line (Haversine) distance in km from the bakery.
+// The charge itself lives in one place — deliveryFee() in src/data/shopConfig.js
+// — so this module only answers "how far away is this pincode?". Fails soft:
+// returns null on any error, and the caller treats null as in-range/free with
+// the bakery confirming far orders on WhatsApp.
 
-// Approx coords for Shia Masjid, Vaso (Anand district, Gujarat).
-// Adjust these if the precise location is different.
-const ORIGIN_LAT = 22.5687
-const ORIGIN_LNG = 72.9598
+import { DELIVERY } from '../data/shopConfig.js'
 
-// ── Pricing knobs (private — don't surface in UI) ────────────────────────
-const RATE_PER_KM   = 5    // INR per km of straight-line distance
-const MIN_DELIVERY  = 30   // floor — never charge less than this
-const MAX_DELIVERY  = 500  // sanity cap — never charge more than this
+const ORIGIN = DELIVERY.origin // decoded from Plus Code MQ84+2GQ, Vaso 387380
 
 function haversineKm(lat1, lng1, lat2, lng2) {
   const toRad = (d) => (d * Math.PI) / 180
@@ -60,14 +56,12 @@ export async function pincodeToCoords(pincode) {
 }
 
 /**
- * Compute the delivery charge for an Indian pincode.
- * Returns { km, charge } when the pincode resolves, or null when invalid.
+ * Straight-line distance in km from the bakery to an Indian pincode.
+ * Returns a number (rounded to 0.1 km) when the pincode resolves, or null.
  */
-export async function computeDeliveryFromPincode(pincode) {
+export async function kmFromBakeryByPincode(pincode) {
   const coords = await pincodeToCoords(pincode)
   if (!coords) return null
-  const km = haversineKm(ORIGIN_LAT, ORIGIN_LNG, coords.lat, coords.lng)
-  const raw = Math.ceil(km * RATE_PER_KM)
-  const charge = Math.min(Math.max(raw, MIN_DELIVERY), MAX_DELIVERY)
-  return { km: Math.round(km * 10) / 10, charge }
+  const km = haversineKm(ORIGIN.lat, ORIGIN.lng, coords.lat, coords.lng)
+  return Math.round(km * 10) / 10
 }

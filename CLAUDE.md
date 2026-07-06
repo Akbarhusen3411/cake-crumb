@@ -50,6 +50,8 @@ Placing an order (`Checkout.jsx::placeOrder`) triggers parallel fire-and-forget 
 
 Order IDs come from `services/orderId.js`: `CC-AB-DDMMYY-NNNN` (initials + date + per-day localStorage counter).
 
+**Payment — two options only, no UTR.** Checkout offers exactly **Pay Now (UPI)** and **Cash on Delivery** (default: UPI). A "reserve — pay later" option existed but was removed because customers reserved without paying. **There is no UTR/reference field** — the customer just pays via the UPI QR and the bakery **verifies the credit in its own bank** before confirming (the admin card has a collapsible "How to verify this payment" that matches by amount + payer name + time). `order.payment` is `{ method: 'upi'|'cod', paid }`; `paid` is the customer's claim for UPI, never treated as proof. Don't reintroduce a reserve option or a customer-entered UTR without the user's explicit ask.
+
 **Admin dashboard — `/admin/orders` (`AdminOrders.jsx`).** Password is real **Firebase Auth** (Email/Password user created in the console; `getFirebaseAuth()` sets `browserSessionPersistence` so login is required again after the tab closes). It subscribes live (`subscribeOrders()` → `onSnapshot`) to all orders and steps each through a **status lifecycle**: `placed → confirmed → ready_for_pickup | out_for_delivery → completed` (+ `cancelled`). The "Ready" action is **method-aware** (pickup vs delivery, from `order.deliveryMethod`). Every action calls `updateOrderStatus(firebaseId, orderId, status)` — which updates both the `orders` doc and the `tracking` mirror — then **opens WhatsApp synchronously** (before any `await`, or mobile browsers block `window.open`) with a status-appropriate message to the customer.
 
 **Customer tracking — `/track-order` (`TrackOrder.jsx`).** Reads the public `tracking/{orderId}` doc via `getOrderTracking()`, so it works cross-device with no auth and no PII exposed; falls back to the local mirror. `statusMeta()` maps each status to a label/icon for the customer.
@@ -64,11 +66,21 @@ One public phone/WhatsApp number site-wide: **+91 91731 83440** (`WHATSAPP_PHONE
 
 `src/components/ChatBot.jsx` (mounted globally in `App.jsx`, ~1150 lines) is a conversational ordering assistant — not just a help widget. It can place a complete order on its own: it walks the customer through category → item selection → contact details, then calls the same `saveOrder()` + `generateOrderId()` + `wa.me/{WHATSAPP_PHONE}` machinery as Checkout. **It keeps its own `orderCart` in component state** — completely separate from `CartContext`; it only reads `useCart().count` to show a badge. Adding to the ChatBot cart does **not** touch the main cart and vice-versa. The menu/price data shown in the bot (`CAT_IMAGES`, price cards) is hand-embedded in the file, **not** sourced from `src/data/products.js` — so a price or item change in `products.js` won't propagate to the bot. Keep them in sync manually when prices change.
 
-### Delivery is a choice, not a computed fee
+### Delivery is a flat fee, chosen alongside method
 
-Checkout asks the customer to pick **Home Delivery** or **Self-Pickup** (radio cards). For home delivery the customer fills in address + city + 6-digit pincode; for pickup all three are optional. The total shown on checkout is always just the subtotal — the actual delivery charge is **confirmed by the bakery on WhatsApp**, and the order WhatsApp message makes that explicit (`*Delivery:* will be confirmed by Cake & Crumb`).
+Checkout asks the customer to pick **Home Delivery** or **Self-Pickup** (radio cards). For home delivery the customer fills in address + city + 6-digit pincode; for pickup all three are optional.
 
-The old Haversine + Nominatim distance calculation in `src/services/delivery.js` is no longer called from `Checkout.jsx`. The file is kept around in case the bakery wants to bring back a per-km auto-quote later, but **don't reintroduce it without the user's explicit ask** — they removed it because customers found the auto-calculated number confusing when it didn't match the final quote.
+Delivery pricing is **distance-based**, defined once in `src/data/shopConfig.js` as `DELIVERY = { freeRadiusKm, perKm, origin }` with a `deliveryFee(method, distanceKm = null)` helper. Pickup is always free; home delivery **within `freeRadiusKm` (10 km) is FREE**; **beyond** that it's `Math.round(distanceKm × perKm)` — i.e. ₹5 × the **full** distance, not just the km past 10 (11.6 km → ₹58). `distanceKm === null` means "not measured yet" → treated as free. The checkout total **includes delivery** (`total = subtotal + delivery`). `DELIVERY.origin` is the bakery lat/lng (`22.665087, 72.756359`) decoded from the Plus Code **MQ84+2GQ, Vaso 387380** — update it there if the bakery moves.
+
+**The km figure is never shown to the customer.** `src/services/delivery.js` (`kmFromBakeryByPincode`) resolves the customer's 6-digit pincode to lat/lng via OpenStreetMap **Nominatim**, then Haversine-measures km from `DELIVERY.origin`. `Checkout.jsx` runs this in an effect when the pincode completes (home delivery only) and stores `deliveryKm` + a `deliveryCalc` state — but the customer only ever sees the resulting **delivery amount** (or "…" while calculating), never the distance or any "within 10 km" wording. The km is persisted on the private `orders` doc (`deliveryKm`) and shown **only in the admin dashboard** ("~14 km away") so the bakery knows the distance; it is deliberately **kept out of the public `tracking` mirror** and the customer WhatsApp receipt. If Nominatim fails, `deliveryKm` stays null → free, never a hard error.
+
+**Other surfaces:** Cart shows a neutral "Calculated at checkout" (no address there). The **ChatBot** only collects a free-text address (no pincode to geocode), so it calls `deliveryFee('delivery')` → free, noting far areas are confirmed by the bakery. The order email + tracking mirror read `totals.delivery` (amount only). Change the two knobs in `shopConfig.js` and everything updates together; don't hard-code a fee, print the word "flat", or surface the km/"within 10 km" wording to customers anywhere.
+
+This model was set up at the owner's explicit request (an earlier version was removed for showing a confusing fluctuating quote) — the mitigation is that the distance stays behind the scenes and the customer sees only a clean amount.
+
+### "Banto 4\"" means inches, not slices
+
+Cheesecake `sizeLabel` is `Banto 4" (inch)` — the `(inch)` is deliberate so customers don't read the `4` as a slice count. Whole ≈ 3 slices by price (`slice` × 3 ≈ whole), but that ratio is **not** shown as "3 slices" on cards or in the ChatBot; keep the size framed as the 4-inch measurement.
 
 ### Cart
 

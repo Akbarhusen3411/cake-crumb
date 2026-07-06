@@ -9,6 +9,8 @@ import { useCart } from '../context/CartContext.jsx'
 import { inr } from '../data/format.js'
 import { u } from '../data/images.js'
 import { COUNTRY_CODES, DEFAULT_COUNTRY } from '../data/countries.js'
+import { deliveryFee } from '../data/shopConfig.js'
+import { kmFromBakeryByPincode } from '../services/delivery.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { saveOrder } from '../services/orders.js'
 import { generateOrderId } from '../services/orderId.js'
@@ -64,8 +66,18 @@ export default function Checkout() {
 
   const [step, setStep] = useState('checkout') // checkout | success
   const [orderId, setOrderId] = useState(null)
-  const [utr, setUtr] = useState('')
   const [copied, setCopied] = useState(false)
+
+  // Distance-based delivery: straight-line km from the bakery to the customer's
+  // pincode (geocoded via Nominatim). null = not known yet → treated as free.
+  // deliveryCalc: 'idle' (no pincode) | 'loading' | 'done' | 'unknown' (lookup failed).
+  const [deliveryKm, setDeliveryKm] = useState(null)
+  const [deliveryCalc, setDeliveryCalc] = useState('idle')
+
+  // Order ID reserved up front for the UPI flow, so the SAME id can be shown on
+  // the pay screen + embedded in the UPI note and reused when the order is
+  // placed. This is how the bakery ties a bank credit back to an order (no UTR).
+  const [pendingOrderId, setPendingOrderId] = useState(null)
 
   // Form always starts empty — pre-fill was removed because customers were
   // seeing stale data from past visits on a fresh checkout.
@@ -79,6 +91,10 @@ export default function Checkout() {
     pincode: '',
     notes: '',
     deliveryDate: '',
+    // Two payment options only: 'upi' (Pay Now — customer pays via UPI QR and the
+    // bakery verifies the credit in its bank) and 'cod' (pay on delivery/pickup).
+    // The old "reserve — pay later" option was removed because customers reserved
+    // without ever paying. Default is Pay Now.
     payment: 'upi',
     // 'delivery' (home delivery, charges confirmed on WhatsApp) or 'pickup'
     // (customer picks up from the bakery — free).
@@ -88,6 +104,29 @@ export default function Checkout() {
   // One-time cleanup: clear any legacy customer/draft data left in
   // localStorage from before pre-fill was removed.
   useEffect(() => { clearStoredCustomer() }, [])
+
+  // Estimate delivery distance whenever the pincode completes (home delivery only).
+  // Pickup or an incomplete pincode resets to "free / not calculated".
+  useEffect(() => {
+    if (form.deliveryMethod !== 'delivery' || !/^\d{6}$/.test(form.pincode.trim())) {
+      setDeliveryKm(null)
+      setDeliveryCalc('idle')
+      return
+    }
+    let cancelled = false
+    setDeliveryCalc('loading')
+    kmFromBakeryByPincode(form.pincode.trim()).then((km) => {
+      if (cancelled) return
+      if (km == null) {
+        setDeliveryKm(null)
+        setDeliveryCalc('unknown')
+      } else {
+        setDeliveryKm(km)
+        setDeliveryCalc('done')
+      }
+    })
+    return () => { cancelled = true }
+  }, [form.pincode, form.deliveryMethod])
 
   // Per-field errors that show on blur (and on submit attempt). An empty
   // string means "valid"; a non-empty string is the error message.
@@ -120,11 +159,10 @@ export default function Checkout() {
     setErrors((e) => ({ ...e, phone: validatePhone() }))
   }
 
-  // Delivery fee is intentionally not calculated here — bakery confirms the
-  // delivery charge on WhatsApp once they know the address. Total shown on
-  // checkout is just the subtotal; the WhatsApp message makes the
-  // "delivery charges apply, confirmed separately" expectation clear.
-  const total = subtotal
+  // Distance-based delivery (see shopConfig.js): free within 10 km of the bakery,
+  // ₹5/km beyond. Free for pickup; free while the distance is still unknown.
+  const delivery = deliveryFee(form.deliveryMethod, deliveryKm)
+  const total = subtotal + delivery
   const selectedCountry = useMemo(
     () => COUNTRY_CODES.find((c) => c.code === form.countryCode) || DEFAULT_COUNTRY,
     [form.countryCode]
@@ -160,10 +198,20 @@ export default function Checkout() {
     )
   }, [form, minDeliveryDate, selectedCountry])
 
-  const isPaymentValid =
-    form.payment === 'cod' || (form.payment === 'upi' && /^\d{12}$/.test(utr))
+  // Both payment methods place the order immediately — UPI has no UTR gate; the
+  // bakery verifies the payment landed in its bank before confirming.
+  const isPaymentValid = form.payment === 'upi' || form.payment === 'cod'
 
   const isFormValid = isDetailsValid && isPaymentValid && subtotal > 0
+
+  // Reserve the order ID as soon as the details are valid and the customer is
+  // paying by UPI — generated once, then shown on the pay screen, put in the UPI
+  // note, and reused at submit so the bank credit can be matched to this order.
+  useEffect(() => {
+    if (form.payment === 'upi' && isDetailsValid && !pendingOrderId) {
+      setPendingOrderId(generateOrderId(form.name))
+    }
+  }, [form.payment, isDetailsValid, pendingOrderId, form.name])
 
   const [placedItems, setPlacedItems] = useState([])
   const [placedTotals, setPlacedTotals] = useState({ subtotal: 0, delivery: 0, total: 0 })
@@ -171,7 +219,7 @@ export default function Checkout() {
 
   function buildOrderMessage(id, snapshotItems, totals, deliveryDate) {
     const paymentLine = form.payment === 'upi'
-      ? `*💳 Payment:* UPI ✅ Paid\n*🧾 UTR:* ${utr}`
+      ? '*💳 Payment:* UPI — Paid (bakery will verify)'
       : '*💳 Payment:* Cash on Delivery'
 
     const isPickup = form.deliveryMethod === 'pickup'
@@ -195,8 +243,10 @@ export default function Checkout() {
       `*Subtotal:* ${inr(totals.subtotal)}`,
       isPickup
         ? '*Delivery:* FREE (pickup)'
-        : '*Delivery:* _will be confirmed by Cake & Crumb_',
-      `*💰 Total (excl. delivery): ${inr(totals.total)}*`,
+        : totals.delivery > 0
+          ? `*Delivery:* ${inr(totals.delivery)}`
+          : '*Delivery:* FREE',
+      `*💰 Total: ${inr(totals.total)}*`,
       '',
       paymentLine,
       ...(form.notes ? ['', `*📝 Notes:* ${form.notes}`] : []),
@@ -209,14 +259,12 @@ export default function Checkout() {
   function placeOrder(e) {
     e.preventDefault()
     if (!isFormValid) return
-    if (form.payment === 'upi' && !/^\d{12}$/.test(utr)) {
-      alert('Please enter the 12-digit UTR / UPI reference number from your payment app.')
-      return
-    }
 
-    const id = generateOrderId(form.name)
+    // Reuse the id reserved for the UPI pay screen (so it matches what the
+    // customer saw / what's in the UPI note); COD orders generate one here.
+    const id = pendingOrderId || generateOrderId(form.name)
     const snapshotItems = items.map((it) => ({ ...it }))
-    const snapshotTotals = { subtotal, delivery: 0, total }
+    const snapshotTotals = { subtotal, delivery, total }
 
     const msg = buildOrderMessage(id, snapshotItems, snapshotTotals, form.deliveryDate)
     try {
@@ -241,11 +289,15 @@ export default function Checkout() {
       },
       payment: {
         method: form.payment,
+        // 'paid' is the customer's claim for UPI — the bakery verifies the credit
+        // in its bank before confirming. No UTR is collected.
         paid: form.payment === 'upi',
-        utr: form.payment === 'upi' ? utr : '',
       },
       deliveryDate: form.deliveryDate,
       deliveryMethod: form.deliveryMethod,
+      // Distance is stored for the bakery's reference only (shown in the admin
+      // dashboard, never to the customer). null for pickup / unknown.
+      deliveryKm: form.deliveryMethod === 'delivery' ? deliveryKm : null,
       notes: form.notes,
       source: 'checkout',
     }
@@ -338,7 +390,7 @@ export default function Checkout() {
 
           <p style={{ fontSize: '0.85rem', color: 'var(--cc-cocoa-soft)' }}>
             {form.payment === 'upi'
-              ? 'Your UPI payment will be verified via WhatsApp.'
+              ? "We'll verify your UPI payment in our account and confirm on WhatsApp. Tip: reply with a screenshot of your payment to help us match it faster."
               : 'Cash on Delivery — please keep the exact amount ready.'}
           </p>
           <div className="d-flex gap-2 justify-content-center mt-3 flex-wrap">
@@ -588,7 +640,7 @@ export default function Checkout() {
                   >
                     <span className="icon-wrap"><FiSmartphone size={18} /></span>
                     <span>
-                      <div>UPI / QR Code</div>
+                      <div>Pay Now (UPI)</div>
                       <div style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--cc-cocoa-soft)' }}>
                         Scan & pay with any UPI app
                       </div>
@@ -610,12 +662,13 @@ export default function Checkout() {
                 </div>
 
                 {form.payment === 'upi' && (() => {
+                  const noteText = pendingOrderId ? `Cake & Crumb ${pendingOrderId}` : 'Cake & Crumb order'
                   const upiPayString =
                     `upi://pay?pa=${encodeURIComponent(UPI_ID)}` +
                     `&pn=${encodeURIComponent(PAYEE_NAME)}` +
                     `&am=${total}` +
                     `&cu=INR` +
-                    `&tn=${encodeURIComponent('Cake & Crumb order')}`
+                    `&tn=${encodeURIComponent(noteText)}`
                   const qrUrl =
                     `https://api.qrserver.com/v1/create-qr-code/` +
                     `?size=320x320&margin=8&color=1a1a1a&bgcolor=ffffff` +
@@ -646,6 +699,11 @@ export default function Checkout() {
                             <div style={{ fontFamily: "'Lato', system-ui, sans-serif", fontSize: '1.4rem', color: 'var(--cc-cocoa)', lineHeight: 1 }}>
                               {inr(total)}
                             </div>
+                            {pendingOrderId && (
+                              <div style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', marginTop: 4 }}>
+                                Order <strong style={{ color: 'var(--cc-cocoa)', letterSpacing: '0.04em' }}>{pendingOrderId}</strong>
+                              </div>
+                            )}
                           </div>
                         </div>
                         <span
@@ -741,67 +799,17 @@ export default function Checkout() {
                       <div
                         className="px-3 px-md-4 py-3"
                         style={{
-                          background: utr.length === 12 ? 'var(--cc-cream)' : '#fff',
+                          background: 'var(--cc-cream)',
                           borderTop: '1px solid var(--cc-border)',
-                          transition: 'background 0.2s',
+                          fontSize: '0.78rem',
+                          color: 'var(--cc-cocoa-soft)',
+                          lineHeight: 1.5,
                         }}
                       >
-                        <label
-                          htmlFor="utr-input"
-                          style={{
-                            display: 'block',
-                            fontSize: '0.7rem',
-                            color: 'var(--cc-cocoa-soft)',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.12em',
-                            fontWeight: 700,
-                            marginBottom: 6,
-                          }}
-                        >
-                          Enter UTR / UPI Reference Number *
-                        </label>
-                        <div className="d-flex" style={{ gap: '0.5rem' }}>
-                          <input
-                            id="utr-input"
-                            type="text"
-                            value={utr}
-                            onChange={(e) => setUtr(e.target.value.replace(/\D/g, '').slice(0, 12))}
-                            placeholder="12-digit number from your UPI app"
-                            inputMode="numeric"
-                            maxLength={12}
-                            className="cc-input"
-                            style={{
-                              flex: 1,
-                              fontSize: '0.95rem',
-                              letterSpacing: '0.04em',
-                              fontFamily: 'monospace',
-                            }}
-                          />
-                          {utr.length === 12 && (
-                            <span
-                              className="d-inline-flex align-items-center"
-                              style={{
-                                color: 'var(--cc-rose-deep)',
-                                fontSize: '0.85rem',
-                                fontWeight: 700,
-                                gap: 4,
-                              }}
-                            >
-                              <FiCheckCircle size={16} />
-                            </span>
-                          )}
-                        </div>
-                        <p style={{
-                          fontSize: '0.7rem',
-                          color: 'var(--cc-cocoa-soft)',
-                          marginTop: 6,
-                          marginBottom: 0,
-                          lineHeight: 1.4,
-                        }}>
-                          After paying, your UPI app shows a <strong>12-digit transaction
-                          reference (UTR)</strong>. Open the payment receipt → copy the
-                          reference number → paste it here. This proves the payment.
-                        </p>
+                        <strong style={{ color: 'var(--cc-cocoa)' }}>After you pay,</strong> tap{' '}
+                        <strong>Place Order</strong> below. We match your payment to order{' '}
+                        {pendingOrderId ? <strong style={{ color: 'var(--cc-cocoa)' }}>{pendingOrderId}</strong> : 'your order'}{' '}
+                        in our account and confirm on WhatsApp — no reference number needed.
                       </div>
                     </div>
                   )
@@ -826,7 +834,7 @@ export default function Checkout() {
                   </div>
                 )}
 
-                {/* Advance-payment note for large / custom orders */}
+                {/* Advance-payment note for large / custom orders. */}
                 <div
                   className="d-flex align-items-start mt-3"
                   style={{
@@ -884,8 +892,12 @@ export default function Checkout() {
                 </div>
                 <div className="d-flex justify-content-between mb-2" style={{ fontSize: '0.9rem' }}>
                   <span>Delivery</span>
-                  <span style={{ color: 'var(--cc-cocoa-soft)', fontStyle: 'italic' }}>
-                    {form.deliveryMethod === 'pickup' ? 'Free (pickup)' : 'Confirmed on WhatsApp'}
+                  <span style={{ color: delivery === 0 ? 'var(--cc-rose)' : 'var(--cc-cocoa)', fontWeight: 600 }}>
+                    {form.deliveryMethod === 'pickup'
+                      ? 'FREE (pickup)'
+                      : deliveryCalc === 'loading'
+                        ? '…'
+                        : delivery > 0 ? inr(delivery) : 'FREE'}
                   </span>
                 </div>
                 <hr style={{ borderColor: 'var(--cc-border)' }} />
@@ -896,8 +908,8 @@ export default function Checkout() {
                   </strong>
                 </div>
                 {form.deliveryMethod === 'delivery' && (
-                  <p style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', marginTop: 0, marginBottom: '1rem', textAlign: 'right' }}>
-                    + delivery charge (confirmed by us)
+                  <p style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', marginTop: '0.4rem', marginBottom: '1rem', textAlign: 'center' }}>
+                    Delivery is calculated from your address. Self-pickup is always free.
                   </p>
                 )}
                 <button

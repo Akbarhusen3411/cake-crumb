@@ -6,6 +6,7 @@ import {
 import { asset } from '../data/images.js'
 import { generateOrderId } from '../services/orderId.js'
 import { saveOrder } from '../services/orders.js'
+import { deliveryFee } from '../data/shopConfig.js'
 import { WHATSAPP_PHONE } from './WhatsAppButton.jsx'
 import { useCart } from '../context/CartContext.jsx'
 
@@ -199,7 +200,7 @@ function getItemCat(name) {
 // ─── Menu price display data ───
 const MENU_DATA = {
   cheesecake: {
-    title: 'Cheesecake', subtitle: 'Banto 4" · 3 slices | Per slice',
+    title: 'Cheesecake', subtitle: 'Banto 4" (inch) | Per slice',
     groups: [
       { name: 'Classic', items: [
         { n: 'Strawberry', s: '₹120', w: '₹350' }, { n: 'Blueberry', s: '₹140', w: '₹410' },
@@ -678,17 +679,23 @@ export default function ChatBot() {
 
   const sendOrderToWhatsApp = () => {
     const items = Object.entries(orderCart).filter(([, v]) => v.qty > 0)
-    const total = getCartTotal()
+    const subtotal = getCartTotal()
+    // The bot only collects a free-text address (no pincode to geocode), so it
+    // can't measure distance — delivery is shown as free within the local radius
+    // and the bakery confirms any charge for far areas.
+    const fee = deliveryFee('delivery')
+    const total = subtotal + fee
     const orderId = generateOrderId(orderInfo.name)
     setLastOrderId(orderId)
     setLastOrderTime(Date.now())
 
     // Persist to Firestore (fire-and-forget, never blocks WhatsApp open).
-    // Delivery is NOT auto-charged — the bakery confirms it on WhatsApp, matching Checkout.
+    // Delivery is free within range here (no pincode to geocode in the bot); the
+    // bakery confirms any far-area charge, matching the distance rule in shopConfig.
     saveOrder({
       orderId,
       items: items.map(([name, { qty, price }]) => ({ name, qty, price, id: name.toLowerCase().replace(/\s+/g, '-') })),
-      totals: { subtotal: total, delivery: 0, total },
+      totals: { subtotal, delivery: fee, total },
       customer: {
         name: orderInfo.name,
         phone: orderInfo.phone,
@@ -726,9 +733,9 @@ export default function ChatBot() {
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `*📋 Order Items:*${orderLines}\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
-      `*Subtotal:* ₹${total}\n` +
-      `*Delivery:* will be confirmed by Cake & Crumb\n` +
-      `*💰 Total: ₹${total}* _(+ delivery, if any)_\n\n` +
+      `*Subtotal:* ₹${subtotal}\n` +
+      `*Delivery:* ${fee === 0 ? 'FREE (far areas confirmed by us)' : '₹' + fee}\n` +
+      `*💰 Total: ₹${total}*\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `⚠️ *Cancel window:* 30 min from order time.\n\n` +
       `Please confirm my order. Thank you! 🙏`
@@ -782,9 +789,9 @@ export default function ChatBot() {
           return
         }
         const total = getCartTotal()
-        const fee = total >= 499 ? 0 : 49
+        const fee = deliveryFee('delivery')
         let summary = `*🛒 Your Order:*\n\n` + getCartSummary()
-        summary += `\n\n*Subtotal:* ₹${total}\n*Delivery:* ${fee === 0 ? 'FREE ✅' : '₹' + fee}\n*Total: ₹${total + fee}*`
+        summary += `\n\n*Subtotal:* ₹${total}\n*Delivery:* ${fee === 0 ? 'FREE' : '₹' + fee}\n*Total: ₹${total + fee}*`
         await addBotMessage(summary)
         await addBotMessage("Looks good? Let's proceed with your details, or go back to add more items.")
         setOptions([
@@ -894,9 +901,9 @@ export default function ChatBot() {
       setOrderInfo((prev) => ({ ...prev, date: text }))
       setOrderStep(null)
       const total = getCartTotal()
-      const fee = total >= 499 ? 0 : 49
+      const fee = deliveryFee('delivery')
       let finalSummary = `*📋 Order Summary*\n\n` + getCartSummary()
-      finalSummary += `\n\n*Subtotal:* ₹${total}\n*Delivery:* ${fee === 0 ? 'FREE ✅' : '₹' + fee}\n*💰 Total: ₹${total + fee}*`
+      finalSummary += `\n\n*Subtotal:* ₹${total}\n*Delivery:* ${fee === 0 ? 'FREE' : '₹' + fee}\n*💰 Total: ₹${total + fee}*`
       finalSummary += `\n\n*👤* ${orderInfo.name}\n*📞* ${orderInfo.phone}\n*📍* ${orderInfo.address}\n*📅* ${text}`
       await addBotMessage(finalSummary)
       await addBotMessage('Ready to send this order to our bakery on WhatsApp? 🎂')

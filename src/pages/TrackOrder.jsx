@@ -267,18 +267,13 @@ export default function TrackOrder() {
                   <span style={{ color: 'var(--cc-cocoa-soft)' }}>
                     {order.deliveryMethod === 'pickup'
                       ? 'Free (pickup)'
-                      : (order.totals?.delivery > 0 ? inr(order.totals.delivery) : 'Confirmed on WhatsApp')}
+                      : (order.totals?.delivery > 0 ? inr(order.totals.delivery) : 'FREE')}
                   </span>
                 </div>
                 <div className="d-flex justify-content-between" style={{ fontSize: '1.05rem' }}>
                   <strong style={{ color: 'var(--cc-cocoa)' }}>Total</strong>
                   <strong style={{ color: 'var(--cc-rose)', fontSize: '1.2rem' }}>{inr(order.totals?.total || 0)}</strong>
                 </div>
-                {order.deliveryMethod === 'delivery' && order.totals?.delivery === 0 && (
-                  <p style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', textAlign: 'right', marginTop: 4, marginBottom: 0 }}>
-                    + delivery charge (confirmed by us)
-                  </p>
-                )}
               </div>
 
               {/* WhatsApp help footer */}

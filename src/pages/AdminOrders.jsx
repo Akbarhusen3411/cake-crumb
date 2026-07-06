@@ -71,7 +71,7 @@ function buildCustomerMessage(order, status) {
         `🎂 *Order Confirmed!* — ${id}`, '',
         `Hi ${name}!`, '',
         `Great news — your order is *confirmed* and we're getting ready to bake. ♥`, '',
-        `💰 *Total (excl. delivery):* ${inr(order.totals?.total || 0)}`, '',
+        `💰 *Total:* ${inr(order.totals?.total || 0)}${order.totals?.delivery > 0 ? ` _(incl. ${inr(order.totals.delivery)} delivery)_` : ''}`, '',
         '*Your Items:*', ...items, '',
         `We'll message you again once it's ready. Thank you for choosing Cake & Crumb! 🙏`,
       ].join('\n')
@@ -384,16 +384,17 @@ export default function AdminOrders() {
                   </ul>
 
                   <div style={{ fontSize: '0.84rem', color: 'var(--cc-cocoa)' }}>
-                    <strong>Total (excl. delivery): {inr(o.totals?.total || 0)}</strong>
-                    {' · '}{o.payment?.method === 'upi' ? `UPI${o.payment?.utr ? ` · UTR ${o.payment.utr}` : ''}` : 'Cash on Delivery'}
+                    <strong>Total: {inr(o.totals?.total || 0)}</strong>
+                    {o.totals?.delivery > 0 ? ` (incl. ${inr(o.totals.delivery)} delivery)` : ''}
+                    {o.deliveryMethod === 'delivery' && o.deliveryKm ? ` · ~${o.deliveryKm} km away` : ''}
+                    {' · '}{o.payment?.method === 'upi' ? 'UPI (verify in your bank)' : 'Cash on Delivery'}
                     {o.notes ? ` · Notes: ${o.notes}` : ''}
                   </div>
 
                   {o.payment?.method === 'upi' && (
                     <div
-                      className="d-flex align-items-start mt-2"
+                      className="mt-2"
                       style={{
-                        gap: '0.5rem',
                         background: '#fff7ed',
                         border: '1px solid #fcd9b6',
                         borderRadius: 10,
@@ -403,11 +404,28 @@ export default function AdminOrders() {
                         lineHeight: 1.45,
                       }}
                     >
-                      <FiAlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
-                      <span>
-                        <strong>Verify this UTR in your bank / UPI app before confirming.</strong>{' '}
-                        The customer entered it themselves — "Paid" here is a claim, not proof.
-                      </span>
+                      <div className="d-flex align-items-start" style={{ gap: '0.5rem' }}>
+                        <FiAlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+                        <span>
+                          <strong>Check the payment landed in your bank before confirming.</strong>{' '}
+                          "Paid" here is the customer's claim, not proof.
+                        </span>
+                      </div>
+                      <details style={{ marginTop: 6 }}>
+                        <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#9a5b12' }}>
+                          How to verify this payment
+                        </summary>
+                        <ol style={{ margin: '6px 0 0', paddingLeft: 18, lineHeight: 1.55 }}>
+                          <li>Open your bank / UPI app for the account that receives your payments.</li>
+                          <li>Go to transaction history for around the time this order was placed (shown at the top of this card).</li>
+                          <li>Find a <strong>credit of {inr(o.totals?.total || 0)}</strong> to your account.</li>
+                          <li>Check the payer name / phone roughly matches <strong>{o.customer?.name || 'the customer'}</strong>, and the amount is exact.</li>
+                          <li>Credit found ✅ → tap <strong>Confirm</strong>. Nothing found or amount differs → don't confirm; message the customer or <strong>Cancel</strong>.</li>
+                        </ol>
+                        <div style={{ marginTop: 6, fontStyle: 'italic' }}>
+                          Never confirm on a screenshot alone — only on a real credit in your passbook.
+                        </div>
+                      </details>
                     </div>
                   )}
 

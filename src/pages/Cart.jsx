@@ -165,8 +165,8 @@ export default function Cart() {
                 <span>Delivery</span>
                 <span style={{ color: 'var(--cc-cocoa-soft)' }}>Calculated at checkout</span>
               </div>
-              <p style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', marginBottom: '0.5rem' }}>
-                Based on your delivery address.
+              <p style={{ fontSize: '0.75rem', color: 'var(--cc-cocoa-soft)', marginBottom: '0.5rem' }}>
+                Self-pickup is always free.
               </p>
               <hr style={{ borderColor: 'var(--cc-border)' }} />
               <div className="d-flex justify-content-between mb-3" style={{ fontSize: '1.05rem' }}>
@@ -181,7 +181,7 @@ export default function Cart() {
 
               <div className="mt-4 p-3" style={{ background: 'var(--cc-cream)', borderRadius: 10, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <FiHeart color="var(--cc-rose)" />
-                <span>Pay via UPI QR or Cash on Delivery</span>
+                <span>Pay by UPI now, or Cash on Delivery</span>
               </div>
             </div>
           </div>

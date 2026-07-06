@@ -65,6 +65,9 @@ export async function saveOrder(input) {
     notes: String(input.notes || ''),
     deliveryDate: String(input.deliveryDate || ''),
     deliveryMethod: String(input.deliveryMethod || ''),
+    // Straight-line km from the bakery — bakery-side reference only. Deliberately
+    // NOT copied into the public `tracking` mirror below (kept PII/detail-free).
+    deliveryKm: input.deliveryKm == null ? null : Number(input.deliveryKm),
     status: 'placed',
   }
 
