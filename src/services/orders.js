@@ -27,7 +27,7 @@ function writeLocal(list) {
  *
  * Shape:
  *   {
- *     orderId: 'CC-...-NNNN',
+ *     orderId: 'CC-...-XXXXX',
  *     items:    [{ id, name, price, qty, img }],
  *     totals:   { subtotal, delivery, total },
  *     customer: { name, phone, email?, address?, city?, pincode? },
@@ -121,7 +121,7 @@ function slimItem(it) {
 }
 
 /**
- * Look up an order by its public orderId (e.g. CC-AB-200526-0001). Reads
+ * Look up an order by its public orderId (e.g. CC-AB-200526-K9GEV). Reads
  * from Firestore; falls back to the local mirror when Firestore is off.
  * Returns the order document with `firebaseId` attached, or null.
  */

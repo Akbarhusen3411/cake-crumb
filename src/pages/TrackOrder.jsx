@@ -134,7 +134,7 @@ export default function TrackOrder() {
                 <FiSearch className="cc-track-form__icon" />
                 <input
                   type="text"
-                  placeholder="Order ID (e.g. CC-AB-200526-0001)"
+                  placeholder="Order ID (e.g. CC-AB-200526-K9GEV)"
                   value={inputId}
                   onChange={(e) => setInputId(e.target.value.toUpperCase())}
                   className="cc-input"

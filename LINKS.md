@@ -30,8 +30,8 @@
 | Purpose | Link |
 |---|---|
 | Track an order | https://akbarhusen3411.github.io/cake-crumb/track-order |
-| Track a specific order | https://akbarhusen3411.github.io/cake-crumb/track-order?id=CC-XX-DDMMYY-NNNN |
-| Confirm an order (legacy link flow) | https://akbarhusen3411.github.io/cake-crumb/confirm-order?id=CC-XX-DDMMYY-NNNN |
+| Track a specific order | https://akbarhusen3411.github.io/cake-crumb/track-order?id=CC-XX-DDMMYY-XXXXX |
+| Confirm an order (legacy link flow) | https://akbarhusen3411.github.io/cake-crumb/confirm-order?id=CC-XX-DDMMYY-XXXXX |
 
 ## 🔐 Admin (only you)
 | Purpose | Link | Access |

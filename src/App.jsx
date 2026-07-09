@@ -10,6 +10,7 @@ import FestivalBanner from './components/FestivalBanner.jsx'
 import BackToTop from './components/BackToTop.jsx'
 import Home from './pages/Home.jsx'
 import PageFallback from './components/skeletons/PageFallback.jsx'
+import ErrorBoundary, { clearChunkReloadGuard } from './components/ErrorBoundary.jsx'
 
 // Lazy-loaded routes — keep initial bundle small.
 // Firebase only loads when /reviews or /review are visited.
@@ -48,6 +49,10 @@ function App() {
     (r) => pathname === r || pathname.startsWith(r + '/')
   )
 
+  // We rendered, so any stale-chunk reload already succeeded — re-arm the one-shot
+  // guard for a future deploy in this same tab.
+  useEffect(() => { clearChunkReloadGuard() }, [])
+
   return (
     <CartProvider>
       <ScrollToTop />
@@ -56,25 +61,27 @@ function App() {
         <FestivalBanner />
         <Navbar />
         <main id="main" className="flex-grow-1">
-          <Suspense fallback={<PageFallback />}>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/menu" element={<Menu />} />
-              <Route path="/shop" element={<Shop />} />
-              <Route path="/gallery" element={<Gallery />} />
-              <Route path="/reviews" element={<Reviews />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/review" element={<ReviewSubmit />} />
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="/confirm-order" element={<ConfirmOrder />} />
-              <Route path="/track-order" element={<TrackOrder />} />
-              <Route path="/admin/orders" element={<AdminOrders />} />
-              <Route path="*" element={<Home />} />
-            </Routes>
-          </Suspense>
+          <ErrorBoundary resetKey={pathname}>
+            <Suspense fallback={<PageFallback />}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/menu" element={<Menu />} />
+                <Route path="/shop" element={<Shop />} />
+                <Route path="/gallery" element={<Gallery />} />
+                <Route path="/reviews" element={<Reviews />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/review" element={<ReviewSubmit />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/confirm-order" element={<ConfirmOrder />} />
+                <Route path="/track-order" element={<TrackOrder />} />
+                <Route path="/admin/orders" element={<AdminOrders />} />
+                <Route path="*" element={<Home />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
         </main>
         {hideFooter ? <MiniFooter /> : <Footer />}
         <CartToast />
