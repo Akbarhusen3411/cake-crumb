@@ -9,12 +9,17 @@ import { saveOrder } from '../services/orders.js'
 import { deliveryFee } from '../data/shopConfig.js'
 import { WHATSAPP_PHONE } from './WhatsAppButton.jsx'
 import { useCart } from '../context/CartContext.jsx'
+import {
+  MENU_DATA, ORDER_ITEMS, MENU_CATEGORIES, ORDER_CATEGORIES, getItemCat,
+} from '../data/chatbotMenu.js'
 
 const WHATSAPP_NUMBER = WHATSAPP_PHONE
 
 // ─── Category preview thumbnails (optional eye-candy when showing prices) ───
+// Keyed by the category keys in data/chatbotMenu.js. Purely decorative — a key
+// with no entry just means no photo strip above that category's price card.
 const CAT_IMAGES = {
-  cheesecake: [
+  cheesecakes: [
     { src: 'products/cheesecake-strawberry-rose.jpeg',      label: 'Strawberry' },
     { src: 'products/cheesecake-blueberry-whole.jpeg',      label: 'Blueberry' },
     { src: 'products/cheesecake-pomegranate-berry.jpeg',    label: 'Raspberry' },
@@ -22,20 +27,35 @@ const CAT_IMAGES = {
     { src: 'products/cheesecake-pistachio-slices-board.jpeg', label: 'Pistachio' },
     { src: 'products/cheesecake-nutella.jpeg',              label: 'Nutella' },
   ],
+  'milk-cakes': [
+    { src: 'products/milkcake-tres-leche-dish.jpeg',      label: 'Trés Léches' },
+    { src: 'products/milkcake-rose-pistachio-domes.jpeg', label: 'Rose' },
+    { src: 'products/milkcake-rose-pistachio.jpeg',       label: 'Pistachio' },
+  ],
+  'sponge-cakes': [
+    { src: 'products/cake-yellow-rose-buttercream.jpeg',    label: 'Vanilla' },
+    { src: 'products/cake-chocolate-caramel-birthday.jpeg', label: 'Chocolate' },
+    { src: 'products/cake-red-velvet-hearts.jpeg',          label: 'Red Velvet' },
+    { src: 'products/cake-blueberry-lavender-slice.jpeg',   label: 'Blueberry' },
+  ],
+  cupcakes: [
+    { src: 'products/cupcakes-red-velvet.jpeg',    label: 'Red Velvet' },
+    { src: 'products/cupcakes-funfetti-box.jpeg',  label: 'Vanilla' },
+    { src: 'products/cupcakes-chocolate-box.jpeg', label: 'Chocolate' },
+  ],
   cookies: [
     { src: 'products/cookies-double-chocolate.jpeg',   label: 'Triple Choc' },
     { src: 'products/cookies-chocolate-nut-board.jpeg', label: 'Classic' },
     { src: 'products/cookies-pistachio-rose.jpeg',     label: 'Pistachio Rose' },
     { src: 'products/cookies-choc-chunk-nut.jpeg',     label: 'Almond' },
   ],
-  cakes: [
-    { src: 'products/cupcakes-red-velvet.jpeg',        label: 'Cupcakes' },
-    { src: 'products/milkcake-rose-pistachio-domes.jpeg', label: 'Rose Milk Cake' },
-    { src: 'products/brownie-fudgy-slab.jpeg',         label: 'Brownies' },
-    { src: 'products/cake-pink-number-rosette.jpeg',   label: 'Cakesicles' },
-    { src: 'products/cake-pink-letter.jpeg',           label: 'Cake Pops' },
+  bakes: [
+    { src: 'products/brownie-fudgy-slab.jpeg',      label: 'Brownies' },
+    { src: 'products/brownie-chocolate-boxes.jpeg', label: 'Brownie Box' },
+    { src: 'products/cake-pink-letter.jpeg',        label: 'Cakesicles' },
+    { src: 'products/bakes-rose-petal-bars.jpeg',   label: 'Blondies' },
   ],
-  desserts: [
+  'dessert-cups': [
     { src: 'products/dessertcup-chocolate-mango-duo.jpeg', label: 'Custard Cup' },
     { src: 'products/dessertcup-mango-custard.jpeg',       label: 'Mango Custard' },
     { src: 'products/dessertcup-assorted-flatlay.jpeg',    label: 'Trifle Cup' },
@@ -48,270 +68,10 @@ const CAT_IMAGES = {
     { src: 'products/drink-blue-lagoon.jpeg',          label: 'Iced Coffee' },
     { src: 'products/drink-virgin-mojito.jpeg',        label: 'Hot Coffee' },
   ],
-}
-
-// ─── Orderable items with prices + category labels ───
-const ORDER_ITEMS = {
-  cheesecake_slice: [
-    { name: 'Strawberry Slice', price: 120, cat: '🍰 Cheesecake' },
-    { name: 'Blueberry Slice', price: 140, cat: '🍰 Cheesecake' },
-    { name: 'Raspberry Slice', price: 140, cat: '🍰 Cheesecake' },
-    { name: 'Orange Creamsicle Slice', price: 130, cat: '🍰 Cheesecake' },
-    { name: 'Lemon Slice', price: 120, cat: '🍰 Cheesecake' },
-    { name: 'Rose Slice', price: 120, cat: '🍰 Cheesecake' },
-    { name: 'Mango Slice', price: 120, cat: '🍰 Cheesecake' },
-    { name: 'Passion Fruit Slice', price: 130, cat: '🍰 Cheesecake' },
-    { name: 'Cherry Slice', price: 130, cat: '🍰 Cheesecake' },
-    { name: 'Chocolate Slice', price: 130, cat: '🍰 Cheesecake' },
-    { name: 'Nutella Slice', price: 150, cat: '🍰 Cheesecake' },
-    { name: 'Biscoff Slice', price: 140, cat: '🍰 Cheesecake' },
-    { name: 'Cookies & Cream Slice', price: 150, cat: '🍰 Cheesecake' },
-    { name: 'Caramel Slice', price: 150, cat: '🍰 Cheesecake' },
-    { name: 'Coffee Slice', price: 150, cat: '🍰 Cheesecake' },
-    { name: 'Pistachio Slice', price: 160, cat: '🍰 Cheesecake' },
-    { name: 'Dubai Special Slice', price: 170, cat: '🍰 Cheesecake' },
-    { name: 'Dipped Cheesecake Slice', price: 200, cat: '🍰 Cheesecake' },
+  platters: [
+    { src: 'products/platter-pancake-strawberry.jpeg', label: 'Pancakes' },
+    { src: 'products/bakes-rose-petal-bars.jpeg',      label: 'Crêpe Roll' },
   ],
-  cheesecake_banto: [
-    { name: 'Strawberry Banto', price: 350, cat: '🍰 Cheesecake' },
-    { name: 'Blueberry Banto', price: 410, cat: '🍰 Cheesecake' },
-    { name: 'Raspberry Banto', price: 410, cat: '🍰 Cheesecake' },
-    { name: 'Mango Banto', price: 350, cat: '🍰 Cheesecake' },
-    { name: 'Chocolate Banto', price: 380, cat: '🍰 Cheesecake' },
-    { name: 'Nutella Banto', price: 440, cat: '🍰 Cheesecake' },
-    { name: 'Biscoff Banto', price: 410, cat: '🍰 Cheesecake' },
-    { name: 'Cookies & Cream Banto', price: 430, cat: '🍰 Cheesecake' },
-    { name: 'Pistachio Banto', price: 470, cat: '🍰 Cheesecake' },
-    { name: 'Dubai Special Banto', price: 500, cat: '🍰 Cheesecake' },
-    { name: 'Brownie Cheesecake (Whole)', price: 750, cat: '🍰 Cheesecake' },
-  ],
-  cookies: [
-    { name: 'Triple Choc Cookie', price: 60, cat: '🍪 Cookies' },
-    { name: 'White Choc Cookie', price: 50, cat: '🍪 Cookies' },
-    { name: 'Classic Cookie', price: 50, cat: '🍪 Cookies' },
-    { name: 'Red Velvet Cookie', price: 60, cat: '🍪 Cookies' },
-    { name: 'Almond Cookie', price: 70, cat: '🍪 Cookies' },
-    { name: 'Coconut Cookie', price: 60, cat: '🍪 Cookies' },
-    { name: 'Pistachio Rose Cookie', price: 70, cat: '🍪 Cookies' },
-    { name: 'Cookie Box (6)', price: 340, cat: '🍪 Cookies' },
-    { name: 'Cookie Box (12)', price: 700, cat: '🍪 Cookies' },
-  ],
-  cakes: [
-    { name: 'Vanilla Cupcakes (6)', price: 150, cat: '🧁 Cupcakes' },
-    { name: 'Red Velvet Cupcakes (6)', price: 180, cat: '🧁 Cupcakes' },
-    { name: 'Chocolate Cupcakes (6)', price: 170, cat: '🧁 Cupcakes' },
-    { name: 'Pistachio Cupcakes (6)', price: 190, cat: '🧁 Cupcakes' },
-    { name: 'Biscoff Cupcakes (6)', price: 180, cat: '🧁 Cupcakes' },
-    { name: 'Nutella Cupcakes (6)', price: 170, cat: '🧁 Cupcakes' },
-    { name: 'Strawberry Cupcakes (6)', price: 170, cat: '🧁 Cupcakes' },
-    { name: 'Vanilla Sponge (Tub)', price: 100, cat: '🍰 Sponge Cake' },
-    { name: 'Vanilla Sponge (Bento)', price: 450, cat: '🍰 Sponge Cake' },
-    { name: 'Chocolate Sponge (Tub)', price: 100, cat: '🍰 Sponge Cake' },
-    { name: 'Chocolate Sponge (Bento)', price: 470, cat: '🍰 Sponge Cake' },
-    { name: 'Strawberry Sponge (Tub)', price: 110, cat: '🍰 Sponge Cake' },
-    { name: 'Strawberry Sponge (Bento)', price: 470, cat: '🍰 Sponge Cake' },
-    { name: 'Red Velvet Sponge (Tub)', price: 110, cat: '🍰 Sponge Cake' },
-    { name: 'Red Velvet Sponge (Bento)', price: 470, cat: '🍰 Sponge Cake' },
-    { name: 'Mango Sponge (Tub)', price: 120, cat: '🍰 Sponge Cake' },
-    { name: 'Mango Sponge (Bento)', price: 480, cat: '🍰 Sponge Cake' },
-    { name: 'Blueberry Sponge (Tub)', price: 120, cat: '🍰 Sponge Cake' },
-    { name: 'Blueberry Sponge (Bento)', price: 480, cat: '🍰 Sponge Cake' },
-    { name: 'Biscoff Sponge (Tub)', price: 130, cat: '🍰 Sponge Cake' },
-    { name: 'Biscoff Sponge (Bento)', price: 490, cat: '🍰 Sponge Cake' },
-    { name: 'Nutella Sponge (Tub)', price: 130, cat: '🍰 Sponge Cake' },
-    { name: 'Nutella Sponge (Bento)', price: 490, cat: '🍰 Sponge Cake' },
-    { name: 'Pistachio Sponge (Tub)', price: 150, cat: '🍰 Sponge Cake' },
-    { name: 'Pistachio Sponge (Bento)', price: 510, cat: '🍰 Sponge Cake' },
-    { name: 'Chocolate Chunk Sponge (Tub)', price: 120, cat: '🍰 Sponge Cake' },
-    { name: 'Chocolate Chunk Sponge (Bento)', price: 480, cat: '🍰 Sponge Cake' },
-    { name: 'Classic Brownie', price: 60, cat: '🎂 Bakes' },
-    { name: 'Nutella Brownie', price: 70, cat: '🎂 Bakes' },
-    { name: 'Biscoff Brownie', price: 70, cat: '🎂 Bakes' },
-    { name: 'Oreo Brownie', price: 70, cat: '🎂 Bakes' },
-    { name: 'Pistachio Brownie', price: 80, cat: '🎂 Bakes' },
-    { name: 'Red Velvet Brownie', price: 80, cat: '🎂 Bakes' },
-    { name: 'Classic Blondie', price: 60, cat: '🎂 Bakes' },
-    { name: 'White Chocolate Blondie', price: 70, cat: '🎂 Bakes' },
-    { name: 'Strawberry Blondie', price: 80, cat: '🎂 Bakes' },
-    { name: 'Cakesicle (Heart)', price: 110, cat: '🎂 Bakes' },
-    { name: 'Cakesicle (Circle)', price: 120, cat: '🎂 Bakes' },
-    { name: 'Cakesicle (Square)', price: 130, cat: '🎂 Bakes' },
-    { name: 'Cakesicle (Ice Cream)', price: 140, cat: '🎂 Bakes' },
-    { name: 'Cake Pops (6)', price: 120, cat: '🎂 Bakes' },
-    { name: 'Choc Covered Strawberry', price: 40, cat: '🎂 Bakes' },
-    { name: 'Cookie Fries', price: 200, cat: '🎂 Bakes' },
-    { name: 'Macarons (per piece)', price: 120, cat: '🎂 Bakes' },
-    { name: 'Rice Krispies Treats', price: 90, cat: '🎂 Bakes' },
-    { name: 'Cookie Dipping Box', price: 420, cat: '🎂 Bakes' },
-    { name: 'Brownie Dipping Box', price: 450, cat: '🎂 Bakes' },
-    { name: 'Brookie Dipping Box', price: 470, cat: '🎂 Bakes' },
-    { name: 'Trés Léches Milk Cake (Bento)', price: 420, cat: '🥛 Milk Cake' },
-    { name: 'Rose Milk Cake (Bento)', price: 420, cat: '🥛 Milk Cake' },
-    { name: 'Mango Milk Cake (Bento)', price: 440, cat: '🥛 Milk Cake' },
-    { name: 'Biscoff Milk Cake (Bento)', price: 480, cat: '🥛 Milk Cake' },
-    { name: 'Nutella Milk Cake (Bento)', price: 480, cat: '🥛 Milk Cake' },
-    { name: 'Turkish (Caramel) Milk Cake (Bento)', price: 480, cat: '🥛 Milk Cake' },
-    { name: 'Pistachio Milk Cake (Bento)', price: 520, cat: '🥛 Milk Cake' },
-  ],
-  desserts: [
-    { name: 'Vanilla Custard Cup', price: 60, cat: '🍮 Dessert Cup' },
-    { name: 'Chocolate Custard Cup', price: 70, cat: '🍮 Dessert Cup' },
-    { name: 'Mango Custard Cup', price: 80, cat: '🍮 Dessert Cup' },
-    { name: 'Trifle Cup', price: 100, cat: '🍮 Dessert Cup' },
-    { name: 'Jelly Cup', price: 50, cat: '🍮 Dessert Cup' },
-    { name: 'Ghas (Milk Pudding) Cup', price: 40, cat: '🍮 Dessert Cup' },
-  ],
-  drinks: [
-    { name: 'Virgin Mojito', price: 180, cat: '🍹 Mojito' },
-    { name: 'Blue Lagoon', price: 190, cat: '🍹 Mojito' },
-    { name: 'Strawberry Delight', price: 200, cat: '🍹 Mojito' },
-    { name: 'Watermelon Wave', price: 200, cat: '🍹 Mojito' },
-    { name: 'Mango Dream', price: 190, cat: '🍹 Mojito' },
-    { name: 'Blueberry Bliss', price: 190, cat: '🍹 Mojito' },
-    { name: 'Lychee Mist', price: 190, cat: '🍹 Mojito' },
-    { name: 'Lotus Luxury (Biscoff)', price: 240, cat: '🥤 Milkshake' },
-    { name: 'Hazelnut Heaven (Nutella)', price: 240, cat: '🥤 Milkshake' },
-    { name: 'Oreo Monster', price: 240, cat: '🥤 Milkshake' },
-    { name: 'Strawberry Cheesecake', price: 230, cat: '🥤 Milkshake' },
-    { name: 'Blueberry Bomb', price: 230, cat: '🥤 Milkshake' },
-    { name: 'Golden Velvet (Mango)', price: 220, cat: '🥤 Milkshake' },
-    { name: 'Pistachio Paradise', price: 250, cat: '🥤 Milkshake' },
-    { name: 'Classic Iced Coffee', price: 220, cat: '☕ Iced Coffee' },
-    { name: 'Mocha Madness Iced Latte', price: 240, cat: '☕ Iced Coffee' },
-    { name: 'Caramel Craze Latte', price: 230, cat: '☕ Iced Coffee' },
-    { name: 'Vanilla Bean Dream (Iced)', price: 230, cat: '☕ Iced Coffee' },
-    { name: 'Strawberry Silk Latte', price: 230, cat: '☕ Iced Coffee' },
-    { name: 'Cookie Monster Brew', price: 240, cat: '☕ Iced Coffee' },
-    { name: 'Classic Hot Coffee', price: 200, cat: '☕ Hot Coffee' },
-    { name: 'Mochaccino', price: 210, cat: '☕ Hot Coffee' },
-    { name: 'Caramel Macchiato', price: 210, cat: '☕ Hot Coffee' },
-    { name: 'Vanilla Bean Dream (Hot)', price: 210, cat: '☕ Hot Coffee' },
-  ],
-}
-
-function getItemCat(name) {
-  for (const items of Object.values(ORDER_ITEMS)) {
-    const found = items.find((i) => i.name === name)
-    if (found) return found.cat
-  }
-  return ''
-}
-
-// ─── Menu price display data ───
-const MENU_DATA = {
-  cheesecake: {
-    title: 'Cheesecake', subtitle: 'Banto 4" (inch) | Per slice',
-    groups: [
-      { name: 'Classic', items: [
-        { n: 'Strawberry', s: '₹120', w: '₹350' }, { n: 'Blueberry', s: '₹140', w: '₹410' },
-        { n: 'Raspberry', s: '₹140', w: '₹410' }, { n: 'Orange Creamsicle', s: '₹130', w: '₹380' },
-        { n: 'Lemon', s: '₹120', w: '₹350' }, { n: 'Rose', s: '₹120', w: '₹350' },
-      ]},
-      { name: 'Exotic', items: [
-        { n: 'Mango', s: '₹120', w: '₹350' }, { n: 'Passion Fruit', s: '₹130', w: '₹380' },
-        { n: 'Cherry', s: '₹130', w: '₹380' }, { n: 'Guava', s: '₹120', w: '₹350' },
-        { n: 'Mango & Passion', s: '₹140', w: '₹410' }, { n: 'Coconut', s: '₹140', w: '₹410' },
-      ]},
-      { name: 'Chocolate', items: [
-        { n: 'Chocolate', s: '₹130', w: '₹380' }, { n: 'Chocolate Orange', s: '₹130', w: '₹380' },
-        { n: 'Black Forest', s: '₹130', w: '₹380' }, { n: 'Chocolate Chunk', s: '₹130', w: '₹380' },
-        { n: 'Nutella', s: '₹150', w: '₹440' }, { n: 'Biscoff', s: '₹140', w: '₹410' },
-      ]},
-      { name: 'Premium', items: [
-        { n: 'Cookies & Cream', s: '₹150', w: '₹430' }, { n: 'Caramel', s: '₹150', w: '₹430' },
-        { n: 'Coffee', s: '₹150', w: '₹430' }, { n: 'Pistachio', s: '₹160', w: '₹470' },
-        { n: 'Dubai Special', s: '₹170', w: '₹500' },
-      ]},
-    ],
-  },
-  cookies: {
-    title: 'Cookies', subtitle: 'Per piece | Box of 6 | Box of 12',
-    items: [
-      { n: 'Triple Choc', p: '₹60 · ₹340 · ₹700' }, { n: 'White Choc', p: '₹50 · ₹280 · ₹580' },
-      { n: 'Classic', p: '₹50 · ₹280 · ₹580' }, { n: 'Red Velvet', p: '₹60 · ₹340 · ₹700' },
-      { n: 'Almond', p: '₹70 · ₹400 · ₹820' }, { n: 'Coconut', p: '₹60 · ₹340 · ₹700' },
-      { n: 'Pistachio & Rose', p: '₹70 · ₹400 · ₹820' },
-    ],
-  },
-  cakes: {
-    title: 'Cakes & Treats', subtitle: 'Cupcakes by the box · Sponge tub/bento · Milk cake bento/tub',
-    groups: [
-      { name: 'Cupcakes · Box of 6 (+₹20 for decoration)', items: [
-        { n: 'Vanilla', p: '₹150' }, { n: 'Red Velvet', p: '₹180' },
-        { n: 'Chocolate', p: '₹170' }, { n: 'Pistachio', p: '₹190' },
-        { n: 'Biscoff', p: '₹180' }, { n: 'Nutella', p: '₹170' },
-        { n: 'Strawberry', p: '₹170' },
-      ]},
-      { name: 'Sponge Cake · Tub / Bento', items: [
-        { n: 'Vanilla', p: '₹100 / ₹450' }, { n: 'Chocolate', p: '₹100 / ₹470' },
-        { n: 'Strawberry', p: '₹110 / ₹470' }, { n: 'Red Velvet', p: '₹110 / ₹470' },
-        { n: 'Mango', p: '₹120 / ₹480' }, { n: 'Blueberry', p: '₹120 / ₹480' },
-        { n: 'Biscoff', p: '₹130 / ₹490' }, { n: 'Nutella', p: '₹130 / ₹490' },
-        { n: 'Pistachio', p: '₹150 / ₹510' }, { n: 'Chocolate Chunk', p: '₹120 / ₹480' },
-      ]},
-      { name: 'Brownies · 1pc / Box of 6', items: [
-        { n: 'Classic', p: '₹60 / ₹350' }, { n: 'Nutella', p: '₹70 / ₹410' },
-        { n: 'Biscoff', p: '₹70 / ₹410' }, { n: 'Oreo', p: '₹70 / ₹410' },
-        { n: 'Pistachio', p: '₹80 / ₹470' }, { n: 'Red Velvet', p: '₹80 / ₹470' },
-      ]},
-      { name: 'Blondies · 1pc / Box of 6', items: [
-        { n: 'Classic', p: '₹60 / ₹350' }, { n: 'White Chocolate', p: '₹70 / ₹410' },
-        { n: 'Strawberry', p: '₹80 / ₹470' }, { n: 'Mango', p: '₹70 / ₹410' },
-        { n: 'Blueberry', p: '₹80 / ₹470' },
-      ]},
-      { name: 'Cakesicles & More', items: [
-        { n: 'Cakesicle (Heart)', p: '₹110' }, { n: 'Cakesicle (Circle)', p: '₹120' },
-        { n: 'Cakesicle (Square)', p: '₹130' }, { n: 'Cakesicle (Ice Cream)', p: '₹140' },
-        { n: 'Cake Pops (6 / 12)', p: '₹120 / ₹230' }, { n: 'Choc Covered Strawberry', p: '₹40' },
-      ]},
-      { name: 'Milk Cake · Bento / Tub', items: [
-        { n: 'Trés Léches', s: '₹120', w: '₹420' }, { n: 'Rose', s: '₹120', w: '₹420' },
-        { n: 'Mango', s: '₹120', w: '₹440' }, { n: 'Biscoff', s: '₹130', w: '₹480' },
-        { n: 'Nutella', s: '₹130', w: '₹480' }, { n: 'Turkish (Caramel)', s: '₹130', w: '₹480' },
-        { n: 'Pistachio', s: '₹140', w: '₹520' },
-      ]},
-      { name: 'New · Look Out For', items: [
-        { n: 'Cookie Fries', p: '₹200' }, { n: 'Macarons (per pc)', p: '₹120' },
-        { n: 'Rice Krispies Treats', p: '₹90' }, { n: 'Brownie Cheesecake (whole)', p: '₹750' },
-        { n: 'Dipped Cheesecake Slice', p: '₹200' }, { n: 'Cookie Dipping Box', p: '₹420' },
-        { n: 'Brownie Dipping Box', p: '₹450' }, { n: 'Brookie Dipping Box', p: '₹470' },
-      ]},
-    ],
-  },
-  desserts: {
-    title: 'Dessert Cups', subtitle: 'Per cup · 150ml',
-    items: [
-      { n: 'Vanilla Custard', p: '₹60' }, { n: 'Chocolate Custard', p: '₹70' },
-      { n: 'Mango Custard', p: '₹80' }, { n: 'Trifle Cup', p: '₹100' },
-      { n: 'Jelly Cup', p: '₹50' }, { n: 'Ghas (Milk Pudding)', p: '₹40' },
-    ],
-  },
-  drinks: {
-    title: 'Drinks', subtitle: 'Per glass / cup · +₹10 for cream on coffee',
-    groups: [
-      { name: 'Mojitos', items: [
-        { n: 'Virgin Mojito', p: '₹180' }, { n: 'Blue Lagoon', p: '₹190' },
-        { n: 'Strawberry Delight', p: '₹200' }, { n: 'Watermelon Wave', p: '₹200' },
-        { n: 'Mango Dream', p: '₹190' }, { n: 'Blueberry Bliss', p: '₹190' },
-        { n: 'Lychee Mist', p: '₹190' },
-      ]},
-      { name: 'Milkshakes', items: [
-        { n: 'Lotus Luxury (Biscoff)', p: '₹240' }, { n: 'Hazelnut Heaven (Nutella)', p: '₹240' },
-        { n: 'Oreo Monster', p: '₹240' }, { n: 'Strawberry Cheesecake', p: '₹230' },
-        { n: 'Blueberry Bomb', p: '₹230' }, { n: 'Golden Velvet (Mango)', p: '₹220' },
-        { n: 'Pistachio Paradise', p: '₹250' },
-      ]},
-      { name: 'Iced Coffee', items: [
-        { n: 'Classic', p: '₹220' }, { n: 'Mocha Madness Iced Latte', p: '₹240' },
-        { n: 'Caramel Craze Latte', p: '₹230' }, { n: 'Vanilla Bean Dream', p: '₹230' },
-        { n: 'Strawberry Silk Latte', p: '₹230' }, { n: 'Cookie Monster Brew', p: '₹240' },
-      ]},
-      { name: 'Hot Coffee', items: [
-        { n: 'Classic', p: '₹200' }, { n: 'Mochaccino', p: '₹210' },
-        { n: 'Caramel Macchiato', p: '₹210' }, { n: 'Vanilla Bean Dream', p: '₹210' },
-      ]},
-    ],
-  },
 }
 
 const VISITED_KEY = 'cake-crumb-chatbot-visited'
@@ -340,25 +100,13 @@ const MAIN_OPTIONS = [
   { label: '📞 Contact Us', action: 'contact' },
 ]
 
-const MENU_CATEGORIES = [
-  { label: '🍰 Cheesecake', action: 'cat_cheesecake' },
-  { label: '🍪 Cookies', action: 'cat_cookies' },
-  { label: '🎂 Cakes & Treats', action: 'cat_cakes' },
-  { label: '🍮 Dessert Cups', action: 'cat_desserts' },
-  { label: '🥤 Drinks', action: 'cat_drinks' },
-  { label: '◀️ Back to Main', action: 'home' },
-]
+// Above this many buttons, lay them out two-per-row instead of one long column.
+// Tuned so the 9-category menu/order lists go grid but MAIN_OPTIONS (5, with longer
+// labels like "⏰ Delivery Info") keeps its roomier single column.
+const GRID_OPTIONS_THRESHOLD = 5
 
-const ORDER_CATEGORIES = [
-  { label: '🍰 Cheesecake Slices', action: 'ord_cheesecake_slice' },
-  { label: '🎂 Cheesecake Banto', action: 'ord_cheesecake_banto' },
-  { label: '🍪 Cookies', action: 'ord_cookies' },
-  { label: '🧁 Cakes & Treats', action: 'ord_cakes' },
-  { label: '🍮 Dessert Cups', action: 'ord_desserts' },
-  { label: '🥤 Drinks', action: 'ord_drinks' },
-  { label: '✅ Review My Order', action: 'review_order' },
-  { label: '🏠 Main Menu', action: 'home' },
-]
+// Buttons that end a list rather than pick from it — full width in grid layout.
+const NAV_ACTIONS = new Set(['home', 'review_order'])
 
 function formatBold(text) {
   return text.split('*').map((part, i) =>
@@ -379,49 +127,22 @@ function PriceCard({ cat }) {
         </div>
       )
     }
-    if (item.p && item.p.includes('·')) {
-      const parts = item.p.split('·').map((s) => s.trim())
-      return (
-        <div className="flex gap-2 shrink-0">
-          {parts.map((price, i) => (
-            <span
-              key={i}
-              className={`w-11 text-right text-[12px] font-bold tabular-nums ${i === 0 ? 'text-berry' : 'text-chocolate'}`}
-            >
-              {price}
-            </span>
-          ))}
-        </div>
-      )
-    }
     return <span className="text-[12px] font-bold text-berry shrink-0 tabular-nums">{item.p}</span>
   }
 
-  const renderColumnHeaders = (items) => {
-    const first = items[0]
-    if (first.s && first.w) {
-      return (
-        <div className="flex justify-end gap-2.5 px-3 pb-1 pt-0.5">
-          <span className="w-11 text-right text-[9px] font-bold tracking-[0.14em] uppercase text-chocolate-light/55">Slice</span>
-          <span className="w-12 text-right text-[9px] font-bold tracking-[0.14em] uppercase text-chocolate-light/55">Whole</span>
-        </div>
-      )
-    }
-    if (first.p && first.p.includes('·')) {
-      const parts = first.p.split('·').length
-      const labels = parts === 3 ? ['Piece', 'Box 6', 'Box 12'] : ['Slice', 'Whole']
-      return (
-        <div className="flex justify-end gap-2 px-3 pb-1 pt-0.5">
-          {labels.slice(0, parts).map((label) => (
-            <span key={label} className="w-11 text-right text-[9px] font-bold tracking-[0.14em] uppercase text-chocolate-light/55">{label}</span>
-          ))}
-        </div>
-      )
-    }
-    return null
+  // `cols` comes from the product's own size/slice labels (see data/chatbotMenu.js),
+  // so a category with two price tiers always labels them correctly.
+  const renderColumnHeaders = (cols) => {
+    if (!cols) return null
+    return (
+      <div className="flex justify-end gap-2.5 px-3 pb-1 pt-0.5">
+        <span className="w-11 text-right text-[9px] font-bold tracking-[0.14em] uppercase text-chocolate-light/55">{cols[0]}</span>
+        <span className="w-12 text-right text-[9px] font-bold tracking-[0.14em] uppercase text-chocolate-light/55">{cols[1]}</span>
+      </div>
+    )
   }
 
-  const renderGroup = (items, groupName, key) => {
+  const renderGroup = ({ items, name: groupName, cols }, key) => {
     const isPremium = groupName && /premium/i.test(groupName)
     return (
       <div key={key}>
@@ -433,7 +154,7 @@ function PriceCard({ cat }) {
             <div className="flex-1 h-px bg-gradient-to-r from-gold/25 via-cream-dark/40 to-transparent" />
           </div>
         )}
-        {renderColumnHeaders(items)}
+        {renderColumnHeaders(cols)}
         <div>
           {items.map((item, i) => {
             const showSpecial = isPremium || isSpecialName(item.n)
@@ -475,9 +196,7 @@ function PriceCard({ cat }) {
         <p className="text-[10px] text-chocolate-light/60 mt-0.5">{cat.subtitle}</p>
       </div>
       <div className="pb-2">
-        {cat.groups
-          ? cat.groups.map((g, i) => renderGroup(g.items, g.name, i))
-          : renderGroup(cat.items, null, 'flat')}
+        {cat.groups.map((g, i) => renderGroup(g, i))}
       </div>
     </div>
   )
@@ -543,6 +262,7 @@ export default function ChatBot() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([])
   const [options, setOptions] = useState([])
+  const isGridOptions = options.length > GRID_OPTIONS_THRESHOLD
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
   const [initialized, setInitialized] = useState(false)
@@ -758,6 +478,12 @@ export default function ChatBot() {
       return
     }
 
+    // Categories are data-driven (data/chatbotMenu.js) — don't enumerate them here.
+    if (action.startsWith('cat_')) {
+      await showCategoryPrices(action.replace('cat_', ''))
+      return
+    }
+
     switch (action) {
       case 'home':
         setOrderCart({})
@@ -767,13 +493,6 @@ export default function ChatBot() {
         break
       case 'menu':
         await showCategoryMenu()
-        break
-      case 'cat_cheesecake':
-      case 'cat_cookies':
-      case 'cat_cakes':
-      case 'cat_desserts':
-      case 'cat_drinks':
-        await showCategoryPrices(action.replace('cat_', ''))
         break
       case 'order':
         setOptions([])
@@ -1196,14 +915,27 @@ export default function ChatBot() {
             )}
 
             {options.length > 0 && !typing && !activeOrderCat && (
-              <div className="flex flex-col gap-1.5 pt-2 pl-10" style={{ animation: 'chat-msg-in 0.3s ease-out' }}>
+              <div
+                // Long category lists (9 categories + nav) would scroll for ages in a
+                // single column, so pack them two-up and drop the conversational indent.
+                className={isGridOptions
+                  ? 'grid grid-cols-2 gap-1.5 pt-2 pl-2 pr-1'
+                  : 'flex flex-col gap-1.5 pt-2 pl-10'}
+                style={{ animation: 'chat-msg-in 0.3s ease-out' }}
+              >
                 {options.map((opt, idx) => {
                   const isPrimary = idx < 2 // first two options get filled-pink emphasis
+                  // Nav actions read as a footer, not a category — give them the full row.
+                  const isFullWidth = isGridOptions && NAV_ACTIONS.has(opt.action)
                   return (
                     <button
                       key={opt.action}
                       onClick={() => handleAction(opt.action, opt.label)}
-                      className="group text-[13px] font-semibold px-4 py-2.5 active:scale-[0.98] transition-all flex items-center justify-between gap-3 self-start"
+                      className={`group font-semibold active:scale-[0.98] transition-all flex items-center justify-between self-start ${
+                        isGridOptions
+                          ? `text-[11.5px] px-2.5 py-2 gap-1 w-full ${isFullWidth ? 'col-span-2' : ''}`
+                          : 'text-[13px] px-4 py-2.5 gap-3'
+                      }`}
                       style={{
                         color: isPrimary ? '#fff' : '#1a1a1a',
                         background: isPrimary ? 'linear-gradient(135deg, #e0617a, #cf3e63)' : '#fff',
@@ -1212,7 +944,7 @@ export default function ChatBot() {
                         boxShadow: isPrimary
                           ? '0 4px 14px rgba(207, 62, 99, 0.28)'
                           : '0 2px 8px rgba(91, 62, 54, 0.06)',
-                        minWidth: 220,
+                        minWidth: isGridOptions ? 0 : 220,
                       }}
                       onMouseEnter={(e) => {
                         if (!isPrimary) {
@@ -1231,9 +963,9 @@ export default function ChatBot() {
                         }
                       }}
                     >
-                      <span>{opt.label}</span>
+                      <span className={isGridOptions ? 'truncate min-w-0' : undefined}>{opt.label}</span>
                       <FiChevronRight
-                        size={14}
+                        size={isGridOptions ? 12 : 14}
                         style={{ color: isPrimary ? 'rgba(255,255,255,0.85)' : '#cf3e63', flexShrink: 0 }}
                       />
                     </button>

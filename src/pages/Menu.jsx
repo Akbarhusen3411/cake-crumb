@@ -81,8 +81,8 @@ const CARDS = [
       { n: 'Ghas (Milk Pudding) Cup', p: 40 },
       { n: 'Jelly Cup', p: 50 },
       { n: 'Vanilla Custard Cup', p: 60 },
+      { n: 'Mango Custard Cup', p: 80 },
       { n: 'Trifle Cup', p: 100 },
-      { n: 'Cheesecake Cup', p: 150 },
     ],
   },
 ]
