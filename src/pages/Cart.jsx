@@ -170,7 +170,7 @@ export default function Cart() {
               </p>
               <hr style={{ borderColor: 'var(--cc-border)' }} />
               <div className="d-flex justify-content-between mb-3" style={{ fontSize: '1.05rem' }}>
-                <span style={{ color: 'var(--cc-cocoa)' }}>Subtotal</span>
+                <span style={{ color: 'var(--cc-cocoa)' }}>Estimated total</span>
                 <strong style={{ color: 'var(--cc-rose)', fontFamily: "'Lato', system-ui, sans-serif", fontSize: '1.2rem' }}>
                   {inr(subtotal)}
                 </strong>

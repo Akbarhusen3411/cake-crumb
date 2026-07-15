@@ -108,7 +108,9 @@ export default function ConfirmOrder() {
 
         const wasAlreadyConfirmed = found.status === 'confirmed'
         if (found.firebaseId && !wasAlreadyConfirmed) {
-          await markOrderConfirmed(found.firebaseId)
+          // Pass orderId too, or the public tracking/{orderId} mirror never flips
+          // to "confirmed" and the customer's Track-Order page stays on "placed".
+          await markOrderConfirmed(found.firebaseId, found.orderId)
           if (cancelled) return
         }
 
@@ -120,8 +122,11 @@ export default function ConfirmOrder() {
         if (phone) {
           const url = `https://wa.me/${phone}?text=${encodeURIComponent(buildConfirmMessage(found))}`
           try {
-            window.open(url, '_blank', 'noopener,noreferrer')
-            if (!cancelled) setWaOpened(true)
+            // A blocked pop-up returns null WITHOUT throwing, so only report
+            // "opened" when we actually got a window — otherwise the manual
+            // fallback button stays the primary action.
+            const win = window.open(url, '_blank', 'noopener,noreferrer')
+            if (!cancelled && win) setWaOpened(true)
           } catch {
             // popup blocked — manual fallback button stays visible
           }

@@ -170,6 +170,7 @@ export default function AdminOrders() {
   const [busyId, setBusyId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
   const [filter, setFilter] = useState('all')
+  const [feedError, setFeedError] = useState('')
 
   const isAdmin = !!user
 
@@ -195,11 +196,20 @@ export default function AdminOrders() {
     let unsub = () => {}
     let active = true
     setLoading(true)
-    subscribeOrders((list) => {
-      if (!active) return
-      setOrders(list)
-      setLoading(false)
-    }).then((u) => { if (active) unsub = u; else u() })
+    setFeedError('')
+    subscribeOrders(
+      (list) => {
+        if (!active) return
+        setOrders(list)
+        setLoading(false)
+      },
+      (err) => {
+        if (!active) return
+        // Without this, a snapshot error would leave the dashboard stuck on "loading…".
+        setFeedError(err?.message || 'Could not load orders — check your connection or Firestore rules.')
+        setLoading(false)
+      }
+    ).then((u) => { if (active) unsub = u; else u() })
     return () => { active = false; unsub() }
   }, [isAdmin])
 
@@ -345,7 +355,13 @@ export default function AdminOrders() {
         })}
       </div>
 
-      {!loading && shown.length === 0 && (
+      {feedError && (
+        <div style={{ background: '#f8d7da', color: '#a32530', border: '1px solid #f1aeb5', borderRadius: 10, padding: '0.7rem 0.9rem', fontSize: '0.85rem', marginBottom: '0.8rem' }}>
+          ⚠ {feedError} <button onClick={refresh} style={{ marginLeft: 8, textDecoration: 'underline', background: 'none', border: 'none', color: '#a32530', cursor: 'pointer' }}>Retry</button>
+        </div>
+      )}
+
+      {!loading && !feedError && shown.length === 0 && (
         <p style={{ color: 'var(--cc-cocoa-soft)' }}>No orders{filter !== 'all' ? ` (${filter})` : ''} yet.</p>
       )}
 

@@ -54,6 +54,7 @@ export default function SearchOverlay({ open, onClose }) {
         className="cc-search-overlay__panel"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
+        aria-modal="true"
         aria-label="Search products"
       >
         <div className="cc-search-overlay__header">
@@ -93,7 +94,7 @@ export default function SearchOverlay({ open, onClose }) {
             results.map((p) => (
               <Link
                 key={p.id}
-                to="/shop"
+                to={`/shop?category=${encodeURIComponent(p.category)}`}
                 onClick={onClose}
                 className="cc-search-overlay__result"
               >
@@ -103,7 +104,7 @@ export default function SearchOverlay({ open, onClose }) {
                   <div className="cc-search-overlay__name">{p.name}</div>
                 </div>
                 <strong className="cc-search-overlay__price">
-                  {p.slice ? `from ${inr(p.slice)}` : inr(p.price)}
+                  {p.slice != null ? `from ${inr(Math.min(p.price, p.slice))}` : inr(p.price)}
                 </strong>
               </Link>
             ))

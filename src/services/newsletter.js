@@ -12,13 +12,17 @@ export async function subscribeNewsletter(email, source = 'footer') {
   const db = await getDb()
   if (db) {
     try {
-      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore')
-      const docRef = await addDoc(collection(db, COLLECTION), {
+      // Key the doc by the email so a repeat subscribe doesn't create duplicate
+      // docs. A create for a new email is allowed by the rules; an existing email
+      // becomes an update (rules deny it) → caught below → dedup with no error to
+      // the user. Emails are validated above so they're safe as a doc id.
+      const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
+      await setDoc(doc(db, COLLECTION, cleaned), {
         email: cleaned,
         source,
         createdAt: serverTimestamp(),
       })
-      return { ok: true, id: docRef.id }
+      return { ok: true, id: cleaned }
     } catch (err) {
       console.error('[newsletter] Firestore save failed:', err)
       // fall through to localStorage so user feedback is still positive

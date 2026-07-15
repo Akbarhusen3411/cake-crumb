@@ -137,27 +137,29 @@ export default function Navbar() {
                 style={{ color: 'var(--cc-cocoa)' }}
               >
                 <FiShoppingBag size={20} strokeWidth={1.8} />
-                <span
-                  className="position-absolute"
-                  style={{
-                    top: -6,
-                    right: -8,
-                    background: 'var(--cc-rose)',
-                    color: '#fff',
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    borderRadius: '50%',
-                    minWidth: 17,
-                    height: 17,
-                    padding: '0 4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: '2px solid #ffffff',
-                  }}
-                >
-                  {count}
-                </span>
+                {count > 0 && (
+                  <span
+                    className="position-absolute"
+                    style={{
+                      top: -6,
+                      right: -8,
+                      background: 'var(--cc-rose)',
+                      color: '#fff',
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      borderRadius: '50%',
+                      minWidth: 17,
+                      height: 17,
+                      padding: '0 4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '2px solid #ffffff',
+                    }}
+                  >
+                    {count}
+                  </span>
+                )}
               </Link>
               <button
                 type="button"

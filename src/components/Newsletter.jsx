@@ -19,7 +19,7 @@ export default function Newsletter({ compact = false }) {
       const source = compact ? 'footer' : 'inline'
       await subscribeNewsletter(email, source)
       // Fire-and-forget: email the subscriber's address to the bakery inbox.
-      sendNewsletterNotification(email, source)
+      sendNewsletterNotification(email, source).catch(() => {})
       setStatus('done')
       setEmail('')
     } catch (err) {

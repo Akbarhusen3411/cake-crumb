@@ -13,6 +13,7 @@ const QUICK_LINKS = [
   { to: '/menu',    label: 'Menu' },
   { to: '/shop',    label: 'Shop' },
   { to: '/gallery', label: 'Gallery' },
+  { to: '/reviews', label: 'Reviews' },
   { to: '/contact', label: 'Contact Us' },
 ]
 
@@ -157,7 +158,8 @@ export default function Footer() {
                   <span className="cc-footer-d__info-icon"><FiClock size={14} /></span>
                   <span>
                     Mon – Sat: 9am – 9pm<br />
-                    Sunday: 10am – 7pm
+                    Sunday: 10am – 7pm<br />
+                    <span style={{ opacity: 0.85 }}>Pre-order 1 day in advance</span>
                   </span>
                 </li>
               </ul>

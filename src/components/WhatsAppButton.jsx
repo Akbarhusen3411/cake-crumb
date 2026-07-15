@@ -12,10 +12,10 @@ export function buildWhatsAppLink(message = '') {
 const HIDDEN_ROUTES = ['/checkout']
 
 export default function WhatsAppButton() {
+  // useLocation().pathname is already base-relative (BrowserRouter has basename
+  // set in main.jsx), so no base-stripping is needed.
   const { pathname } = useLocation()
-  // Strip the Vite base if present (e.g. /cake-crumb/checkout → /checkout).
-  const route = pathname.replace(/^\/cake-crumb/, '') || '/'
-  if (HIDDEN_ROUTES.includes(route)) return null
+  if (HIDDEN_ROUTES.includes(pathname)) return null
 
   return (
     <a

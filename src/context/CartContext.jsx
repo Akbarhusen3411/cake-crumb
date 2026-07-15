@@ -31,7 +31,7 @@ export function CartProvider({ children }) {
       if (found) {
         return prev.map((p) => (p.id === product.id ? { ...p, qty: p.qty + qty } : p))
       }
-      return [...prev, { id: product.id, name: product.name, price: product.price, img: product.img, qty }]
+      return [...prev, { id: product.id, name: product.name, price: Number(product.price) || 0, img: product.img, qty }]
     })
     showToast({ name: product.name, img: product.img, qty })
   }

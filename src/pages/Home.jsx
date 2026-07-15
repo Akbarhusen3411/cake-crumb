@@ -175,6 +175,7 @@ export default function Home() {
                 href="https://www.instagram.com/cake_and_crumb_1/"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Cake & Crumb on Instagram"
                 className="ig-tile"
               >
                 <img src={u(src, 400, 400)} alt="" loading="lazy" />

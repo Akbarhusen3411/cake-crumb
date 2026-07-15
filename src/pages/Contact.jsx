@@ -217,14 +217,17 @@ export default function Contact() {
                     </select>
                   </div>
                   <div className="col-md-6">
+                    <label className="cc-field-label" htmlFor="contact-need-by">Need by *</label>
                     <input
+                      id="contact-need-by"
                       className="cc-input"
                       type="date"
                       min={minDate}
                       value={form.needBy}
                       onChange={(e) => update('needBy', e.target.value)}
                       required
-                      title="Need by *"
+                      aria-label="Need by date"
+                      title="Need by"
                     />
                   </div>
                   <div className="col-md-6">

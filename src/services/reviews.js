@@ -12,7 +12,11 @@ function readLocal() {
 }
 
 function writeLocal(list) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+  } catch {
+    // storage full or blocked — fail silently (parity with orders/newsletter)
+  }
 }
 
 /**

@@ -27,8 +27,11 @@ export function usePageMeta({ title, description } = {}) {
     setMeta('property', 'og:url', url)
 
     return () => {
-      // restore defaults on unmount so the next page (if it doesn't call this) is sensible
+      // restore defaults on unmount so a page that forgets to call this doesn't
+      // inherit the previous route's title/description
       document.title = DEFAULT_TITLE
+      setMeta('name', 'description', DEFAULT_DESC)
+      setMeta('property', 'og:description', DEFAULT_DESC)
     }
   }, [title, description])
 }

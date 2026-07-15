@@ -18,16 +18,17 @@ const CATEGORIES = [
   'All Products', 'Cheesecakes', 'Milk Cakes', 'Sponge Cakes', 'Cookies', 'Cupcakes', 'Bakes', 'Dessert Cups', 'Drinks',
 ]
 
+// A product's lowest orderable price. `slice` is the SMALLER tier for cheesecakes
+// (per-slice) but the LARGER box for cookies/brownies (box of 12), so never assume
+// — take the min so "From" prices, filters and sort all use the true entry price.
+const lowestPrice = (p) => (p.slice != null ? Math.min(p.price, p.slice) : p.price)
+
 const PRICE_RANGES = [
   { id: 'all',  label: 'All Prices',     test: () => true },
-  { id: '0-200',    label: '₹0 – ₹200',  test: (p) => (p.slice || p.price) <= 200 },
-  { id: '200-500',  label: '₹200 – ₹500',test: (p) => (p.slice || p.price) > 200 && (p.slice || p.price) <= 500 },
-  { id: '500-1000', label: '₹500 – ₹1000',test: (p) => (p.slice || p.price) > 500 && (p.slice || p.price) <= 1000 },
-  { id: '1000+',    label: '₹1000+',     test: (p) => (p.slice || p.price) > 1000 },
-]
-
-const OCCASIONS = [
-  'Birthday', 'Wedding', 'Anniversary', 'Thank You', 'Just Because', 'Other',
+  { id: '0-200',    label: '₹0 – ₹200',  test: (p) => lowestPrice(p) <= 200 },
+  { id: '200-500',  label: '₹200 – ₹500',test: (p) => lowestPrice(p) > 200 && lowestPrice(p) <= 500 },
+  { id: '500-1000', label: '₹500 – ₹1000',test: (p) => lowestPrice(p) > 500 && lowestPrice(p) <= 1000 },
+  { id: '1000+',    label: '₹1000+',     test: (p) => lowestPrice(p) > 1000 },
 ]
 
 function Radio({ checked, onChange, label }) {
@@ -68,11 +69,10 @@ export default function Shop() {
         brand: { '@type': 'Brand', name: 'Cake & Crumb' },
         offers: {
           '@type': 'Offer',
-          price: p.slice || p.price,
+          price: lowestPrice(p),
           priceCurrency: 'INR',
           availability: 'https://schema.org/InStock',
         },
-        aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.9', reviewCount: '245' },
       },
     })),
   })
@@ -84,7 +84,6 @@ export default function Shop() {
     paramCategory && CATEGORIES.includes(paramCategory) ? paramCategory : 'All Products'
   )
   const [priceRange, setPriceRange] = useState('all')
-  const [occasion, setOccasion] = useState(null) // visual only — no real product tagging
   const [sort, setSort] = useState('featured')
   const [page, setPage] = useState(1)
   const [quickView, setQuickView] = useState(null)
@@ -94,8 +93,7 @@ export default function Shop() {
   // are active even while the panel is collapsed.
   const activeFilterCount =
     (category !== 'All Products' ? 1 : 0) +
-    (priceRange !== 'all' ? 1 : 0) +
-    (occasion ? 1 : 0)
+    (priceRange !== 'all' ? 1 : 0)
   const { items, count, subtotal, add, increment, decrement, remove, clear } = useCart()
 
   const PAGE_SIZE = 12
@@ -105,8 +103,8 @@ export default function Shop() {
     let list = shopProducts.filter(
       (p) => (category === 'All Products' || p.category === category) && priceTest(p)
     )
-    if (sort === 'lowhigh') list = [...list].sort((a, b) => (a.slice || a.price) - (b.slice || b.price))
-    else if (sort === 'highlow') list = [...list].sort((a, b) => (b.slice || b.price) - (a.slice || a.price))
+    if (sort === 'lowhigh') list = [...list].sort((a, b) => lowestPrice(a) - lowestPrice(b))
+    else if (sort === 'highlow') list = [...list].sort((a, b) => lowestPrice(b) - lowestPrice(a))
     return list
   }, [category, priceRange, sort])
 
@@ -126,7 +124,6 @@ export default function Shop() {
   const clearFilters = () => {
     setCategory('All Products')
     setPriceRange('all')
-    setOccasion(null)
   }
 
   // On phones/tablets the filter sidebar sits ABOVE the product grid, so after
@@ -233,18 +230,6 @@ export default function Shop() {
                   ))}
                 </div>
 
-                <div className="cc-shop-filter__group">
-                  <div className="cc-shop-filter__label">Occasion</div>
-                  {OCCASIONS.map((o) => (
-                    <Radio
-                      key={o}
-                      label={o}
-                      checked={occasion === o}
-                      onChange={() => setOccasion(o)}
-                    />
-                  ))}
-                </div>
-
                 <button
                   type="button"
                   className="cc-shop-filter__clear"
@@ -283,13 +268,6 @@ export default function Shop() {
                   <article key={p.id} className="cc-product-card">
                     <button
                       type="button"
-                      className="cc-product-card__heart"
-                      aria-label="Add to favorites"
-                    >
-                      <FiHeart size={14} />
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => setQuickView(p)}
                       aria-label={`View ${p.name}`}
                       className="cc-product-card__img-btn"
@@ -310,7 +288,7 @@ export default function Shop() {
                         {p.name}
                       </h6>
                       <div className="cc-product-card__price">
-                        {p.slice ? `From ${inr(p.slice)}` : inr(p.price)}
+                        {p.slice != null ? `From ${inr(lowestPrice(p))}` : inr(p.price)}
                       </div>
                       <button
                         className="cc-product-card__add"
@@ -432,6 +410,8 @@ export default function Shop() {
                   to="/cart"
                   className="btn-rose w-100 justify-content-center mb-2"
                   style={{ pointerEvents: count === 0 ? 'none' : 'auto', opacity: count === 0 ? 0.5 : 1 }}
+                  tabIndex={count === 0 ? -1 : undefined}
+                  aria-disabled={count === 0}
                 >
                   <FiShoppingBag size={14} /> View Cart
                 </Link>
@@ -439,6 +419,8 @@ export default function Shop() {
                   to="/checkout"
                   className="btn-outline-rose w-100 justify-content-center"
                   style={{ pointerEvents: count === 0 ? 'none' : 'auto', opacity: count === 0 ? 0.5 : 1 }}
+                  tabIndex={count === 0 ? -1 : undefined}
+                  aria-disabled={count === 0}
                 >
                   <FiCheckCircle size={14} /> Checkout
                 </Link>
