@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import {
   FiX, FiSend, FiChevronRight, FiPlus, FiMinus,
-  FiShoppingBag, FiHeart, FiAlertCircle, FiStar,
+  FiShoppingBag, FiHeart, FiAlertCircle, FiStar, FiCalendar, FiCheck,
 } from 'react-icons/fi'
 import { asset } from '../data/images.js'
 import { generateOrderId } from '../services/orderId.js'
 import { saveOrder } from '../services/orders.js'
 import { deliveryFee, isBulkOrder, depositAmount, DEPOSIT_PCT } from '../data/shopConfig.js'
+import { kmFromBakeryByPincode } from '../services/delivery.js'
 import { WHATSAPP_PHONE } from './WhatsAppButton.jsx'
 import { useCart } from '../context/CartContext.jsx'
 import {
@@ -202,6 +203,148 @@ function PriceCard({ cat }) {
   )
 }
 
+// ─── Order summary card (chat-styled version of the website checkout summary) ───
+function OrderSummaryCard({ data }) {
+  const { items, subtotal, delivery, total, bulk, deposit, info } = data
+  return (
+    <div
+      className="flex-1 min-w-0 rounded-2xl rounded-tl-sm shadow-md overflow-hidden border border-gold/15"
+      style={{ background: '#fffbf8', animation: 'chat-msg-in 0.28s cubic-bezier(0.16,1,0.3,1)' }}
+    >
+      {/* Header */}
+      <div
+        className="px-3.5 py-2.5 flex items-center gap-2.5 border-b border-cream-dark/50"
+        style={{ background: 'linear-gradient(135deg,#fff0eb 0%,#ffffff 60%,#fce4e9 100%)' }}
+      >
+        <span
+          className="w-8 h-8 rounded-xl flex items-center justify-center text-white shrink-0"
+          style={{ background: 'linear-gradient(135deg,#e0617a,#cf3e63)', boxShadow: '0 4px 10px -3px rgba(207,62,99,0.5)' }}
+        >
+          <FiShoppingBag size={15} />
+        </span>
+        <div className="leading-tight">
+          <div className="text-[14px] font-bold" style={{ fontFamily: "'Playfair Display',serif", color: '#5b3e36' }}>Order Summary</div>
+          <div className="text-[9px] font-bold tracking-[0.14em] uppercase text-berry">{items.length} item{items.length !== 1 ? 's' : ''}</div>
+        </div>
+      </div>
+
+      {/* Items */}
+      <div className="px-2.5 py-2 flex flex-col gap-1.5">
+        {items.map((it, idx) => (
+          <div key={idx} className="flex items-center gap-2 rounded-xl border border-cream-dark/50 bg-white px-2.5 py-1.5">
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-semibold leading-tight" style={{ color: '#5b3e36' }}>{it.name}</p>
+              <p className="text-[10.5px] mt-0.5">
+                <span className="font-bold text-berry">×{it.qty}</span>{' '}
+                <span className="text-chocolate-light/70">₹{it.price}</span>
+              </p>
+            </div>
+            <span className="text-[12.5px] font-bold shrink-0" style={{ color: '#5b3e36' }}>₹{it.price * it.qty}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Totals */}
+      <div className="px-3.5 pt-2 pb-1 mt-0.5 border-t border-dashed border-berry/30">
+        <div className="flex justify-between text-[12px] mb-1">
+          <span className="text-chocolate-light/70">Subtotal</span>
+          <span className="font-semibold" style={{ color: '#5b3e36' }}>₹{subtotal}</span>
+        </div>
+        <div className="flex justify-between text-[12px]">
+          <span className="text-chocolate-light/70">Delivery</span>
+          <span className={`font-bold ${delivery === 0 ? 'text-berry' : ''}`} style={delivery !== 0 ? { color: '#5b3e36' } : undefined}>
+            {delivery === 0 ? 'FREE' : '₹' + delivery}
+          </span>
+        </div>
+      </div>
+      <div
+        className="mx-3 my-2 flex items-center justify-between rounded-xl px-3 py-2"
+        style={{ background: 'linear-gradient(135deg,rgba(224,97,122,0.12),rgba(247,227,223,0.55))', border: '1px solid #f3d7d9' }}
+      >
+        <span className="text-[13px] font-bold" style={{ fontFamily: "'Playfair Display',serif", color: '#5b3e36' }}>Total</span>
+        <span className="text-[18px] font-extrabold" style={{ color: '#cf3e63' }}>₹{total}</span>
+      </div>
+
+      {bulk && (
+        <div
+          className="mx-3 mb-2 flex items-center justify-between rounded-lg px-2.5 py-1.5 text-[11px]"
+          style={{ background: '#fff', border: '1px dashed #d7a7ae', color: '#7a584d' }}
+        >
+          <span>Pay now · {Math.round(DEPOSIT_PCT * 100)}% advance</span>
+          <strong style={{ color: '#cf3e63' }}>₹{deposit}</strong>
+        </div>
+      )}
+
+      {/* Contact */}
+      <div className="px-3.5 py-2 border-t border-cream-dark/50 text-[11px] leading-relaxed" style={{ color: '#7a584d' }}>
+        <div className="truncate">👤 {info.name}{info.phone ? ` · 📞 ${info.phone}` : ''}</div>
+        {info.address && <div className="truncate">📍 {info.address}{info.pincode ? `, ${info.pincode}` : ''}</div>}
+        {info.date && <div>📅 {info.date}</div>}
+      </div>
+    </div>
+  )
+}
+
+// ─── Delivery date picker (native date input + optional time slot) ───
+function nextDayISO() {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  return d.toISOString().slice(0, 10)
+}
+function formatPickedDate(iso) {
+  const d = new Date(iso + 'T00:00:00')
+  if (isNaN(d.getTime())) return iso
+  return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+}
+function DatePickerWidget({ onPick }) {
+  const [date, setDate] = useState('')
+  const [slot, setSlot] = useState('')
+  const min = nextDayISO()
+  const slots = ['Morning', 'Afternoon', 'Evening']
+  return (
+    <div
+      className="w-full rounded-2xl rounded-tl-sm shadow-md overflow-hidden border border-gold/15 bg-white"
+      style={{ animation: 'chat-msg-in 0.25s ease-out' }}
+    >
+      <div className="px-3.5 py-2.5 bg-gradient-to-r from-gold/15 via-cream/80 to-soft-pink/40 border-b border-gold/10 flex items-center gap-2">
+        <FiCalendar size={13} className="text-berry" />
+        <p className="text-[11px] font-semibold text-chocolate tracking-wide">Pick your delivery date</p>
+      </div>
+      <div className="p-3 flex flex-col gap-2.5">
+        <input
+          type="date"
+          min={min}
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="w-full rounded-xl border border-cream-dark px-3 py-2 text-[13px] outline-none focus:border-berry"
+          style={{ background: '#fffbf8', color: '#5b3e36' }}
+        />
+        <div className="flex gap-1.5">
+          {slots.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setSlot(s === slot ? '' : s)}
+              className={`flex-1 rounded-lg py-1.5 text-[11px] font-semibold border transition-colors ${slot === s ? 'bg-berry text-white border-berry' : 'bg-white border-cream-dark text-chocolate'}`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          disabled={!date}
+          onClick={() => onPick(formatPickedDate(date) + (slot ? ` · ${slot}` : ''))}
+          className="w-full h-9 rounded-xl text-white text-[12.5px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform disabled:opacity-50"
+          style={{ background: 'linear-gradient(to right,#e0617a,#cf3e63)' }}
+        >
+          <FiCheck size={14} /> Confirm Date
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Order item selector ───
 function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
   // Running count across the whole order (cart is the full name→qty map).
@@ -240,6 +383,7 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
                           <div className="flex items-center justify-between">
                             <button
                               onClick={() => onUpdate(v.name, v.price, q - 1)}
+                              aria-label={`Remove one ${v.label}`}
                               className="w-7 h-7 rounded-lg bg-white border border-berry/40 flex items-center justify-center text-berry active:scale-90 transition-transform"
                             >
                               <FiMinus size={14} />
@@ -247,6 +391,7 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
                             <span className="text-[14px] font-extrabold text-chocolate">{q}</span>
                             <button
                               onClick={() => onUpdate(v.name, v.price, q + 1)}
+                              aria-label={`Add one ${v.label}`}
                               className="w-7 h-7 rounded-lg bg-berry flex items-center justify-center text-white active:scale-90 transition-transform"
                             >
                               <FiPlus size={14} />
@@ -281,6 +426,7 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
                   <>
                     <button
                       onClick={() => onUpdate(item.name, item.price, qty - 1)}
+                      aria-label={`Remove one ${item.name}`}
                       className="w-7 h-7 rounded-full bg-cream border border-chocolate/10 flex items-center justify-center text-chocolate active:scale-90 transition-transform"
                     >
                       <FiMinus size={12} />
@@ -290,6 +436,7 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
                 )}
                 <button
                   onClick={() => onUpdate(item.name, item.price, qty + 1)}
+                  aria-label={`Add ${item.name}`}
                   className="w-7 h-7 rounded-full bg-berry flex items-center justify-center text-white active:scale-90 transition-transform"
                   style={{ boxShadow: '0 2px 6px rgba(224, 97, 122, 0.4)' }}
                 >
@@ -336,13 +483,19 @@ export default function ChatBot() {
   const [initialized, setInitialized] = useState(false)
   const [orderCart, setOrderCart] = useState({})
   const [activeOrderCat, setActiveOrderCat] = useState(null)
+  const [showDatePicker, setShowDatePicker] = useState(false)
   const [orderStep, setOrderStep] = useState(null)
   const [lastOrderId, setLastOrderId] = useState(null)
   const [lastOrderTime, setLastOrderTime] = useState(null)
-  const [orderInfo, setOrderInfo] = useState({ name: '', phone: '', address: '', date: '' })
+  const [lastWaUrl, setLastWaUrl] = useState(null) // fallback link if a pop-up is blocked
+  const [orderInfo, setOrderInfo] = useState({ name: '', phone: '', address: '', pincode: '', date: '' })
+  // Straight-line km from the bakery, geocoded from the pincode in the address —
+  // drives the distance-based delivery fee so the bot matches the website checkout.
+  const [deliveryKm, setDeliveryKm] = useState(null)
   const scrollRef = useRef(null)
   const chatPanelRef = useRef(null)
   const chatToggleRef = useRef(null)
+  const inputRef = useRef(null)
 
   const { count: mainCartCount } = useCart()
 
@@ -468,18 +621,18 @@ export default function ChatBot() {
   const sendOrderToWhatsApp = () => {
     const items = Object.entries(orderCart).filter(([, v]) => v.qty > 0)
     const subtotal = getCartTotal()
-    // The bot only collects a free-text address (no pincode to geocode), so it
-    // can't measure distance — delivery is shown as free within the local radius
-    // and the bakery confirms any charge for far areas.
-    const fee = deliveryFee('delivery')
+    // Distance-based delivery from the pincode in the address (geocoded at the date
+    // step and stored in deliveryKm) — matches the website checkout so the same
+    // address costs the same here. null (no pincode / lookup failed) → free.
+    const fee = deliveryFee('delivery', deliveryKm)
     const total = subtotal + fee
     const orderId = generateOrderId(orderInfo.name)
     setLastOrderId(orderId)
     setLastOrderTime(Date.now())
 
     // Persist to Firestore (fire-and-forget, never blocks WhatsApp open).
-    // Delivery is free within range here (no pincode to geocode in the bot); the
-    // bakery confirms any far-area charge, matching the distance rule in shopConfig.
+    // deliveryKm is geocoded from the address pincode (same as website checkout);
+    // stored so the admin dashboard shows "~N km away" for bot orders too.
     saveOrder({
       orderId,
       items: items.map(([name, { qty, price }]) => ({ name, qty, price, id: name.toLowerCase().replace(/\s+/g, '-') })),
@@ -488,8 +641,11 @@ export default function ChatBot() {
         name: orderInfo.name,
         phone: orderInfo.phone,
         address: orderInfo.address,
+        pincode: orderInfo.pincode,
       },
       payment: { method: 'cod' },
+      deliveryMethod: 'delivery',
+      deliveryKm,
       notes: `Delivery: ${orderInfo.date}`,
       source: 'chatbot',
     })
@@ -537,7 +693,10 @@ export default function ChatBot() {
       `⚠️ *Cancel window:* 30 min from order time.\n\n` +
       `Please confirm my order. Thank you! 🙏`
 
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer')
+    const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`
+    const win = window.open(waUrl, '_blank', 'noopener,noreferrer')
+    // Report back so the caller can offer a manual link if the pop-up was blocked.
+    return { url: waUrl, opened: !!win }
   }
 
   const handleAction = async (action, label) => {
@@ -565,7 +724,9 @@ export default function ChatBot() {
       case 'home':
         setOrderCart({})
         setOrderStep(null)
-        setOrderInfo({ name: '', phone: '', address: '', date: '' })
+        setOrderInfo({ name: '', phone: '', address: '', pincode: '', date: '' })
+        setDeliveryKm(null)
+        setShowDatePicker(false)
         await showMainMenu()
         break
       case 'menu':
@@ -585,9 +746,8 @@ export default function ChatBot() {
           return
         }
         const total = getCartTotal()
-        const fee = deliveryFee('delivery')
         let summary = `*🛒 Your Order:*\n\n` + getCartSummary()
-        summary += `\n\n*Subtotal:* ₹${total}\n*Delivery:* ${fee === 0 ? 'FREE' : '₹' + fee}\n*Total: ₹${total + fee}*`
+        summary += `\n\n*Subtotal:* ₹${total}\n_Delivery is calculated from your address in the next step._`
         await addBotMessage(summary)
         await addBotMessage("Looks good? Let's proceed with your details, or go back to add more items.")
         setOptions([
@@ -610,16 +770,26 @@ export default function ChatBot() {
         await addBotMessage('Great! I need a few details for delivery.\n\nPlease type your *full name*:')
         setOrderStep('name')
         break
-      case 'confirm_send':
+      case 'confirm_send': {
         setOptions([])
-        sendOrderToWhatsApp()
-        await addBotMessage('✅ *Order sent to WhatsApp!*\n\nOur team will confirm your order within minutes.\n\n⚠️ *Cancellation:* You can cancel within 30 minutes. After that, cancellation is not available.')
+        const { url, opened } = sendOrderToWhatsApp()
+        setLastWaUrl(url)
+        if (opened) {
+          await addBotMessage('✅ *Order sent to WhatsApp!*\n\nOur team will confirm your order within minutes.\n\n⚠️ *Cancellation:* You can cancel within 30 minutes. After that, cancellation is not available.')
+        } else {
+          await addBotMessage('✅ *Your order is ready!*\n\nYour browser blocked the WhatsApp pop-up — tap *Open WhatsApp to Send* below to deliver it to us. 👇')
+        }
         setOrderCart({})
         setOrderStep(null)
         setOptions([
+          ...(opened ? [] : [{ label: '💬 Open WhatsApp to Send', action: 'open_wa_fallback' }]),
           { label: '🚫 Cancel My Order', action: 'user_cancel' },
           { label: '🏠 Main Menu', action: 'home' },
         ])
+        break
+      }
+      case 'open_wa_fallback':
+        if (lastWaUrl) window.open(lastWaUrl, '_blank', 'noopener,noreferrer')
         break
       case 'user_cancel': {
         setOptions([])
@@ -665,15 +835,66 @@ export default function ChatBot() {
     }
   }
 
+  // Finalize the order once a delivery date is chosen (from the picker or typed):
+  // render the styled summary card, show the bulk-advance note, then ask to send.
+  const submitDate = async (dateStr) => {
+    setOrderInfo((prev) => ({ ...prev, date: dateStr }))
+    setOrderStep(null)
+    setShowDatePicker(false)
+    const subtotal = getCartTotal()
+    // deliveryKm was geocoded from the pincode step (same rule as the website).
+    const fee = deliveryFee('delivery', deliveryKm)
+    const total = subtotal + fee
+    const summaryItems = Object.entries(orderCart)
+      .filter(([, v]) => v.qty > 0)
+      .map(([name, { qty, price }]) => ({ name, qty, price }))
+    setMessages((prev) => [
+      ...prev,
+      {
+        from: 'bot',
+        summary: {
+          items: summaryItems,
+          subtotal,
+          delivery: fee,
+          total,
+          bulk: isBulkOrder(subtotal),
+          deposit: depositAmount(total),
+          info: {
+            name: orderInfo.name,
+            phone: orderInfo.phone,
+            address: orderInfo.address,
+            pincode: orderInfo.pincode,
+            date: dateStr,
+          },
+        },
+      },
+    ])
+    scrollToBottom()
+    // Large-order advance notice — mirrors the website's bulk banner.
+    if (isBulkOrder(subtotal)) {
+      await addBotMessage(`💳 *This is a larger order.* We'll request a *${Math.round(DEPOSIT_PCT * 100)}% advance* (₹${depositAmount(total)}) on WhatsApp before baking — the balance is paid on delivery.`)
+    }
+    await addBotMessage('Ready to send this order to our bakery on WhatsApp? 🎂')
+    setOptions([
+      { label: '✅ Send Order via WhatsApp', action: 'confirm_send' },
+      { label: '✏️ Edit Details', action: 'collect_info' },
+      { label: '🏠 Cancel', action: 'home' },
+    ])
+  }
+
   const handleTextInput = async (text) => {
     const lower = text.toLowerCase().trim()
     addUserMessage(text)
     setInput('')
 
     if (orderStep === 'name') {
-      setOrderInfo((prev) => ({ ...prev, name: text }))
+      if (text.trim().length < 2) {
+        await addBotMessage('Please enter your name so we know who the order is for 🙂')
+        return
+      }
+      setOrderInfo((prev) => ({ ...prev, name: text.trim() }))
       setOrderStep('phone')
-      await addBotMessage(`Thanks *${text}*! Now enter your *phone number*:`)
+      await addBotMessage(`Thanks *${text.trim()}*! Now enter your *phone number*:`)
       return
     }
     if (orderStep === 'phone') {
@@ -684,33 +905,40 @@ export default function ChatBot() {
       }
       setOrderInfo((prev) => ({ ...prev, phone: text }))
       setOrderStep('address')
-      await addBotMessage('Enter your *full delivery address*\n(House/Flat, Street, Area, City, Pincode):')
+      await addBotMessage('Enter your *full delivery address*\n(House/Flat, Street, Area, City):')
       return
     }
     if (orderStep === 'address') {
-      setOrderInfo((prev) => ({ ...prev, address: text }))
+      if (text.trim().length < 6) {
+        await addBotMessage('Please enter your *full address* (house/flat, street, area, city) so we can deliver correctly 📍')
+        return
+      }
+      setOrderInfo((prev) => ({ ...prev, address: text.trim() }))
+      setOrderStep('pincode')
+      await addBotMessage('Enter your *6-digit pincode* 📮\n(so we can calculate delivery to your area):')
+      return
+    }
+    if (orderStep === 'pincode') {
+      const pin = text.replace(/\D/g, '')
+      if (!/^\d{6}$/.test(pin)) {
+        await addBotMessage('Please enter a valid *6-digit pincode* (numbers only):')
+        return
+      }
+      setOrderInfo((prev) => ({ ...prev, pincode: pin }))
+      // Brief feedback so the geocode round-trip doesn't feel like a freeze.
+      await addBotMessage('Got it! Calculating delivery to your area… ⏳')
+      // Geocode now (same as website checkout) so the delivery fee is ready for the
+      // summary. null (lookup failed) → free, bakery confirms far areas.
+      const km = await kmFromBakeryByPincode(pin)
+      setDeliveryKm(km)
       setOrderStep('date')
-      await addBotMessage('When would you like it delivered?\n(e.g., *Tomorrow 4 PM*, *31 March Evening*):')
+      setShowDatePicker(true)
+      await addBotMessage('Almost done! 📅 Pick your preferred *delivery date* below:')
       return
     }
     if (orderStep === 'date') {
-      setOrderInfo((prev) => ({ ...prev, date: text }))
-      setOrderStep(null)
-      const total = getCartTotal()
-      const fee = deliveryFee('delivery')
-      let finalSummary = `*📋 Order Summary*\n\n` + getCartSummary()
-      finalSummary += `\n\n*Subtotal:* ₹${total}\n*Delivery:* ${fee === 0 ? 'FREE' : '₹' + fee}\n*💰 Total: ₹${total + fee}*`
-      if (isBulkOrder(total)) {
-        finalSummary += `\n\n💳 *Large order:* we'll request a ${Math.round(DEPOSIT_PCT * 100)}% advance (₹${depositAmount(total + fee)}) on WhatsApp before baking — the balance is paid on delivery.`
-      }
-      finalSummary += `\n\n*👤* ${orderInfo.name}\n*📞* ${orderInfo.phone}\n*📍* ${orderInfo.address}\n*📅* ${text}`
-      await addBotMessage(finalSummary)
-      await addBotMessage('Ready to send this order to our bakery on WhatsApp? 🎂')
-      setOptions([
-        { label: '✅ Send Order via WhatsApp', action: 'confirm_send' },
-        { label: '✏️ Edit Details', action: 'collect_info' },
-        { label: '🏠 Cancel', action: 'home' },
-      ])
+      // Typing a date still works, but the date-picker widget is the primary path.
+      await submitDate(text)
       return
     }
 
@@ -722,15 +950,20 @@ export default function ChatBot() {
     } else if (['order', 'buy', 'want'].some((w) => lower.includes(w))) {
       await handleAction('order')
     } else if (['cheesecake', 'cheese'].some((w) => lower.includes(w))) {
-      await showCategoryPrices('cheesecake')
+      await showCategoryPrices('cheesecakes')
+    } else if (lower.includes('cupcake')) {
+      await showCategoryPrices('cupcakes')
     } else if (['cookie', 'biscuit'].some((w) => lower.includes(w))) {
       await showCategoryPrices('cookies')
-    } else if (['cake', 'brownie', 'cupcake'].some((w) => lower.includes(w))) {
-      await showCategoryPrices('cakes')
-    } else if (['dessert', 'cup', 'custard'].some((w) => lower.includes(w))) {
-      await showCategoryPrices('desserts')
-    } else if (['drink', 'mojito', 'shake', 'coffee'].some((w) => lower.includes(w))) {
+    } else if (['brownie', 'blondie', 'cakesicle', 'bake'].some((w) => lower.includes(w))) {
+      await showCategoryPrices('bakes')
+    } else if (['drink', 'mojito', 'shake', 'coffee', 'mocktail'].some((w) => lower.includes(w))) {
       await showCategoryPrices('drinks')
+    } else if (['dessert', 'custard', 'cup'].some((w) => lower.includes(w))) {
+      await showCategoryPrices('dessert-cups')
+    } else if (['cake', 'sponge', 'milk'].some((w) => lower.includes(w))) {
+      // "cake" is ambiguous (milk cake vs sponge cake) — let the customer pick.
+      await showCategoryMenu()
     } else if (['delivery', 'deliver'].some((w) => lower.includes(w))) {
       await handleAction('delivery')
     } else if (['contact', 'phone', 'whatsapp'].some((w) => lower.includes(w))) {
@@ -772,6 +1005,15 @@ export default function ChatBot() {
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
+  // Move focus into the chat input when it opens (desktop only — on mobile this
+  // would pop the keyboard over the greeting). Waits for the open animation.
+  useEffect(() => {
+    if (open && typeof window !== 'undefined' && window.innerWidth >= 640) {
+      const t = setTimeout(() => inputRef.current?.focus(), 350)
+      return () => clearTimeout(t)
+    }
   }, [open])
 
   return (
@@ -906,10 +1148,12 @@ export default function ChatBot() {
                         marginBottom: 2,
                       }}
                     >
-                      <img src={asset('logo-icon.png')} alt="" className="w-full h-full object-cover" />
+                      <img src={asset('logo_final.webp')} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
-                  {msg.menu ? (
+                  {msg.summary ? (
+                    <OrderSummaryCard data={msg.summary} />
+                  ) : msg.menu ? (
                     <PriceCard cat={msg.menu} />
                   ) : (
                     <div
@@ -963,6 +1207,12 @@ export default function ChatBot() {
                     await showOrderCategories()
                   }}
                 />
+              </div>
+            )}
+
+            {showDatePicker && (
+              <div className="flex justify-start">
+                <DatePickerWidget onPick={(d) => submitDate(d)} />
               </div>
             )}
 
@@ -1060,8 +1310,10 @@ export default function ChatBot() {
           <div className="px-3 pt-2.5 pb-1 bg-white flex items-center gap-2 shrink-0" style={{ borderTop: '1px solid rgba(224, 97, 122, 0.18)' }}>
             <div className="flex-1 relative">
               <input
+                ref={inputRef}
                 type="text"
                 value={input}
+                maxLength={200}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && input.trim()) handleTextInput(input) }}
                 placeholder={orderStep ? 'Type here…' : 'Ask about our menu…'}

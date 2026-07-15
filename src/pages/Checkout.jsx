@@ -1016,12 +1016,6 @@ export default function Checkout() {
                   </div>
                 )}
 
-                {form.deliveryMethod === 'delivery' && (
-                  <p className="cc-summary-note">
-                    Delivery is calculated from your address. Self-pickup is always free.
-                  </p>
-                )}
-
                 <button type="submit" className="cc-place-order-btn" disabled={!isFormValid}>
                   <FiCheckCircle size={18} /> Place Order
                 </button>
