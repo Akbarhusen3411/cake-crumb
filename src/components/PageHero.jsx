@@ -35,7 +35,7 @@ export default function PageHero({ eyebrow, title, text, cta, image, imageAlt = 
                 src={image}
                 alt={imageAlt}
                 loading="eager"
-                fetchpriority="high"
+                fetchPriority="high"
                 style={{ width: '100%', height: 'auto', display: 'block', aspectRatio: '4/3', objectFit: 'cover' }}
               />
             </div>

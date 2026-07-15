@@ -29,7 +29,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /reviews/{review} {
+      allow read: if true;
       allow create: if
+        request.resource.data.keys().hasOnly(
+          ['name','email','rating','title','text','orderItem','photo','createdAt']
+        ) &&
         request.resource.data.name is string &&
         request.resource.data.name.size() > 0 &&
         request.resource.data.name.size() < 100 &&
@@ -38,9 +42,20 @@ service cloud.firestore {
         request.resource.data.text.size() < 2000 &&
         request.resource.data.rating is number &&
         request.resource.data.rating >= 1 &&
-        request.resource.data.rating <= 5;
-      allow read: if true;
-      allow update, delete: if false;
+        request.resource.data.rating <= 5 &&
+        request.resource.data.email is string &&
+        request.resource.data.email.size() < 150 &&
+        request.resource.data.title is string &&
+        request.resource.data.title.size() < 150 &&
+        request.resource.data.orderItem is string &&
+        request.resource.data.orderItem.size() < 200 &&
+        request.resource.data.photo is string &&
+        request.resource.data.photo.size() < 1000000;
+      allow update: if false;
+      // Deletes require a signed-in admin (same Firebase Auth account as the
+      // orders dashboard). The Reviews page moderation UI is gated by real auth
+      // now — there is no hardcoded password anymore.
+      allow delete: if request.auth != null;
     }
 
     match /orders/{order} {
@@ -80,19 +95,14 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
-    // Reviews delete: opt-in.
-    // The admin moderation UI (single hardcoded password, sessionStorage gate)
-    // is *client-side only*. To actually allow deletes on the database, change
-    // the line under /reviews from "allow update, delete: if false;" to:
-    //   allow delete: if true;
-    // Then any browser session that can match the password can also delete.
-    // For real security, swap to Firebase Auth + uid-based rules.
   }
 }
 ```
 
 Click **Publish**. This lets anyone submit a review (with sane validation) and read reviews,
-but nobody can edit/delete them from the browser — only you, via Firebase console.
+caps field sizes and rejects unknown fields (anti-spam), and allows deletes **only for a
+signed-in admin** — the Reviews-page moderation UI now uses the same Firebase Auth account as
+the orders dashboard (section 6), so there is no hardcoded password in the code anymore.
 
 > **Optional review photo.** Reviews may include an optional `photo` field — a client-side
 > compressed JPEG **data URL** (see `src/utils/compressImage.js`, downscaled to ≤1000px so it

@@ -33,7 +33,7 @@ export default function Logo({ size = 'md' }) {
         src={LOGO_SRC}
         alt=""
         aria-hidden="true"
-        fetchpriority="high"
+        fetchPriority="high"
         decoding="async"
         className={size === 'md' ? 'logo-icon' : ''}
         style={{

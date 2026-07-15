@@ -5,6 +5,7 @@ import { addReview } from '../services/reviews.js'
 import { shopProducts } from '../data/products.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { compressImage } from '../utils/compressImage.js'
+import { reviewCooldownMs, markReviewSubmitted, isHoneypotTripped, HONEYPOT_STYLE } from '../utils/reviewGuard.js'
 
 // Grouped item list for the "What did you order?" dropdown — sourced from the
 // live product catalog so it stays in sync with the Shop.
@@ -58,6 +59,7 @@ export default function ReviewSubmit() {
   const [errorMsg, setErrorMsg] = useState('')
   const [photoBusy, setPhotoBusy] = useState(false)
   const fileRef = useRef(null)
+  const hpRef = useRef(null) // honeypot — real users never fill this
 
   function update(k, v) {
     setForm((p) => ({ ...p, [k]: v }))
@@ -85,10 +87,27 @@ export default function ReviewSubmit() {
 
   async function onSubmit(e) {
     e.preventDefault()
+
+    // Honeypot: a bot filled the hidden field → pretend success, drop it.
+    if (isHoneypotTripped(hpRef.current?.value)) {
+      setStatus('success')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    // Rate-limit: one review per minute per browser.
+    const wait = reviewCooldownMs()
+    if (wait > 0) {
+      setErrorMsg(`Please wait ${Math.ceil(wait / 1000)}s before sending another review.`)
+      setStatus('error')
+      return
+    }
+
     setStatus('submitting')
     setErrorMsg('')
     try {
       await addReview(form)
+      markReviewSubmitted()
       setStatus('success')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err) {
@@ -139,6 +158,16 @@ export default function ReviewSubmit() {
           className="p-4 p-md-5"
           style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 16 }}
         >
+          {/* Honeypot — hidden from humans; bots that fill every field trip it. */}
+          <input
+            ref={hpRef}
+            type="text"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            style={HONEYPOT_STYLE}
+          />
           {/* Star rating */}
           <div className="text-center mb-4">
             <div className="tag-badge mb-2">Your Rating</div>

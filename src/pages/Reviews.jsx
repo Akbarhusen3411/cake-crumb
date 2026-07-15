@@ -7,7 +7,8 @@ import { compressImage } from '../utils/compressImage.js'
 import { TbLeaf, TbCake, TbToolsKitchen2, TbHandStop } from 'react-icons/tb'
 import HeartDivider from '../components/HeartDivider.jsx'
 import { addReview, deleteReview, getReviews, summarize, timeAgo } from '../services/reviews.js'
-import { isFirebaseEnabled } from '../firebase.js'
+import { isFirebaseEnabled, getFirebaseAuth } from '../firebase.js'
+import { reviewCooldownMs, markReviewSubmitted, isHoneypotTripped, HONEYPOT_STYLE } from '../utils/reviewGuard.js'
 import ReviewCardSkeleton from '../components/skeletons/ReviewCardSkeleton.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { useJsonLd } from '../hooks/useJsonLd.js'
@@ -92,6 +93,7 @@ export default function Reviews() {
   const [submitOk, setSubmitOk] = useState(false)
   const [photoBusy, setPhotoBusy] = useState(false)
   const fileRef = useRef(null)
+  const hpRef = useRef(null) // honeypot — real users never fill this
 
   async function onPickPhoto(e) {
     const file = e.target.files?.[0]
@@ -108,31 +110,74 @@ export default function Reviews() {
     }
   }
 
-  // ── Admin moderation (single hardcoded password, sessionStorage flag) ──
-  const ADMIN_KEY = 'cc_admin_v1'
-  const [isAdmin, setIsAdmin] = useState(() => {
-    try { return sessionStorage.getItem(ADMIN_KEY) === '1' } catch { return false }
-  })
+  // ── Admin moderation (real Firebase Auth — same account as /admin/orders) ──
+  // The old hardcoded password was client-side only and visible in the public
+  // bundle, so it couldn't actually protect deletes. Now moderation requires a
+  // signed-in Firebase user, and the Firestore rules enforce it server-side.
+  // Auth is loaded LAZILY (only when the admin clicks the lock) so ordinary
+  // visitors to this public page never download the auth SDK.
+  const [user, setUser] = useState(null)
+  const [authStarted, setAuthStarted] = useState(false)
   const [showAdminLogin, setShowAdminLogin] = useState(false)
-  const [adminPwd, setAdminPwd] = useState('')
-  const [adminError, setAdminError] = useState('')
-  const ADMIN_PASSWORD = 'cakeandcrumb2026'
+  const [email, setEmail] = useState('')
+  const [pwd, setPwd] = useState('')
+  const [pwdError, setPwdError] = useState('')
+  const [signingIn, setSigningIn] = useState(false)
+  const isAdmin = !!user
 
-  function tryAdminLogin(e) {
+  // Subscribe to auth state only after the admin engages the lock. If they're
+  // already signed in (e.g. came from /admin/orders in the same tab), this picks
+  // up that session automatically and skips the login form.
+  useEffect(() => {
+    if (!authStarted) return
+    let unsub = () => {}
+    let active = true
+    ;(async () => {
+      const auth = await getFirebaseAuth()
+      if (!auth) return
+      const { onAuthStateChanged } = await import('firebase/auth')
+      unsub = onAuthStateChanged(auth, (u) => {
+        if (!active) return
+        setUser(u)
+        if (u) setShowAdminLogin(false)
+      })
+    })()
+    return () => { active = false; unsub() }
+  }, [authStarted])
+
+  function openAdmin() {
+    setAuthStarted(true)
+    setShowAdminLogin(true)
+  }
+
+  async function adminLogin(e) {
     e.preventDefault()
-    if (adminPwd === ADMIN_PASSWORD) {
-      try { sessionStorage.setItem(ADMIN_KEY, '1') } catch { /* storage blocked */ }
-      setIsAdmin(true)
-      setShowAdminLogin(false)
-      setAdminPwd('')
-      setAdminError('')
-    } else {
-      setAdminError('Incorrect password.')
+    setPwdError('')
+    setSigningIn(true)
+    try {
+      const auth = await getFirebaseAuth()
+      if (!auth) throw new Error('Firebase is not configured.')
+      const { signInWithEmailAndPassword } = await import('firebase/auth')
+      await signInWithEmailAndPassword(auth, email.trim(), pwd)
+      setPwd('')
+    } catch (err) {
+      setPwdError(
+        err?.code === 'auth/invalid-credential' || err?.code === 'auth/wrong-password'
+          ? 'Incorrect email or password.'
+          : (err?.message || 'Sign-in failed.')
+      )
+    } finally {
+      setSigningIn(false)
     }
   }
-  function adminLogout() {
-    try { sessionStorage.removeItem(ADMIN_KEY) } catch { /* storage blocked */ }
-    setIsAdmin(false)
+
+  async function adminLogout() {
+    const auth = await getFirebaseAuth()
+    if (auth) {
+      const { signOut } = await import('firebase/auth')
+      await signOut(auth)
+    }
+    setUser(null)
   }
   async function onDelete(id, name) {
     if (!confirm(`Delete review by ${name || 'anonymous'}?`)) return
@@ -169,11 +214,30 @@ export default function Reviews() {
 
   async function onSubmit(e) {
     e.preventDefault()
+
+    // Honeypot: a bot filled the hidden field → silently pretend success and
+    // drop it, so the bot can't tell it was blocked.
+    if (isHoneypotTripped(hpRef.current?.value)) {
+      setSubmitMsg('Your Sweet Words Mean the World to Us! 💕')
+      setSubmitOk(true)
+      setForm({ name: '', email: '', rating: 5, title: '', text: '', orderItem: '', photo: '' })
+      return
+    }
+
+    // Rate-limit: one review per minute per browser.
+    const wait = reviewCooldownMs()
+    if (wait > 0) {
+      setSubmitOk(false)
+      setSubmitMsg(`Thanks! Please wait ${Math.ceil(wait / 1000)}s before sending another review.`)
+      return
+    }
+
     setSubmitting(true)
     setSubmitMsg('')
     setSubmitOk(false)
     try {
       await addReview(form)
+      markReviewSubmitted()
       setForm({ name: '', email: '', rating: 5, title: '', text: '', orderItem: '', photo: '' })
       setSubmitMsg('Your Sweet Words Mean the World to Us! 💕')
       setSubmitOk(true)
@@ -220,7 +284,7 @@ export default function Reviews() {
                 src={u(img.heroReviews, 1000, 800)}
                 alt="Three-tier celebration cake with pink fresh flowers"
                 className="cc-reviews-hero__img"
-                fetchpriority="high"
+                fetchPriority="high"
               />
             </div>
           </div>
@@ -303,7 +367,7 @@ export default function Reviews() {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => setShowAdminLogin(true)}
+                      onClick={openAdmin}
                       className="border-0 bg-transparent"
                       aria-label="Admin login"
                       style={{ color: 'var(--cc-cocoa-soft)', opacity: 0.5 }}
@@ -315,28 +379,40 @@ export default function Reviews() {
               </div>
 
               {showAdminLogin && !isAdmin && (
-                <form onSubmit={tryAdminLogin} className="cc-admin-login">
+                <form onSubmit={adminLogin} className="cc-admin-login">
                   <input
-                    type="password"
-                    placeholder="Admin password"
-                    value={adminPwd}
-                    onChange={(e) => setAdminPwd(e.target.value)}
+                    type="email"
+                    placeholder="Admin email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="cc-input"
-                    style={{ flex: 1, minWidth: 200 }}
+                    style={{ flex: 1, minWidth: 160 }}
+                    autoComplete="username"
                     autoFocus
                   />
-                  <button type="submit" className="btn-rose" style={{ fontSize: '0.7rem' }}>Unlock</button>
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={pwd}
+                    onChange={(e) => setPwd(e.target.value)}
+                    className="cc-input"
+                    style={{ flex: 1, minWidth: 140 }}
+                    autoComplete="current-password"
+                  />
+                  <button type="submit" className="btn-rose" style={{ fontSize: '0.7rem' }} disabled={signingIn}>
+                    {signingIn ? 'Signing in…' : 'Unlock'}
+                  </button>
                   <button
                     type="button"
-                    onClick={() => { setShowAdminLogin(false); setAdminPwd(''); setAdminError('') }}
+                    onClick={() => { setShowAdminLogin(false); setPwd(''); setPwdError('') }}
                     className="btn-outline-rose"
                     style={{ fontSize: '0.7rem' }}
                   >
                     Cancel
                   </button>
-                  {adminError && (
+                  {pwdError && (
                     <div style={{ flex: '1 1 100%', fontSize: '0.75rem', color: 'var(--cc-rose-deep)' }}>
-                      {adminError}
+                      {pwdError}
                     </div>
                   )}
                 </form>
@@ -430,6 +506,16 @@ export default function Reviews() {
             <aside className="col-lg-4">
               {/* Share Your Experience form */}
               <form className="cc-share-form" onSubmit={onSubmit}>
+                {/* Honeypot — hidden from humans; bots that fill every field trip it. */}
+                <input
+                  ref={hpRef}
+                  type="text"
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  style={HONEYPOT_STYLE}
+                />
                 <h6 className="cc-share-form__heading">Share Your Experience</h6>
                 <p className="cc-share-form__sub">
                   We'd love to hear your thoughts! Your review helps us and other sweet customers.

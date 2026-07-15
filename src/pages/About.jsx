@@ -57,7 +57,7 @@ export default function About() {
                 src={u(img.heroAbout, 1000, 800)}
                 alt="Pink cherry cake on a white footed tray"
                 className="cc-about-hero__img"
-                fetchpriority="high"
+                fetchPriority="high"
               />
             </div>
           </div>

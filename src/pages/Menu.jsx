@@ -154,7 +154,7 @@ export default function Menu() {
                 src={u(img.heroMenu, 1000, 800)}
                 alt="Assorted pastries arranged on ceramic trays"
                 className="cc-menu-hero__img"
-                fetchpriority="high"
+                fetchPriority="high"
               />
             </div>
           </div>

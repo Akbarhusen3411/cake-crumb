@@ -53,7 +53,7 @@ export default function Home() {
                 src={u(img.pinkRoses, 1100, 900)}
                 alt="Soft pink rose bouquet"
                 className="cc-home-hero__img"
-                fetchpriority="high"
+                fetchPriority="high"
               />
             </div>
           </div>

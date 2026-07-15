@@ -95,7 +95,7 @@ export default function Contact() {
                 src={u(img.heroContact, 1000, 800)}
                 alt="Pink-frosted cupcakes on a white ceramic plate"
                 className="cc-contact-hero__img"
-                fetchpriority="high"
+                fetchPriority="high"
               />
             </div>
           </div>
