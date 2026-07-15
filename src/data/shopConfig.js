@@ -31,3 +31,36 @@ export function deliveryFee(method = 'delivery', distanceKm = null) {
   // Beyond the free radius, charge the full distance × rate (rounded to the rupee).
   return Math.round(distanceKm * DELIVERY.perKm)
 }
+
+// ── Fraud protection — advance deposit + COD cap ──────────────────────────────
+// A large Cash-on-Delivery order is the main fraud risk: a fake address + a
+// no-show means the bakery eats the whole ingredient + delivery cost. These
+// three knobs move that risk back onto the customer *before* baking starts:
+//   • BULK_ORDER_MIN — at/above this SUBTOTAL an order is "bulk": full unpaid COD
+//     is removed and the customer must pay a deposit now (UPI) or pay in full.
+//   • DEPOSIT_PCT    — the bulk deposit, as a fraction of the order TOTAL. The
+//     balance (total − deposit) is collected on pickup / delivery.
+//   • COD_MAX_INR    — subtotal above which plain "Cash on Delivery" disappears
+//     entirely. Kept equal to BULK_ORDER_MIN so the two rules line up: once an
+//     order is bulk, its only choices are deposit-now or pay-in-full.
+// There is still no server/auth (see CLAUDE.md), so the deposit is enforced the
+// same way UPI already is: the customer *claims* they paid and the bakery
+// verifies the credit in its bank (admin dashboard) before confirming.
+export const BULK_ORDER_MIN = 1000 // subtotal ≥ this ⇒ bulk order (deposit required)
+export const DEPOSIT_PCT = 0.5     // bulk deposit = 50% of the order total
+export const COD_MAX_INR = 1000    // subtotal > this ⇒ no plain Cash on Delivery
+
+// Is this cart a "bulk" order that requires an advance? (subtotal-based)
+export function isBulkOrder(subtotal = 0) {
+  return Number(subtotal) >= BULK_ORDER_MIN
+}
+
+// Is plain full-unpaid Cash on Delivery allowed for this subtotal?
+export function isCodAllowed(subtotal = 0) {
+  return Number(subtotal) <= COD_MAX_INR && !isBulkOrder(subtotal)
+}
+
+// The advance a bulk order pays now (rounded to the rupee); balance = total − this.
+export function depositAmount(total = 0) {
+  return Math.round(Number(total) * DEPOSIT_PCT)
+}

@@ -11,7 +11,26 @@ const PICKUP_LOCATION = 'Cake & Crumb, Vaso, Kheda, Gujarat 387380'
 const REVIEW_LINK = 'https://akbarhusen3411.github.io/cake-crumb/review'
 import { getFirebaseAuth, isFirebaseEnabled } from '../firebase.js'
 import { inr } from '../data/format.js'
+import { isBulkOrder } from '../data/shopConfig.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
+
+// Human-readable payment summary for an order card.
+function paymentLabel(o) {
+  const p = o.payment || {}
+  if (p.method === 'upi') return 'UPI — paid in full (verify in your bank)'
+  if (p.method === 'deposit') {
+    return `Advance ${inr(p.depositAmount || 0)} paid (verify in bank) + ${inr(p.balanceDue || 0)} cash on delivery`
+  }
+  return 'Cash on Delivery'
+}
+
+// The amount the bakery should look for as a bank credit before confirming:
+// the deposit for an advance order, otherwise the full total.
+function verifyAmount(o) {
+  const p = o.payment || {}
+  if (p.method === 'deposit') return p.depositAmount || 0
+  return o.totals?.total || 0
+}
 
 // Strip to digits; assume India (+91) for bare 10-digit numbers, so wa.me works.
 function waNumber(raw) {
@@ -357,6 +376,16 @@ export default function AdminOrders() {
                   letterSpacing: '0.05em', flex: '0 0 auto',
                 }}>{st.label}</span>
                 <strong style={{ color: 'var(--cc-cocoa)', fontSize: '0.85rem', flex: '0 0 auto' }}>{o.orderId}</strong>
+                {isBulkOrder(o.totals?.subtotal ?? o.totals?.total) && (o.status === 'placed' || o.status === 'confirmed') && (
+                  <span
+                    title="Large order — verify payment & address before baking"
+                    style={{
+                      background: '#fdecef', color: '#b0264a', fontWeight: 800, fontSize: '0.58rem',
+                      padding: '2px 7px', borderRadius: 999, textTransform: 'uppercase',
+                      letterSpacing: '0.05em', flex: '0 0 auto', whiteSpace: 'nowrap',
+                    }}
+                  >⚠ Verify</span>
+                )}
                 <span style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.82rem', flex: '1 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {o.customer?.name || '—'}
                 </span>
@@ -387,11 +416,52 @@ export default function AdminOrders() {
                     <strong>Total: {inr(o.totals?.total || 0)}</strong>
                     {o.totals?.delivery > 0 ? ` (incl. ${inr(o.totals.delivery)} delivery)` : ''}
                     {o.deliveryMethod === 'delivery' && o.deliveryKm ? ` · ~${o.deliveryKm} km away` : ''}
-                    {' · '}{o.payment?.method === 'upi' ? 'UPI (verify in your bank)' : 'Cash on Delivery'}
+                    {' · '}{paymentLabel(o)}
                     {o.notes ? ` · Notes: ${o.notes}` : ''}
                   </div>
 
-                  {o.payment?.method === 'upi' && (
+                  {/* Delivery order with no measured distance → address couldn't be
+                      geo-located (bad/unknown pincode). Worth a confirmation call. */}
+                  {o.deliveryMethod === 'delivery' && !o.deliveryKm && (
+                    <div
+                      className="mt-2 d-flex align-items-start"
+                      style={{
+                        gap: '0.5rem', background: '#fff7ed', border: '1px solid #fcd9b6',
+                        borderRadius: 10, padding: '0.5rem 0.7rem', fontSize: '0.76rem',
+                        color: '#9a5b12', lineHeight: 1.45,
+                      }}
+                    >
+                      <FiAlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+                      <span>Delivery address couldn’t be located from its pincode — <strong>call to confirm the address</strong> before dispatching.</span>
+                    </div>
+                  )}
+
+                  {/* Bulk-order safety checklist — the fraud-prone case. */}
+                  {isBulkOrder(o.totals?.subtotal ?? o.totals?.total) && (o.status === 'placed' || o.status === 'confirmed') && (
+                    <details
+                      className="mt-2"
+                      style={{
+                        background: '#fdecef', border: '1px solid #f6c6d2', borderRadius: 10,
+                        padding: '0.55rem 0.7rem', fontSize: '0.78rem', color: '#8f1f3f', lineHeight: 1.5,
+                      }}
+                    >
+                      <summary style={{ cursor: 'pointer', fontWeight: 800 }}>
+                        ⚠ Large order — verify before baking
+                      </summary>
+                      <ol style={{ margin: '6px 0 0', paddingLeft: 18 }}>
+                        <li><strong>Call the customer</strong> ({o.customer?.phone || 'no number'}) to confirm the order is genuine.</li>
+                        {o.payment?.method === 'deposit'
+                          ? <li>Confirm the <strong>{inr(o.payment?.depositAmount || 0)} advance</strong> landed in your bank (see “verify payment” below).</li>
+                          : o.payment?.method === 'upi'
+                            ? <li>Confirm the <strong>full {inr(o.totals?.total || 0)}</strong> landed in your bank (see “verify payment” below).</li>
+                            : <li><strong>No advance was collected</strong> on this order — consider asking for one on WhatsApp before baking.</li>}
+                        {o.deliveryMethod === 'delivery' && <li>Confirm the delivery address is real and reachable.</li>}
+                        <li>Only then tap <strong>Confirm</strong> and start baking.</li>
+                      </ol>
+                    </details>
+                  )}
+
+                  {(o.payment?.method === 'upi' || o.payment?.method === 'deposit') && (
                     <div
                       className="mt-2"
                       style={{
@@ -407,8 +477,13 @@ export default function AdminOrders() {
                       <div className="d-flex align-items-start" style={{ gap: '0.5rem' }}>
                         <FiAlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
                         <span>
-                          <strong>Check the payment landed in your bank before confirming.</strong>{' '}
+                          <strong>
+                            Check the {o.payment?.method === 'deposit' ? 'advance' : 'payment'} landed in your bank before confirming.
+                          </strong>{' '}
                           "Paid" here is the customer's claim, not proof.
+                          {o.payment?.method === 'deposit' && (
+                            <> Collect the <strong>{inr(o.payment?.balanceDue || 0)}</strong> balance on delivery.</>
+                          )}
                         </span>
                       </div>
                       <details style={{ marginTop: 6 }}>
@@ -418,7 +493,7 @@ export default function AdminOrders() {
                         <ol style={{ margin: '6px 0 0', paddingLeft: 18, lineHeight: 1.55 }}>
                           <li>Open your bank / UPI app for the account that receives your payments.</li>
                           <li>Go to transaction history for around the time this order was placed (shown at the top of this card).</li>
-                          <li>Find a <strong>credit of {inr(o.totals?.total || 0)}</strong> to your account.</li>
+                          <li>Find a <strong>credit of {inr(verifyAmount(o))}</strong>{o.payment?.method === 'deposit' ? ' (the advance)' : ''} to your account.</li>
                           <li>Check the payer name / phone roughly matches <strong>{o.customer?.name || 'the customer'}</strong>, and the amount is exact.</li>
                           <li>Credit found ✅ → tap <strong>Confirm</strong>. Nothing found or amount differs → don't confirm; message the customer or <strong>Cancel</strong>.</li>
                         </ol>

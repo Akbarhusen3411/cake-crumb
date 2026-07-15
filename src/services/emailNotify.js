@@ -36,7 +36,12 @@ function buildParams(order) {
     subtotal: `₹${t.subtotal || 0}`,
     delivery: t.delivery === 0 ? 'FREE' : `₹${t.delivery || 0}`,
     total: `₹${t.total || 0}`,
-    payment_method: order.payment?.method === 'upi' ? 'UPI / QR (verify in bank)' : 'Cash on Delivery',
+    payment_method:
+      order.payment?.method === 'upi'
+        ? 'UPI / QR — paid in full (verify in bank)'
+        : order.payment?.method === 'deposit'
+          ? `Advance ₹${order.payment?.depositAmount || 0} paid (verify in bank) + ₹${order.payment?.balanceDue || 0} cash on delivery`
+          : 'Cash on Delivery',
     utr: '—', // UTR system removed; bakery verifies the credit in its bank
     delivery_date: order.deliveryDate || '—',
     notes: order.notes || '—',

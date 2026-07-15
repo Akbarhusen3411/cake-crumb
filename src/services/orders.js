@@ -31,7 +31,7 @@ function writeLocal(list) {
  *     items:    [{ id, name, price, qty, img }],
  *     totals:   { subtotal, delivery, total },
  *     customer: { name, phone, email?, address?, city?, pincode? },
- *     payment:  { method: 'upi'|'cod', paid?: boolean },
+ *     payment:  { method: 'upi'|'deposit'|'cod', paid?: boolean, depositAmount?: number, balanceDue?: number },
  *     source:   'checkout' | 'chatbot',
  *     notes?:   string,
  *   }
@@ -57,9 +57,14 @@ export async function saveOrder(input) {
       pincode: String(input.customer?.pincode || '').trim(),
     },
     payment: {
-      method: input.payment?.method || 'cod',
+      method: input.payment?.method || 'cod', // 'upi' | 'deposit' | 'cod'
       paid: !!input.payment?.paid,
       utr: String(input.payment?.utr || '').trim(),
+      // Advance-deposit orders: how much was paid now and what's still owed on
+      // delivery. 0 for full-UPI / full-COD. Bakery-side only (admin dashboard);
+      // deliberately NOT copied into the public `tracking` mirror below.
+      depositAmount: Number(input.payment?.depositAmount) || 0,
+      balanceDue: Number(input.payment?.balanceDue) || 0,
     },
     source: input.source || 'checkout',
     notes: String(input.notes || ''),

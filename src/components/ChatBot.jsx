@@ -6,7 +6,7 @@ import {
 import { asset } from '../data/images.js'
 import { generateOrderId } from '../services/orderId.js'
 import { saveOrder } from '../services/orders.js'
-import { deliveryFee } from '../data/shopConfig.js'
+import { deliveryFee, isBulkOrder, depositAmount, DEPOSIT_PCT } from '../data/shopConfig.js'
 import { WHATSAPP_PHONE } from './WhatsAppButton.jsx'
 import { useCart } from '../context/CartContext.jsx'
 import {
@@ -442,6 +442,14 @@ export default function ChatBot() {
 
     const orderTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
 
+    // Large orders: the bot can't take a UPI payment inline, so it flags that the
+    // bakery will request a 50% advance on WhatsApp before baking (keeps big COD
+    // orders from being a no-show fraud risk — mirrors the checkout deposit rule).
+    const bulk = isBulkOrder(subtotal)
+    const advanceLine = bulk
+      ? `*💳 Advance:* ₹${depositAmount(total)} (${Math.round(DEPOSIT_PCT * 100)}%) requested before baking · balance on delivery\n`
+      : ''
+
     const msg =
       `🎂 *NEW ORDER — ${orderId}*\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
@@ -455,8 +463,9 @@ export default function ChatBot() {
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `*Subtotal:* ₹${subtotal}\n` +
       `*Delivery:* ${fee === 0 ? 'FREE (far areas confirmed by us)' : '₹' + fee}\n` +
-      `*💰 Total: ₹${total}*\n\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `*💰 Total: ₹${total}*\n` +
+      advanceLine +
+      `\n━━━━━━━━━━━━━━━━━━━━\n\n` +
       `⚠️ *Cancel window:* 30 min from order time.\n\n` +
       `Please confirm my order. Thank you! 🙏`
 
@@ -623,6 +632,9 @@ export default function ChatBot() {
       const fee = deliveryFee('delivery')
       let finalSummary = `*📋 Order Summary*\n\n` + getCartSummary()
       finalSummary += `\n\n*Subtotal:* ₹${total}\n*Delivery:* ${fee === 0 ? 'FREE' : '₹' + fee}\n*💰 Total: ₹${total + fee}*`
+      if (isBulkOrder(total)) {
+        finalSummary += `\n\n💳 *Large order:* we'll request a ${Math.round(DEPOSIT_PCT * 100)}% advance (₹${depositAmount(total + fee)}) on WhatsApp before baking — the balance is paid on delivery.`
+      }
       finalSummary += `\n\n*👤* ${orderInfo.name}\n*📞* ${orderInfo.phone}\n*📍* ${orderInfo.address}\n*📅* ${text}`
       await addBotMessage(finalSummary)
       await addBotMessage('Ready to send this order to our bakery on WhatsApp? 🎂')

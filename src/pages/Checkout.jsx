@@ -9,7 +9,7 @@ import { useCart } from '../context/CartContext.jsx'
 import { inr } from '../data/format.js'
 import { u } from '../data/images.js'
 import { COUNTRY_CODES, DEFAULT_COUNTRY } from '../data/countries.js'
-import { deliveryFee } from '../data/shopConfig.js'
+import { deliveryFee, isBulkOrder, depositAmount, DEPOSIT_PCT } from '../data/shopConfig.js'
 import { kmFromBakeryByPincode } from '../services/delivery.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { saveOrder } from '../services/orders.js'
@@ -163,6 +163,18 @@ export default function Checkout() {
   // ₹5/km beyond. Free for pickup; free while the distance is still unknown.
   const delivery = deliveryFee(form.deliveryMethod, deliveryKm)
   const total = subtotal + delivery
+
+  // Fraud protection (see shopConfig.js). A "bulk" cart (subtotal ≥ ₹1000) can't
+  // use plain full-unpaid Cash on Delivery — the customer must pay a 50% advance
+  // now (UPI) or pay in full. This is what stops a fake-address no-show from
+  // costing the bakery a whole day's bake.
+  const bulk = isBulkOrder(subtotal)
+  const depositAmt = depositAmount(total)   // 50% advance paid now (UPI)
+  const balanceDue = total - depositAmt     // rest paid on pickup / delivery
+  // How much the customer pays *now* via UPI: the deposit for a bulk deposit,
+  // otherwise the full total.
+  const payNow = form.payment === 'deposit' ? depositAmt : total
+
   const selectedCountry = useMemo(
     () => COUNTRY_CODES.find((c) => c.code === form.countryCode) || DEFAULT_COUNTRY,
     [form.countryCode]
@@ -198,17 +210,32 @@ export default function Checkout() {
     )
   }, [form, minDeliveryDate, selectedCountry])
 
-  // Both payment methods place the order immediately — UPI has no UTR gate; the
-  // bakery verifies the payment landed in its bank before confirming.
-  const isPaymentValid = form.payment === 'upi' || form.payment === 'cod'
+  // Valid payment choices depend on order size: a bulk order allows full UPI or a
+  // 50% deposit (no plain COD); a normal order allows full UPI or COD.
+  const isPaymentValid = bulk
+    ? (form.payment === 'upi' || form.payment === 'deposit')
+    : (form.payment === 'upi' || form.payment === 'cod')
 
   const isFormValid = isDetailsValid && isPaymentValid && subtotal > 0
 
-  // Reserve the order ID as soon as the details are valid and the customer is
-  // paying by UPI — generated once, then shown on the pay screen, put in the UPI
-  // note, and reused at submit so the bank credit can be matched to this order.
+  // Keep the selected payment method consistent with the order size. When a cart
+  // crosses into "bulk", a stale 'cod' choice becomes invalid → switch to the
+  // deposit; when it drops back below bulk, a stale 'deposit' → full UPI. Only
+  // fires on the bulk flip, so it never fights a choice the customer makes while
+  // the bulk status is unchanged.
   useEffect(() => {
-    if (form.payment === 'upi' && isDetailsValid && !pendingOrderId) {
+    setForm((p) => {
+      if (bulk && p.payment === 'cod') return { ...p, payment: 'deposit' }
+      if (!bulk && p.payment === 'deposit') return { ...p, payment: 'upi' }
+      return p
+    })
+  }, [bulk])
+
+  // Reserve the order ID as soon as the details are valid and the customer is
+  // paying by UPI (full or deposit — both show a QR with the id in the note) —
+  // generated once, then reused at submit so the bank credit can be matched.
+  useEffect(() => {
+    if ((form.payment === 'upi' || form.payment === 'deposit') && isDetailsValid && !pendingOrderId) {
       setPendingOrderId(generateOrderId(form.name))
     }
   }, [form.payment, isDetailsValid, pendingOrderId, form.name])
@@ -218,11 +245,22 @@ export default function Checkout() {
   const [placedDeliveryDate, setPlacedDeliveryDate] = useState('')
 
   function buildOrderMessage(id, snapshotItems, totals, deliveryDate) {
-    const paymentLine = form.payment === 'upi'
-      ? '*💳 Payment:* UPI — Paid (bakery will verify)'
-      : '*💳 Payment:* Cash on Delivery'
-
     const isPickup = form.deliveryMethod === 'pickup'
+    // Deposit figures derived from the passed totals so the success-page re-send
+    // (which runs after the cart is cleared) still shows the right numbers.
+    const dep = depositAmount(totals.total)
+    const bal = totals.total - dep
+    let paymentLine
+    if (form.payment === 'deposit') {
+      paymentLine =
+        `*💳 Payment:* 50% advance ${inr(dep)} paid via UPI (bakery will verify)\n` +
+        `*💵 Balance:* ${inr(bal)} on ${isPickup ? 'pickup' : 'delivery'}`
+    } else if (form.payment === 'upi') {
+      paymentLine = '*💳 Payment:* UPI — Paid in full (bakery will verify)'
+    } else {
+      paymentLine = '*💳 Payment:* Cash on Delivery'
+    }
+
     const methodLine = isPickup
       ? '*🚶 Order type:* Self-Pickup (free)'
       : '*🚚 Order type:* Home Delivery'
@@ -288,10 +326,19 @@ export default function Checkout() {
         pincode: form.pincode,
       },
       payment: {
-        method: form.payment,
-        // 'paid' is the customer's claim for UPI — the bakery verifies the credit
-        // in its bank before confirming. No UTR is collected.
-        paid: form.payment === 'upi',
+        method: form.payment, // 'upi' (full) | 'deposit' (50% now) | 'cod'
+        // 'paid' is the customer's CLAIM for any UPI payment (full or advance) —
+        // the bakery verifies the credit in its bank before confirming. No UTR.
+        paid: form.payment === 'upi' || form.payment === 'deposit',
+        // For a deposit order: how much was paid now, and what's still owed on
+        // delivery. Shown in the admin dashboard so the bakery collects the rest.
+        depositAmount: form.payment === 'deposit' ? depositAmount(snapshotTotals.total) : 0,
+        balanceDue:
+          form.payment === 'deposit'
+            ? snapshotTotals.total - depositAmount(snapshotTotals.total)
+            : form.payment === 'cod'
+              ? snapshotTotals.total
+              : 0,
       },
       deliveryDate: form.deliveryDate,
       deliveryMethod: form.deliveryMethod,
@@ -391,7 +438,9 @@ export default function Checkout() {
           <p style={{ fontSize: '0.85rem', color: 'var(--cc-cocoa-soft)' }}>
             {form.payment === 'upi'
               ? "We'll verify your UPI payment in our account and confirm on WhatsApp. Tip: reply with a screenshot of your payment to help us match it faster."
-              : 'Cash on Delivery — please keep the exact amount ready.'}
+              : form.payment === 'deposit'
+                ? "We'll verify your advance payment and confirm on WhatsApp. The balance is paid on delivery/pickup. Tip: reply with a screenshot to help us match it faster."
+                : 'Cash on Delivery — please keep the exact amount ready.'}
           </p>
           <div className="d-flex gap-2 justify-content-center mt-3 flex-wrap">
             <Link to="/" className="btn-outline-rose">
@@ -632,7 +681,47 @@ export default function Checkout() {
                 style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14 }}
               >
                 <h4 className="mb-3" style={{ fontSize: '1.2rem' }}>Payment Method</h4>
+
+                {bulk && (
+                  <div
+                    className="d-flex align-items-start mb-3"
+                    style={{
+                      gap: '0.6rem',
+                      background: 'rgba(224, 97, 122, 0.08)',
+                      border: '1px solid var(--cc-rose-soft)',
+                      borderRadius: 12,
+                      padding: '0.8rem 1rem',
+                      fontSize: '0.82rem',
+                      color: 'var(--cc-cocoa)',
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    <FiAlertCircle size={17} style={{ flexShrink: 0, marginTop: 2, color: 'var(--cc-rose)' }} />
+                    <span>
+                      This is a <strong>larger order ({inr(subtotal)})</strong>. To reserve your slot we ask
+                      for a <strong>{Math.round(DEPOSIT_PCT * 100)}% advance ({inr(depositAmt)})</strong> now,
+                      or full payment — the balance is paid on {form.deliveryMethod === 'pickup' ? 'pickup' : 'delivery'}.
+                      Full cash-on-delivery isn’t available for orders this size.
+                    </span>
+                  </div>
+                )}
+
                 <div className="d-flex flex-column flex-md-row gap-3 mb-3">
+                  {bulk ? (
+                    <button
+                      type="button"
+                      className={'payment-tab' + (form.payment === 'deposit' ? ' active' : '')}
+                      onClick={() => update('payment', 'deposit')}
+                    >
+                      <span className="icon-wrap"><FiSmartphone size={18} /></span>
+                      <span>
+                        <div>Pay {Math.round(DEPOSIT_PCT * 100)}% Advance</div>
+                        <div style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--cc-cocoa-soft)' }}>
+                          {inr(depositAmt)} now · {inr(balanceDue)} on {form.deliveryMethod === 'pickup' ? 'pickup' : 'delivery'}
+                        </div>
+                      </span>
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     className={'payment-tab' + (form.payment === 'upi' ? ' active' : '')}
@@ -640,33 +729,36 @@ export default function Checkout() {
                   >
                     <span className="icon-wrap"><FiSmartphone size={18} /></span>
                     <span>
-                      <div>Pay Now (UPI)</div>
+                      <div>{bulk ? 'Pay Full Now (UPI)' : 'Pay Now (UPI)'}</div>
                       <div style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--cc-cocoa-soft)' }}>
-                        Scan & pay with any UPI app
+                        {bulk ? `Pay ${inr(total)} now via any UPI app` : 'Scan & pay with any UPI app'}
                       </div>
                     </span>
                   </button>
-                  <button
-                    type="button"
-                    className={'payment-tab' + (form.payment === 'cod' ? ' active' : '')}
-                    onClick={() => update('payment', 'cod')}
-                  >
-                    <span className="icon-wrap"><FiTruck size={18} /></span>
-                    <span>
-                      <div>Cash on Delivery</div>
-                      <div style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--cc-cocoa-soft)' }}>
-                        Pay in cash when it arrives
-                      </div>
-                    </span>
-                  </button>
+                  {!bulk && (
+                    <button
+                      type="button"
+                      className={'payment-tab' + (form.payment === 'cod' ? ' active' : '')}
+                      onClick={() => update('payment', 'cod')}
+                    >
+                      <span className="icon-wrap"><FiTruck size={18} /></span>
+                      <span>
+                        <div>Cash on Delivery</div>
+                        <div style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--cc-cocoa-soft)' }}>
+                          Pay in cash when it arrives
+                        </div>
+                      </span>
+                    </button>
+                  )}
                 </div>
 
-                {form.payment === 'upi' && (() => {
+                {(form.payment === 'upi' || form.payment === 'deposit') && (() => {
+                  const isDeposit = form.payment === 'deposit'
                   const noteText = pendingOrderId ? `Cake & Crumb ${pendingOrderId}` : 'Cake & Crumb order'
                   const upiPayString =
                     `upi://pay?pa=${encodeURIComponent(UPI_ID)}` +
                     `&pn=${encodeURIComponent(PAYEE_NAME)}` +
-                    `&am=${total}` +
+                    `&am=${payNow}` +
                     `&cu=INR` +
                     `&tn=${encodeURIComponent(noteText)}`
                   const qrUrl =
@@ -694,11 +786,16 @@ export default function Checkout() {
                           </span>
                           <div>
                             <div style={{ fontSize: '0.7rem', color: 'var(--cc-cocoa-soft)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
-                              Amount to Pay
+                              {isDeposit ? 'Advance to Pay Now' : 'Amount to Pay'}
                             </div>
                             <div style={{ fontFamily: "'Lato', system-ui, sans-serif", fontSize: '1.4rem', color: 'var(--cc-cocoa)', lineHeight: 1 }}>
-                              {inr(total)}
+                              {inr(payNow)}
                             </div>
+                            {isDeposit && (
+                              <div style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', marginTop: 4 }}>
+                                Balance <strong style={{ color: 'var(--cc-cocoa)' }}>{inr(balanceDue)}</strong> on {form.deliveryMethod === 'pickup' ? 'pickup' : 'delivery'}
+                              </div>
+                            )}
                             {pendingOrderId && (
                               <div style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', marginTop: 4 }}>
                                 Order <strong style={{ color: 'var(--cc-cocoa)', letterSpacing: '0.04em' }}>{pendingOrderId}</strong>
@@ -834,26 +931,30 @@ export default function Checkout() {
                   </div>
                 )}
 
-                {/* Advance-payment note for large / custom orders. */}
-                <div
-                  className="d-flex align-items-start mt-3"
-                  style={{
-                    gap: '0.6rem',
-                    background: 'var(--cc-cream)',
-                    border: '1px dashed var(--cc-rose-soft)',
-                    borderRadius: 12,
-                    padding: '0.7rem 0.9rem',
-                    fontSize: '0.78rem',
-                    color: 'var(--cc-cocoa-soft)',
-                    lineHeight: 1.5,
-                  }}
-                >
-                  <FiAlertCircle size={16} style={{ flexShrink: 0, marginTop: 2, color: 'var(--cc-rose)' }} />
-                  <span>
-                    For <strong>large or custom orders</strong>, Cake &amp; Crumb may confirm a small
-                    advance on WhatsApp before baking. The balance is settled on pickup / delivery.
-                  </span>
-                </div>
+                {/* Soft advance note for smaller custom orders. Bulk orders have
+                    their own enforced deposit banner above, so this would be
+                    redundant (and contradictory — "may" vs the required deposit). */}
+                {!bulk && (
+                  <div
+                    className="d-flex align-items-start mt-3"
+                    style={{
+                      gap: '0.6rem',
+                      background: 'var(--cc-cream)',
+                      border: '1px dashed var(--cc-rose-soft)',
+                      borderRadius: 12,
+                      padding: '0.7rem 0.9rem',
+                      fontSize: '0.78rem',
+                      color: 'var(--cc-cocoa-soft)',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    <FiAlertCircle size={16} style={{ flexShrink: 0, marginTop: 2, color: 'var(--cc-rose)' }} />
+                    <span>
+                      For <strong>custom orders</strong>, Cake &amp; Crumb may confirm a small
+                      advance on WhatsApp before baking. The balance is settled on pickup / delivery.
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 

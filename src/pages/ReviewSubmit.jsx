@@ -104,10 +104,9 @@ export default function ReviewSubmit() {
           <span className="feature-icon mb-3" style={{ width: 84, height: 84 }}>
             <FiCheckCircle size={40} />
           </span>
-          <h1 className="section-title">Thank you!</h1>
+          <h1 className="section-title">Your Sweet Words Mean the World to Us! 💕</h1>
           <p className="mt-3" style={{ fontSize: '1.05rem' }}>
-            Your review means the world to us, <strong>{form.name}</strong>. We'll keep
-            baking with love. ♥
+            Thank you, <strong>{form.name}</strong> — we'll keep baking with love. ♥
           </p>
           <div className="d-flex flex-wrap gap-2 justify-content-center mt-4">
             <Link to="/reviews" className="btn-rose">

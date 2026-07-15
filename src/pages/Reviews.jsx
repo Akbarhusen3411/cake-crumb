@@ -89,6 +89,7 @@ export default function Reviews() {
   const [form, setForm] = useState({ name: '', email: '', rating: 5, title: '', text: '', orderItem: '', photo: '' })
   const [submitting, setSubmitting] = useState(false)
   const [submitMsg, setSubmitMsg] = useState('')
+  const [submitOk, setSubmitOk] = useState(false)
   const [photoBusy, setPhotoBusy] = useState(false)
   const fileRef = useRef(null)
 
@@ -170,10 +171,12 @@ export default function Reviews() {
     e.preventDefault()
     setSubmitting(true)
     setSubmitMsg('')
+    setSubmitOk(false)
     try {
       await addReview(form)
       setForm({ name: '', email: '', rating: 5, title: '', text: '', orderItem: '', photo: '' })
-      setSubmitMsg('Thank you! Your review was submitted.')
+      setSubmitMsg('Your Sweet Words Mean the World to Us! 💕')
+      setSubmitOk(true)
       reload()
     } catch (err) {
       setSubmitMsg(err.message || 'Something went wrong.')
@@ -534,7 +537,17 @@ export default function Reviews() {
                 )}
 
                 {submitMsg && (
-                  <div className="cc-share-form__msg">{submitMsg}</div>
+                  <div
+                    className="cc-share-form__msg"
+                    style={submitOk ? {
+                      color: 'var(--cc-rose-deep)',
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      fontSize: '1rem',
+                    } : undefined}
+                  >
+                    {submitMsg}
+                  </div>
                 )}
 
                 <button

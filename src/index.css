@@ -2011,8 +2011,8 @@ html, body { overflow-x: hidden; }
 .cc-footer-d__script {
   font-family: 'Allura', cursive;
   color: var(--cc-rose);
-  font-size: 1.15rem;
-  line-height: 1.25;
+  font-size: 2rem;
+  line-height: 1.2;
   margin: 1rem 0 0;
 }
 
@@ -2458,20 +2458,35 @@ body.search-open { overflow: hidden; }
 /* Info column */
 .cc-footer-m__info {
   list-style: none;
-  padding: 1.2rem 0 0;
-  margin: 0;
+  padding: 1.1rem 0 0;
+  /* Shrink the block to its content and center it, so all four rows are
+     left-aligned to each other (icons stack in one neat vertical line). */
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  font-size: 0.86rem;
+  gap: 0.4rem;
+  font-size: 0.84rem;
   color: var(--cc-cocoa);
 }
 .cc-footer-m__info li {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
-  line-height: 1.3;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  line-height: 1.25;
+  /* Keep each contact item on a single line — no wrapping the address or
+     pre-order note onto a second row on narrow phones. */
+  white-space: nowrap;
+}
+.cc-footer-m__info li > span:last-child {
+  min-width: 0;
+}
+/* On very small phones, shrink the text just enough that the longest lines
+   (address / pre-order) still fit on one line without overflowing. */
+@media (max-width: 360px) {
+  .cc-footer-m__info { font-size: 0.78rem; }
 }
 .cc-footer-m__info-icon {
   width: 28px;
@@ -2488,9 +2503,9 @@ body.search-open { overflow: hidden; }
 /* Cursive flourish */
 .cc-footer-m__script {
   font-family: 'Allura', cursive;
-  font-size: 1.4rem;
+  font-size: 2.1rem;
   color: var(--cc-rose);
-  line-height: 1.1;
+  line-height: 1.15;
   margin: 1.4rem 0 0.4rem;
 }
 
