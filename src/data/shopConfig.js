@@ -4,20 +4,30 @@
 export const MIN_ORDER_INR = 250
 export const MAX_ITEM_QTY = 99
 
-// ── Delivery pricing — distance-based (calculated behind the scenes) ──────────
-// The rule:
-//   • Self-pickup                → always free
-//   • Home delivery ≤ 10 km      → FREE
-//   • Home delivery > 10 km      → ₹5 × the FULL distance (not just the km past 10)
-// e.g. 11.6 km → round(11.6 × 5) = ₹58; 24.8 km → ₹124.
-// Distance is measured from the bakery (Plus Code MQ84+2GQ, Vaso 387380) to the
-// customer's pincode, geocoded at checkout — see src/services/delivery.js. The km
-// figure is NOT shown to the customer anywhere; only the resulting charge feeds
-// the total, and the bakery sees the distance in the admin dashboard. Tune the two
-// knobs below and every surface updates together.
+// ── Delivery pricing — distance-based SLABS (calculated behind the scenes) ─────
+// Self-pickup → always free. Home delivery is FREE within freeRadiusKm; beyond
+// that it falls into a flat price band by distance. Slabs are used on purpose: a
+// pincode covers an AREA (its geocoded point is only approximate), so a customer
+// at 11 km or 19 km should pay the same clean fee rather than a falsely-precise
+// per-km number. Distance is the straight-line km from the bakery (Plus Code
+// MQ84+2GQ, Vaso 387380) to the customer's pincode, geocoded — see
+// src/services/delivery.js. The km is NEVER shown to the customer (only the
+// resulting fee); the bakery sees the km in the admin dashboard and confirms /
+// adjusts the final charge. Edit the bands below and every surface (checkout +
+// ChatBot) updates together.
 export const DELIVERY = {
   freeRadiusKm: 10, // delivery is free within this many km of the bakery
-  perKm: 6,         // ₹ per km on the FULL distance once past the free radius
+  // Flat fee by distance band. `maxKm` is each band's inclusive upper edge; the
+  // first band whose maxKm ≥ distance wins. The last band (Infinity) is the
+  // catch-all for very far orders. Ordered nearest → farthest.
+  slabs: [
+    { maxKm: 20, fee: 80 },   // 10–20 km
+    { maxKm: 35, fee: 150 },  // 20–35 km
+    { maxKm: 50, fee: 250 },  // 35–50 km
+    { maxKm: 75, fee: 350 },  // 50–75 km
+    { maxKm: 100, fee: 450 }, // 75–100 km
+    { maxKm: Infinity, fee: 550 }, // 100 km+
+  ],
   // Bakery origin — decoded from the Plus Code MQ84+2GQ, Vaso, Gujarat 387380.
   origin: { lat: 22.665087, lng: 72.756359 },
 }
@@ -28,8 +38,9 @@ export const DELIVERY = {
 export function deliveryFee(method = 'delivery', distanceKm = null) {
   if (method === 'pickup') return 0
   if (distanceKm == null || distanceKm <= DELIVERY.freeRadiusKm) return 0
-  // Beyond the free radius, charge the full distance × rate (rounded to the rupee).
-  return Math.round(distanceKm * DELIVERY.perKm)
+  // First band whose upper edge covers the distance (last band is Infinity).
+  const band = DELIVERY.slabs.find((s) => distanceKm <= s.maxKm)
+  return band ? band.fee : DELIVERY.slabs[DELIVERY.slabs.length - 1].fee
 }
 
 // ── Fraud protection — advance deposit + COD cap ──────────────────────────────

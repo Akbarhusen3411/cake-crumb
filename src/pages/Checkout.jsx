@@ -160,7 +160,7 @@ export default function Checkout() {
   }
 
   // Distance-based delivery (see shopConfig.js): free within 10 km of the bakery,
-  // ₹5/km beyond. Free for pickup; free while the distance is still unknown.
+  // then flat price bands by distance. Free for pickup; free while unknown.
   const delivery = deliveryFee(form.deliveryMethod, deliveryKm)
   const total = subtotal + delivery
 
