@@ -285,6 +285,55 @@ function OrderSummaryCard({ data }) {
   )
 }
 
+// ─── Cart preview card (pre-address review — items + subtotal, no delivery yet) ───
+function CartPreviewCard({ items, subtotal }) {
+  return (
+    <div
+      className="flex-1 min-w-0 rounded-2xl rounded-tl-sm shadow-md overflow-hidden border border-gold/15"
+      style={{ background: '#fffbf8', animation: 'chat-msg-in 0.28s cubic-bezier(0.16,1,0.3,1)' }}
+    >
+      <div
+        className="px-3.5 py-2.5 flex items-center gap-2.5 border-b border-cream-dark/50"
+        style={{ background: 'linear-gradient(135deg,#fff0eb 0%,#ffffff 60%,#fce4e9 100%)' }}
+      >
+        <span
+          className="w-8 h-8 rounded-xl flex items-center justify-center text-white shrink-0"
+          style={{ background: 'linear-gradient(135deg,#e0617a,#cf3e63)', boxShadow: '0 4px 10px -3px rgba(207,62,99,0.5)' }}
+        >
+          <FiShoppingBag size={15} />
+        </span>
+        <div className="leading-tight">
+          <div className="text-[14px] font-bold" style={{ fontFamily: "'Playfair Display',serif", color: '#5b3e36' }}>Your Order</div>
+          <div className="text-[9px] font-bold tracking-[0.14em] uppercase text-berry">{items.length} item{items.length !== 1 ? 's' : ''}</div>
+        </div>
+      </div>
+
+      <div className="px-2.5 py-2 flex flex-col gap-1.5">
+        {items.map((it, idx) => (
+          <div key={idx} className="flex items-center gap-2 rounded-xl border border-cream-dark/50 bg-white px-2.5 py-1.5">
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-semibold leading-tight" style={{ color: '#5b3e36' }}>{it.name}</p>
+              <p className="text-[10.5px] mt-0.5">
+                <span className="font-bold text-berry">×{it.qty}</span>{' '}
+                <span className="text-chocolate-light/70">₹{it.price} each</span>
+              </p>
+            </div>
+            <span className="text-[12.5px] font-bold shrink-0" style={{ color: '#5b3e36' }}>₹{it.price * it.qty}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="px-3.5 pt-2 pb-2.5 mt-0.5 border-t border-dashed border-berry/30">
+        <div className="flex justify-between items-center">
+          <span className="text-[13px] font-bold" style={{ fontFamily: "'Playfair Display',serif", color: '#5b3e36' }}>Subtotal</span>
+          <span className="text-[16px] font-extrabold" style={{ color: '#cf3e63' }}>₹{subtotal}</span>
+        </div>
+        <p className="text-[10.5px] mt-1.5 text-chocolate-light/70">🚚 Delivery is added after you enter your address.</p>
+      </div>
+    </div>
+  )
+}
+
 // ─── Delivery date picker (native date input + optional time slot) ───
 function nextDayISO() {
   const d = new Date()
@@ -562,12 +611,6 @@ export default function ChatBot() {
   const getCartTotal = () =>
     Object.values(orderCart).reduce((sum, item) => sum + item.price * item.qty, 0)
 
-  const getCartSummary = () => {
-    const items = Object.entries(orderCart).filter(([, v]) => v.qty > 0)
-    if (items.length === 0) return 'No items yet'
-    return items.map(([name, { qty, price }]) => `• ${name} x${qty} = ₹${price * qty}`).join('\n')
-  }
-
   const updateCartItem = (name, price, qty) => {
     setOrderCart((prev) => {
       const updated = { ...prev }
@@ -739,17 +782,24 @@ export default function ChatBot() {
         break
       case 'review_order': {
         setOptions([])
-        const items = Object.entries(orderCart).filter(([, v]) => v.qty > 0)
-        if (items.length === 0) {
+        const cartItems = Object.entries(orderCart).filter(([, v]) => v.qty > 0)
+        if (cartItems.length === 0) {
           await addBotMessage('Your cart is empty! Please add some items first. 🛒')
           await showOrderCategories()
           return
         }
-        const total = getCartTotal()
-        let summary = `*🛒 Your Order:*\n\n` + getCartSummary()
-        summary += `\n\n*Subtotal:* ₹${total}\n_Delivery is calculated from your address in the next step._`
-        await addBotMessage(summary)
-        await addBotMessage("Looks good? Let's proceed with your details, or go back to add more items.")
+        setMessages((prev) => [
+          ...prev,
+          {
+            from: 'bot',
+            cartPreview: {
+              items: cartItems.map(([name, { qty, price }]) => ({ name, qty, price })),
+              subtotal: getCartTotal(),
+            },
+          },
+        ])
+        scrollToBottom()
+        await addBotMessage("Looks good? Let's add your delivery details, or go back for more treats. 🎂")
         setOptions([
           { label: '✅ Confirm & Enter Details', action: 'collect_info' },
           { label: '➕ Add More Items', action: 'order' },
@@ -1151,7 +1201,9 @@ export default function ChatBot() {
                       <img src={asset('logo_final.webp')} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
-                  {msg.summary ? (
+                  {msg.cartPreview ? (
+                    <CartPreviewCard items={msg.cartPreview.items} subtotal={msg.cartPreview.subtotal} />
+                  ) : msg.summary ? (
                     <OrderSummaryCard data={msg.summary} />
                   ) : msg.menu ? (
                     <PriceCard cat={msg.menu} />
