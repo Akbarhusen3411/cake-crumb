@@ -87,20 +87,26 @@ function buildCategory(cfg) {
   return { title: cfg.category, subtitle: cfg.subtitle, groups }
 }
 
-// Every purchasable variant, with the full product name so the WhatsApp receipt
-// and the admin dashboard stay unambiguous.
+// One row per product. A two-price product keeps BOTH tiers on the same row as
+// separate add-buttons (`variants`) instead of two full-width rows, so the order
+// list stays short. Each variant `name` keeps the full "<product> — <size>" so
+// the WhatsApp receipt and admin dashboard stay unambiguous; `label` is the
+// compact tier shown on the button (e.g. "Banto", "Slice", "Box 12").
 function buildOrderItems(cfg) {
   const catLabel = `${cfg.emoji} ${cfg.category}`
   return shopProducts
     .filter((p) => p.category === cfg.category)
-    .flatMap((p) =>
-      p.slice != null
-        ? [
-            { name: `${p.name} — ${sizeOf(p)}`, price: p.price, cat: catLabel },
-            { name: `${p.name} — ${sliceOf(p)}`, price: p.slice, cat: catLabel },
-          ]
-        : [{ name: p.name, price: p.price, cat: catLabel }]
-    )
+    .map((p) => {
+      if (p.slice == null) return { name: p.name, price: p.price, cat: catLabel }
+      return {
+        name: p.name,
+        cat: catLabel,
+        variants: [
+          { name: `${p.name} — ${sizeOf(p)}`,  label: headerLabel(sizeOf(p)),  price: p.price },
+          { name: `${p.name} — ${sliceOf(p)}`, label: headerLabel(sliceOf(p)), price: p.slice },
+        ],
+      }
+    })
 }
 
 export const MENU_DATA = Object.fromEntries(
@@ -122,9 +128,13 @@ export const ORDER_CATEGORIES = [
   { label: '🏠 Main Menu', action: 'home' },
 ]
 
-// Name → "🍰 Cheesecakes", for grouping the WhatsApp order receipt.
+// Name → "🍰 Cheesecakes", for grouping the WhatsApp order receipt. Two-price
+// products carry `variants`, so map each variant's full name (that's what lands
+// in the cart) rather than the base product name.
 const CAT_BY_NAME = new Map(
-  Object.values(ORDER_ITEMS).flatMap((items) => items.map((i) => [i.name, i.cat]))
+  Object.values(ORDER_ITEMS).flatMap((items) =>
+    items.flatMap((i) => (i.variants ? i.variants.map((v) => [v.name, i.cat]) : [[i.name, i.cat]]))
+  )
 )
 
 export function getItemCat(name) {
