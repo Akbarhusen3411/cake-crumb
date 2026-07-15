@@ -208,53 +208,59 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
   const cartCount = Object.values(cart).reduce((sum, q) => sum + (q || 0), 0)
   return (
     <div
-      className="bg-white rounded-2xl rounded-tl-sm shadow-md overflow-hidden max-w-[90%] border border-gold/15"
+      className="bg-white rounded-2xl rounded-tl-sm shadow-md overflow-hidden w-full border border-gold/15"
       style={{ animation: 'chat-msg-in 0.25s ease-out' }}
     >
       <div className="px-3.5 py-2.5 bg-gradient-to-r from-gold/15 via-cream/80 to-soft-pink/40 border-b border-gold/10 flex items-center gap-2">
         <FiStar size={12} className="text-gold" />
         <p className="text-[11px] font-semibold text-chocolate tracking-wide">Tap + to add to your order</p>
       </div>
-      <div className="max-h-[260px] overflow-y-auto divide-y divide-cream-dark/40">
+      <div className="max-h-[46vh] overflow-y-auto divide-y divide-cream-dark/40">
         {items.map((item) => {
           // Two-price product → one row, name once, both tiers as compact
           // side-by-side add controls.
           if (item.variants) {
             return (
-              <div key={item.name} className="px-3.5 py-2.5">
-                <p className="text-[12.5px] font-medium text-chocolate truncate leading-tight mb-1.5">{item.name}</p>
-                <div className="grid grid-cols-2 gap-1.5">
+              <div key={item.name} className="px-3.5 py-2">
+                <p className="text-[13.5px] font-semibold truncate leading-tight mb-1.5" style={{ color: '#5b3e36' }}>{item.name}</p>
+                <div className="grid grid-cols-2 gap-2">
                   {item.variants.map((v) => {
                     const q = cart[v.name] || 0
                     return (
                       <div
                         key={v.name}
-                        className={`flex items-center justify-between rounded-lg border px-2 py-1 transition-colors ${q > 0 ? 'border-berry bg-berry/5' : 'border-cream-dark/50'}`}
+                        className={`rounded-xl border p-1.5 flex flex-col gap-1.5 transition-colors ${q > 0 ? 'border-berry' : 'border-cream-dark/60'}`}
+                        style={{ background: q > 0 ? '#fdeef1' : '#fffbf8' }}
                       >
-                        <div className="min-w-0 pr-1">
-                          <p className="text-[10px] font-semibold text-chocolate leading-none truncate">{v.label}</p>
-                          <p className="text-[11px] text-berry font-bold leading-none mt-1">₹{v.price}</p>
+                        <div className="flex items-baseline justify-between gap-1 px-0.5">
+                          <span className="text-[13px] font-semibold truncate" style={{ color: '#5b3e36' }}>{v.label}</span>
+                          <span className="text-[13px] font-bold text-berry shrink-0">₹{v.price}</span>
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {q > 0 && (
-                            <>
-                              <button
-                                onClick={() => onUpdate(v.name, v.price, q - 1)}
-                                className="w-5 h-5 rounded-full bg-cream border border-chocolate/10 flex items-center justify-center text-chocolate active:scale-90 transition-transform"
-                              >
-                                <FiMinus size={10} />
-                              </button>
-                              <span className="w-3.5 text-center text-[11px] font-bold text-chocolate">{q}</span>
-                            </>
-                          )}
+                        {q > 0 ? (
+                          <div className="flex items-center justify-between">
+                            <button
+                              onClick={() => onUpdate(v.name, v.price, q - 1)}
+                              className="w-7 h-7 rounded-lg bg-white border border-berry/40 flex items-center justify-center text-berry active:scale-90 transition-transform"
+                            >
+                              <FiMinus size={14} />
+                            </button>
+                            <span className="text-[14px] font-extrabold text-chocolate">{q}</span>
+                            <button
+                              onClick={() => onUpdate(v.name, v.price, q + 1)}
+                              className="w-7 h-7 rounded-lg bg-berry flex items-center justify-center text-white active:scale-90 transition-transform"
+                            >
+                              <FiPlus size={14} />
+                            </button>
+                          </div>
+                        ) : (
                           <button
-                            onClick={() => onUpdate(v.name, v.price, q + 1)}
-                            className="w-5 h-5 rounded-full bg-berry flex items-center justify-center text-white active:scale-90 transition-transform"
-                            style={{ boxShadow: '0 2px 6px rgba(224, 97, 122, 0.4)' }}
+                            onClick={() => onUpdate(v.name, v.price, 1)}
+                            className="w-full h-7 rounded-lg bg-berry/10 border border-berry/30 flex items-center justify-center text-berry active:scale-95 transition-transform"
+                            aria-label={`Add ${v.label}`}
                           >
-                            <FiPlus size={10} />
+                            <FiPlus size={16} />
                           </button>
-                        </div>
+                        )}
                       </div>
                     )
                   })}
@@ -835,26 +841,26 @@ export default function ChatBot() {
           >
             <div className="pointer-events-none absolute -top-10 -right-10 w-28 h-28 rounded-full" style={{ background: 'rgba(224, 97, 122, 0.10)', filter: 'blur(28px)' }} />
 
-            <div className="relative shrink-0">
-              <img
-                src={asset('logo-icon.png')}
-                alt="Cake & Crumb"
-                className="w-11 h-11 rounded-full object-cover shadow"
-                style={{ background: '#fff', border: '2px solid #f7d6d4' }}
-              />
-              <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-400" style={{ border: '2px solid #fff' }} />
-            </div>
+            <img
+              src={asset('logo_final.webp')}
+              alt="Cake & Crumb"
+              className="shrink-0"
+              style={{ height: 42, width: 'auto', display: 'block' }}
+            />
             <div className="flex-1 min-w-0 leading-tight">
               <h3
-                className="text-[20px] tracking-wide truncate"
-                style={{ fontFamily: "'Lato', system-ui, sans-serif", color: '#1a1a1a', fontWeight: 600, letterSpacing: '0.02em' }}
+                className="truncate"
+                style={{ fontFamily: "'Playfair Display', 'Cormorant Garamond', Georgia, serif", color: '#1a1a1a', fontWeight: 700, letterSpacing: '0.03em', fontSize: 17 }}
               >
                 CAKE
-                <span style={{ color: '#1a1a1a', fontStyle: 'italic', fontWeight: 500, fontSize: '1.2em', margin: '0 0.06em', verticalAlign: '-0.04em' }}>&</span>
+                <span style={{ fontStyle: 'italic', fontWeight: 500, fontSize: '1.28em', margin: '0 0.05em', verticalAlign: '-0.05em' }}>&</span>
                 CRUMB
               </h3>
-              <p className="text-[9.5px] font-semibold tracking-[0.18em] uppercase truncate" style={{ color: '#cf3e63' }}>
-                Gourmet Chocolate &amp; Berry
+              <p
+                className="truncate"
+                style={{ fontFamily: "'Allura', cursive", color: '#1a1a1a', fontSize: 12.5, marginTop: 1, lineHeight: 1.1 }}
+              >
+                The gourmet chocolate and berry boutique!
               </p>
             </div>
             {Object.keys(orderCart).length > 0 && (

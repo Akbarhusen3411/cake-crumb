@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   FiCheckCircle, FiHome, FiArrowLeft, FiSmartphone, FiTruck,
-  FiCopy, FiShoppingBag, FiCalendar, FiAlertCircle, FiCheck,
+  FiCopy, FiShoppingBag, FiCalendar, FiAlertCircle, FiCheck, FiShield,
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import { useCart } from '../context/CartContext.jsx'
@@ -960,72 +960,80 @@ export default function Checkout() {
 
             {/* RIGHT — order summary with Place Order inside */}
             <div className="col-lg-5">
-              <div
-                className="p-4 sticky-lg-top"
-                style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14, top: 'calc(var(--cc-header-h, 82px) + 1rem)' }}
-              >
-                <div className="tag-badge mb-3">Order Summary</div>
-                <div style={{ maxHeight: 280, overflowY: 'auto' }}>
+              <div className="cc-summary-card sticky-lg-top" style={{ top: 'calc(var(--cc-header-h, 82px) + 1rem)' }}>
+                <div className="cc-summary-card__head">
+                  <span className="cc-summary-card__head-icon"><FiShoppingBag size={17} /></span>
+                  <div>
+                    <div className="cc-summary-card__title">Order Summary</div>
+                    <div className="cc-summary-card__count">{count} item{count !== 1 ? 's' : ''}</div>
+                  </div>
+                </div>
+
+                <div className="cc-summary-card__items">
                   {items.map((it) => (
-                    <div key={it.id} className="d-flex align-items-center mb-3" style={{ gap: '0.7rem' }}>
-                      <img
-                        src={u(it.img, 200, 200)}
-                        alt=""
-                        style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
-                      />
-                      <div className="flex-grow-1" style={{ fontSize: '0.85rem', minWidth: 0 }}>
-                        <div style={{ color: 'var(--cc-cocoa)', fontWeight: 600 }}>{it.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--cc-cocoa-soft)' }}>
-                          Qty: {it.qty} × {inr(it.price)}
+                    <div key={it.id} className="cc-summary-item">
+                      <img src={u(it.img, 200, 200)} alt="" className="cc-summary-item__img" />
+                      <div className="cc-summary-item__info">
+                        <div className="cc-summary-item__name">{it.name}</div>
+                        <div className="cc-summary-item__meta">
+                          <span className="cc-summary-item__qty">×{it.qty}</span>
+                          {inr(it.price)}
                         </div>
                       </div>
-                      <strong style={{ color: 'var(--cc-rose)', fontSize: '0.9rem' }}>
-                        {inr(it.price * it.qty)}
-                      </strong>
+                      <span className="cc-summary-item__price">{inr(it.price * it.qty)}</span>
                     </div>
                   ))}
                 </div>
 
-                <hr style={{ borderColor: 'var(--cc-border)' }} />
-                <div className="d-flex justify-content-between mb-1" style={{ fontSize: '0.9rem' }}>
-                  <span>Subtotal</span>
-                  <span>{inr(subtotal)}</span>
+                <div className="cc-summary-card__totals">
+                  <div className="cc-summary-row">
+                    <span>Subtotal</span>
+                    <span>{inr(subtotal)}</span>
+                  </div>
+                  <div className="cc-summary-row">
+                    <span>Delivery</span>
+                    {form.deliveryMethod === 'pickup' ? (
+                      <span className="cc-summary-delivery--free">FREE · pickup</span>
+                    ) : deliveryCalc === 'loading' ? (
+                      <span>…</span>
+                    ) : delivery > 0 ? (
+                      <span>{inr(delivery)}</span>
+                    ) : (
+                      <span className="cc-summary-delivery--free">FREE</span>
+                    )}
+                  </div>
                 </div>
-                <div className="d-flex justify-content-between mb-2" style={{ fontSize: '0.9rem' }}>
-                  <span>Delivery</span>
-                  <span style={{ color: delivery === 0 ? 'var(--cc-rose)' : 'var(--cc-cocoa)', fontWeight: 600 }}>
-                    {form.deliveryMethod === 'pickup'
-                      ? 'FREE (pickup)'
-                      : deliveryCalc === 'loading'
-                        ? '…'
-                        : delivery > 0 ? inr(delivery) : 'FREE'}
-                  </span>
+
+                <div className="cc-summary-total">
+                  <span className="cc-summary-total__label">Total</span>
+                  <span className="cc-summary-total__value">{inr(total)}</span>
                 </div>
-                <hr style={{ borderColor: 'var(--cc-border)' }} />
-                <div className="d-flex justify-content-between mb-1" style={{ fontSize: '1.05rem' }}>
-                  <strong style={{ color: 'var(--cc-cocoa)' }}>Total</strong>
-                  <strong style={{ color: 'var(--cc-rose)', fontFamily: "'Lato', system-ui, sans-serif", fontSize: '1.3rem' }}>
-                    {inr(total)}
-                  </strong>
-                </div>
+
+                {form.payment === 'deposit' && (
+                  <div className="cc-summary-deposit">
+                    <span>Pay now · {Math.round(DEPOSIT_PCT * 100)}% advance</span>
+                    <strong>{inr(depositAmt)}</strong>
+                  </div>
+                )}
+
                 {form.deliveryMethod === 'delivery' && (
-                  <p style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', marginTop: '0.4rem', marginBottom: '1rem', textAlign: 'center' }}>
+                  <p className="cc-summary-note">
                     Delivery is calculated from your address. Self-pickup is always free.
                   </p>
                 )}
-                <button
-                  type="submit"
-                  className="btn-rose w-100 justify-content-center"
-                  disabled={!isFormValid}
-                  style={{
-                    opacity: !isFormValid ? 0.5 : 1,
-                    cursor: !isFormValid ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  <FiCheckCircle /> Place Order
+
+                <button type="submit" className="cc-place-order-btn" disabled={!isFormValid}>
+                  <FiCheckCircle size={18} /> Place Order
                 </button>
-                <p style={{ fontSize: '0.7rem', color: 'var(--cc-cocoa-soft)', textAlign: 'center', marginTop: '0.6rem', marginBottom: 0 }}>
-                  By placing your order you agree to our terms & conditions.
+
+                <div className="cc-summary-trust">
+                  <span><FiShield size={12} /> Secure</span>
+                  <span><FiCheckCircle size={12} /> Freshly baked</span>
+                  <span><FaWhatsapp size={12} /> Order updates</span>
+                </div>
+
+                <p className="cc-summary-terms">
+                  By placing your order you agree to our terms &amp; conditions.
                 </p>
               </div>
             </div>
