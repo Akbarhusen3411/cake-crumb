@@ -788,6 +788,82 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
   .feature-row > .feature-cell:last-child { border-bottom: none; }
 }
 
+/* ─── Certification badges — FSSAI + Udyam (components/CertBadges.jsx) ────── */
+.cc-cert-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+.cc-cert-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 1.1rem 0.55rem 0.65rem;
+  border: 1px solid var(--cc-rose-soft);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+}
+.cc-cert-pill__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--cc-blush-soft);
+  color: var(--cc-rose);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.cc-cert-pill__body {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  text-align: left;
+}
+.cc-cert-pill__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cc-rose);
+}
+.cc-cert-pill__num {
+  font-size: 0.78rem;
+  color: var(--cc-cocoa-soft);
+  /* Tabular figures so a 14-digit licence number stays easy to read aloud
+     and compare against the certificate. */
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* Compact single line — footer + checkout summary. Deliberately at full body
+   contrast and weight: a licence number nobody can read is not a trust signal. */
+.cc-cert-line {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--cc-cocoa);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.cc-cert-line strong {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.cc-cert-line svg {
+  color: var(--cc-rose);
+  flex-shrink: 0;
+}
+.cc-cert-line__sep {
+  opacity: 0.55;
+  color: var(--cc-rose);
+}
+
 .hero-split {
   background: var(--cc-cream);
   padding: 24px 0;
@@ -1369,6 +1445,15 @@ html, body { overflow-x: hidden; }
   font-weight: 600;
 }
 .cc-summary-trust svg { color: var(--cc-rose); }
+/* Slightly smaller than the footer's line — the summary card is a narrow
+   sidebar column and the full size wraps badly there. */
+.cc-summary-certs {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--cc-border);
+  width: 100%;
+  font-size: 0.74rem;
+}
 .cc-summary-terms {
   font-size: 0.68rem;
   color: var(--cc-cocoa-soft);
@@ -2232,6 +2317,14 @@ html, body { overflow-x: hidden; }
   font-size: 2rem;
   line-height: 1.2;
   margin: 1rem 0 0;
+}
+
+/* Registration line — shared by the mobile + desktop footers. Sits directly
+   above the rose copyright ribbon in both. */
+.cc-footer__certs {
+  text-align: center;
+  padding: 0.9rem 1rem;
+  border-top: 1px solid var(--cc-border);
 }
 
 .cc-footer-d__ribbon {
@@ -3568,6 +3661,38 @@ header[style*="sticky"] {
   padding: 1rem 1.25rem;
 }
 
+/* Registered & Certified — cream so it separates the two #fdeae8 sections
+   either side of it (Why Choose Us / Kitchen Peek). */
+.cc-about-certs {
+  background: var(--cc-cream);
+}
+.cc-about-certs__lede {
+  max-width: 620px;
+  margin: 1rem auto 0;
+  color: var(--cc-cocoa-soft);
+  font-size: 0.95rem;
+}
+.cc-about-certs__notes {
+  list-style: none;
+  max-width: 620px;
+  margin: 1.5rem auto 0;
+  padding: 0;
+  text-align: center;
+}
+.cc-about-certs__notes li {
+  font-size: 0.86rem;
+  color: var(--cc-cocoa-soft);
+  line-height: 1.6;
+  margin-bottom: 0.6rem;
+}
+.cc-about-certs__notes li:last-child { margin-bottom: 0; }
+.cc-about-certs__notes strong { color: var(--cc-cocoa); }
+.cc-about-certs__notes a {
+  color: var(--cc-rose);
+  white-space: nowrap;
+}
+.cc-about-certs__notes a:hover { color: var(--cc-rose-deep); }
+
 .cc-about-kitchen {
   background: #fdeae8;
 }
@@ -4246,6 +4371,15 @@ header[style*="sticky"] {
   font-weight: 700;
   margin-bottom: 0.7rem;
   font-size: 0.95rem;
+}
+/* Per-piece products lead with the box price; the per-piece rate sits under it,
+   explicitly labelled, so it can't be read as the price of the whole box. */
+.cc-product-card__price-sub {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--cc-cocoa-soft);
+  margin-top: 1px;
 }
 .cc-product-card__add {
   background: var(--cc-rose);

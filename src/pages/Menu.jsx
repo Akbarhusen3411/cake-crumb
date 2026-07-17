@@ -54,12 +54,12 @@ const CARDS = [
     image: img.rcCupcakesRedVelvet,
     items: [
       { n: 'Vanilla (Box of 6)', p: 150 },
-      { n: 'Chocolate (Box of 6)', p: 170 },
-      { n: 'Strawberry (Box of 6)', p: 170 },
+      { n: 'Chocolate (Box of 6)', p: 180 },
+      { n: 'Strawberry (Box of 6)', p: 180 },
       { n: 'Red Velvet (Box of 6)', p: 180 },
-      { n: 'Pistachio (Box of 6)', p: 190, badge: 'Premium' },
+      { n: 'Pistachio (Box of 6)', p: 210, badge: 'Premium' },
     ],
-    note: '♥ Add ₹20 for floral or additional decoration.',
+    note: '♥ Also sold by the piece from ₹25 (minimum 2). Add ₹20 for floral or additional decoration.',
   },
   {
     title: 'Cookies',

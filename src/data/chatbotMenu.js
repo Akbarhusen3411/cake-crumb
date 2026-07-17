@@ -16,7 +16,7 @@ const CATEGORY_CONFIG = [
   { key: 'cheesecakes',  category: 'Cheesecakes',  emoji: '🍰', subtitle: 'Banto 4" (inch) · whole or per slice', strip: / Cheesecake/ },
   { key: 'milk-cakes',   category: 'Milk Cakes',   emoji: '🥛', subtitle: 'Bento or single-serve tub',            strip: / Milk Cake/ },
   { key: 'sponge-cakes', category: 'Sponge Cakes', emoji: '🎂', subtitle: 'Whole bento or single-serve tub',      strip: / Sponge Cake/ },
-  { key: 'cupcakes',     category: 'Cupcakes',     emoji: '🧁', subtitle: 'Box of 6 · +₹20 for decoration',       strip: / Cupcakes \(6 pcs\)/ },
+  { key: 'cupcakes',     category: 'Cupcakes',     emoji: '🧁', subtitle: 'Per piece (min 2) or box of 6 · +₹20 for decoration', strip: / Cupcakes/ },
   { key: 'cookies',      category: 'Cookies',      emoji: '🍪', subtitle: 'Box of 6 or box of 12',                strip: / Cookies/ },
   { key: 'bakes',        category: 'Bakes',        emoji: '🍫', subtitle: 'Brownies, blondies, cakesicles & more', strip: / Brownie$| Blondie$/ },
   { key: 'dessert-cups', category: 'Dessert Cups', emoji: '🍮', subtitle: 'Per cup · 150ml',                      strip: / Cup$/ },
@@ -102,7 +102,11 @@ function buildOrderItems(cfg) {
         name: p.name,
         cat: catLabel,
         variants: [
-          { name: `${p.name} — ${sizeOf(p)}`,  label: headerLabel(sizeOf(p)),  price: p.price },
+          // `min` rides on the `price` tier only — it's the per-piece one, and
+          // products.js puts the minimum there (cupcakes: 2). The bot has to
+          // honour it or it would quote 1 cupcake at a price the website won't
+          // sell. Undefined ⇒ 1 for every other product.
+          { name: `${p.name} — ${sizeOf(p)}`,  label: headerLabel(sizeOf(p)),  price: p.price, min: p.minQty },
           { name: `${p.name} — ${sliceOf(p)}`, label: headerLabel(sliceOf(p)), price: p.slice },
         ],
       }

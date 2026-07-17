@@ -15,6 +15,7 @@ import { usePageMeta } from '../hooks/usePageMeta.js'
 import { saveOrder } from '../services/orders.js'
 import { generateOrderId } from '../services/orderId.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
+import CertBadges from '../components/CertBadges.jsx'
 import { sendOrderEmail, sendCustomerConfirmation } from '../services/emailNotify.js'
 
 const UPI_ID = '9081668490@kotakbank'
@@ -1025,6 +1026,10 @@ export default function Checkout() {
                   <span><FiCheckCircle size={12} /> Freshly baked</span>
                   <span><FaWhatsapp size={12} /> Order updates</span>
                 </div>
+
+                {/* Checkout uses MiniFooter, so the footer's registration line
+                    never renders here — repeat it at the point of payment. */}
+                <CertBadges variant="line" className="cc-summary-certs" />
 
                 <p className="cc-summary-terms">
                   By placing your order you agree to our terms &amp; conditions.

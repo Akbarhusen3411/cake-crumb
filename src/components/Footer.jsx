@@ -5,6 +5,7 @@ import {
 } from 'react-icons/fi'
 import Newsletter from './Newsletter.jsx'
 import Logo from './Logo.jsx'
+import CertBadges from './CertBadges.jsx'
 import { asset } from '../data/images.js'
 
 const QUICK_LINKS = [
@@ -92,6 +93,11 @@ export default function Footer() {
           <Newsletter compact />
         </div>
 
+        {/* Statutory registrations — numbers only, see data/certifications.js */}
+        <div className="cc-footer__certs">
+          <CertBadges variant="line" />
+        </div>
+
         {/* Copyright bar */}
         <div className="cc-footer-m__copyright">
           © {year} Cake &amp; Crumb &nbsp;·&nbsp; Made with <span aria-hidden style={{ color: '#ffe0e8' }}>♥</span> in India
@@ -167,6 +173,11 @@ export default function Footer() {
                 We can't wait to<br />sweeten your day! <span aria-hidden style={{ color: 'var(--cc-rose)' }}>♥</span>
               </p>
             </div>
+          </div>
+
+          {/* Statutory registrations — numbers only, see data/certifications.js */}
+          <div className="cc-footer__certs">
+            <CertBadges variant="line" />
           </div>
         </div>
 

@@ -9,6 +9,7 @@ import { img, u } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { useCart } from '../context/CartContext.jsx'
 import HeartDivider from '../components/HeartDivider.jsx'
+import CertBadges from '../components/CertBadges.jsx'
 
 // Instagram-style tile grid for the bottom of the home page.
 const IG_TILES = [
@@ -78,6 +79,7 @@ export default function Home() {
               </div>
             ))}
           </div>
+          <CertBadges className="mt-4" />
         </div>
       </section>
 

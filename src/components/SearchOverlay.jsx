@@ -104,7 +104,14 @@ export default function SearchOverlay({ open, onClose }) {
                   <div className="cc-search-overlay__name">{p.name}</div>
                 </div>
                 <strong className="cc-search-overlay__price">
-                  {p.slice != null ? `from ${inr(Math.min(p.price, p.slice))}` : inr(p.price)}
+                  {/* Per-piece products (minQty > 1) quote the BOX price here for
+                      the same reason the Shop card does — "from ₹25" beside the
+                      name "Vanilla Cupcakes" reads as six of them for ₹25. */}
+                  {p.slice == null
+                    ? inr(p.price)
+                    : (p.minQty || 1) > 1
+                      ? inr(p.slice)
+                      : `from ${inr(Math.min(p.price, p.slice))}`}
                 </strong>
               </Link>
             ))

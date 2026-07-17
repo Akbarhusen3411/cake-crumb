@@ -1,16 +1,26 @@
-import { useEffect } from 'react'
-import { FiX, FiShoppingBag, FiHeart } from 'react-icons/fi'
+import { useEffect, useState } from 'react'
+import { FiX, FiShoppingBag, FiHeart, FiMinus, FiPlus } from 'react-icons/fi'
 import { u } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { useCart } from '../context/CartContext.jsx'
 import AllergenTags from './AllergenTags.jsx'
 
 /**
- * Modal dialog showing one product with bigger image, full info,
- * allergens, and dual add-to-cart (whole/slice) where applicable.
+ * Modal dialog showing one product with bigger image, full info, allergens, and
+ * dual add-to-cart (whole/slice) where applicable.
+ *
+ * For a per-piece product (`minQty > 1` — cupcakes) the base tier also gets a
+ * quantity stepper with a live total, because the Shop card deliberately shows
+ * the BOX price: this modal is the only place the customer sees the per-piece
+ * rate, so it has to be where they choose how many pieces they want.
  */
 export default function ProductQuickView({ product, onClose }) {
   const { add } = useCart()
+  // Applies to the base (`price`) tier only — a box is orderable on its own.
+  const minQty = Math.max(1, Number(product?.minQty) || 1)
+  // Shop keys this component by product id, so opening a different product
+  // remounts it and qty re-initialises to that product's minimum.
+  const [qty, setQty] = useState(minQty)
 
   useEffect(() => {
     if (!product) return
@@ -25,9 +35,10 @@ export default function ProductQuickView({ product, onClose }) {
 
   if (!product) return null
   const p = product
+  const perPiece = minQty > 1
 
-  function addAndClose(item) {
-    add(item)
+  function addAndClose(item, addQty) {
+    add(item, addQty)
     onClose()
   }
 
@@ -74,19 +85,63 @@ export default function ProductQuickView({ product, onClose }) {
             {/* Options — each size on its own row with price + Add button */}
             {p.slice ? (
               <div className="qv-options">
-                <div className="qv-option">
+                <div className={`qv-option${perPiece ? ' qv-option--qty' : ''}`}>
                   <div className="qv-option__info">
-                    <div className="qv-option__label">{p.sizeLabel || 'Whole'}</div>
-                    <div className="qv-option__price">{inr(p.price)}</div>
+                    <div className="qv-option__label">
+                      {p.sizeLabel || 'Whole'}
+                      {perPiece && <span className="qv-option__min">Min {minQty}</span>}
+                    </div>
+                    <div className="qv-option__price">
+                      {inr(p.price)}
+                      {perPiece && <span className="qv-option__sub">each</span>}
+                    </div>
                   </div>
-                  <button
-                    className="qv-btn qv-btn--filled"
-                    onClick={() =>
-                      addAndClose({ ...p, name: `${p.name} (${p.sizeLabel || 'Whole'})` })
-                    }
-                  >
-                    <FiShoppingBag size={13} /> Add
-                  </button>
+
+                  {perPiece ? (
+                    <div className="qv-qty">
+                      <span className="qv-qty__ask">How many?</span>
+                      <div className="qv-qty__row">
+                        <div className="qv-qty__stepper">
+                          <button
+                            type="button"
+                            onClick={() => setQty((q) => Math.max(minQty, q - 1))}
+                            disabled={qty <= minQty}
+                            aria-label="One fewer"
+                          >
+                            <FiMinus size={13} />
+                          </button>
+                          <span className="qv-qty__val" aria-live="polite">{qty}</span>
+                          <button
+                            type="button"
+                            onClick={() => setQty((q) => q + 1)}
+                            aria-label="One more"
+                          >
+                            <FiPlus size={13} />
+                          </button>
+                        </div>
+                        {/* Name carries the TIER, never the count — add() merges
+                            by id, so "(2 pcs)" would go stale the moment the
+                            customer added more. The count lives in cart qty. */}
+                        <button
+                          className="qv-btn qv-btn--filled qv-qty__add"
+                          onClick={() =>
+                            addAndClose({ ...p, name: `${p.name} (${p.sizeLabel || 'Whole'})` }, qty)
+                          }
+                        >
+                          <FiShoppingBag size={13} /> Add {qty} — {inr(p.price * qty)}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      className="qv-btn qv-btn--filled"
+                      onClick={() =>
+                        addAndClose({ ...p, name: `${p.name} (${p.sizeLabel || 'Whole'})` }, minQty)
+                      }
+                    >
+                      <FiShoppingBag size={13} /> Add
+                    </button>
+                  )}
                 </div>
                 <div className="qv-option">
                   <div className="qv-option__info">
@@ -269,6 +324,17 @@ export default function ProductQuickView({ product, onClose }) {
           text-transform: uppercase;
           letter-spacing: 0.12em;
           font-weight: 700;
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+        .qv-option__min {
+          background: var(--cc-blush-soft);
+          color: var(--cc-rose-deep);
+          border-radius: 999px;
+          padding: 1px 7px;
+          letter-spacing: 0.08em;
+          font-size: 0.58rem;
         }
         .qv-option__price {
           font-size: 1.25rem;
@@ -276,8 +342,77 @@ export default function ProductQuickView({ product, onClose }) {
           font-weight: 700;
           line-height: 1.1;
           margin-top: 2px;
+          display: flex;
+          align-items: baseline;
+          gap: 0.45rem;
+        }
+        .qv-option__sub {
+          font-size: 0.7rem;
+          font-weight: 600;
+          color: var(--cc-cocoa-soft);
+          letter-spacing: 0.02em;
         }
         .qv-option .qv-btn { flex: 0 0 auto; min-width: 96px; padding: 0.6rem 1rem; }
+
+        /* Per-piece tier: label/price on top, then "How many?" + stepper + a
+           live-total Add button. Stacks so the row never gets cramped. */
+        .qv-option--qty {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0.6rem;
+        }
+        .qv-qty__ask {
+          display: block;
+          font-size: 0.62rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: var(--cc-cocoa-soft);
+          margin-bottom: 0.35rem;
+        }
+        .qv-qty__row {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          flex-wrap: wrap;
+        }
+        .qv-qty__stepper {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.15rem;
+          background: #fff;
+          border: 1.5px solid var(--cc-rose-soft);
+          border-radius: 999px;
+          padding: 0.2rem;
+          flex: 0 0 auto;
+        }
+        .qv-qty__stepper button {
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          border: none;
+          background: transparent;
+          color: var(--cc-rose);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+        .qv-qty__stepper button:hover:not(:disabled) { background: var(--cc-blush); }
+        .qv-qty__stepper button:disabled { opacity: 0.35; cursor: not-allowed; }
+        .qv-qty__val {
+          min-width: 26px;
+          text-align: center;
+          font-weight: 800;
+          font-size: 0.95rem;
+          color: var(--cc-cocoa);
+          font-variant-numeric: tabular-nums;
+        }
+        .qv-option--qty .qv-qty__add {
+          flex: 1 1 auto;
+          min-width: 0;
+        }
 
         .qv-actions {
           display: flex;

@@ -9,7 +9,7 @@ const A_NUTS    = [...A_BAKED, 'contains-nuts']
 // Featured cards on Home — visually distinctive picks across categories.
 export const featured = [
   { id: 'feat-1', name: 'Blueberry Cheesecake', price: 410, img: img.rcCheesecakeBlueberry, category: 'Cheesecakes', allergens: A_BAKED },
-  { id: 'feat-2', name: 'Red Velvet Cupcakes (6 pcs)', price: 180, img: img.rcCupcakesRedVelvet, category: 'Cupcakes', allergens: A_BAKED },
+  { id: 'feat-2', name: 'Red Velvet Cupcakes (Box of 6)', price: 180, img: img.rcCupcakesRedVelvet, category: 'Cupcakes', allergens: A_BAKED },
   { id: 'feat-3', name: 'Triple Choc Cookies (Box of 6)', price: 340, img: img.rcCookiesDoubleChocolate, category: 'Cookies', allergens: A_BAKED },
   { id: 'feat-4', name: 'Pistachio Milk Cake (Bento)', price: 520, img: img.rcMilkcakeRosePistachioDomes, category: 'Milk Cakes', allergens: A_NUTS },
 ]
@@ -76,14 +76,24 @@ export const shopProducts = [
   { id: 'ck-coconut', name: 'Coconut Cookies', price: 340, slice: 700, img: img.cookies, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12' },
   { id: 'ck-pistachio', name: 'Pistachio & Rose Cookies', price: 400, slice: 820, img: img.rcCookiesPistachioRose, category: 'Cookies', sizeLabel: 'Box of 6', sliceLabel: 'Box of 12', badge: 'Special' },
 
-  // ───── CUPCAKES — box of 6 (₹20 extra for floral / additional decoration) ─────
-  { id: 'cup-vanilla', name: 'Vanilla Cupcakes (6 pcs)', price: 150, img: img.rcCupcakesFunfetti, category: 'Cupcakes', sizeLabel: 'Box of 6' },
-  { id: 'cup-redvelvet', name: 'Red Velvet Cupcakes (6 pcs)', price: 180, img: img.rcCupcakesRedVelvet, category: 'Cupcakes', sizeLabel: 'Box of 6' },
-  { id: 'cup-chocolate', name: 'Chocolate Cupcakes (6 pcs)', price: 170, img: img.rcCupcakesChocolate, category: 'Cupcakes', sizeLabel: 'Box of 6' },
-  { id: 'cup-pistachio', name: 'Pistachio Cupcakes (6 pcs)', price: 190, img: img.rcCupcakesMintGoldLeaf, category: 'Cupcakes', sizeLabel: 'Box of 6' },
-  { id: 'cup-biscoff', name: 'Biscoff Cupcakes (6 pcs)', price: 180, img: img.cupcakesBox, category: 'Cupcakes', sizeLabel: 'Box of 6' },
-  { id: 'cup-nutella', name: 'Nutella Cupcakes (6 pcs)', price: 170, img: img.cupcakesBoxLarge, category: 'Cupcakes', sizeLabel: 'Box of 6' },
-  { id: 'cup-strawberry', name: 'Strawberry Cupcakes (6 pcs)', price: 170, img: img.rcCupcakesFloralRose, category: 'Cupcakes', sizeLabel: 'Box of 6' },
+  // ───── CUPCAKES — per piece (min 2) or box of 6 (₹20 extra for floral / additional decoration) ─────
+  // Two tiers like the brownies below, but with one extra rule: every box price
+  // is an exact multiple of 6, so `price × 6 === slice`. Both tiers are quoted
+  // side by side and customers do check the arithmetic — if the per-piece tier
+  // were rounded, six singles would cost more (or less) than the box and one of
+  // the two prices would look like a cheat. Keep the multiple-of-6 invariant if
+  // you ever change a cupcake price: pick the BOX price first, then divide.
+  //   `minQty: 2` — the bakery won't bake a single cupcake, so the per-piece
+  //   tier enters the cart at 2 and drops out entirely below that. It applies to
+  //   the `price` tier only; a box of 6 is orderable on its own. See
+  //   CartContext.jsx (minQtyOf) for how it's enforced.
+  { id: 'cup-vanilla', name: 'Vanilla Cupcakes', price: 25, slice: 150, img: img.rcCupcakesFunfetti, category: 'Cupcakes', sizeLabel: '1 pc', sliceLabel: 'Box of 6', minQty: 2 },
+  { id: 'cup-redvelvet', name: 'Red Velvet Cupcakes', price: 30, slice: 180, img: img.rcCupcakesRedVelvet, category: 'Cupcakes', sizeLabel: '1 pc', sliceLabel: 'Box of 6', minQty: 2 },
+  { id: 'cup-chocolate', name: 'Chocolate Cupcakes', price: 30, slice: 180, img: img.rcCupcakesChocolate, category: 'Cupcakes', sizeLabel: '1 pc', sliceLabel: 'Box of 6', minQty: 2 },
+  { id: 'cup-pistachio', name: 'Pistachio Cupcakes', price: 35, slice: 210, img: img.rcCupcakesMintGoldLeaf, category: 'Cupcakes', sizeLabel: '1 pc', sliceLabel: 'Box of 6', minQty: 2 },
+  { id: 'cup-biscoff', name: 'Biscoff Cupcakes', price: 30, slice: 180, img: img.cupcakesBox, category: 'Cupcakes', sizeLabel: '1 pc', sliceLabel: 'Box of 6', minQty: 2 },
+  { id: 'cup-nutella', name: 'Nutella Cupcakes', price: 30, slice: 180, img: img.cupcakesBoxLarge, category: 'Cupcakes', sizeLabel: '1 pc', sliceLabel: 'Box of 6', minQty: 2 },
+  { id: 'cup-strawberry', name: 'Strawberry Cupcakes', price: 30, slice: 180, img: img.rcCupcakesFloralRose, category: 'Cupcakes', sizeLabel: '1 pc', sliceLabel: 'Box of 6', minQty: 2 },
 
   // ───── BROWNIES — 1 pc / Box of 6 (also sold in 4 & 12) ─────
   { id: 'bk-brownie-classic', name: 'Classic Brownie', price: 60, slice: 350, img: img.rcBrownieFudgy, category: 'Bakes', sizeLabel: '1 pc', sliceLabel: 'Box of 6', group: 'Brownies' },

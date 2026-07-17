@@ -1,7 +1,18 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 const CartContext = createContext(null)
-const STORAGE_KEY = 'cc_cart_v1'
+// v2: lines gained `minQty`, and the cupcake ids changed meaning — `cup-vanilla`
+// was a box of 6 at ₹150 and is now a single piece at ₹25. A v1 cart still holds
+// the old price against that id, and `add()` merges by id keeping the STORED
+// price, so a v1 cupcake line would bill new per-piece adds at the old box rate.
+// Bumping the key drops those carts once rather than mispricing them.
+const STORAGE_KEY = 'cc_cart_v2'
+
+// Smallest quantity this line may sit at. Products carry `minQty` (cupcakes are
+// per-piece with a minimum of 2 — the bakery won't bake a single one); anything
+// without it behaves exactly as before at 1. Also covers carts restored from
+// localStorage that predate the field.
+const minQtyOf = (p) => Math.max(1, Number(p?.minQty) || 1)
 
 function loadInitial() {
   try {
@@ -25,26 +36,34 @@ export function CartProvider({ children }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
   }, [items])
 
-  function add(product, qty = 1) {
+  // qty defaults to the product's minimum, not 1 — a first "Add" on a min-2
+  // product must land on 2, or the cart would open in an unorderable state.
+  // Topping up an existing line still moves one step at a time.
+  function add(product, qty) {
+    const min = minQtyOf(product)
+    const addQty = qty == null ? min : Math.max(1, Number(qty) || 1)
     setItems((prev) => {
       const found = prev.find((p) => p.id === product.id)
       if (found) {
-        return prev.map((p) => (p.id === product.id ? { ...p, qty: p.qty + qty } : p))
+        return prev.map((p) => (p.id === product.id ? { ...p, qty: p.qty + addQty } : p))
       }
-      return [...prev, { id: product.id, name: product.name, price: Number(product.price) || 0, img: product.img, qty }]
+      return [...prev, { id: product.id, name: product.name, price: Number(product.price) || 0, img: product.img, qty: addQty, minQty: min }]
     })
-    showToast({ name: product.name, img: product.img, qty })
+    showToast({ name: product.name, img: product.img, qty: addQty })
   }
 
   function remove(id) {
     setItems((prev) => prev.filter((p) => p.id !== id))
   }
 
+  // Falling below a line's minimum drops it from the cart, which is the same
+  // rule that already removed a line at qty 0 — there is just no valid quantity
+  // between 0 and the minimum to stop at.
   function updateQty(id, qty) {
     setItems((prev) =>
       prev
         .map((p) => (p.id === id ? { ...p, qty: Math.max(0, qty) } : p))
-        .filter((p) => p.qty > 0)
+        .filter((p) => p.qty >= minQtyOf(p))
     )
   }
 
@@ -56,7 +75,7 @@ export function CartProvider({ children }) {
     setItems((prev) =>
       prev
         .map((p) => (p.id === id ? { ...p, qty: p.qty - 1 } : p))
-        .filter((p) => p.qty > 0)
+        .filter((p) => p.qty >= minQtyOf(p))
     )
   }
 

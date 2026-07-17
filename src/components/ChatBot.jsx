@@ -418,6 +418,10 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
                 <div className="grid grid-cols-2 gap-2">
                   {item.variants.map((v) => {
                     const q = cart[v.name] || 0
+                    // Per-piece tiers can carry a minimum (cupcakes: 2). First
+                    // tap lands on it; stepping below it clears the line, which
+                    // matches the website cart exactly.
+                    const min = Math.max(1, Number(v.min) || 1)
                     return (
                       <div
                         key={v.name}
@@ -425,13 +429,16 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
                         style={{ background: q > 0 ? '#fdeef1' : '#fffbf8' }}
                       >
                         <div className="flex items-baseline justify-between gap-1 px-0.5">
-                          <span className="text-[13px] font-semibold truncate" style={{ color: '#5b3e36' }}>{v.label}</span>
+                          <span className="text-[13px] font-semibold truncate" style={{ color: '#5b3e36' }}>
+                            {v.label}
+                            {min > 1 && <span className="text-[10px] font-bold text-berry/70 ml-1">min {min}</span>}
+                          </span>
                           <span className="text-[13px] font-bold text-berry shrink-0">₹{v.price}</span>
                         </div>
                         {q > 0 ? (
                           <div className="flex items-center justify-between">
                             <button
-                              onClick={() => onUpdate(v.name, v.price, q - 1)}
+                              onClick={() => onUpdate(v.name, v.price, q - 1 < min ? 0 : q - 1)}
                               aria-label={`Remove one ${v.label}`}
                               className="w-7 h-7 rounded-lg bg-white border border-berry/40 flex items-center justify-center text-berry active:scale-90 transition-transform"
                             >
@@ -448,9 +455,9 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
                           </div>
                         ) : (
                           <button
-                            onClick={() => onUpdate(v.name, v.price, 1)}
+                            onClick={() => onUpdate(v.name, v.price, min)}
                             className="w-full h-7 rounded-lg bg-berry/10 border border-berry/30 flex items-center justify-center text-berry active:scale-95 transition-transform"
-                            aria-label={`Add ${v.label}`}
+                            aria-label={min > 1 ? `Add ${min} ${v.label}` : `Add ${v.label}`}
                           >
                             <FiPlus size={16} />
                           </button>

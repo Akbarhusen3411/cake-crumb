@@ -71,6 +71,14 @@ Vestigial `utr` plumbing survives the removal and is **intentionally left alone*
 
 One public phone/WhatsApp number site-wide: **+91 91731 83440** (`WHATSAPP_PHONE` in `WhatsAppButton.jsx`, mirrored in `index.html` meta/JSON-LD and the Footer/Contact/ChatBot). Email everywhere is `cakeandcrumb.in@gmail.com`; address is *Vaso, Kheda, Gujarat 387380, India*. The checkout **UPI handle is `9081668490@kotakbank`** (`UPI_ID` in `Checkout.jsx`) — that's a bank payment address, **not** a contact number, so it intentionally still contains the old digits; don't "fix" it. All routes/links are catalogued in `LINKS.md`.
 
+### Statutory registrations — numbers only, never the scans
+
+`src/data/certifications.js` is the single source of truth for the bakery's two government registrations: **FSSAI** `20726012000837` (food-safety; fee paid upto **16-07-2027** — it lapses if not renewed) and **Udyam/MSME** `UDYAM-GJ-12-0059372` (Micro, Manufacturing). `src/components/CertBadges.jsx` renders them in two variants — `pills` (Home, under the feature strip; About's "Registered & Certified" section) and `line` (the compact line above the copyright ribbon in both Footer variants, and in the Checkout summary card). Checkout needs its own copy because `NO_FOOTER_ROUTES` swaps in `MiniFooter`, so the footer line never renders there.
+
+**Only the numbers are published — never the certificate scans, and never a link to them.** The FSSAI certificate carries the owner's **photograph**, an **Aadhaar** reference and the **full home street address** (Venipura Mominvad / "Momin House") — all far more specific than the public *Vaso, Kheda 387380*. The Udyam PDF carries **9081668490**, a personal mobile that is not the public contact number (it survives only as the `UPI_ID` bank handle). None of it belongs on a public page and none of it is what anyone checks: customers and food-safety officers verify the **number** on the government portal. Displaying the FSSAI number is required of food businesses under the FSS Act, so this is load-bearing, not decoration. Don't add a certificate image/PDF, and don't surface `9081668490` as a contact.
+
+The About page links each number to its official verification portal — Udyam deep-links to `Udyam_Verify.aspx`; FoSCoS is a JS app with no stable deep link, so it points at the portal root.
+
 ### ChatBot is a second, independent order path
 
 `src/components/ChatBot.jsx` (mounted globally in `App.jsx`) is a conversational ordering assistant — not just a help widget. It can place a complete order on its own: it walks the customer through category → item selection → contact details, then calls the same `saveOrder()` + `generateOrderId()` + `wa.me/{WHATSAPP_PHONE}` machinery as Checkout. **It keeps its own `orderCart` in component state** — completely separate from `CartContext`; it only reads `useCart().count` to show a badge. Adding to the ChatBot cart does **not** touch the main cart and vice-versa.
@@ -95,13 +103,31 @@ Delivery pricing is **distance-based flat SLABS**, defined once in `src/data/sho
 
 This model was set up at the owner's explicit request (an earlier version was removed for showing a confusing fluctuating quote) — the mitigation is that the distance stays behind the scenes and the customer sees only a clean amount.
 
+### Cupcakes are sold per piece — box price must stay a multiple of 6
+
+Cupcakes use the same two-tier `price`/`slice` shape as brownies, but with an extra invariant: **`price × 6 === slice`** for every cupcake. Per-piece ₹25/₹30/₹35 → box of 6 ₹150/₹180/₹210. Both tiers are quoted side by side (Shop quick-view, ChatBot row, Menu teaser), so if the per-piece tier were rounded, six singles would visibly cost more or less than the box and one of the two numbers would read as a cheat. **Pick the BOX price first, then divide by 6** — that's why Chocolate/Strawberry/Nutella went ₹170 → ₹180 and Pistachio ₹190 → ₹210 when per-piece landed (₹170 ÷ 6 = ₹28.33, which isn't a price you can charge). The owner chose to raise the box prices rather than round the per-piece tier.
+
+`minQty: 2` on each cupcake means the bakery won't bake a single one — see the Cart section for how the rule is enforced.
+
+**A per-piece product shows its BOX price, not its lowest price — and never the per-piece rate.** This is the one place `lowestPrice()` is deliberately *not* what gets displayed. "From ₹25" under a card named **"Vanilla Cupcakes"** showing a photo of six of them reads as *"six cupcakes for ₹25"* — the owner reported customers misreading it exactly that way. So `isPerPiece(p)` (`p.slice != null && p.minQty > 1`) switches three surfaces to the box price: the **Shop card** (`₹150` + a plain "Box of 6" sub-line), the **SearchOverlay** row, and the **per-product JSON-LD `Offer`** — that last one matters because structured data contradicting the visible price gets flagged by search engines. A sub-line quoting the per-piece rate ("Box of 6 · ₹25 per piece") was tried and **explicitly removed at the owner's request**: one unambiguous number on the card beats a cheaper one competing with it. Don't re-add it. The per-piece rate lives only in the **quick-view**, and the **category note above the grid** is what tells customers pieces are an option at all — so that note is load-bearing, not decoration.
+
+**Filters and sort still use `lowestPrice()`**, since the true entry price is 2 × the per-piece rate (₹50), not the box; a cupcake can therefore appear under a price filter its card price sits outside (Pistachio: enters at ₹70, card shows ₹210). That's the accepted trade — don't "fix" it by feeding the box price into the filter, or per-piece buyers stop finding cupcakes in the low bands.
+
+Because the card hides the per-piece rate, **`ProductQuickView` is where the piece count is chosen**: the base tier renders a "How many?" stepper starting at `minQty` with a live total ("Add 4 — ₹100"). Shop passes `key={quickView?.id}` — the modal stays mounted with `product={null}`, so without the key its `qty` state would never re-init for the next product. The cart line name carries the **tier** (`Vanilla Cupcakes (1 pc)`), never the count: `add()` merges by id, so a `(2 pcs)` name would go stale the moment the customer added more. The count lives in cart `qty`.
+
+Four surfaces carry cupcake prices and must move together: `products.js` (the tiers), **`Menu.jsx`** (hand-written teaser — box prices only), `chatbotMenu.js` (`strip: / Cupcakes/` — it was `/ Cupcakes \(6 pcs\)/` before the rename, and the names no longer carry "(6 pcs)"), and the `featured` array in `products.js` (`feat-2` is the ₹180 Red Velvet **box**, a separate cart id from `cup-redvelvet-slice`).
+
 ### "Banto 4\"" means inches, not slices
 
 Cheesecake `sizeLabel` is `Banto 4" (inch)` — the `(inch)` is deliberate so customers don't read the `4` as a slice count. Whole ≈ 3 slices by price (`slice` × 3 ≈ whole), but that ratio is **not** shown as "3 slices" on cards or in the ChatBot; keep the size framed as the 4-inch measurement.
 
 ### Cart
 
-`src/context/CartContext.jsx` is the single source of truth, persisted to `localStorage` under `cc_cart_v1`. Item shape: `{ id, name, price, img, qty }`. **There is no minimum order** — any non-empty cart can proceed to checkout. `MIN_ORDER_INR` still exists in `src/data/shopConfig.js` but is a dead export (nothing reads it); don't re-wire it without checking with the user first.
+`src/context/CartContext.jsx` is the single source of truth, persisted to `localStorage` under `cc_cart_v2`. Item shape: `{ id, name, price, img, qty, minQty }`. **There is no minimum order value** — any non-empty cart can proceed to checkout. `MIN_ORDER_INR` still exists in `src/data/shopConfig.js` but is a dead export (nothing reads it); don't re-wire it without checking with the user first. (`updateQty` is exported but unused too — the Cart page only uses `increment`/`decrement`.)
+
+**Per-line minimum quantity (`minQty`).** A product may set `minQty` (only cupcakes do today: `2`). `minQtyOf()` defaults it to 1, so every other product and every pre-existing cart line behaves exactly as before. Three rules move together: `add(product, qty)` **defaults qty to the minimum, not 1** (a first "Add" must land on 2 or the cart opens in an unorderable state); `decrement`/`updateQty` **drop the line entirely** when it falls below the minimum (there's no valid quantity between 0 and 2 to stop at); and the line carries its own `minQty` so a restored cart keeps the rule. `minQty` applies to the **base (`price`) tier only** — a box of 6 is orderable on its own.
+
+The key was bumped `v1` → `v2` when per-piece cupcakes landed: **the cupcake ids changed meaning** (`cup-vanilla` was a box of 6 at ₹150, now a single piece at ₹25), and since `add()` merges by id while keeping the **stored** price, a surviving v1 line would have billed new per-piece adds at the old box rate. Bump the key again if you ever repurpose an existing product id.
 
 The context value also carries derived totals (`count`, `subtotal`, `delivery`, `total`) and a `toast` slot: `add()` sets `toast` to the added product and clears it after 2.4 s, which is the only thing `<CartToast />` renders from. Adding a cart mutation that should surface a toast means setting it in the context, not in the component.
 
@@ -132,7 +158,9 @@ A small `<ScrollToTop />` component inside `<CartProvider>` listens to `useLocat
 
 `src/data/products.js` is hand-maintained — `featured` (Home cards) and `shopProducts` (the full Shop + Menu list). Each entry references `img.someName` from `src/data/images.js`. Some products have a `slice` field for a second price tier (rendered as a second add-to-cart button). Sourced from the original menu PDF; prices in INR.
 
-The Shop page is a 3-column layout (lg+): **left filter sidebar** (Category radio + Price Range radio + Occasion visual-only radio + Clear Filters button), **center product grid** (3 columns of `.cc-product-card`), **right sticky cart sidebar** with subtotal + View Cart / Checkout buttons + "Need Something Special?" CTA + 3 trust badges. Pagination shows 12 products per page with prev/next + numbered buttons. Filter state lives in component state; changing any filter resets to page 1. The old `.cc-filter-chips` row CSS is still in `index.css` but unused. Search is wired to the navbar magnifier icon (`SearchOverlay.jsx`).
+The Shop page is a 3-column layout (lg+): **left filter sidebar** (Category radio + Price Range radio + Clear Filters button), **center product grid** (3 columns of `.cc-product-card`), **right sticky cart sidebar** with subtotal + View Cart / Checkout buttons + "Need Something Special?" CTA + 3 trust badges. Pagination shows 12 products per page with prev/next + numbered buttons. Filter state lives in component state; changing any filter resets to page 1. Search is wired to the navbar magnifier icon (`SearchOverlay.jsx`), whose results deep-link to `/shop?category=…`.
+
+**`slice`-price gotcha (bit us once):** the "From" price, price-range filter, and price sort all use `lowestPrice(p)` = `Math.min(price, slice)` — **never** `slice || price`. `slice` is the *cheaper* per-slice tier for cheesecakes but the *pricier* box-of-12 for cookies/brownies/cake-pops, so assuming `slice` is smaller made a ₹340 cookie box show "From ₹700" and mis-sort/mis-filter it. Same rule in `SearchOverlay.jsx` and the per-product JSON-LD Offer.
 
 ### Festival banner
 
@@ -186,7 +214,7 @@ The Reviews page also has its own non-hero patterns worth knowing: a 3-section s
 ### Conventions worth following
 
 - `usePageMeta({ title, description })` from `src/hooks/usePageMeta.js` updates `<title>` and OG/Twitter meta per route. Call it at the top of every page.
-- `useJsonLd(id, jsonObj)` from `src/hooks/useJsonLd.js` injects structured data — Shop adds per-product `Product` JSON-LD with rating, brand, image; Home has `Bakery`; Reviews has `AggregateRating`.
+- `useJsonLd(id, jsonObj)` from `src/hooks/useJsonLd.js` injects structured data — Shop adds per-product `Product` JSON-LD with brand, image, and lowest price (**no per-product ratings** — fabricated identical ratings were removed; only Reviews carries a real `AggregateRating`); Home has `Bakery`.
 - `<SmartImage>` is the drop-in `<img>` with shimmer skeleton + lazy loading.
 - `<HeartDivider width={50} />` is the small heart-on-a-line component used under hero h1s — see Brand kit section.
 - INR formatting goes through `inr()` in `src/data/format.js`.

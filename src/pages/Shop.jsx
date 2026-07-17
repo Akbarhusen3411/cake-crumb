@@ -23,6 +23,17 @@ const CATEGORIES = [
 // — take the min so "From" prices, filters and sort all use the true entry price.
 const lowestPrice = (p) => (p.slice != null ? Math.min(p.price, p.slice) : p.price)
 
+// A per-piece product (`minQty > 1` — cupcakes) shows ONLY its box price + size
+// on the card ("₹150" / "Box of 6"). "From ₹25" under a card named "Vanilla
+// Cupcakes" showing six of them reads as "six cupcakes for ₹25", which is
+// exactly how customers misread it — and the owner's call is that a single
+// unambiguous box price beats any sub-line quoting the per-piece rate. The
+// per-piece rate appears only in the quick-view, where the count is chosen; the
+// category note above the grid is what advertises that pieces are an option.
+// NOTE: filters + sort still use lowestPrice() — the true entry price is 2 × the
+// per-piece rate, not the box.
+const isPerPiece = (p) => p.slice != null && (p.minQty || 1) > 1
+
 const PRICE_RANGES = [
   { id: 'all',  label: 'All Prices',     test: () => true },
   { id: '0-200',    label: '₹0 – ₹200',  test: (p) => lowestPrice(p) <= 200 },
@@ -68,8 +79,11 @@ export default function Shop() {
           : u(p.img, 800, 800),
         brand: { '@type': 'Brand', name: 'Cake & Crumb' },
         offers: {
+          // Must match the price the card actually shows, or search engines
+          // flag the structured data as contradicting the landing page — so
+          // per-piece products publish their box price, not the per-piece rate.
           '@type': 'Offer',
-          price: lowestPrice(p),
+          price: isPerPiece(p) ? p.slice : lowestPrice(p),
           priceCurrency: 'INR',
           availability: 'https://schema.org/InStock',
         },
@@ -259,7 +273,7 @@ export default function Shop() {
 
               {category === 'Cupcakes' && (
                 <p className="cc-shop-note">
-                  <FiHeart size={12} /> Cupcakes are sold by the box of 6. Add ₹20 for floral or additional decoration.
+                  <FiHeart size={12} /> Cupcakes come as a box of 6, or buy them by the piece (minimum 2) — tap any cupcake to choose how many. Add ₹20 for floral or additional decoration.
                 </p>
               )}
 
@@ -288,7 +302,16 @@ export default function Shop() {
                         {p.name}
                       </h6>
                       <div className="cc-product-card__price">
-                        {p.slice != null ? `From ${inr(lowestPrice(p))}` : inr(p.price)}
+                        {isPerPiece(p) ? (
+                          <>
+                            {inr(p.slice)}
+                            <span className="cc-product-card__price-sub">{p.sliceLabel}</span>
+                          </>
+                        ) : p.slice != null ? (
+                          `From ${inr(lowestPrice(p))}`
+                        ) : (
+                          inr(p.price)
+                        )}
                       </div>
                       <button
                         className="cc-product-card__add"
@@ -483,7 +506,9 @@ export default function Shop() {
         </div>
       </section>
 
-      <ProductQuickView product={quickView} onClose={() => setQuickView(null)} />
+      {/* Keyed by id: this modal stays mounted with product=null, so without a
+          key its quantity state would never re-init for the next product. */}
+      <ProductQuickView key={quickView?.id} product={quickView} onClose={() => setQuickView(null)} />
     </>
   )
 }

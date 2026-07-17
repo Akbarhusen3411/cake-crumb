@@ -2,6 +2,8 @@ import { FiHeart, FiGift, FiTruck } from 'react-icons/fi'
 import { TbLeaf, TbCake } from 'react-icons/tb'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import HeartDivider from '../components/HeartDivider.jsx'
+import CertBadges from '../components/CertBadges.jsx'
+import { FSSAI, UDYAM } from '../data/certifications.js'
 import { img, u } from '../data/images.js'
 
 const STORY_FEATURES = [
@@ -130,6 +132,34 @@ export default function About() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ───── REGISTERED & CERTIFIED — FSSAI + Udyam numbers (no scans) ───── */}
+      <section className="cc-about-certs">
+        <div className="container py-5">
+          <div className="text-center mb-4">
+            <span className="eyebrow">Registered &amp; Certified</span>
+            <h2 className="section-title mt-3">A Kitchen You Can Trust</h2>
+            <HeartDivider width={50} />
+            <p className="cc-about-certs__lede">
+              Cake &amp; Crumb is a licensed food business. You're welcome to check either
+              registration yourself on the Government of India portals below.
+            </p>
+          </div>
+
+          <CertBadges />
+
+          <ul className="cc-about-certs__notes">
+            {[FSSAI, UDYAM].map((c) => (
+              <li key={c.number}>
+                <strong>{c.label}</strong> — {c.blurb}{' '}
+                <a href={c.verifyUrl} target="_blank" rel="noopener noreferrer">
+                  Verify on the {c.verifyLabel}
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
