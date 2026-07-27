@@ -228,8 +228,83 @@ export async function importExcelDataIfNeeded() {
     return { orders: orderRecs.length, expenses: expenseRecs.length }
   } catch (err) {
     console.error('[accounting] excel import failed', err)
-    return null
+    return { error: errText(err) }
   }
+}
+
+/** Forget the Excel-import flag so the next load re-imports (used by the sync panel). */
+export function resetExcelImport() {
+  try { localStorage.removeItem('cc_acc_excel_v7') } catch { /* ignore */ }
+}
+
+// ───────────────────── cloud sync / diagnostics ─────────────────────
+//
+// Every read/write above degrades to localStorage on failure and only logs to the
+// console. That is right for customers, but on the admin page it means a broken
+// Firestore looks identical to a healthy one — the dashboard happily renders stale
+// local rows while the cloud stays empty, so two devices disagree with no visible
+// cause. These two helpers exist to make that state legible and repairable.
+
+const errText = (err) => err?.code || err?.message || String(err)
+
+const SYNCED = [ACC.ORDERS, ACC.EXPENSES, ACC.WITHDRAWALS, ACC.MENU]
+
+/**
+ * Per-collection: how many docs Firestore actually returns vs. how many this
+ * browser has cached. Reads straight through — deliberately NO localStorage
+ * fallback and no mirror write, so the result is the truth about the cloud.
+ */
+export async function probeCloud() {
+  const db = await getDb()
+  const rows = SYNCED.map((coll) => ({ coll, cloud: null, local: readLocal(coll).length, error: null }))
+  if (!db) {
+    rows.forEach((r) => { r.error = 'Firebase not configured' })
+    return rows
+  }
+  const { collection, getDocs } = await import('firebase/firestore')
+  for (const r of rows) {
+    try {
+      const snap = await getDocs(collection(db, r.coll))
+      r.cloud = snap.size
+    } catch (err) {
+      r.error = errText(err)
+    }
+  }
+  return rows
+}
+
+/**
+ * Push everything this browser has cached up to Firestore, so the data survives
+ * the device it was entered on. Ids are preserved where they are already stable
+ * (`xl-…` Excel rows) and minted fresh for offline-only rows (`local-…`/`seed-…`),
+ * which is what keeps a re-run from duplicating rows it already uploaded.
+ * Writes in 400-doc batches (Firestore's limit is 500).
+ */
+export async function pushLocalToCloud() {
+  const db = await getDb()
+  if (!db) return { ok: false, error: 'Firebase not configured', pushed: {} }
+  const { collection, doc, writeBatch } = await import('firebase/firestore')
+  const pushed = {}
+  for (const coll of SYNCED) {
+    const rows = readLocal(coll)
+    if (!rows.length) { pushed[coll] = 0 ; continue }
+    try {
+      for (let i = 0; i < rows.length; i += 400) {
+        const batch = writeBatch(db)
+        for (const row of rows.slice(i, i + 400)) {
+          const { id, ...data } = row
+          const ref = !id || isLocalId(id) ? doc(collection(db, coll)) : doc(db, coll, String(id))
+          batch.set(ref, data)
+        }
+        await batch.commit()
+      }
+      pushed[coll] = rows.length
+    } catch (err) {
+      console.error('[accounting] push failed', coll, err)
+      return { ok: false, error: `${coll}: ${errText(err)}`, pushed }
+    }
+  }
+  return { ok: true, error: null, pushed }
 }
 
 // ───────────────────── settings (Expense Taken for Use) ─────────────────────
