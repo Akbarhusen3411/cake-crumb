@@ -11,7 +11,6 @@ import OrdersTab from '../components/admin/accounting/OrdersTab.jsx'
 import MenuTab from '../components/admin/accounting/MenuTab.jsx'
 import ExpensesTab from '../components/admin/accounting/ExpensesTab.jsx'
 import MonthlyTab from '../components/admin/accounting/MonthlyTab.jsx'
-import CloudSyncPanel from '../components/admin/accounting/CloudSyncPanel.jsx'
 
 const TABS = [
   { key: 'dashboard', label: 'Dashboard' },
@@ -164,12 +163,7 @@ export default function AdminAccounting() {
         })}
       </div>
 
-      {tab === 'dashboard' && (
-        <>
-          <DashboardTab orders={orders} expenses={expenses} withdrawals={withdrawals} />
-          <CloudSyncPanel reload={reload} />
-        </>
-      )}
+      {tab === 'dashboard' && <DashboardTab orders={orders} expenses={expenses} withdrawals={withdrawals} />}
       {tab === 'orders' && <OrdersTab orders={orders} menu={menu} reload={reload} />}
       {tab === 'menu' && <MenuTab menu={menu} reload={reload} />}
       {tab === 'expenses' && <ExpensesTab expenses={expenses} reload={reload} />}

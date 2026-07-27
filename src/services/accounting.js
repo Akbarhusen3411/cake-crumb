@@ -232,90 +232,28 @@ export async function importExcelDataIfNeeded() {
   }
 }
 
-/** Forget the Excel-import flag so the next load re-imports (used by the sync panel). */
-export function resetExcelImport() {
-  try { localStorage.removeItem('cc_acc_excel_v7') } catch { /* ignore */ }
-}
-
-// ───────────────────── cloud sync / diagnostics ─────────────────────
-//
-// Every read/write above degrades to localStorage on failure and only logs to the
-// console. That is right for customers, but on the admin page it means a broken
-// Firestore looks identical to a healthy one — the dashboard happily renders stale
-// local rows while the cloud stays empty, so two devices disagree with no visible
-// cause. These two helpers exist to make that state legible and repairable.
-
+// Firestore failures above degrade to localStorage and only log to the console,
+// so an import that silently wrote nothing looks identical to one that worked.
+// Return the reason instead of a bare null.
 const errText = (err) => err?.code || err?.message || String(err)
-
-const SYNCED = [ACC.ORDERS, ACC.EXPENSES, ACC.WITHDRAWALS, ACC.MENU]
-
-/**
- * Per-collection: how many docs Firestore actually returns vs. how many this
- * browser has cached. Reads straight through — deliberately NO localStorage
- * fallback and no mirror write, so the result is the truth about the cloud.
- */
-export async function probeCloud() {
-  const db = await getDb()
-  const rows = SYNCED.map((coll) => ({ coll, cloud: null, local: readLocal(coll).length, error: null }))
-  if (!db) {
-    rows.forEach((r) => { r.error = 'Firebase not configured' })
-    return rows
-  }
-  const { collection, getDocs } = await import('firebase/firestore')
-  for (const r of rows) {
-    try {
-      const snap = await getDocs(collection(db, r.coll))
-      r.cloud = snap.size
-    } catch (err) {
-      r.error = errText(err)
-    }
-  }
-  return rows
-}
-
-/**
- * Push everything this browser has cached up to Firestore, so the data survives
- * the device it was entered on. Ids are preserved where they are already stable
- * (`xl-…` Excel rows) and minted fresh for offline-only rows (`local-…`/`seed-…`),
- * which is what keeps a re-run from duplicating rows it already uploaded.
- * Writes in 400-doc batches (Firestore's limit is 500).
- */
-export async function pushLocalToCloud() {
-  const db = await getDb()
-  if (!db) return { ok: false, error: 'Firebase not configured', pushed: {} }
-  const { collection, doc, writeBatch } = await import('firebase/firestore')
-  const pushed = {}
-  for (const coll of SYNCED) {
-    const rows = readLocal(coll)
-    if (!rows.length) { pushed[coll] = 0 ; continue }
-    try {
-      for (let i = 0; i < rows.length; i += 400) {
-        const batch = writeBatch(db)
-        for (const row of rows.slice(i, i + 400)) {
-          const { id, ...data } = row
-          const ref = !id || isLocalId(id) ? doc(collection(db, coll)) : doc(db, coll, String(id))
-          batch.set(ref, data)
-        }
-        await batch.commit()
-      }
-      pushed[coll] = rows.length
-    } catch (err) {
-      console.error('[accounting] push failed', coll, err)
-      return { ok: false, error: `${coll}: ${errText(err)}`, pushed }
-    }
-  }
-  return { ok: true, error: null, pushed }
-}
 
 // ───────────────────── settings (Expense Taken for Use) ─────────────────────
 const TAKEN_LS = 'cc_acc_taken'
 
+// The figure the owner carried over from the Excel sheet. Used only until it is
+// explicitly set, so the dashboard keeps showing the number it always showed
+// instead of dropping to ₹0 on a device that has never edited it.
+export const TAKEN_DEFAULT = 12300
+
 /** "Expense Taken for Use" — money taken from earnings to buy materials (owner's figure). */
 export async function getExpenseTakenForUse() {
-  let local = 0
-  try { local = Number(localStorage.getItem(TAKEN_LS)) || 0 } catch { /* ignore */ }
+  let local = null
+  try {
+    const raw = localStorage.getItem(TAKEN_LS)
+    if (raw != null) local = Number(raw) || 0
+  } catch { /* ignore */ }
   const db = await getDb()
-  if (!db) return local
+  if (!db) return local ?? TAKEN_DEFAULT
   try {
     const { doc, getDoc } = await import('firebase/firestore')
     const snap = await getDoc(doc(db, 'acc_settings', 'main'))
@@ -325,7 +263,7 @@ export async function getExpenseTakenForUse() {
       return v
     }
   } catch (err) { console.error('[accounting] getTaken failed', err) }
-  return local
+  return local ?? TAKEN_DEFAULT
 }
 
 export async function setExpenseTakenForUse(n) {

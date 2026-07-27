@@ -5095,3 +5095,74 @@ header[style*="sticky"] {
   .cc-ig-grid { grid-template-columns: repeat(7, 1fr); gap: 0.85rem; }
 }
 
+
+/* ── Admin · Daily Accounting dashboard ──────────────────────────────────
+   The dashboard was a single 560px column, which left the widest surface in
+   the app almost empty and gave every figure the same weight. These grids
+   let the summary breathe: hero pair first, supporting tiles below. Admin
+   only — none of this renders on a storefront route. */
+.cc-acc-dash { max-width: 1080px; margin: 0 auto; }
+
+.cc-acc-hero,
+.cc-acc-kpis,
+.cc-acc-split {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 700px) {
+  .cc-acc-hero { grid-template-columns: repeat(2, 1fr); }
+  .cc-acc-kpis { grid-template-columns: repeat(2, 1fr); }
+  .cc-acc-split { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1000px) {
+  .cc-acc-kpis { grid-template-columns: repeat(4, 1fr); }
+}
+
+.cc-acc-card {
+  background: #fff;
+  border: 1px solid rgba(207, 62, 99, 0.10);
+  border-radius: 18px;
+  padding: 1.15rem 1.25rem;
+  box-shadow: 0 4px 18px -8px rgba(160, 60, 90, 0.18);
+}
+.cc-acc-card--hero { padding: 1.45rem 1.5rem; }
+.cc-acc-card--accent {
+  background: linear-gradient(160deg, #fff6f2 0%, #fbe6df 100%);
+  border-color: rgba(207, 62, 99, 0.22);
+}
+
+.cc-acc-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--cc-cocoa-soft, #7a584d);
+}
+.cc-acc-value {
+  font-family: var(--font-heading, serif);
+  font-weight: 700;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--cc-cocoa, #5b3e36);
+}
+.cc-acc-card--hero .cc-acc-value { font-size: clamp(1.9rem, 5vw, 2.6rem); }
+.cc-acc-kpis .cc-acc-value { font-size: clamp(1.35rem, 3.4vw, 1.7rem); }
+.cc-acc-note { font-size: 0.78rem; color: #8a8a8a; margin-top: 0.35rem; }
+
+/* Cash vs bank proportion — a bar, not a pie: two parts of one total. */
+.cc-acc-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #f1e7ea;
+  gap: 2px; /* surface gap between adjacent fills */
+}
+.cc-acc-bar > span { display: block; }
+
+.cc-acc-chart-grid line { stroke: #e1e0d9; stroke-width: 1; }
+.cc-acc-chart-base { stroke: #c3c2b7; stroke-width: 1; }
+.cc-acc-chart text { fill: #898781; font-size: 11px; }
+.cc-acc-chart rect.bar { transition: opacity 0.12s ease; }
+.cc-acc-chart g.col:hover rect.bar { opacity: 0.75; }
