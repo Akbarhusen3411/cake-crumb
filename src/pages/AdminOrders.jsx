@@ -13,6 +13,7 @@ import { getFirebaseAuth, isFirebaseEnabled } from '../firebase.js'
 import { inr } from '../data/format.js'
 import { isBulkOrder } from '../data/shopConfig.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
+import AdminNav from '../components/admin/AdminNav.jsx'
 
 // Human-readable payment summary for an order card.
 function paymentLabel(o) {
@@ -317,6 +318,7 @@ export default function AdminOrders() {
 
   return (
     <section className="container py-4 py-md-5">
+      <AdminNav />
       <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <h1 className="h4 m-0" style={{ fontFamily: 'var(--font-heading)' }}>
           Orders <span style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.9rem' }}>({orders.length})</span>

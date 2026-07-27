@@ -34,10 +34,14 @@
 | Confirm an order (legacy link flow) | https://akbarhusen3411.github.io/cake-crumb/confirm-order?id=CC-XX-DDMMYY-XXXXX |
 
 ## 🔐 Admin (only you)
+
+Never linked from any public page — bookmark these. All three use the **same Firebase Auth admin account** (email + password, created in the Firebase console). Login is session-only, so closing the tab signs you out.
+
 | Purpose | Link | Access |
 |---|---|---|
-| **Orders dashboard** | https://akbarhusen3411.github.io/cake-crumb/admin/orders | Firebase Auth login (email + password) |
-| Reviews moderation | https://akbarhusen3411.github.io/cake-crumb/reviews | Hidden admin login on the Reviews page (`cakeandcrumb2026`) |
+| **Orders dashboard** (website customer orders) | https://akbarhusen3411.github.io/cake-crumb/admin/orders | Firebase Auth login |
+| **Daily accounting** (walk-in orders, expenses, withdrawals, menu) | https://akbarhusen3411.github.io/cake-crumb/admin/accounting | Firebase Auth login |
+| Reviews moderation | https://akbarhusen3411.github.io/cake-crumb/reviews | Click the 🔒 lock on the Reviews page, then the same Firebase Auth login |
 
 ## 🛠️ Project / infrastructure
 | Purpose | Link |

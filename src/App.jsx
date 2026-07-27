@@ -27,6 +27,7 @@ const FAQ = lazy(() => import('./pages/FAQ.jsx'))
 const ConfirmOrder = lazy(() => import('./pages/ConfirmOrder.jsx'))
 const TrackOrder = lazy(() => import('./pages/TrackOrder.jsx'))
 const AdminOrders = lazy(() => import('./pages/AdminOrders.jsx'))
+const AdminAccounting = lazy(() => import('./pages/AdminAccounting.jsx'))
 
 // Routes inside the buying / admin-confirm flow render without the footer
 // so customers stay focused on the cart → checkout → done path.
@@ -48,6 +49,8 @@ function App() {
   const hideFooter = NO_FOOTER_ROUTES.some(
     (r) => pathname === r || pathname.startsWith(r + '/')
   )
+  // Admin pages are a private full-screen tool — no storefront navbar/footer/chatbot.
+  const isAdmin = pathname.startsWith('/admin')
 
   // We rendered, so any stale-chunk reload already succeeded — re-arm the one-shot
   // guard for a future deploy in this same tab.
@@ -58,8 +61,8 @@ function App() {
       <ScrollToTop />
       <a href="#main" className="cc-skip-link">Skip to main content</a>
       <div className="d-flex flex-column min-vh-100">
-        <FestivalBanner />
-        <Navbar />
+        {!isAdmin && <FestivalBanner />}
+        {!isAdmin && <Navbar />}
         <main id="main" className="flex-grow-1">
           <ErrorBoundary resetKey={pathname}>
             <Suspense fallback={<PageFallback />}>
@@ -78,15 +81,16 @@ function App() {
                 <Route path="/confirm-order" element={<ConfirmOrder />} />
                 <Route path="/track-order" element={<TrackOrder />} />
                 <Route path="/admin/orders" element={<AdminOrders />} />
+                <Route path="/admin/accounting" element={<AdminAccounting />} />
                 <Route path="*" element={<Home />} />
               </Routes>
             </Suspense>
           </ErrorBoundary>
         </main>
-        {hideFooter ? <MiniFooter /> : <Footer />}
-        <CartToast />
-        <ChatBot />
-        <BackToTop />
+        {isAdmin ? null : hideFooter ? <MiniFooter /> : <Footer />}
+        {!isAdmin && <CartToast />}
+        {!isAdmin && <ChatBot />}
+        {!isAdmin && <BackToTop />}
       </div>
     </CartProvider>
   )
