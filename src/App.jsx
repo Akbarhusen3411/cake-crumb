@@ -11,6 +11,7 @@ import BackToTop from './components/BackToTop.jsx'
 import Home from './pages/Home.jsx'
 import PageFallback from './components/skeletons/PageFallback.jsx'
 import ErrorBoundary, { clearChunkReloadGuard } from './components/ErrorBoundary.jsx'
+import AdminHeader from './components/admin/AdminHeader.jsx'
 
 // Lazy-loaded routes — keep initial bundle small.
 // Firebase only loads when /reviews or /review are visited.
@@ -63,6 +64,7 @@ function App() {
       <div className="d-flex flex-column min-vh-100">
         {!isAdmin && <FestivalBanner />}
         {!isAdmin && <Navbar />}
+        {isAdmin && <AdminHeader />}
         <main id="main" className="flex-grow-1">
           <ErrorBoundary resetKey={pathname}>
             <Suspense fallback={<PageFallback />}>

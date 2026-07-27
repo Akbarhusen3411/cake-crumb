@@ -319,19 +319,19 @@ export default function AdminOrders() {
   return (
     <section className="container py-4 py-md-5">
       <AdminNav />
-      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <h1 className="h4 m-0" style={{ fontFamily: 'var(--font-heading)' }}>
-          Orders <span style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.9rem' }}>({orders.length})</span>
-          {loading && <span style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.8rem' }}> · loading…</span>}
+      {/* Same header row as /admin/accounting: title + icon refresh on the left,
+          sign-out pushed to the right, so the two admin pages don't drift apart. */}
+      <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h1 className="h4 m-0" style={{ fontFamily: 'var(--font-heading,serif)', color: '#cf3e63' }}>
+          Website Orders <span style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.9rem' }}>({orders.length})</span>
         </h1>
-        <div className="d-flex gap-2">
-          <button className="btn-outline-rose" onClick={refresh} disabled={loading}>
-            <FiRefreshCw size={14} /> Refresh
-          </button>
-          <button className="btn-outline-rose" onClick={logout}>
-            <FiLogOut size={14} /> Log out
-          </button>
-        </div>
+        <button className="btn btn-sm btn-light ms-2" onClick={refresh} disabled={loading} title="Refresh">
+          <FiRefreshCw />
+        </button>
+        {loading ? <span className="text-muted small">Loading…</span> : null}
+        <button className="btn btn-sm btn-outline-secondary ms-auto" onClick={logout}>
+          <FiLogOut /> Sign out
+        </button>
       </div>
 
       {/* Filter tabs */}

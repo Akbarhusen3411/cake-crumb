@@ -5178,3 +5178,23 @@ header[style*="sticky"] {
 }
 .cc-acc-chart rect.bar { transition: opacity 0.12s ease; }
 .cc-acc-chart g.col:hover rect.bar { opacity: 0.75; }
+
+/* Admin brand bar. Reuses .cc-header (frosted rose glass, sticky) and only adds
+   what the private pages need — the storefront's shadow-on-scroll behaviour is
+   driven by Navbar state that admin doesn't mount, so this stays flat. */
+.cc-admin-header {
+  border-bottom: 1px solid rgba(207, 62, 99, 0.14);
+  margin-bottom: 0.5rem;
+}
+.cc-admin-badge {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cc-rose-deep, #cf3e63);
+  background: rgba(207, 62, 99, 0.08);
+  border: 1px solid rgba(207, 62, 99, 0.22);
+  border-radius: 999px;
+  padding: 0.28rem 0.8rem;
+}
