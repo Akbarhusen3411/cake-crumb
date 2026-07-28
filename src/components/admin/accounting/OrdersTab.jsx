@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { FiPlus, FiEdit2, FiTrash2, FiRepeat } from 'react-icons/fi'
 import OrderForm from './OrderForm.jsx'
+import FilterChips from './FilterChips.jsx'
 import { ACC, addDocRec, updateDocRec, deleteDocRec, orderTotal, orderQty } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
@@ -22,11 +23,24 @@ const itemsLabel = (o, withQty) => {
   const parts = orderLines(o).map((it) => oneLine(it, withQty))
   return parts.length <= 2 ? parts.join(', ') : `${parts.slice(0, 2).join(', ')} +${parts.length - 2} more`
 }
+const PAY_FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'paid', label: 'Paid' },
+  { key: 'unpaid', label: 'Unpaid' },
+]
+const METHOD_FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'Cash', label: 'Cash' },
+  { key: 'Online', label: 'Online' },
+]
+
 const isBankable = (o) => o.paid && o.method === 'Online'
 const searchText = (o) => [o.customer, ...orderLines(o).map((it) => it.item)].join(' ').toLowerCase()
 
 export default function OrdersTab({ orders, menu, reload }) {
   const [q, setQ] = useState('')
+  const [payFilter, setPayFilter] = useState('all')     // all | paid | unpaid
+  const [methodFilter, setMethodFilter] = useState('all') // all | Cash | Online
   const [editing, setEditing] = useState(null) // order or {} for new
   const [busy, setBusy] = useState(false)
   const [page, setPage] = useState(1)
@@ -38,10 +52,16 @@ export default function OrdersTab({ orders, menu, reload }) {
   )
   const rows = useMemo(() => {
     const s = q.trim().toLowerCase()
-    const list = [...orders].sort((a, b) => String(b.date).localeCompare(String(a.date)))
-    if (!s) return list
-    return list.filter((o) => searchText(o).includes(s))
-  }, [orders, q])
+    let list = [...orders].sort((a, b) => String(b.date).localeCompare(String(a.date)))
+    if (s) list = list.filter((o) => searchText(o).includes(s))
+    if (payFilter !== 'all') list = list.filter((o) => (payFilter === 'paid' ? !!o.paid : !o.paid))
+    if (methodFilter !== 'all') list = list.filter((o) => o.method === methodFilter)
+    return list
+  }, [orders, q, payFilter, methodFilter])
+
+  const filtered = payFilter !== 'all' || methodFilter !== 'all' || q.trim() !== ''
+  // Total of what's on screen — handy when filtering to "Unpaid" or "Cash".
+  const rowsTotal = useMemo(() => rows.reduce((s, o) => s + orderTotal(o), 0), [rows])
 
   // pagination — 10 per page on mobile, 25 on desktop
   const pageSize = mobile ? 10 : 25
@@ -88,8 +108,31 @@ export default function OrdersTab({ orders, menu, reload }) {
           className="form-control" style={{ maxWidth: 280 }}
           placeholder="Search customer or item…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }}
         />
-        <span className="ms-auto text-muted small">{rows.length} order{rows.length === 1 ? '' : 's'}</span>
+        <span className="ms-auto text-muted small">
+          {rows.length} order{rows.length === 1 ? '' : 's'}
+          {filtered && rows.length > 0 ? ` · ${inr(rowsTotal)}` : ''}
+        </span>
       </div>
+
+      <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
+        <FilterChips
+          label="Payment" options={PAY_FILTERS} value={payFilter}
+          onChange={(v) => { setPayFilter(v); setPage(1) }}
+        />
+        <FilterChips
+          label="Cash/Online" options={METHOD_FILTERS} value={methodFilter}
+          onChange={(v) => { setMethodFilter(v); setPage(1) }}
+        />
+        {filtered && (
+          <button
+            type="button" className="btn btn-sm btn-link text-secondary p-0"
+            onClick={() => { setQ(''); setPayFilter('all'); setMethodFilter('all'); setPage(1) }}
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
       <p className="small text-muted mb-3" style={{ marginTop: -6 }}>
         💡 For <strong>Online</strong> orders, tap <span style={{ color: '#c67c17', fontWeight: 700 }}>In bank</span> once
         you’ve taken that money out — it flips to <span style={{ color: '#1b7f5e', fontWeight: 700 }}>Taken to cash</span>,
@@ -98,7 +141,7 @@ export default function OrdersTab({ orders, menu, reload }) {
 
       {rows.length === 0 ? (
         <div className="text-center text-muted py-4" style={{ border: '1px solid #f0e0e3', borderRadius: 12 }}>
-          No orders yet. Click “New Order”.
+          {filtered ? 'No orders match these filters.' : 'No orders yet. Click “New Order”.'}
         </div>
       ) : mobile ? (
         // ── mobile: stacked cards ──

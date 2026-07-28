@@ -1,9 +1,16 @@
 import { useMemo, useState } from 'react'
 import { FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi'
 import Modal from '../Modal.jsx'
+import FilterChips from './FilterChips.jsx'
 import { ACC, addDocRec, updateDocRec, deleteDocRec } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
+
+const METHOD_FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'Cash', label: 'Cash' },
+  { key: 'Online', label: 'Online' },
+]
 
 const todayIso = () => new Date().toISOString().slice(0, 10)
 const fmtDate = (iso) => {
@@ -18,17 +25,28 @@ const itemsSummary = (e) => {
   if (parts.length) return parts.join(', ')
   return e.notes || '—'
 }
+// Searchable text: shop name, every item bought, and the notes.
+const searchText = (e) =>
+  [e.vendor, ...(e.items || []).map((it) => it.name), e.notes].filter(Boolean).join(' ').toLowerCase()
 
 export default function ExpensesTab({ expenses, reload }) {
+  const [q, setQ] = useState('')
   const [editing, setEditing] = useState(null)
   const [busy, setBusy] = useState(false)
   const [page, setPage] = useState(1)
+  const [methodFilter, setMethodFilter] = useState('all') // all | Cash | Online
   const mobile = useIsMobile()
 
-  const rows = useMemo(
-    () => [...expenses].sort((a, b) => String(b.date).localeCompare(String(a.date))),
-    [expenses]
-  )
+  const rows = useMemo(() => {
+    const s = q.trim().toLowerCase()
+    let list = [...expenses].sort((a, b) => String(b.date).localeCompare(String(a.date)))
+    if (s) list = list.filter((e) => searchText(e).includes(s))
+    if (methodFilter !== 'all') list = list.filter((e) => e.method === methodFilter)
+    return list
+  }, [expenses, q, methodFilter])
+
+  const filtered = methodFilter !== 'all' || q.trim() !== ''
+  // Total follows the filter, so "Cash" answers "how much cash went out".
   const total = rows.reduce((s, e) => s + (Number(e.amount) || 0), 0)
   const pageSize = mobile ? 10 : 25
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize))
@@ -52,15 +70,37 @@ export default function ExpensesTab({ expenses, reload }) {
         <button className="btn text-white d-inline-flex align-items-center gap-2" style={{ background: 'var(--cc-rose,#e0617a)', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => setEditing({})}>
           <FiPlus /> New Expense
         </button>
+        <input
+          className="form-control" style={{ maxWidth: 280 }}
+          placeholder="Search shop, item or note…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }}
+        />
         <div className="ms-auto text-end" style={{ background: '#fdeef0', border: '1px solid #f3d3d8', borderRadius: 12, padding: '6px 16px' }}>
-          <div style={{ fontSize: 11, color: '#a06', letterSpacing: 0.3, textTransform: 'uppercase' }}>Total spent</div>
+          <div style={{ fontSize: 11, color: '#a06', letterSpacing: 0.3, textTransform: 'uppercase' }}>
+            {q.trim() ? 'Spent — filtered' : methodFilter === 'all' ? 'Total spent' : `Spent — ${methodFilter}`}
+          </div>
           <div style={{ fontSize: 24, fontWeight: 800, color: '#c23a2b', lineHeight: 1.1 }}>{inr(total)}</div>
         </div>
       </div>
 
+      <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
+        <FilterChips
+          label="Paid from" options={METHOD_FILTERS} value={methodFilter}
+          onChange={(v) => { setMethodFilter(v); setPage(1) }}
+        />
+        {filtered && (
+          <button
+            type="button" className="btn btn-sm btn-link text-secondary p-0"
+            onClick={() => { setQ(''); setMethodFilter('all'); setPage(1) }}
+          >
+            Clear filters
+          </button>
+        )}
+        <span className="ms-auto text-muted small">{rows.length} expense{rows.length === 1 ? '' : 's'}</span>
+      </div>
+
       {rows.length === 0 ? (
         <div className="text-center text-muted py-4" style={{ border: '1px solid #f0e0e3', borderRadius: 12 }}>
-          No expenses yet. Click “New Expense”.
+          {filtered ? 'No expenses match these filters.' : 'No expenses yet. Click “New Expense”.'}
         </div>
       ) : mobile ? (
         // ── mobile: stacked cards ──
