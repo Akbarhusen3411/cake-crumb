@@ -1,9 +1,16 @@
 import { useMemo, useState } from 'react'
 import { FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi'
 import Modal from '../Modal.jsx'
+import FilterChips from './FilterChips.jsx'
 import { ACC, addDocRec, updateDocRec, deleteDocRec } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
+
+const METHOD_FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'Cash', label: 'Cash' },
+  { key: 'Online', label: 'Online' },
+]
 
 const todayIso = () => new Date().toISOString().slice(0, 10)
 const fmtDate = (iso) => {
@@ -12,13 +19,22 @@ const fmtDate = (iso) => {
 }
 
 export default function WithdrawalsTab({ withdrawals, reload }) {
+  const [q, setQ] = useState('')
+  const [methodFilter, setMethodFilter] = useState('all') // all | Cash | Online
   const [editing, setEditing] = useState(null)
   const [busy, setBusy] = useState(false)
   const mobile = useIsMobile()
-  const rows = useMemo(
-    () => [...withdrawals].sort((a, b) => String(b.date).localeCompare(String(a.date))),
-    [withdrawals]
-  )
+
+  const rows = useMemo(() => {
+    const s = q.trim().toLowerCase()
+    let list = [...withdrawals].sort((a, b) => String(b.date).localeCompare(String(a.date)))
+    if (s) list = list.filter((w) => String(w.notes || '').toLowerCase().includes(s))
+    if (methodFilter !== 'all') list = list.filter((w) => w.method === methodFilter)
+    return list
+  }, [withdrawals, q, methodFilter])
+
+  const filtered = methodFilter !== 'all' || q.trim() !== ''
+  // Total follows the filter — "Cash" answers how much cash left the tin.
   const total = rows.reduce((s, w) => s + (Number(w.amount) || 0), 0)
 
   async function save(data) {
@@ -42,11 +58,32 @@ export default function WithdrawalsTab({ withdrawals, reload }) {
         <button className="btn text-white" style={{ background: 'var(--cc-rose,#e0617a)' }} onClick={() => setEditing({})}>
           <FiPlus /> Take out money
         </button>
-        <span className="ms-auto fw-semibold" style={{ color: '#7a5bb0' }}>Total taken out: {inr(total)}</span>
+        <input
+          className="form-control" style={{ maxWidth: 260 }}
+          placeholder="Search reason…" value={q} onChange={(e) => setQ(e.target.value)}
+        />
+        <span className="ms-auto fw-semibold" style={{ color: '#7a5bb0' }}>
+          {filtered ? 'Taken out (filtered)' : 'Total taken out'}: {inr(total)}
+        </span>
+      </div>
+
+      <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
+        <FilterChips label="Taken from" options={METHOD_FILTERS} value={methodFilter} onChange={setMethodFilter} />
+        {filtered && (
+          <button
+            type="button" className="btn btn-sm btn-link text-secondary p-0"
+            onClick={() => { setQ(''); setMethodFilter('all') }}
+          >
+            Clear filters
+          </button>
+        )}
+        <span className="ms-auto text-muted small">{rows.length} entr{rows.length === 1 ? 'y' : 'ies'}</span>
       </div>
 
       {rows.length === 0 ? (
-        <div className="text-center text-muted py-4" style={{ border: '1px solid #f0e0e3', borderRadius: 12 }}>Nothing taken out yet.</div>
+        <div className="text-center text-muted py-4" style={{ border: '1px solid #f0e0e3', borderRadius: 12 }}>
+          {filtered ? 'No entries match these filters.' : 'Nothing taken out yet.'}
+        </div>
       ) : mobile ? (
         <div className="d-flex flex-column gap-2">
           {rows.map((w) => (
