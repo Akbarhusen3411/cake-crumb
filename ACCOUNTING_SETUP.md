@@ -28,14 +28,34 @@ optional: it holds the "Expense taken for use" figure *and* the marker that stop
 the one-time Excel import from re-running (and overwriting your edits) on every
 new device.
 
-## 2. First run
+## 2. The accounting PIN
+
+After you sign in, Daily Accounting asks for a **4–8 digit PIN**. Website Orders
+does not — only the money pages.
+
+- **The first time**, the screen says *Choose an accounting PIN*. Type your PIN
+  twice and it's saved. Only a scrambled version (a hash) is stored, in
+  `acc_settings/main`, so the digits are nowhere in the website's code.
+- It asks again **every time the tab is closed and reopened**. The **Lock**
+  button beside *Sign out* re-locks without signing out.
+- **Forgot it?** In the Firebase console open `acc_settings` → `main`, delete the
+  `accPinHash` field, and the *Choose a PIN* screen comes back.
+
+**What this is for, honestly:** it stops someone picking up a phone or laptop
+that's already signed in. It is *not* a second password — your admin email and
+password remain the real protection, and anyone who has those can see the
+figures in the Firebase console anyway. Keep the admin password strong.
+
+## 3. First run
 
 - `npm run dev` → open `/admin/accounting` → sign in.
 - On first visit the **207-item menu** seeds itself into `acc_menu` automatically.
 - Data model (all admin-only):
   - `acc_orders` — `{ date, customer, category, item, variant, qty, unitPrice, paid, method, status, notes }`
   - `acc_expenses` — `{ date, vendor, amount, method, notes }`
-  - `acc_withdrawals` — `{ date, amount, method, notes }`
+  - `acc_withdrawals` — `{ date, amount, method, notes, direction }` where
+    `direction` is `in` (you invest your own money) or `out` (you take money for
+    yourself). Missing = `out`.
   - `acc_menu` — `{ category, name, variant, price }`
   - `date` = `YYYY-MM-DD`, `method` = `Cash | Online`, `paid` = boolean.
 
@@ -64,9 +84,22 @@ after. The Apr–Jul 2026 Excel importer is retired, so nothing refills the book
 
 - **Searchable dropdowns** everywhere — type "cheese" to filter to cheesecakes.
 - **New Order**: Category → Item → Size cascade, price auto-fills; qty × price = total.
-- **Cash vs Online** tracked on every order/expense/personal-use entry.
-- **Dashboard**: overall Money in Hand = Cash in Hand + In Bank (online), plus a
-  month picker that recalculates Sales / Received / Expenses / Profit per month.
+- **Cash vs Online** tracked on every order/expense/owner-money entry.
+- **Dashboard**: five figures and a graph, nothing else —
+
+  - **Money in hand** = invested + earnings − expenses − taken out
+  - **Profit** = earnings − expenses
+
+  Money you invest is not earnings, and money you take out is not a cost, so
+  neither changes profit. It counts cash, not stock: right after you buy
+  material, profit dips and then recovers as those orders sell.
+- **Invoice**: every order row has a 🗎 button. It opens a Cake & Crumb invoice
+  with the items, prices and total, then **Print / Save as PDF**. In Chrome's
+  print dialog pick *Save as PDF* as the destination. There is no GST line (no
+  GSTIN); the FSSAI and Udyam numbers are printed on every invoice.
+- **My Money (In/Out)**: record it here when you put your own money into the
+  bakery, or take money out for yourself. Material you buy with it still has to
+  be entered in **Expenses** — the two are separate entries.
 - **Menu & Prices** tab to edit the catalogue; **Monthly Report** tab.
 
 Separate from the storefront `orders` collection — this is the bakery's private

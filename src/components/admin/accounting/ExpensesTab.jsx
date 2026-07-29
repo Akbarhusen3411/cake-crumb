@@ -145,8 +145,8 @@ export default function ExpensesTab({ expenses, reload }) {
                   <td className="text-end fw-semibold">{inr(e.amount)}</td>
                   <td className="text-center">{e.method}</td>
                   <td className="text-nowrap text-end">
-                    <button className="btn btn-sm btn-link" style={{ color: '#cf3e63' }} onClick={() => setEditing(e)}><FiEdit2 /></button>
-                    <button className="btn btn-sm btn-link text-danger" onClick={() => remove(e)}><FiTrash2 /></button>
+                    <button className="cc-row-action" style={{ color: '#cf3e63' }} title="Edit" onClick={() => setEditing(e)}><FiEdit2 /></button>
+                    <button className="cc-row-action text-danger" title="Delete" onClick={() => remove(e)}><FiTrash2 /></button>
                   </td>
                 </tr>
               ))}

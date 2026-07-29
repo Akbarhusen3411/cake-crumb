@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FiAlertTriangle, FiLock, FiLogOut, FiRefreshCw } from 'react-icons/fi'
+import PinGate from '../components/admin/accounting/PinGate.jsx'
 import { getFirebaseAuth, isFirebaseEnabled } from '../firebase.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import {
@@ -11,7 +12,7 @@ import DashboardTab from '../components/admin/accounting/DashboardTab.jsx'
 import OrdersTab from '../components/admin/accounting/OrdersTab.jsx'
 import MenuTab from '../components/admin/accounting/MenuTab.jsx'
 import ExpensesTab from '../components/admin/accounting/ExpensesTab.jsx'
-import WithdrawalsTab from '../components/admin/accounting/WithdrawalsTab.jsx'
+import OwnerMoneyTab from '../components/admin/accounting/OwnerMoneyTab.jsx'
 import MonthlyTab from '../components/admin/accounting/MonthlyTab.jsx'
 import DangerZone from '../components/admin/accounting/DangerZone.jsx'
 
@@ -20,7 +21,7 @@ const TABS = [
   { key: 'orders', label: 'Orders' },
   { key: 'menu', label: 'Menu & Prices' },
   { key: 'expenses', label: 'Expenses' },
-  { key: 'withdrawals', label: 'Money Taken Out' },
+  { key: 'withdrawals', label: 'My Money (In/Out)' },
   { key: 'monthly', label: 'Monthly Report' },
 ]
 
@@ -41,6 +42,23 @@ export default function AdminAccounting() {
   const [pwdError, setPwdError] = useState('')
   const [signingIn, setSigningIn] = useState(false)
   const isAdmin = !!user
+
+  // Second lock, on top of the sign-in. sessionStorage, not localStorage, so it
+  // asks again once the tab closes — matching the browserSessionPersistence the
+  // auth itself uses. See PinGate for what this does and doesn't protect.
+  const UNLOCK_KEY = 'cc_acc_unlocked'
+  const [unlocked, setUnlocked] = useState(() => {
+    try { return sessionStorage.getItem(UNLOCK_KEY) === '1' } catch { return false }
+  })
+  function unlock() {
+    try { sessionStorage.setItem(UNLOCK_KEY, '1') } catch { /* ignore */ }
+    setUnlocked(true)
+  }
+  function lock() {
+    try { sessionStorage.removeItem(UNLOCK_KEY) } catch { /* ignore */ }
+    setUnlocked(false)
+  }
+  const ready = isAdmin && unlocked
 
   const [tab, setTab] = useState('dashboard')
   const [menu, setMenu] = useState([])
@@ -77,7 +95,7 @@ export default function AdminAccounting() {
   // Live subscriptions, not a one-shot read: an entry made on the shop PC shows
   // up here without a refresh, and two devices can't drift out of step.
   useEffect(() => {
-    if (!isAdmin) return
+    if (!ready) return // nothing loads while the PIN gate is up
     let active = true
     const unsubs = []
     ;(async () => {
@@ -101,7 +119,7 @@ export default function AdminAccounting() {
       })
     })()
     return () => { active = false; unsubs.forEach((u) => u()) }
-  }, [isAdmin])
+  }, [ready])
 
   async function login(e) {
     e.preventDefault()
@@ -120,6 +138,7 @@ export default function AdminAccounting() {
     } finally { setSigningIn(false) }
   }
   async function logout() {
+    lock() // never leave the tool unlocked for the next person to sign in
     const auth = await getFirebaseAuth()
     if (auth) { const { signOut } = await import('firebase/auth'); await signOut(auth) }
     setUser(null)
@@ -158,6 +177,16 @@ export default function AdminAccounting() {
     )
   }
 
+  // Signed in, but the money pages take one more step.
+  if (!unlocked) {
+    return (
+      <section className="container py-2">
+        <AdminNav />
+        <PinGate onUnlock={unlock} />
+      </section>
+    )
+  }
+
   return (
     <section className="container py-4 py-md-5">
       <AdminNav />
@@ -165,7 +194,10 @@ export default function AdminAccounting() {
         <h1 className="h4 m-0" style={{ fontFamily: 'var(--font-heading,serif)', color: '#cf3e63' }}>Daily Accounting</h1>
         <button className="btn btn-sm btn-light ms-2" onClick={reload} title="Refresh"><FiRefreshCw /></button>
         {loading ? <span className="text-muted small">Loading…</span> : null}
-        <button className="btn btn-sm btn-outline-secondary ms-auto" onClick={logout}><FiLogOut /> Sign out</button>
+        <button className="btn btn-sm btn-outline-secondary ms-auto" onClick={lock} title="Lock without signing out">
+          <FiLock /> Lock
+        </button>
+        <button className="btn btn-sm btn-outline-secondary" onClick={logout}><FiLogOut /> Sign out</button>
       </div>
 
       {cloudError ? (
@@ -205,7 +237,7 @@ export default function AdminAccounting() {
       {tab === 'orders' && <OrdersTab orders={orders} menu={menu} reload={reload} />}
       {tab === 'menu' && <MenuTab menu={menu} reload={reload} />}
       {tab === 'expenses' && <ExpensesTab expenses={expenses} reload={reload} />}
-      {tab === 'withdrawals' && <WithdrawalsTab withdrawals={withdrawals} reload={reload} />}
+      {tab === 'withdrawals' && <OwnerMoneyTab withdrawals={withdrawals} reload={reload} />}
       {tab === 'monthly' && <MonthlyTab orders={orders} expenses={expenses} withdrawals={withdrawals} />}
 
       <DangerZone orders={orders} expenses={expenses} withdrawals={withdrawals} />

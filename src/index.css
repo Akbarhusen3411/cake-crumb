@@ -5198,3 +5198,230 @@ header[style*="sticky"] {
   border-radius: 999px;
   padding: 0.28rem 0.8rem;
 }
+
+/* ───────────────────── printable invoice (admin) ─────────────────────
+   Rendered through a portal onto document.body, so the print rule below can
+   hide #root outright. Colour lives in text and borders rather than filled
+   blocks: Chrome only prints backgrounds when "Background graphics" is ticked,
+   and this way the sheet looks right either way. */
+.cc-invoice-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1060;
+  background: rgba(60, 30, 40, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4vh 16px;
+  overflow-y: auto;
+}
+.cc-invoice-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(120, 40, 70, 0.3);
+}
+/* Hangs off the sheet's corner rather than sitting inside it — the invoice's own
+   "INVOICE / number / date" block is right-aligned at the top, and a close
+   button inside the padding box would land on top of it. */
+.cc-invoice-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  z-index: 2;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #f0d9dd;
+  border-radius: 50%;
+  background: #fff;
+  color: #a06;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(120, 40, 70, 0.22);
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+.cc-invoice-close svg { width: 19px; height: 19px; display: block; }
+.cc-invoice-close:hover { background: var(--cc-rose, #e0617a); color: #fff; }
+.cc-invoice-close:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 2px; }
+.cc-invoice {
+  padding: 2rem 2.25rem 1.5rem;
+  font-family: var(--font-body, 'Lato', sans-serif);
+  color: #3f3330;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-invoice-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.cc-invoice-meta { text-align: right; }
+.cc-invoice-title {
+  font-family: var(--font-heading, serif);
+  font-size: 1.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cc-rose-deep, #cf3e63);
+  line-height: 1.1;
+}
+.cc-invoice-no { font-weight: 700; font-size: 0.9rem; margin-top: 0.15rem; }
+.cc-invoice-date { font-size: 0.82rem; color: #7a6b66; }
+.cc-invoice-contact {
+  margin-top: 0.9rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #7a6b66;
+}
+.cc-invoice-billto {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 0.25rem 0 1rem;
+}
+.cc-invoice-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9a8b86;
+}
+.cc-invoice-customer {
+  font-family: var(--font-heading, serif);
+  font-size: 1.15rem;
+  color: #3f3330;
+}
+
+.cc-invoice-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.cc-invoice-table th {
+  text-align: left;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9a8b86;
+  font-weight: 700;
+  padding: 0 0 0.45rem;
+  border-bottom: 1.5px solid var(--cc-rose-soft, #d7a7ae);
+}
+.cc-invoice-table td { padding: 0.55rem 0; border-bottom: 1px solid #f2e6e8; vertical-align: top; }
+.cc-invoice-table .num { text-align: right; white-space: nowrap; padding-left: 0.75rem; }
+.cc-invoice-variant { color: #8a7a75; }
+.cc-invoice-table tfoot td { border-bottom: 0; padding-top: 0.8rem; }
+.cc-invoice-total-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9a8b86;
+}
+.cc-invoice-total {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--cc-rose-deep, #cf3e63);
+}
+
+.cc-invoice-pay {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
+}
+.cc-invoice-status {
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 0.12rem 0.7rem;
+  font-weight: 700;
+}
+.cc-invoice-status.is-paid { color: #1d7a44; border-color: #a9dcc0; }
+.cc-invoice-status.is-unpaid { color: #a5591b; border-color: #f0d3a8; }
+.cc-invoice-method { color: #7a6b66; }
+.cc-invoice-notes { margin-top: 0.9rem; font-size: 0.85rem; color: #5b4e4a; }
+
+.cc-invoice-foot {
+  margin-top: 1.6rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid #f2e6e8;
+  text-align: center;
+}
+.cc-invoice-quote {
+  font-family: var(--font-script, cursive);
+  font-size: 1.45rem;
+  line-height: 1.35;
+  color: var(--cc-rose, #e0617a);
+}
+.cc-invoice-thanks {
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8a7a75;
+  margin-top: 0.35rem;
+}
+.cc-invoice-regs {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: #a0908b;
+  margin-top: 0.75rem;
+}
+
+.cc-invoice-actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  padding: 0.9rem 1.25rem;
+  border-top: 1px solid #f3e3e6;
+}
+
+@media (max-width: 575.98px) {
+  .cc-invoice { padding: 1.25rem 1.1rem 1rem; }
+  .cc-invoice-meta { text-align: left; }
+  .cc-invoice-table { font-size: 0.85rem; }
+}
+
+@media print {
+  /* The app is a sibling of the portal, so it can be removed outright — hiding
+     it in place would leave its layout behind and print blank pages after the
+     invoice. */
+  #root { display: none !important; }
+  .cc-invoice-overlay {
+    position: static !important;
+    background: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  .cc-invoice-sheet {
+    max-width: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  .cc-invoice-actions,
+  .cc-invoice-close { display: none !important; }
+  /* Chrome draws its own header/footer — the date, the page title and the URL —
+     into the @page margin. Zeroing the margin is what removes them; the paper
+     margin is then the invoice's own padding instead. (The print dialog's
+     "Headers and footers" tick-box does the same thing by hand.)
+     Trade-off: element padding applies once, not per page, so an invoice long
+     enough to break onto a second page would start that page at the paper edge.
+     Item lists that long don't happen here; revisit if they ever do. */
+  @page { size: A4; margin: 0; }
+  .cc-invoice { padding: 14mm !important; }
+}
+
+/* Row action icons in the admin tables (edit / delete / invoice / mark paid).
+   Bootstrap's .btn-sm .btn-link rendered these at the table's 14px font, which
+   was too small to aim at — sized here instead so every admin table matches. */
+.cc-row-action {
+  border: 0;
+  background: transparent;
+  padding: 0.3rem 0.42rem;
+  line-height: 1;
+  border-radius: 8px;
+  cursor: pointer;
+  color: inherit;
+  transition: background-color 0.12s ease;
+}
+.cc-row-action svg { width: 19px; height: 19px; display: block; }
+.cc-row-action:hover { background: rgba(207, 62, 99, 0.09); }
+.cc-row-action:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 1px; }

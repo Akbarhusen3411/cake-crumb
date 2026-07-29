@@ -262,18 +262,15 @@ export async function clearCollection(coll) {
 }
 
 /**
- * Wipe the books: orders, expenses and money-taken-out. `acc_menu` is KEPT — the
- * 207 prices (and any the owner edited by hand) are the tool's setup, not its
- * bookkeeping, and the New Order form is unusable without them. The legacy
- * display-only "expense taken for use" note is reset, since it describes a book
- * that no longer exists.
+ * Wipe the books: orders, expenses and the owner's money in/out. `acc_menu` is
+ * KEPT — the 207 prices (and any the owner edited by hand) are the tool's setup,
+ * not its bookkeeping, and the New Order form is unusable without them.
  */
 export async function clearAccountingBooks() {
   const out = {}
   for (const coll of [ACC.ORDERS, ACC.EXPENSES, ACC.WITHDRAWALS]) {
     out[coll] = await clearCollection(coll)
   }
-  await setExpenseTakenForUse(0)
   return out
 }
 
@@ -289,44 +286,61 @@ export async function exportAccountingBackup() {
   }
 }
 
-// ───────────────────── settings (Expense Taken for Use) ─────────────────────
-const TAKEN_LS = 'cc_acc_taken'
+// The "Expense Taken for Use" setting is gone. It was one hand-typed figure
+// standing in for two things the tool now records properly: material bought
+// (Expenses tab) and money the owner moves in or out of the business (My Money
+// tab). `acc_settings/main` is left in place — it now holds the accounting PIN
+// hash (below) and nothing else.
 
-// The figure the owner carried over from the Excel sheet. Used only until it is
-// explicitly set, so the dashboard keeps showing the number it always showed
-// instead of dropping to ₹0 on a device that has never edited it.
-export const TAKEN_DEFAULT = 12300
+// ───────────────────── accounting PIN (second lock) ─────────────────────
+//
+// A SECOND LOCK, NOT A SECOND WALL. The real boundary is Firebase Auth plus the
+// Firestore rules; anyone holding the admin email + password can already read
+// every figure straight from the console, and could bypass this check from
+// devtools. What it actually protects is a signed-in tab left unattended — a
+// phone or laptop someone else picks up. That is a real risk for a shop counter,
+// which is why it exists, and it is the only risk it covers.
+//
+// The PIN is NEVER hardcoded — the same rule the reviews moderation UI follows.
+// It is SHA-256'd with an app salt and stored in `acc_settings/main.accPinHash`,
+// which is admin-only, so the digits appear neither in the published bundle nor
+// in the repo. A 6-digit PIN is brute-forceable offline by anyone who can read
+// the hash, but reading it already requires the admin login.
+const PIN_SALT = 'cake-crumb-acc-pin-v1'
 
-/** "Expense Taken for Use" — money taken from earnings to buy materials (owner's figure). */
-export async function getExpenseTakenForUse() {
-  let local = null
-  try {
-    const raw = localStorage.getItem(TAKEN_LS)
-    if (raw != null) local = Number(raw) || 0
-  } catch { /* ignore */ }
-  const db = await getDb()
-  if (!db) return local ?? TAKEN_DEFAULT
-  try {
-    const { doc, getDoc } = await import('firebase/firestore')
-    const snap = await getDoc(doc(db, 'acc_settings', 'main'))
-    if (snap.exists()) {
-      const v = Number(snap.data().expenseTakenForUse) || 0
-      try { localStorage.setItem(TAKEN_LS, String(v)) } catch { /* ignore */ }
-      return v
-    }
-  } catch (err) { reportCloudError('read', 'acc_settings', err) }
-  return local ?? TAKEN_DEFAULT
+async function pinDigest(pin) {
+  const bytes = new TextEncoder().encode(`${PIN_SALT}:${String(pin)}`)
+  const buf = await crypto.subtle.digest('SHA-256', bytes)
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
-export async function setExpenseTakenForUse(n) {
-  const v = Number(n) || 0
-  try { localStorage.setItem(TAKEN_LS, String(v)) } catch { /* ignore */ }
+/**
+ * The stored PIN hash, or null if none is set yet. Throws on a read failure so
+ * the gate can say "couldn't check" and offer a retry — silently treating an
+ * error as "no PIN set" would turn a broken rule into an open door.
+ */
+export async function getAccPinHash() {
   const db = await getDb()
-  if (!db) return
-  try {
-    const { doc, setDoc } = await import('firebase/firestore')
-    await setDoc(doc(db, 'acc_settings', 'main'), { expenseTakenForUse: v }, { merge: true })
-  } catch (err) { reportCloudError('save', 'acc_settings', err) }
+  if (!db) return null
+  const { doc, getDoc } = await import('firebase/firestore')
+  const snap = await getDoc(doc(db, 'acc_settings', 'main'))
+  return snap.exists() ? (snap.data().accPinHash || null) : null
+}
+
+/** Set (or change) the PIN. Digits only, 4–8 of them. */
+export async function setAccPin(pin) {
+  const clean = String(pin).trim()
+  if (!/^\d{4,8}$/.test(clean)) throw new Error('PIN must be 4 to 8 digits.')
+  const db = await getDb()
+  if (!db) throw new Error('Firebase is not configured.')
+  const { doc, setDoc } = await import('firebase/firestore')
+  await setDoc(doc(db, 'acc_settings', 'main'), { accPinHash: await pinDigest(clean) }, { merge: true })
+}
+
+/** True when `pin` matches the stored hash. */
+export async function verifyAccPin(pin, storedHash) {
+  if (!storedHash) return false
+  return (await pinDigest(String(pin).trim())) === storedHash
 }
 
 // ───────────────────── pure calculations (client-side) ─────────────────────
@@ -352,12 +366,27 @@ export function orderQty(o) {
   return Number(o.qty) || 0
 }
 
-/** Money summary for a month ("YYYY-MM") or all-time (month falsy). */
+/**
+ * Money summary for a month ("YYYY-MM") or all-time (month falsy).
+ *
+ * The owner's working-capital model, in their words: put ₹15,000 in, buy ₹15,000
+ * of material, sell ₹20,000 → ₹5,000 profit, and the original ₹15,000 is back
+ * inside that ₹20,000; spend ₹10,000 of it on more material and total expenses
+ * are ₹25,000. So:
+ *
+ *   Money in hand = invested + received − expenses − taken out
+ *   Profit        = received − expenses      (money you put in is not income)
+ *
+ * `acc_withdrawals` rows carry `direction: 'in' | 'out'` — money the owner puts
+ * IN from his own pocket, or takes OUT for himself. Rows with no `direction`
+ * are treated as 'out', which is what every row meant before investing existed.
+ */
 export function computeSummary(orders, expenses, withdrawals, month) {
   const inMonth = (d) => !month || String(d || '').slice(0, 7) === month
   const s = {
     receivedCash: 0, receivedOnline: 0, toCollect: 0, orderCount: 0, unpaidCount: 0,
     expensesCash: 0, expensesOnline: 0, withdrawnCash: 0, withdrawnOnline: 0,
+    investedCash: 0, investedOnline: 0,
     onlineTakenToCash: 0, // online payments the owner has withdrawn from the bank
   }
   for (const o of orders) {
@@ -378,15 +407,19 @@ export function computeSummary(orders, expenses, withdrawals, month) {
   for (const w of withdrawals) {
     if (!inMonth(w.date)) continue
     const a = Number(w.amount) || 0
-    if (w.method === 'Online') s.withdrawnOnline += a; else s.withdrawnCash += a
+    const online = w.method === 'Online'
+    if (w.direction === 'in') { if (online) s.investedOnline += a; else s.investedCash += a }
+    else if (online) s.withdrawnOnline += a
+    else s.withdrawnCash += a
   }
   s.received = s.receivedCash + s.receivedOnline
   s.totalExpenses = s.expensesCash + s.expensesOnline
   s.totalWithdrawn = s.withdrawnCash + s.withdrawnOnline
+  s.invested = s.investedCash + s.investedOnline
   s.totalSales = s.received + s.toCollect
   // Online money the owner already withdrew moves from the Bank pocket into Cash.
-  s.cashInHand = s.receivedCash + s.onlineTakenToCash - s.expensesCash - s.withdrawnCash
-  s.bankOnline = s.receivedOnline - s.onlineTakenToCash - s.expensesOnline - s.withdrawnOnline
+  s.cashInHand = s.receivedCash + s.investedCash + s.onlineTakenToCash - s.expensesCash - s.withdrawnCash
+  s.bankOnline = s.receivedOnline + s.investedOnline - s.onlineTakenToCash - s.expensesOnline - s.withdrawnOnline
   s.moneyInHand = s.cashInHand + s.bankOnline
   // Profit counts money actually RECEIVED, not invoiced — an unpaid order stays
   // in `toCollect` until the customer pays. The Dashboard and the Monthly Report

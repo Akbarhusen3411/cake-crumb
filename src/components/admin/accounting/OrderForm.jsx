@@ -176,8 +176,12 @@ export default function OrderForm({ menu = [], customers = [], initial = null, o
             <option value="Cash">Cash</option><option value="Online">Online</option>
           </select></div>
         <div className="col-12 col-md-4"><Label>Status</Label>
+          {/* Pending = not started, In Progress = baking now, Completed = handed
+              over. Only "Cancelled" changes the money (computeSummary drops it);
+              the rest are for the baker's own tracking. */}
           <select className="form-select" value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option>Completed</option><option>Pending</option><option>Cancelled</option>
+            <option>Completed</option><option>In Progress</option>
+            <option>Pending</option><option>Cancelled</option>
           </select></div>
         <div className="col-12"><Label>Notes</Label>
           <input type="text" className="form-control" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="optional" /></div>

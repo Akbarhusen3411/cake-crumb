@@ -25,9 +25,10 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
   return (
     <div>
       <p className="text-muted small mb-3">
-        Every month totalled automatically. “Net” = <strong>Received</strong> − Expenses — the same
-        profit the Dashboard shows. An unpaid order counts only once the customer pays, so it sits
-        in “To Collect” until then.
+        Every month totalled automatically. <strong>Profit = Earnings − Expenses</strong>, the same
+        figure the Dashboard shows. Money you invest or take out is your own, so it changes neither
+        earnings nor profit. An unpaid order counts only once the customer pays — until then it sits
+        in “To Collect”.
       </p>
 
       {rows.length === 0 ? (
@@ -42,11 +43,12 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
                 <div className="small text-muted">{s.orderCount} orders</div>
               </div>
               <div className="d-flex flex-wrap gap-2">
-                <Stat label="Sales" value={inr(s.totalSales)} />
-                <Stat label="Received" value={inr(s.received)} />
-                <Stat label="To Collect" value={inr(s.toCollect)} color="#c67c17" />
+                <Stat label="Invested" value={inr(s.invested)} color="#1b7f5e" />
+                <Stat label="Earnings" value={inr(s.received)} />
                 <Stat label="Expenses" value={inr(s.totalExpenses)} color="#b23b3b" />
-                <Stat label="Net (Received − Exp)" value={inr(s.profit)} strong color={s.profit >= 0 ? '#1b7f5e' : '#b23b3b'} />
+                <Stat label="Taken out" value={inr(s.totalWithdrawn)} />
+                <Stat label="To Collect" value={inr(s.toCollect)} color="#c67c17" />
+                <Stat label="Profit" value={inr(s.profit)} strong color={s.profit >= 0 ? '#1b7f5e' : '#b23b3b'} />
               </div>
             </div>
           ))}
@@ -58,9 +60,9 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
             <thead style={{ background: '#f9eef1' }}>
               <tr style={{ color: '#7a4a58' }}>
                 <th>Month</th><th className="text-center">Orders</th>
-                <th className="text-end">Sales</th><th className="text-end">Received</th>
-                <th className="text-end">To Collect</th><th className="text-end">Expenses</th>
-                <th className="text-end">Net</th>
+                <th className="text-end">Invested</th><th className="text-end">Earnings</th>
+                <th className="text-end">Expenses</th><th className="text-end">Taken out</th>
+                <th className="text-end">To Collect</th><th className="text-end">Profit</th>
               </tr>
             </thead>
             <tbody>
@@ -68,10 +70,11 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
                 <tr key={m}>
                   <td className="fw-semibold">{monthLabel(m)}</td>
                   <td className="text-center">{s.orderCount}</td>
-                  <td className="text-end">{inr(s.totalSales)}</td>
+                  <td className="text-end" style={{ color: '#1b7f5e' }}>{inr(s.invested)}</td>
                   <td className="text-end">{inr(s.received)}</td>
-                  <td className="text-end">{inr(s.toCollect)}</td>
                   <td className="text-end">{inr(s.totalExpenses)}</td>
+                  <td className="text-end">{inr(s.totalWithdrawn)}</td>
+                  <td className="text-end">{inr(s.toCollect)}</td>
                   <td className="text-end fw-semibold" style={{ color: s.profit >= 0 ? '#1b7f5e' : '#b23b3b' }}>{inr(s.profit)}</td>
                 </tr>
               ))}

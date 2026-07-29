@@ -1,8 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { FiEdit2, FiCheck, FiX } from 'react-icons/fi'
-import {
-  computeSummary, monthsFrom, getExpenseTakenForUse, setExpenseTakenForUse,
-} from '../../../services/accounting.js'
+import { useMemo, useState } from 'react'
+import { computeSummary, monthsFrom } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
 import { monthLabel } from '../../../utils/adminDate.js'
 
@@ -12,6 +9,7 @@ import { monthLabel } from '../../../utils/adminDate.js'
 const SERIES_SALES = '#cf3e63'
 const SERIES_EXPENSES = '#6b5bb0'
 const INK_MUTED = '#898781'
+const INK_IN = '#1b7f5e'
 
 function monthShort(ym) {
   const [y, m] = ym.split('-')
@@ -125,66 +123,23 @@ function TrendChart({ orders, expenses, withdrawals, months }) {
   )
 }
 
-/** Cash vs online, as a proportion of what was actually received. */
-function PocketsCard({ cash, online }) {
-  const total = cash + online
-  const pctCash = total > 0 ? Math.round((cash / total) * 100) : 0
-  return (
-    <div className="cc-acc-card">
-      <div className="cc-acc-label">Received by method</div>
-      <div className="d-flex justify-content-between align-items-baseline mt-2" style={{ gap: 12 }}>
-        <div>
-          <div style={{ fontWeight: 700, color: SERIES_SALES }}>Cash</div>
-          <div className="cc-acc-value" style={{ fontSize: '1.3rem' }}>{inr(cash)}</div>
-        </div>
-        <div className="text-end">
-          <div style={{ fontWeight: 700, color: SERIES_EXPENSES }}>Online</div>
-          <div className="cc-acc-value" style={{ fontSize: '1.3rem' }}>{inr(online)}</div>
-        </div>
-      </div>
-      <div className="cc-acc-bar mt-3" role="img" aria-label={`${pctCash}% of receipts in cash`}>
-        <span style={{ width: `${pctCash}%`, background: SERIES_SALES }} />
-        <span style={{ width: `${100 - pctCash}%`, background: SERIES_EXPENSES }} />
-      </div>
-      <div className="cc-acc-note">{pctCash}% cash · {100 - pctCash}% online</div>
-    </div>
-  )
-}
-
+/**
+ * The dashboard the owner asked for: invest → earn → spend → what's left, and
+ * nothing else. It used to carry Total sales, a received-by-method breakdown,
+ * two big pocket cards and a legacy hand-typed note; that was more numbers than
+ * decisions, and the owner said so. The cash/bank split survives as one small line
+ * because the "In bank → Taken to cash" button on an online order feeds it.
+ */
 export default function DashboardTab({ orders, expenses, withdrawals }) {
   const months = useMemo(() => monthsFrom(orders, expenses, withdrawals), [orders, expenses, withdrawals])
   const [period, setPeriod] = useState('ALL')
   const sel = months.includes(period) ? period : 'ALL'
   const allTime = sel === 'ALL'
 
-  // "Expense Taken for Use" used to be a constant compiled into this file, so it
-  // could not be changed without a code edit and showed the same figure on a
-  // dashboard with no data at all. It now lives in acc_settings/main — and it is
-  // no longer subtracted from anything: it predates the Expenses tab, so with
-  // materials now itemised there, netting it off too double-counted them. The
-  // Withdrawals tab is where money that really leaves the tin gets recorded.
-  const [taken, setTaken] = useState(null)
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState('')
-  useEffect(() => { getExpenseTakenForUse().then(setTaken) }, [])
-
-  async function saveTaken() {
-    const v = Number(draft) || 0
-    setTaken(v); setEditing(false)
-    await setExpenseTakenForUse(v)
-  }
-
   const s = useMemo(
     () => computeSummary(orders, expenses, withdrawals, allTime ? null : sel),
     [orders, expenses, withdrawals, allTime, sel]
   )
-
-  // Only PAID orders count as earnings (unpaid "to collect" and cancelled don't).
-  const earnings = s.received
-  // What's actually left: received − expenses − money taken out, split across the
-  // two pockets. On a single month this is that month's movement, not a running
-  // balance, so the pockets only make sense on the all-time view.
-  const moneyAtHand = s.moneyInHand
 
   return (
     <div className="cc-acc-dash">
@@ -204,14 +159,13 @@ export default function DashboardTab({ orders, expenses, withdrawals }) {
 
       <div className="cc-acc-hero">
         <div className="cc-acc-card cc-acc-card--hero cc-acc-card--accent">
-          <div className="cc-acc-label">{allTime ? 'Money at hand' : 'Earnings'}</div>
-          <div className="cc-acc-value mt-1" style={{ color: '#c23a2b' }}>
-            {inr(allTime ? moneyAtHand : earnings)}
+          <div className="cc-acc-label">Money in hand</div>
+          <div className="cc-acc-value mt-1" style={{ color: s.moneyInHand < 0 ? '#c23a2b' : '#c23a2b' }}>
+            {inr(s.moneyInHand)}
           </div>
           <div className="cc-acc-note">
-            {allTime
-              ? `Received ${inr(earnings)} − expenses ${inr(s.totalExpenses)} − taken out ${inr(s.totalWithdrawn)}`
-              : `Paid orders in ${monthLabel(sel)}`}
+            Invested {inr(s.invested)} + earnings {inr(s.received)} − expenses {inr(s.totalExpenses)}
+            {' '}− taken out {inr(s.totalWithdrawn)}
           </div>
         </div>
 
@@ -220,84 +174,33 @@ export default function DashboardTab({ orders, expenses, withdrawals }) {
           <div className="cc-acc-value mt-1" style={{ color: s.profit < 0 ? '#c23a2b' : '#1d6f3a' }}>
             {inr(s.profit)}
           </div>
-          <div className="cc-acc-note">Received {inr(earnings)} − expenses {inr(s.totalExpenses)}</div>
+          <div className="cc-acc-note">
+            Earnings {inr(s.received)} − expenses {inr(s.totalExpenses)}. Money you put in is not
+            profit — it is your own money coming back.
+          </div>
         </div>
       </div>
-
-      {allTime && (
-        <div className="cc-acc-split mt-3">
-          <div className="cc-acc-card">
-            <div className="cc-acc-label">Cash in hand</div>
-            <div className="cc-acc-value mt-1" style={{ fontSize: '1.6rem', color: s.cashInHand < 0 ? '#c23a2b' : '#1d6f3a' }}>
-              {inr(s.cashInHand)}
-            </div>
-            <div className="cc-acc-note">
-              Cash received {inr(s.receivedCash)}
-              {s.onlineTakenToCash > 0 ? ` + ${inr(s.onlineTakenToCash)} taken from the bank` : ''}
-              {' '}− cash expenses {inr(s.expensesCash)}
-              {s.withdrawnCash > 0 ? ` − ${inr(s.withdrawnCash)} taken out` : ''}
-            </div>
-          </div>
-          <div className="cc-acc-card">
-            <div className="cc-acc-label">In bank (online)</div>
-            <div className="cc-acc-value mt-1" style={{ fontSize: '1.6rem', color: s.bankOnline < 0 ? '#c23a2b' : SERIES_EXPENSES }}>
-              {inr(s.bankOnline)}
-            </div>
-            <div className="cc-acc-note">
-              Online money you have not moved to cash yet. Tap <strong>In bank</strong> on an online
-              order once you withdraw it — it shifts that amount into cash in hand.
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="cc-acc-kpis mt-3">
-        <Stat label="Earnings (paid)" value={inr(earnings)} color={SERIES_SALES}
-          note={`${s.orderCount} order${s.orderCount === 1 ? '' : 's'}`} />
-        <Stat label="Expenses" value={inr(s.totalExpenses)} color={SERIES_EXPENSES} note="Materials & supplies" />
-        <Stat label="Still to collect" value={inr(s.toCollect)}
-          note={`${s.unpaidCount} unpaid order${s.unpaidCount === 1 ? '' : 's'}`} />
-        <Stat label="Total sales" value={inr(s.totalSales)} note="Paid + unpaid, excludes cancelled" />
+        <Stat label="Invested" value={inr(s.invested)} color={INK_IN} note="Your own money put in" />
+        <Stat label="Earnings" value={inr(s.received)} color={SERIES_SALES}
+          note={`${s.orderCount} paid order${s.orderCount === 1 ? '' : 's'}`} />
+        <Stat label="Expenses" value={inr(s.totalExpenses)} color={SERIES_EXPENSES} note="Material & supplies" />
+        <Stat label="Taken out" value={inr(s.totalWithdrawn)} note="For yourself, not the bakery" />
       </div>
 
-      <div className="cc-acc-split mt-3">
-        <PocketsCard cash={s.receivedCash} online={s.receivedOnline} />
-
-        <div className="cc-acc-card">
-          <div className="d-flex align-items-start justify-content-between gap-2">
-            <div className="cc-acc-label">Expense taken for use (note only)</div>
-            {!editing && (
-              <button type="button" className="btn btn-sm btn-link p-0" style={{ color: SERIES_SALES }}
-                onClick={() => { setDraft(String(taken ?? 0)); setEditing(true) }} title="Edit">
-                <FiEdit2 aria-hidden /> Edit
-              </button>
-            )}
-          </div>
-          {editing ? (
-            <div className="d-flex align-items-center gap-2 mt-2">
-              <input className="form-control form-control-sm" type="number" min="0" value={draft}
-                onChange={(e) => setDraft(e.target.value)} autoFocus style={{ maxWidth: 160 }} />
-              <button className="btn btn-sm btn-success" onClick={saveTaken} title="Save"><FiCheck /></button>
-              <button className="btn btn-sm btn-outline-secondary" onClick={() => setEditing(false)} title="Cancel"><FiX /></button>
-            </div>
-          ) : (
-            <div className="cc-acc-value mt-1" style={{ fontSize: '1.6rem' }}>
-              {taken == null ? '—' : inr(taken)}
-            </div>
-          )}
-          <div className="cc-acc-note">
-            Your old hand-written figure, kept for reference — <strong>not</strong> subtracted from
-            anything. Materials are counted in the Expenses tab, and money you take out belongs in
-            the Withdrawals tab; subtracting this as well would count the same rupees twice.
-          </div>
-        </div>
-      </div>
+      <p className="cc-acc-note mt-3 mb-0 text-center">
+        Still to collect <strong>{inr(s.toCollect)}</strong> from {s.unpaidCount} unpaid
+        order{s.unpaidCount === 1 ? '' : 's'}
+        {allTime ? <> · Cash <strong>{inr(s.cashInHand)}</strong> · In bank <strong>{inr(s.bankOnline)}</strong></> : null}
+      </p>
 
       <TrendChart orders={orders} expenses={expenses} withdrawals={withdrawals} months={months} />
 
       <p className="cc-acc-note text-center mt-3 mb-0">
-        Only paid orders count as earnings and profit. Cancelled orders are excluded entirely;
-        unpaid ones show above as “still to collect” until the customer pays.
+        Only paid orders count as earnings. Buying material goes in <strong>Expenses</strong>;
+        money you put in or take out goes in <strong>My Money</strong>.
+        Right after a big purchase profit dips — it comes back as those orders are sold.
       </p>
     </div>
   )

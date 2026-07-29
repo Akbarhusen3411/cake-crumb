@@ -63,10 +63,10 @@ export default function DangerZone({ orders, expenses, withdrawals }) {
           <div className="d-flex align-items-start gap-2 mb-3">
             <FiAlertTriangle className="flex-shrink-0 mt-1" style={{ color: '#c23a2b' }} />
             <div className="small" style={{ color: '#7a584d' }}>
-              <strong>Start a fresh book.</strong> Deletes every order, expense and money-taken-out
-              entry from the cloud and from every device — <strong>{total} entries</strong>
+              <strong>Start a fresh book.</strong> Deletes every order, expense and My-Money entry
+              from the cloud and from every device — <strong>{total} entries</strong>
               {money > 0 ? <> covering {inr(money)} of orders</> : null}. <strong>Menu &amp; Prices
-              are kept.</strong> The old “expense taken for use” note is reset to ₹0. This cannot be undone.
+              are kept.</strong> This cannot be undone.
             </div>
           </div>
 

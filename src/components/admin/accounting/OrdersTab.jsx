@@ -1,34 +1,17 @@
 import { useMemo, useState } from 'react'
-import { FiPlus, FiEdit2, FiTrash2, FiRepeat } from 'react-icons/fi'
+import { FiPlus, FiEdit2, FiTrash2, FiRepeat, FiFileText } from 'react-icons/fi'
 import OrderForm from './OrderForm.jsx'
 import FilterChips from './FilterChips.jsx'
 import PeriodSelect from './PeriodSelect.jsx'
+import InvoiceModal from './InvoiceModal.jsx'
 import {
   ACC, addDocRec, updateDocRec, deleteDocRec, orderTotal, orderQty, monthsFrom,
 } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
 import { fmtDate, inPeriod } from '../../../utils/adminDate.js'
+import { orderLines, fullItem, oneLine } from '../../../utils/orderItems.js'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
 
-// Normalise an order to a list of item lines (legacy single-item orders too).
-const orderLines = (o) =>
-  Array.isArray(o.items) && o.items.length
-    ? o.items
-    : [{ category: o.category, item: o.item, variant: o.variant, qty: o.qty }]
-// The item name alone is ambiguous — the menu has a "Chocolate" under Cake Pop
-// and another under Cupcake, so a row reading just "Chocolate — Per piece" says
-// nothing. Append the category, unless the name already carries it (rows typed
-// by hand before the cascade existed read "Red velvet cake pop" in full).
-const fullItem = (it) => {
-  const item = String(it.item || '').trim()
-  const cat = String(it.category || '').trim()
-  if (!cat) return item
-  if (!item) return cat
-  return item.toLowerCase().includes(cat.toLowerCase()) ? item : `${item} ${cat}`
-}
-const oneLine = (it, withQty) =>
-  (it.variant ? `${fullItem(it)} — ${it.variant}` : fullItem(it)) +
-  (withQty && Number(it.qty) > 1 ? ` ×${it.qty}` : '')
 // Compact summary: first two items, then "+N more". withQty shows ×N per item
 // (used on mobile where there's no separate Qty column; the desktop table only
 // shows ×N for multi-item orders since it has its own Qty column).
@@ -48,6 +31,16 @@ const METHOD_FILTERS = [
 ]
 
 const isBankable = (o) => o.paid && o.method === 'Online'
+// Statuses are the baker's own tracking — only "Cancelled" changes any figure
+// (computeSummary drops it from sales). Colour them so a list of mostly-done
+// orders doesn't bury the one still in the oven.
+const STATUS_INK = {
+  completed: '#1d7a44',
+  'in progress': '#c67c17',
+  pending: '#7a6b66',
+  cancelled: '#b23b3b',
+}
+const statusInk = (s) => STATUS_INK[String(s || '').toLowerCase()] || '#7a6b66'
 // Search the label the row actually shows, so "cake pop" matches a "Chocolate"
 // cake pop the same way it matches a legacy "Red velvet cake pop".
 const searchText = (o) =>
@@ -59,6 +52,7 @@ export default function OrdersTab({ orders, menu, reload }) {
   const [methodFilter, setMethodFilter] = useState('all') // all | Cash | Online
   const [period, setPeriod] = useState('all')           // all | today | YYYY-MM
   const [editing, setEditing] = useState(null) // order or {} for new
+  const [invoiceOf, setInvoiceOf] = useState(null) // order being printed
   const [busy, setBusy] = useState(false)
   const [page, setPage] = useState(1)
   const mobile = useIsMobile()
@@ -179,7 +173,10 @@ export default function OrdersTab({ orders, menu, reload }) {
               <div className="d-flex justify-content-between align-items-start">
                 <div>
                   <div className="fw-bold" style={{ color: '#5b3e36' }}>{o.customer}</div>
-                  <div className="small text-muted">{fmtDate(o.date)} · {o.method} · {o.status}</div>
+                  <div className="small text-muted">
+                    {fmtDate(o.date)} · {o.method} ·{' '}
+                    <span style={{ color: statusInk(o.status), fontWeight: 600 }}>{o.status}</span>
+                  </div>
                 </div>
                 <div className="text-end">
                   <div className="fw-bold" style={{ color: '#1b7f5e', fontSize: 18 }}>{inr(orderTotal(o))}</div>
@@ -202,6 +199,7 @@ export default function OrdersTab({ orders, menu, reload }) {
               )}
               <div className="mt-2 d-flex gap-2 justify-content-end">
                 <button className="btn btn-sm btn-light" onClick={() => togglePaid(o)}><FiRepeat /> {o.paid ? 'Unpaid' : 'Paid'}</button>
+                <button className="btn btn-sm btn-light" onClick={() => setInvoiceOf(o)}><FiFileText /> Invoice</button>
                 <button className="btn btn-sm btn-light" onClick={() => setEditing(o)}><FiEdit2 /> Edit</button>
                 <button className="btn btn-sm btn-light text-danger" onClick={() => remove(o)}><FiTrash2 /></button>
               </div>
@@ -244,11 +242,12 @@ export default function OrdersTab({ orders, menu, reload }) {
                       </button>
                     )}
                   </td>
-                  <td>{o.status}</td>
+                  <td style={{ color: statusInk(o.status), fontWeight: 600, whiteSpace: 'nowrap' }}>{o.status}</td>
                   <td className="text-nowrap text-end">
-                    <button className="btn btn-sm btn-link text-secondary" title="Mark paid/unpaid" onClick={() => togglePaid(o)}><FiRepeat /></button>
-                    <button className="btn btn-sm btn-link" style={{ color: '#cf3e63' }} title="Edit" onClick={() => setEditing(o)}><FiEdit2 /></button>
-                    <button className="btn btn-sm btn-link text-danger" title="Delete" onClick={() => remove(o)}><FiTrash2 /></button>
+                    <button className="cc-row-action text-secondary" title="Mark paid/unpaid" onClick={() => togglePaid(o)}><FiRepeat /></button>
+                    <button className="cc-row-action text-secondary" title="Invoice" onClick={() => setInvoiceOf(o)}><FiFileText /></button>
+                    <button className="cc-row-action" style={{ color: '#cf3e63' }} title="Edit" onClick={() => setEditing(o)}><FiEdit2 /></button>
+                    <button className="cc-row-action text-danger" title="Delete" onClick={() => remove(o)}><FiTrash2 /></button>
                   </td>
                 </tr>
               ))}
@@ -274,6 +273,8 @@ export default function OrdersTab({ orders, menu, reload }) {
           onClose={() => setEditing(null)}
         />
       )}
+
+      {invoiceOf && <InvoiceModal order={invoiceOf} onClose={() => setInvoiceOf(null)} />}
     </div>
   )
 }
