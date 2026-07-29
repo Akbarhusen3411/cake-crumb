@@ -213,7 +213,7 @@ export default function AdminAccounting() {
         </div>
       ) : null}
 
-      <div className="d-flex flex-wrap gap-2 mb-4">
+      <div className="cc-admin-tabs mb-4">
         {TABS.map((t) => {
           const on = tab === t.key
           return (
@@ -223,6 +223,7 @@ export default function AdminAccounting() {
               style={{
                 border: '1px solid var(--cc-rose-soft, #d7a7ae)', borderRadius: 999,
                 padding: '6px 16px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
+                whiteSpace: 'nowrap',
                 background: on ? 'var(--cc-rose, #e0617a)' : '#fff',
                 color: on ? '#fff' : 'var(--cc-cocoa, #5b3e36)',
               }}

@@ -5218,7 +5218,10 @@ header[style*="sticky"] {
 .cc-invoice-sheet {
   position: relative;
   width: 100%;
-  max-width: 720px;
+  /* Receipt proportions, not a dashboard card. At 720px a one-item bill left a
+     chasm between the item and its figures; ~560 keeps them related and reads
+     like the sheet of paper it becomes when printed. */
+  max-width: 560px;
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 24px 60px rgba(120, 40, 70, 0.3);
@@ -5247,19 +5250,27 @@ header[style*="sticky"] {
 .cc-invoice-close:hover { background: var(--cc-rose, #e0617a); color: #fff; }
 .cc-invoice-close:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 2px; }
 .cc-invoice {
-  padding: 2rem 2.25rem 1.5rem;
+  padding: 1.75rem 1.9rem 1.4rem;
   font-family: var(--font-body, 'Lato', sans-serif);
   color: #3f3330;
   font-variant-numeric: lining-nums tabular-nums;
 }
+/* Masthead: brand in the left corner, INVOICE + date in the right, and the
+   reference numbers centred underneath both. */
 .cc-invoice-head {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
   align-items: flex-start;
   justify-content: space-between;
+  gap: 0.75rem;
 }
-.cc-invoice-meta { text-align: right; }
+.cc-invoice-meta { text-align: right; flex: 0 0 auto; }
+.cc-invoice-ids {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  margin-top: 0.7rem;
+}
 .cc-invoice-title {
   font-family: var(--font-heading, serif);
   font-size: 1.6rem;
@@ -5268,19 +5279,21 @@ header[style*="sticky"] {
   color: var(--cc-rose-deep, #cf3e63);
   line-height: 1.1;
 }
-.cc-invoice-no { font-weight: 700; font-size: 0.9rem; margin-top: 0.15rem; }
+.cc-invoice-no { font-weight: 800; font-size: 0.95rem; letter-spacing: 0.02em; }
 .cc-invoice-ref { font-size: 0.8rem; color: #7a6b66; }
-.cc-invoice-date { font-size: 0.82rem; color: #7a6b66; }
+.cc-invoice-date { font-size: 0.82rem; color: #7a6b66; margin-top: 0.1rem; }
 .cc-invoice-contact {
-  margin-top: 0.9rem;
+  margin-top: 0.85rem;
   font-size: 0.82rem;
-  line-height: 1.5;
+  line-height: 1.6;
   color: #7a6b66;
 }
 .cc-invoice-billto {
   display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  text-align: center;
   margin: 0.25rem 0 1rem;
 }
 .cc-invoice-label {
@@ -5298,6 +5311,7 @@ header[style*="sticky"] {
 .cc-invoice-fulfil {
   font-size: 0.8rem;
   color: #7a6b66;
+  text-align: center;
   margin: -0.5rem 0 0.9rem;
 }
 
@@ -5312,14 +5326,37 @@ header[style*="sticky"] {
   padding: 0 0 0.45rem;
   border-bottom: 1.5px solid var(--cc-rose-soft, #d7a7ae);
 }
-.cc-invoice-table td { padding: 0.55rem 0; border-bottom: 1px solid #f2e6e8; vertical-align: top; }
-.cc-invoice-table .num { text-align: right; white-space: nowrap; padding-left: 0.75rem; }
+.cc-invoice-table td { padding: 0.6rem 0; border-bottom: 1px solid #f2e6e8; vertical-align: top; }
+/* Fixed, snug figure columns so Qty/Rate/Amount read as one group at the right
+   and the item name absorbs whatever width is left. */
+.cc-invoice-table .num { text-align: right; white-space: nowrap; padding-left: 0.6rem; }
+.cc-invoice-table th.num:nth-child(2), .cc-invoice-table td.num:nth-child(2) { width: 48px; }
+.cc-invoice-table th.num:nth-child(3), .cc-invoice-table td.num:nth-child(3) { width: 72px; }
+.cc-invoice-table th.num:nth-child(4), .cc-invoice-table td.num:nth-child(4) { width: 84px; }
 .cc-invoice-variant { color: #8a7a75; }
-.cc-invoice-table tfoot td { border-bottom: 0; padding-top: 0.8rem; }
+.cc-invoice-table tbody tr:last-child td { border-bottom: 0; }
+.cc-invoice-table tfoot td { border-bottom: 0; padding-top: 0.5rem; vertical-align: middle; }
+/* Closing line: payment on the left, total on the right, sharing one rule.
+   A rule rather than a filled band — Chrome only prints backgrounds when
+   "Background graphics" is ticked, so weight has to come from borders and type
+   if it's to survive the print. */
+.cc-invoice-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-top: 0.85rem;
+  padding-top: 0.7rem;
+  border-top: 2px solid var(--cc-rose-soft, #d7a7ae);
+}
+/* margin-left:auto as well as space-between, so the total stays on the right
+   even when a long payment label pushes it onto its own line. */
+.cc-invoice-grand { display: flex; align-items: baseline; gap: 0.55rem; margin-left: auto; }
 .cc-invoice-table tfoot .cc-invoice-subrow td {
-  padding-top: 0.3rem;
+  padding-top: 0.35rem;
   padding-bottom: 0;
-  font-size: 0.85rem;
+  font-size: 0.86rem;
   color: #7a6b66;
 }
 .cc-invoice-table tfoot .cc-invoice-subrow + .cc-invoice-subrow td { padding-top: 0.1rem; }
@@ -5338,8 +5375,7 @@ header[style*="sticky"] {
 .cc-invoice-pay {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  margin-top: 0.4rem;
+  gap: 0.5rem;
   font-size: 0.82rem;
 }
 .cc-invoice-status {
@@ -5351,7 +5387,7 @@ header[style*="sticky"] {
 .cc-invoice-status.is-paid { color: #1d7a44; border-color: #a9dcc0; }
 .cc-invoice-status.is-unpaid { color: #a5591b; border-color: #f0d3a8; }
 .cc-invoice-method { color: #7a6b66; }
-.cc-invoice-balance { margin-top: 0.35rem; font-size: 0.82rem; color: #a5591b; font-weight: 600; }
+.cc-invoice-balance { margin-top: 0.4rem; font-size: 0.82rem; color: #a5591b; font-weight: 600; text-align: right; }
 .cc-invoice-notes { margin-top: 0.9rem; font-size: 0.85rem; color: #5b4e4a; }
 
 .cc-invoice-foot {
@@ -5383,14 +5419,26 @@ header[style*="sticky"] {
 .cc-invoice-actions {
   display: flex;
   gap: 0.6rem;
-  justify-content: flex-end;
+  justify-content: center;
   padding: 0.9rem 1.25rem;
   border-top: 1px solid #f3e3e6;
 }
 
+/* Phone: the sheet is only ~370px wide here, so the two corners collide — the
+   wordmark ends up shoved against the date. Stack instead: mark above wordmark,
+   both centred, INVOICE and the date centred under them. Print is A4-wide, so
+   it keeps the desktop two-corner masthead. */
 @media (max-width: 575.98px) {
   .cc-invoice { padding: 1.25rem 1.1rem 1rem; }
-  .cc-invoice-meta { text-align: left; }
+  .cc-invoice-head {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  /* The Logo component's own root — image beside text by default. */
+  .cc-invoice-brand > span { flex-direction: column; align-items: center; }
+  .cc-invoice-meta { text-align: center; }
   .cc-invoice-table { font-size: 0.85rem; }
 }
 
@@ -5440,3 +5488,45 @@ header[style*="sticky"] {
 .cc-row-action svg { width: 19px; height: 19px; display: block; }
 .cc-row-action:hover { background: rgba(207, 62, 99, 0.09); }
 .cc-row-action:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 1px; }
+
+/* ─────────── admin accounting: tabs, toolbar, filters on small screens ───────────
+   Six tab pills wrapped into three ragged rows on a phone, which pushed the
+   actual work below the fold and made the row you wanted hard to hit. */
+.cc-admin-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+@media (max-width: 767.98px) {
+  /* One swipeable row instead. Bleeds to the container edges so the cut-off
+     pill at the right reads as "there's more this way". */
+  .cc-admin-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    margin-inline: calc(var(--bs-gutter-x, 1.5rem) * -0.5);
+    padding-inline: calc(var(--bs-gutter-x, 1.5rem) * 0.5);
+    padding-bottom: 2px;
+  }
+  .cc-admin-tabs::-webkit-scrollbar { display: none; }
+  .cc-admin-tabs > button { flex: 0 0 auto; scroll-snap-align: start; }
+
+  /* Toolbar: one thing per line, each full width. Half-width controls next to a
+     stray count read as a broken grid at this size. */
+  .cc-admin-toolbar { gap: 0.5rem; }
+  .cc-admin-toolbar > .cc-admin-toolbar-btn { flex: 1 1 100%; justify-content: center; }
+  .cc-admin-toolbar > .form-control { max-width: none !important; flex: 1 1 100%; }
+  .cc-admin-toolbar > .cc-admin-count {
+    margin-left: 0 !important;
+    flex: 1 1 100%;
+    text-align: right;
+  }
+
+  /* Filters: one group per line with a fixed label column, so the chips start
+     at the same x whatever the label says. */
+  .cc-admin-filters { gap: 0.55rem !important; }
+  .cc-admin-filters > * { flex: 1 1 100%; }
+  .cc-admin-filters .cc-filter-label {
+    flex: 0 0 5.4rem;
+    margin-right: 0 !important;
+  }
+}

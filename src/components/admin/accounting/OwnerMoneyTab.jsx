@@ -78,12 +78,12 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
         Buying material is <strong>not</strong> recorded here — that goes in the Expenses tab.
       </p>
 
-      <div className="d-flex flex-wrap gap-2 align-items-center mb-3">
-        <button className="btn text-white d-inline-flex align-items-center gap-2"
+      <div className="cc-admin-toolbar d-flex flex-wrap gap-2 align-items-center mb-3">
+        <button className="cc-admin-toolbar-btn btn text-white d-inline-flex align-items-center gap-2"
           style={{ background: IN_INK, whiteSpace: 'nowrap' }} onClick={() => setEditing({ direction: IN })}>
           <FiArrowDownLeft /> Put money in
         </button>
-        <button className="btn text-white d-inline-flex align-items-center gap-2"
+        <button className="cc-admin-toolbar-btn btn text-white d-inline-flex align-items-center gap-2"
           style={{ background: OUT_INK, whiteSpace: 'nowrap' }} onClick={() => setEditing({ direction: OUT })}>
           <FiArrowUpRight /> Take money out
         </button>
@@ -91,13 +91,13 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
           className="form-control" style={{ maxWidth: 240 }}
           placeholder="Search reason…" value={q} onChange={(e) => setQ(e.target.value)}
         />
-        <div className="ms-auto text-end small">
+        <div className="cc-admin-count ms-auto text-end small">
           <div style={{ color: IN_INK, fontWeight: 700 }}>In {inr(totals.put)}</div>
           <div style={{ color: OUT_INK, fontWeight: 700 }}>Out {inr(totals.took)}</div>
         </div>
       </div>
 
-      <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
+      <div className="cc-admin-filters d-flex flex-wrap align-items-center gap-3 mb-3">
         <FilterChips label="Direction" options={DIR_FILTERS} value={dirFilter} onChange={setDirFilter} />
         <FilterChips label="Cash/Online" options={METHOD_FILTERS} value={methodFilter} onChange={setMethodFilter} />
         {filtered && (

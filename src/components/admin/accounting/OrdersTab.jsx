@@ -122,21 +122,21 @@ export default function OrdersTab({ orders, menu, reload }) {
 
   return (
     <div>
-      <div className="d-flex flex-wrap gap-2 align-items-center mb-3">
-        <button className="btn text-white d-inline-flex align-items-center gap-2" style={{ background: 'var(--cc-rose,#e0617a)', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => setEditing({})}>
+      <div className="cc-admin-toolbar d-flex flex-wrap gap-2 align-items-center mb-3">
+        <button className="cc-admin-toolbar-btn btn text-white d-inline-flex align-items-center gap-2" style={{ background: 'var(--cc-rose,#e0617a)', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => setEditing({})}>
           <FiPlus /> New Order
         </button>
         <input
           className="form-control" style={{ maxWidth: 280 }}
           placeholder="Search customer or item…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }}
         />
-        <span className="ms-auto text-muted small">
+        <span className="cc-admin-count ms-auto text-muted small">
           {rows.length} order{rows.length === 1 ? '' : 's'}
           {filtered && rows.length > 0 ? ` · ${inr(rowsTotal)}` : ''}
         </span>
       </div>
 
-      <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
+      <div className="cc-admin-filters d-flex flex-wrap align-items-center gap-3 mb-3">
         <FilterChips
           label="Payment" options={PAY_FILTERS} value={payFilter}
           onChange={(v) => { setPayFilter(v); setPage(1) }}

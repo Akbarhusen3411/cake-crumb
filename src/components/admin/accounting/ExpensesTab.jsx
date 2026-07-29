@@ -66,15 +66,15 @@ export default function ExpensesTab({ expenses, reload }) {
 
   return (
     <div>
-      <div className="d-flex flex-wrap gap-2 align-items-center mb-3">
-        <button className="btn text-white d-inline-flex align-items-center gap-2" style={{ background: 'var(--cc-rose,#e0617a)', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => setEditing({})}>
+      <div className="cc-admin-toolbar d-flex flex-wrap gap-2 align-items-center mb-3">
+        <button className="cc-admin-toolbar-btn btn text-white d-inline-flex align-items-center gap-2" style={{ background: 'var(--cc-rose,#e0617a)', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => setEditing({})}>
           <FiPlus /> New Expense
         </button>
         <input
           className="form-control" style={{ maxWidth: 280 }}
           placeholder="Search shop, item or note…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }}
         />
-        <div className="ms-auto text-end" style={{ background: '#fdeef0', border: '1px solid #f3d3d8', borderRadius: 12, padding: '6px 16px' }}>
+        <div className="cc-admin-count ms-auto text-end" style={{ background: '#fdeef0', border: '1px solid #f3d3d8', borderRadius: 12, padding: '6px 16px' }}>
           <div style={{ fontSize: 11, color: '#a06', letterSpacing: 0.3, textTransform: 'uppercase' }}>
             {filtered ? 'Spent — filtered' : 'Total spent'}
           </div>
@@ -82,7 +82,7 @@ export default function ExpensesTab({ expenses, reload }) {
         </div>
       </div>
 
-      <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
+      <div className="cc-admin-filters d-flex flex-wrap align-items-center gap-3 mb-3">
         <FilterChips
           label="Paid from" options={METHOD_FILTERS} value={methodFilter}
           onChange={(v) => { setMethodFilter(v); setPage(1) }}

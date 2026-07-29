@@ -3,8 +3,8 @@
 // live in the tabs (this file exports only the component, for fast refresh).
 export default function FilterChips({ label, options, value, onChange }) {
   return (
-    <div className="d-flex align-items-center gap-1 flex-wrap">
-      <span className="small text-muted me-1">{label}</span>
+    <div className="cc-filter-group d-flex align-items-center gap-1 flex-wrap">
+      <span className="cc-filter-label small text-muted me-1">{label}</span>
       {options.map((o) => {
         const on = value === o.key
         return (

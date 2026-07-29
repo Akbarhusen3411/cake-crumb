@@ -13,6 +13,7 @@ const BAKERY = {
   address: 'Vaso, Kheda, Gujarat 387380, India',
   phone: '+91 91731 83440',
   email: 'cakeandcrumb.in@gmail.com',
+  instagram: '@cake_and_crumb_1',
 }
 
 /**
@@ -60,15 +61,15 @@ export default function InvoiceModal({ invoice, onClose }) {
             <div className="cc-invoice-brand"><Logo size="sm" /></div>
             <div className="cc-invoice-meta">
               <div className="cc-invoice-title">Invoice</div>
-              <div className="cc-invoice-no">{invoice.number}</div>
-              {invoice.reference ? <div className="cc-invoice-ref">Order {invoice.reference}</div> : null}
               <div className="cc-invoice-date">{fmtDate(invoice.date)}</div>
             </div>
           </div>
 
-          <div className="cc-invoice-contact">
-            {BAKERY.address}<br />
-            {BAKERY.phone} · {BAKERY.email}
+          {/* Centred under both corners — the reference is what gets quoted back
+              on the phone, so it shouldn't be tucked into a corner. */}
+          <div className="cc-invoice-ids">
+            <span className="cc-invoice-no">{invoice.number}</span>
+            {invoice.reference ? <span className="cc-invoice-ref">Order {invoice.reference}</span> : null}
           </div>
 
           <div className="text-center"><HeartDivider width={54} /></div>
@@ -106,31 +107,33 @@ export default function InvoiceModal({ invoice, onClose }) {
                 </tr>
               ))}
             </tbody>
-            <tfoot>
-              {showBreakdown ? (
-                <>
-                  <tr className="cc-invoice-subrow">
-                    <td colSpan={3} className="num">Subtotal</td>
-                    <td className="num">{inr(invoice.subtotal)}</td>
-                  </tr>
-                  <tr className="cc-invoice-subrow">
-                    <td colSpan={3} className="num">Delivery</td>
-                    <td className="num">{inr(invoice.delivery)}</td>
-                  </tr>
-                </>
-              ) : null}
-              <tr>
-                <td colSpan={3} className="num cc-invoice-total-label">Total</td>
-                <td className="num cc-invoice-total">{inr(invoice.total)}</td>
-              </tr>
-            </tfoot>
+            {showBreakdown ? (
+              <tfoot>
+                <tr className="cc-invoice-subrow">
+                  <td colSpan={3} className="num">Subtotal</td>
+                  <td className="num">{inr(invoice.subtotal)}</td>
+                </tr>
+                <tr className="cc-invoice-subrow">
+                  <td colSpan={3} className="num">Delivery</td>
+                  <td className="num">{inr(invoice.delivery)}</td>
+                </tr>
+              </tfoot>
+            ) : null}
           </table>
 
-          <div className="cc-invoice-pay">
-            <span className={`cc-invoice-status ${invoice.paid ? 'is-paid' : 'is-unpaid'}`}>
-              {invoice.statusLabel}
-            </span>
-            {invoice.methodLabel ? <span className="cc-invoice-method">{invoice.methodLabel}</span> : null}
+          {/* One closing line: how it was paid on the left, what it came to on
+              the right. The two answer the same question and belong together. */}
+          <div className="cc-invoice-summary">
+            <div className="cc-invoice-pay">
+              <span className={`cc-invoice-status ${invoice.paid ? 'is-paid' : 'is-unpaid'}`}>
+                {invoice.statusLabel}
+              </span>
+              {invoice.methodLabel ? <span className="cc-invoice-method">{invoice.methodLabel}</span> : null}
+            </div>
+            <div className="cc-invoice-grand">
+              <span className="cc-invoice-total-label">Total</span>
+              <span className="cc-invoice-total">{inr(invoice.total)}</span>
+            </div>
           </div>
           {invoice.balanceNote ? <div className="cc-invoice-balance">{invoice.balanceNote}</div> : null}
 
@@ -139,6 +142,13 @@ export default function InvoiceModal({ invoice, onClose }) {
           <div className="cc-invoice-foot">
             <div className="cc-invoice-quote">{invoiceQuote(invoice.quoteKey)}</div>
             <div className="cc-invoice-thanks">Thank you for your order ♥</div>
+            {/* Contact sits at the foot, not under the header: the items and the
+                total are what the customer looks for, and the bakery's own
+                details are what they come back to afterwards. */}
+            <div className="cc-invoice-contact">
+              {BAKERY.address}<br />
+              {BAKERY.phone} · {BAKERY.email} · {BAKERY.instagram}
+            </div>
             <div className="cc-invoice-regs">
               FSSAI {FSSAI.number} · {UDYAM.number}
             </div>

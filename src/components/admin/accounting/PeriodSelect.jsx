@@ -5,8 +5,8 @@ import { monthLabel } from '../../../utils/adminDate.js'
 // value: 'all' | 'today' | 'YYYY-MM'.
 export default function PeriodSelect({ value, onChange, months = [] }) {
   return (
-    <div className="d-flex align-items-center gap-1">
-      <span className="small text-muted me-1">Dates</span>
+    <div className="cc-filter-group d-flex align-items-center gap-1">
+      <span className="cc-filter-label small text-muted me-1">Dates</span>
       <select
         className="form-select form-select-sm"
         style={{ width: 'auto', borderColor: value === 'all' ? undefined : 'var(--cc-rose,#e0617a)' }}
