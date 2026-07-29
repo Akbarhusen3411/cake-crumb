@@ -228,109 +228,64 @@ export async function ensureCakePopPrices() {
   try { localStorage.setItem(FLAG, '1') } catch { /* ignore */ }
 }
 
-// Bump to re-import when the Excel is regenerated. Recorded in the cloud (see
-// below), so bumping it re-imports once for the whole bakery, not once per PC.
-const EXCEL_VERSION = 'v7'
+// ── The Excel importer is RETIRED. ──
+// It used to seed acc_orders / acc_expenses from the owner's Apr–Jul 2026
+// spreadsheet (`src/data/excelImport.js`, kept in the repo as the archive of
+// those figures). The owner cleared the books to start fresh from August 2026,
+// and the importer rewrote its rows with `set` on any device that hadn't run it
+// — so leaving it wired up would have refilled the fresh book with the old year.
+// It is deliberately not called from anywhere. Don't reinstate it without the
+// owner's explicit ask; `acc_settings/main.excelImport` is now a dead marker.
 
-/** Record in Firestore that this Excel version has been imported. */
-async function markExcelImported(db) {
+// ───────────────────── destructive: start a fresh book ─────────────────────
+
+/** Delete every doc in a collection. Returns { deleted } or { error }. */
+export async function clearCollection(coll) {
+  writeLocal(coll, [])
+  const db = await getDb()
+  if (!db) return { deleted: 0, localOnly: true }
   try {
-    const { doc, setDoc } = await import('firebase/firestore')
-    await setDoc(doc(db, 'acc_settings', 'main'), { excelImport: EXCEL_VERSION }, { merge: true })
-    return true
+    const { collection, getDocs, writeBatch, doc } = await import('firebase/firestore')
+    const snap = await getDocs(collection(db, coll))
+    const ids = snap.docs.map((d) => d.id)
+    for (let i = 0; i < ids.length; i += 400) { // 500 is the batch limit
+      const batch = writeBatch(db)
+      ids.slice(i, i + 400).forEach((id) => batch.delete(doc(db, coll, id)))
+      await batch.commit()
+    }
+    writeLocal(coll, [])
+    return { deleted: ids.length }
   } catch (err) {
-    reportCloudError('mark import', 'acc_settings', err)
-    return false
+    reportCloudError('clear', coll, err)
+    return { deleted: 0, error: errText(err) }
   }
 }
 
 /**
- * One-time import of the owner's Excel history (April–July 2026) into
- * acc_orders / acc_expenses. Deterministic ids (xl-o-N / xl-e-N) → running it
- * again just overwrites the same docs, never duplicates.
- *
- * It DELETES every existing `xl-` doc and re-writes it with `set` (no merge),
- * so it must run **once per database, not once per device**. The gate used to be
- * a localStorage flag alone — which meant a second PC opening this page for the
- * first time silently reverted every cloud edit made to an imported row (a
- * changed amount, or the "✓ Taken to cash" flag) back to the Excel baseline.
- * The cloud marker `acc_settings/main.excelImport` is now the real gate.
+ * Wipe the books: orders, expenses and money-taken-out. `acc_menu` is KEPT — the
+ * 207 prices (and any the owner edited by hand) are the tool's setup, not its
+ * bookkeeping, and the New Order form is unusable without them. The legacy
+ * display-only "expense taken for use" note is reset, since it describes a book
+ * that no longer exists.
  */
-export async function importExcelDataIfNeeded() {
-  const FLAG = `cc_acc_excel_${EXCEL_VERSION}`
-  let localDone = false
-  try { localDone = !!localStorage.getItem(FLAG) } catch { /* ignore */ }
-
-  const db = await getDb()
-
-  if (db) {
-    let cloudVersion
-    try {
-      const { doc, getDoc } = await import('firebase/firestore')
-      const snap = await getDoc(doc(db, 'acc_settings', 'main'))
-      cloudVersion = snap.exists() ? (snap.data().excelImport || null) : null
-    } catch (err) {
-      // Can't tell whether the cloud already has it — importing on a guess
-      // would wipe real edits, so do nothing.
-      reportCloudError('import check', 'acc_settings', err)
-      return { error: errText(err) }
-    }
-    if (cloudVersion === EXCEL_VERSION) {
-      try { localStorage.setItem(FLAG, '1') } catch { /* ignore */ }
-      return null
-    }
-    if (localDone) {
-      // This device imported before the marker existed. Backfill it so no other
-      // device repeats the destructive import.
-      await markExcelImported(db)
-      return null
-    }
-  } else if (localDone) {
-    return null
+export async function clearAccountingBooks() {
+  const out = {}
+  for (const coll of [ACC.ORDERS, ACC.EXPENSES, ACC.WITHDRAWALS]) {
+    out[coll] = await clearCollection(coll)
   }
+  await setExpenseTakenForUse(0)
+  return out
+}
 
-  const { EXCEL_ORDERS, EXCEL_EXPENSES } = await import('../data/excelImport.js')
-  const stamp = new Date().toISOString()
-  const orderRecs = EXCEL_ORDERS.map((o, i) => ({ id: `xl-o-${i}`, ...o, createdAt: stamp }))
-  const expenseRecs = EXCEL_EXPENSES.map((e, i) => ({ id: `xl-e-${i}`, ...e, createdAt: stamp }))
-  const fromExcel = (r) => String(r.id).startsWith('xl-') // only touch imported rows, never manual entries
-
-  if (!db) {
-    const rewrite = (coll, recs) => {
-      const kept = readLocal(coll).filter((r) => !fromExcel(r))
-      writeLocal(coll, [...recs, ...kept])
-    }
-    rewrite(ACC.ORDERS, orderRecs); rewrite(ACC.EXPENSES, expenseRecs)
-    try { localStorage.setItem(FLAG, '1') } catch { /* ignore */ }
-    return { orders: orderRecs.length, expenses: expenseRecs.length }
-  }
-  try {
-    const { doc, writeBatch } = await import('firebase/firestore')
-    // clear previously-imported rows so a shorter/changed sheet leaves no orphans
-    const curO = await listDocs(ACC.ORDERS)
-    const curE = await listDocs(ACC.EXPENSES)
-    const deletes = [
-      ...curO.filter(fromExcel).map((r) => [ACC.ORDERS, r.id]),
-      ...curE.filter(fromExcel).map((r) => [ACC.EXPENSES, r.id]),
-    ]
-    const writes = [...orderRecs.map((r) => [ACC.ORDERS, r]), ...expenseRecs.map((r) => [ACC.EXPENSES, r])]
-    for (let i = 0; i < deletes.length; i += 400) {
-      const batch = writeBatch(db)
-      deletes.slice(i, i + 400).forEach(([c, id]) => batch.delete(doc(db, c, id)))
-      await batch.commit()
-    }
-    for (let i = 0; i < writes.length; i += 400) {
-      const batch = writeBatch(db)
-      writes.slice(i, i + 400).forEach(([c, r]) => { const { id, ...data } = r; batch.set(doc(db, c, id), data) })
-      await batch.commit()
-    }
-    await markExcelImported(db)
-    await listDocs(ACC.ORDERS); await listDocs(ACC.EXPENSES)
-    try { localStorage.setItem(FLAG, '1') } catch { /* ignore */ }
-    return { orders: orderRecs.length, expenses: expenseRecs.length }
-  } catch (err) {
-    reportCloudError('excel import', 'acc_orders/acc_expenses', err)
-    return { error: errText(err) }
+/** Everything in the books as one plain object, for a downloadable backup. */
+export async function exportAccountingBackup() {
+  const [orders, expenses, withdrawals, menu] = await Promise.all([
+    listDocs(ACC.ORDERS), listDocs(ACC.EXPENSES), listDocs(ACC.WITHDRAWALS), listDocs(ACC.MENU),
+  ])
+  return {
+    exportedAt: new Date().toISOString(),
+    counts: { orders: orders.length, expenses: expenses.length, withdrawals: withdrawals.length, menu: menu.length },
+    orders, expenses, withdrawals, menu,
   }
 }
 
@@ -433,7 +388,12 @@ export function computeSummary(orders, expenses, withdrawals, month) {
   s.cashInHand = s.receivedCash + s.onlineTakenToCash - s.expensesCash - s.withdrawnCash
   s.bankOnline = s.receivedOnline - s.onlineTakenToCash - s.expensesOnline - s.withdrawnOnline
   s.moneyInHand = s.cashInHand + s.bankOnline
-  s.profit = s.totalSales - s.totalExpenses
+  // Profit counts money actually RECEIVED, not invoiced — an unpaid order stays
+  // in `toCollect` until the customer pays. The Dashboard and the Monthly Report
+  // both read this one value, so the two screens can't quote different profits
+  // for the same month (they used to: the Dashboard netted off `received`, the
+  // Monthly Report off `totalSales`).
+  s.profit = s.received - s.totalExpenses
   return s
 }
 

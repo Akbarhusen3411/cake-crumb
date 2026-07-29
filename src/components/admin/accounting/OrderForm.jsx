@@ -3,9 +3,9 @@ import { FiPlus, FiX } from 'react-icons/fi'
 import Modal from '../Modal.jsx'
 import SearchableSelect from '../SearchableSelect.jsx'
 import { inr } from '../../../data/format.js'
+import { todayIso } from '../../../utils/adminDate.js'
 import { isPerPieceVariant } from '../../../services/accounting.js'
 
-const todayIso = () => new Date().toISOString().slice(0, 10)
 const emptyLine = () => ({ category: '', item: '', variant: '', qty: 1, unitPrice: '' })
 
 const Label = ({ children }) => (
@@ -125,6 +125,10 @@ export default function OrderForm({ menu = [], customers = [], initial = null, o
       .filter((l) => l.item)
     if (!clean.length) return alert('Add at least one item.')
     if (clean.some((l) => l.qty <= 0)) return alert('Each item quantity must be 1 or more.')
+    // The Pieces box says "min 2" and picking the size bumps it, but until now
+    // nothing stopped you typing 1 back in — the bakery won't bake a single one.
+    const single = clean.find((l) => isPerPieceVariant(l.variant) && l.qty < 2)
+    if (single) return alert(`${single.item} is sold per piece — the minimum is 2 pieces.`)
     onSave({ date, customer: customer.trim(), items: clean, amount: total, paid, method, status, notes: notes.trim() })
   }
 

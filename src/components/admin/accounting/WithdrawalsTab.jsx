@@ -4,6 +4,7 @@ import Modal from '../Modal.jsx'
 import FilterChips from './FilterChips.jsx'
 import { ACC, addDocRec, updateDocRec, deleteDocRec } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
+import { todayIso, fmtDate } from '../../../utils/adminDate.js'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
 
 const METHOD_FILTERS = [
@@ -11,12 +12,6 @@ const METHOD_FILTERS = [
   { key: 'Cash', label: 'Cash' },
   { key: 'Online', label: 'Online' },
 ]
-
-const todayIso = () => new Date().toISOString().slice(0, 10)
-const fmtDate = (iso) => {
-  const d = new Date(iso)
-  return isNaN(d) ? iso : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })
-}
 
 export default function WithdrawalsTab({ withdrawals, reload }) {
   const [q, setQ] = useState('')

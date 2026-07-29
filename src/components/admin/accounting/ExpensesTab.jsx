@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react'
 import { FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi'
 import Modal from '../Modal.jsx'
 import FilterChips from './FilterChips.jsx'
-import { ACC, addDocRec, updateDocRec, deleteDocRec } from '../../../services/accounting.js'
+import PeriodSelect from './PeriodSelect.jsx'
+import { ACC, addDocRec, updateDocRec, deleteDocRec, monthsFrom } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
+import { todayIso, fmtDate, inPeriod } from '../../../utils/adminDate.js'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
 
 const METHOD_FILTERS = [
@@ -12,11 +14,6 @@ const METHOD_FILTERS = [
   { key: 'Online', label: 'Online' },
 ]
 
-const todayIso = () => new Date().toISOString().slice(0, 10)
-const fmtDate = (iso) => {
-  const d = new Date(iso)
-  return isNaN(d) ? iso : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })
-}
 // A one-line summary of what an expense contained.
 const itemsSummary = (e) => {
   const parts = (e.items || [])
@@ -35,17 +32,20 @@ export default function ExpensesTab({ expenses, reload }) {
   const [busy, setBusy] = useState(false)
   const [page, setPage] = useState(1)
   const [methodFilter, setMethodFilter] = useState('all') // all | Cash | Online
+  const [period, setPeriod] = useState('all')             // all | today | YYYY-MM
   const mobile = useIsMobile()
 
+  const months = useMemo(() => monthsFrom(expenses), [expenses])
   const rows = useMemo(() => {
     const s = q.trim().toLowerCase()
     let list = [...expenses].sort((a, b) => String(b.date).localeCompare(String(a.date)))
     if (s) list = list.filter((e) => searchText(e).includes(s))
     if (methodFilter !== 'all') list = list.filter((e) => e.method === methodFilter)
+    if (period !== 'all') list = list.filter((e) => inPeriod(e.date, period))
     return list
-  }, [expenses, q, methodFilter])
+  }, [expenses, q, methodFilter, period])
 
-  const filtered = methodFilter !== 'all' || q.trim() !== ''
+  const filtered = methodFilter !== 'all' || period !== 'all' || q.trim() !== ''
   // Total follows the filter, so "Cash" answers "how much cash went out".
   const total = rows.reduce((s, e) => s + (Number(e.amount) || 0), 0)
   const pageSize = mobile ? 10 : 25
@@ -76,7 +76,7 @@ export default function ExpensesTab({ expenses, reload }) {
         />
         <div className="ms-auto text-end" style={{ background: '#fdeef0', border: '1px solid #f3d3d8', borderRadius: 12, padding: '6px 16px' }}>
           <div style={{ fontSize: 11, color: '#a06', letterSpacing: 0.3, textTransform: 'uppercase' }}>
-            {q.trim() ? 'Spent — filtered' : methodFilter === 'all' ? 'Total spent' : `Spent — ${methodFilter}`}
+            {filtered ? 'Spent — filtered' : 'Total spent'}
           </div>
           <div style={{ fontSize: 24, fontWeight: 800, color: '#c23a2b', lineHeight: 1.1 }}>{inr(total)}</div>
         </div>
@@ -87,10 +87,11 @@ export default function ExpensesTab({ expenses, reload }) {
           label="Paid from" options={METHOD_FILTERS} value={methodFilter}
           onChange={(v) => { setMethodFilter(v); setPage(1) }}
         />
+        <PeriodSelect value={period} months={months} onChange={(v) => { setPeriod(v); setPage(1) }} />
         {filtered && (
           <button
             type="button" className="btn btn-sm btn-link text-secondary p-0"
-            onClick={() => { setQ(''); setMethodFilter('all'); setPage(1) }}
+            onClick={() => { setQ(''); setMethodFilter('all'); setPeriod('all'); setPage(1) }}
           >
             Clear filters
           </button>

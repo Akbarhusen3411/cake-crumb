@@ -4,6 +4,7 @@ import {
   computeSummary, monthsFrom, getExpenseTakenForUse, setExpenseTakenForUse,
 } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
+import { monthLabel } from '../../../utils/adminDate.js'
 
 // Two-series categorical palette, validated against the #ffffff card surface
 // (lightness band, chroma floor, CVD separation, normal-vision floor, contrast).
@@ -12,11 +13,6 @@ const SERIES_SALES = '#cf3e63'
 const SERIES_EXPENSES = '#6b5bb0'
 const INK_MUTED = '#898781'
 
-function monthLabel(ym) {
-  if (ym === 'ALL') return 'All time'
-  const [y, m] = ym.split('-')
-  return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
-}
 function monthShort(ym) {
   const [y, m] = ym.split('-')
   return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('en-IN', { month: 'short' })
@@ -67,11 +63,11 @@ function TrendChart({ orders, expenses, withdrawals, months }) {
   return (
     <div className="cc-acc-card mt-3">
       <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <div className="cc-acc-label">Sales vs expenses · last {data.length} months</div>
+        <div className="cc-acc-label">Received vs expenses · last {data.length} months</div>
         <div className="d-flex gap-3" style={{ fontSize: '0.78rem', color: '#52514e' }}>
           <span className="d-inline-flex align-items-center gap-1">
             <span style={{ width: 10, height: 10, borderRadius: 3, background: SERIES_SALES, display: 'inline-block' }} />
-            Sales
+            Received
           </span>
           <span className="d-inline-flex align-items-center gap-1">
             <span style={{ width: 10, height: 10, borderRadius: 3, background: SERIES_EXPENSES, display: 'inline-block' }} />
@@ -81,7 +77,7 @@ function TrendChart({ orders, expenses, withdrawals, months }) {
       </div>
 
       <svg className="cc-acc-chart mt-2" viewBox={`0 0 ${W} ${H}`} width="100%" role="img"
-        aria-label={`Sales versus expenses for the last ${data.length} months`}>
+        aria-label={`Money received versus expenses for the last ${data.length} months`}>
         <defs>
           <clipPath id="ccAccPlot">
             <rect x={PAD_L} y={PAD_T} width={plotW} height={plotH} />
@@ -106,7 +102,7 @@ function TrendChart({ orders, expenses, withdrawals, months }) {
               <g key={d.month} className="col">
                 <rect className="bar" x={cx - barW - 1} y={y(d.sales)} width={barW}
                   height={plotH + PAD_T - y(d.sales) + 4} rx="4" fill={SERIES_SALES}>
-                  <title>{`${monthLabel(d.month)} · Sales ${inr(d.sales)}`}</title>
+                  <title>{`${monthLabel(d.month)} · Received ${inr(d.sales)}`}</title>
                 </rect>
                 <rect className="bar" x={cx + 1} y={y(d.expenses)} width={barW}
                   height={plotH + PAD_T - y(d.expenses) + 4} rx="4" fill={SERIES_EXPENSES}>
@@ -163,7 +159,10 @@ export default function DashboardTab({ orders, expenses, withdrawals }) {
 
   // "Expense Taken for Use" used to be a constant compiled into this file, so it
   // could not be changed without a code edit and showed the same figure on a
-  // dashboard with no data at all. It now lives in acc_settings/main.
+  // dashboard with no data at all. It now lives in acc_settings/main — and it is
+  // no longer subtracted from anything: it predates the Expenses tab, so with
+  // materials now itemised there, netting it off too double-counted them. The
+  // Withdrawals tab is where money that really leaves the tin gets recorded.
   const [taken, setTaken] = useState(null)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
@@ -182,9 +181,10 @@ export default function DashboardTab({ orders, expenses, withdrawals }) {
 
   // Only PAID orders count as earnings (unpaid "to collect" and cancelled don't).
   const earnings = s.received
-  const takenNow = allTime ? (taken ?? 0) : 0
-  const moneyAtHand = earnings - takenNow
-  const profit = earnings - s.totalExpenses
+  // What's actually left: received − expenses − money taken out, split across the
+  // two pockets. On a single month this is that month's movement, not a running
+  // balance, so the pockets only make sense on the all-time view.
+  const moneyAtHand = s.moneyInHand
 
   return (
     <div className="cc-acc-dash">
@@ -210,19 +210,46 @@ export default function DashboardTab({ orders, expenses, withdrawals }) {
           </div>
           <div className="cc-acc-note">
             {allTime
-              ? `Earnings ${inr(earnings)} − taken for use ${inr(takenNow)}`
+              ? `Received ${inr(earnings)} − expenses ${inr(s.totalExpenses)} − taken out ${inr(s.totalWithdrawn)}`
               : `Paid orders in ${monthLabel(sel)}`}
           </div>
         </div>
 
         <div className="cc-acc-card cc-acc-card--hero">
           <div className="cc-acc-label">Profit</div>
-          <div className="cc-acc-value mt-1" style={{ color: profit < 0 ? '#c23a2b' : '#1d6f3a' }}>
-            {inr(profit)}
+          <div className="cc-acc-value mt-1" style={{ color: s.profit < 0 ? '#c23a2b' : '#1d6f3a' }}>
+            {inr(s.profit)}
           </div>
-          <div className="cc-acc-note">Earnings {inr(earnings)} − expenses {inr(s.totalExpenses)}</div>
+          <div className="cc-acc-note">Received {inr(earnings)} − expenses {inr(s.totalExpenses)}</div>
         </div>
       </div>
+
+      {allTime && (
+        <div className="cc-acc-split mt-3">
+          <div className="cc-acc-card">
+            <div className="cc-acc-label">Cash in hand</div>
+            <div className="cc-acc-value mt-1" style={{ fontSize: '1.6rem', color: s.cashInHand < 0 ? '#c23a2b' : '#1d6f3a' }}>
+              {inr(s.cashInHand)}
+            </div>
+            <div className="cc-acc-note">
+              Cash received {inr(s.receivedCash)}
+              {s.onlineTakenToCash > 0 ? ` + ${inr(s.onlineTakenToCash)} taken from the bank` : ''}
+              {' '}− cash expenses {inr(s.expensesCash)}
+              {s.withdrawnCash > 0 ? ` − ${inr(s.withdrawnCash)} taken out` : ''}
+            </div>
+          </div>
+          <div className="cc-acc-card">
+            <div className="cc-acc-label">In bank (online)</div>
+            <div className="cc-acc-value mt-1" style={{ fontSize: '1.6rem', color: s.bankOnline < 0 ? '#c23a2b' : SERIES_EXPENSES }}>
+              {inr(s.bankOnline)}
+            </div>
+            <div className="cc-acc-note">
+              Online money you have not moved to cash yet. Tap <strong>In bank</strong> on an online
+              order once you withdraw it — it shifts that amount into cash in hand.
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="cc-acc-kpis mt-3">
         <Stat label="Earnings (paid)" value={inr(earnings)} color={SERIES_SALES}
@@ -238,7 +265,7 @@ export default function DashboardTab({ orders, expenses, withdrawals }) {
 
         <div className="cc-acc-card">
           <div className="d-flex align-items-start justify-content-between gap-2">
-            <div className="cc-acc-label">Expense taken for use</div>
+            <div className="cc-acc-label">Expense taken for use (note only)</div>
             {!editing && (
               <button type="button" className="btn btn-sm btn-link p-0" style={{ color: SERIES_SALES }}
                 onClick={() => { setDraft(String(taken ?? 0)); setEditing(true) }} title="Edit">
@@ -259,8 +286,9 @@ export default function DashboardTab({ orders, expenses, withdrawals }) {
             </div>
           )}
           <div className="cc-acc-note">
-            Money taken out of earnings to buy materials. Saved to the cloud, so it is the
-            same on every device. Applied to “money at hand” on the all-time view only.
+            Your old hand-written figure, kept for reference — <strong>not</strong> subtracted from
+            anything. Materials are counted in the Expenses tab, and money you take out belongs in
+            the Withdrawals tab; subtracting this as well would count the same rupees twice.
           </div>
         </div>
       </div>
@@ -268,8 +296,8 @@ export default function DashboardTab({ orders, expenses, withdrawals }) {
       <TrendChart orders={orders} expenses={expenses} withdrawals={withdrawals} months={months} />
 
       <p className="cc-acc-note text-center mt-3 mb-0">
-        Only paid orders count as earnings. Cancelled orders are excluded entirely; unpaid ones
-        show above as “still to collect”.
+        Only paid orders count as earnings and profit. Cancelled orders are excluded entirely;
+        unpaid ones show above as “still to collect” until the customer pays.
       </p>
     </div>
   )

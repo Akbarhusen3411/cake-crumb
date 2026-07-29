@@ -46,6 +46,20 @@ appears on the home PC within a second — no refresh needed. If a figure looks
 stale, check for the orange "Not saved to the cloud" banner: that means the write
 never left the browser, and the two devices are each showing their own local copy.
 
+## Starting a fresh book
+
+At the bottom of `/admin/accounting` there is a collapsed **Danger zone**:
+
+1. **Download backup first** — saves every order, expense, money-taken-out entry
+   and the menu as a JSON file. Do this before anything else; there is no undo
+   and no server-side backup.
+2. **Delete N entries** — type `DELETE` to enable it. It clears `acc_orders`,
+   `acc_expenses` and `acc_withdrawals` from the cloud and from every device, and
+   resets the old "expense taken for use" note to ₹0.
+
+**Menu & Prices are never touched**, so the New Order form still works straight
+after. The Apr–Jul 2026 Excel importer is retired, so nothing refills the book.
+
 ## What it does
 
 - **Searchable dropdowns** everywhere — type "cheese" to filter to cheesecakes.

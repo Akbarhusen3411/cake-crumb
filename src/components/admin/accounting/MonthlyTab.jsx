@@ -1,12 +1,8 @@
 import { useMemo } from 'react'
 import { computeSummary, monthsFrom } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
+import { monthLabel } from '../../../utils/adminDate.js'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
-
-function monthLabel(ym) {
-  const [y, m] = ym.split('-')
-  return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
-}
 
 // One label/value stat inside a mobile month card.
 function Stat({ label, value, strong, color }) {
@@ -28,7 +24,11 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
 
   return (
     <div>
-      <p className="text-muted small mb-3">Every month totalled automatically. “Net” = Sales − Expenses for that month.</p>
+      <p className="text-muted small mb-3">
+        Every month totalled automatically. “Net” = <strong>Received</strong> − Expenses — the same
+        profit the Dashboard shows. An unpaid order counts only once the customer pays, so it sits
+        in “To Collect” until then.
+      </p>
 
       {rows.length === 0 ? (
         <div className="text-center text-muted py-4" style={{ border: '1px solid #f0e0e3', borderRadius: 12 }}>No data yet.</div>
@@ -46,7 +46,7 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
                 <Stat label="Received" value={inr(s.received)} />
                 <Stat label="To Collect" value={inr(s.toCollect)} color="#c67c17" />
                 <Stat label="Expenses" value={inr(s.totalExpenses)} color="#b23b3b" />
-                <Stat label="Net (Sales − Exp)" value={inr(s.profit)} strong color={s.profit >= 0 ? '#1b7f5e' : '#b23b3b'} />
+                <Stat label="Net (Received − Exp)" value={inr(s.profit)} strong color={s.profit >= 0 ? '#1b7f5e' : '#b23b3b'} />
               </div>
             </div>
           ))}

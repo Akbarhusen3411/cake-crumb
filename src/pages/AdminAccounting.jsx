@@ -4,20 +4,23 @@ import { getFirebaseAuth, isFirebaseEnabled } from '../firebase.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import {
   ACC, listDocs, subscribeDocs, onCloudError,
-  seedMenuIfEmpty, ensurePerPieceMenu, ensureCakePopPrices, importExcelDataIfNeeded,
+  seedMenuIfEmpty, ensurePerPieceMenu, ensureCakePopPrices,
 } from '../services/accounting.js'
 import AdminNav from '../components/admin/AdminNav.jsx'
 import DashboardTab from '../components/admin/accounting/DashboardTab.jsx'
 import OrdersTab from '../components/admin/accounting/OrdersTab.jsx'
 import MenuTab from '../components/admin/accounting/MenuTab.jsx'
 import ExpensesTab from '../components/admin/accounting/ExpensesTab.jsx'
+import WithdrawalsTab from '../components/admin/accounting/WithdrawalsTab.jsx'
 import MonthlyTab from '../components/admin/accounting/MonthlyTab.jsx'
+import DangerZone from '../components/admin/accounting/DangerZone.jsx'
 
 const TABS = [
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'orders', label: 'Orders' },
   { key: 'menu', label: 'Menu & Prices' },
   { key: 'expenses', label: 'Expenses' },
+  { key: 'withdrawals', label: 'Money Taken Out' },
   { key: 'monthly', label: 'Monthly Report' },
 ]
 
@@ -78,10 +81,11 @@ export default function AdminAccounting() {
     let active = true
     const unsubs = []
     ;(async () => {
+      // Menu setup only. The Excel-history importer is retired (see accounting.js)
+      // — the books were cleared to start fresh, and it would refill them.
       await seedMenuIfEmpty()
       await ensurePerPieceMenu() // adds "Per piece" prices for Cake Pop & Cupcakes
       await ensureCakePopPrices() // owner's Cake Pop prices + Pistachio
-      await importExcelDataIfNeeded() // one-time import of the Excel history
       if (!active) return
       setLoading(true)
       const feeds = [
@@ -201,7 +205,10 @@ export default function AdminAccounting() {
       {tab === 'orders' && <OrdersTab orders={orders} menu={menu} reload={reload} />}
       {tab === 'menu' && <MenuTab menu={menu} reload={reload} />}
       {tab === 'expenses' && <ExpensesTab expenses={expenses} reload={reload} />}
+      {tab === 'withdrawals' && <WithdrawalsTab withdrawals={withdrawals} reload={reload} />}
       {tab === 'monthly' && <MonthlyTab orders={orders} expenses={expenses} withdrawals={withdrawals} />}
+
+      <DangerZone orders={orders} expenses={expenses} withdrawals={withdrawals} />
     </section>
   )
 }
