@@ -22,7 +22,11 @@ match /acc_settings/{doc}    { allow read, write: if request.auth != null; }
 
 Same protection as the `orders` collection — sign-in required, never public.
 Until these are published, saving falls back to this browser's local storage only
-(the app never errors — it just won't sync to the cloud).
+— the app never errors, but the page shows a **"Not saved to the cloud"** warning
+and other devices will not see the entry. `acc_settings` is required, not
+optional: it holds the "Expense taken for use" figure *and* the marker that stops
+the one-time Excel import from re-running (and overwriting your edits) on every
+new device.
 
 ## 2. First run
 
@@ -34,6 +38,13 @@ Until these are published, saving falls back to this browser's local storage onl
   - `acc_withdrawals` — `{ date, amount, method, notes }`
   - `acc_menu` — `{ category, name, variant, price }`
   - `date` = `YYYY-MM-DD`, `method` = `Cash | Online`, `paid` = boolean.
+
+## Using it on more than one device
+
+The page subscribes to Firestore **live**, so an order typed on the shop PC
+appears on the home PC within a second — no refresh needed. If a figure looks
+stale, check for the orange "Not saved to the cloud" banner: that means the write
+never left the browser, and the two devices are each showing their own local copy.
 
 ## What it does
 

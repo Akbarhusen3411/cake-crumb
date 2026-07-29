@@ -29,6 +29,21 @@ function writeLocal(coll, list) {
 const isLocalId = (id) => String(id).startsWith('local-') || String(id).startsWith('seed-')
 const newLocalId = () => `local-${Date.now()}-${Math.round(Math.random() * 1e6)}`
 
+// Every cloud failure below degrades to localStorage, so a broken rule renders
+// identically to a healthy database — one device shows its own stale rows while
+// the cloud stays empty. Report it so the page can say so out loud.
+const errText = (err) => err?.code || err?.message || String(err)
+let cloudErrorHandler = null
+/** Subscribe to cloud-write/read failures. Returns an unsubscribe function. */
+export function onCloudError(fn) {
+  cloudErrorHandler = fn
+  return () => { if (cloudErrorHandler === fn) cloudErrorHandler = null }
+}
+function reportCloudError(op, coll, err) {
+  console.error(`[accounting] ${op} failed`, coll, err)
+  try { cloudErrorHandler?.(`${op} ${coll} — ${errText(err)}`) } catch { /* ignore */ }
+}
+
 /** List every doc in a collection (Firestore → localStorage fallback/mirror). */
 export async function listDocs(coll) {
   const db = await getDb()
@@ -40,9 +55,41 @@ export async function listDocs(coll) {
     writeLocal(coll, arr)
     return arr
   } catch (err) {
-    console.error('[accounting] list failed', coll, err)
+    reportCloudError('read', coll, err)
     return readLocal(coll)
   }
+}
+
+/**
+ * Live subscription to a collection — the page updates the moment another
+ * device writes, instead of only on load/refresh. Falls back to a one-shot
+ * localStorage read when Firestore isn't available. Returns an unsubscribe fn.
+ */
+export function subscribeDocs(coll, onData) {
+  let cancelled = false
+  let unsub = () => {}
+  ;(async () => {
+    const db = await getDb()
+    if (cancelled) return
+    if (!db) { onData(readLocal(coll)); return }
+    try {
+      const { collection, onSnapshot } = await import('firebase/firestore')
+      if (cancelled) return
+      unsub = onSnapshot(
+        collection(db, coll),
+        (snap) => {
+          const arr = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+          writeLocal(coll, arr)
+          onData(arr)
+        },
+        (err) => { reportCloudError('live read', coll, err); onData(readLocal(coll)) }
+      )
+    } catch (err) {
+      reportCloudError('live read', coll, err)
+      onData(readLocal(coll))
+    }
+  })()
+  return () => { cancelled = true; unsub() }
 }
 
 /** Add a record. Returns the saved record with its id. */
@@ -61,7 +108,7 @@ export async function addDocRec(coll, data) {
     const l = readLocal(coll); l.unshift(r); writeLocal(coll, l)
     return r
   } catch (err) {
-    console.error('[accounting] add failed', coll, err)
+    reportCloudError('save', coll, err)
     const r = { id: newLocalId(), ...rec }
     const l = readLocal(coll); l.unshift(r); writeLocal(coll, l)
     return r
@@ -79,7 +126,9 @@ export async function updateDocRec(coll, id, data) {
     const { doc, updateDoc } = await import('firebase/firestore')
     await updateDoc(doc(db, coll, id), data)
   } catch (err) {
-    console.error('[accounting] update failed', coll, err)
+    // Swallowing this used to make the edit look saved: the localStorage write
+    // above kept it on screen, then the next read from the cloud reverted it.
+    reportCloudError('update', coll, err)
   }
 }
 
@@ -92,7 +141,7 @@ export async function deleteDocRec(coll, id) {
     const { doc, deleteDoc } = await import('firebase/firestore')
     await deleteDoc(doc(db, coll, id))
   } catch (err) {
-    console.error('[accounting] delete failed', coll, err)
+    reportCloudError('delete', coll, err)
   }
 }
 
@@ -113,7 +162,7 @@ export async function seedMenuIfEmpty() {
     await batch.commit()
     return await listDocs(ACC.MENU)
   } catch (err) {
-    console.error('[accounting] seed menu failed', err)
+    reportCloudError('seed menu', ACC.MENU, err)
     const seeded = ACCOUNTING_MENU.map((m, i) => ({ id: `seed-${i}`, ...m }))
     writeLocal(ACC.MENU, seeded)
     return seeded
@@ -179,21 +228,73 @@ export async function ensureCakePopPrices() {
   try { localStorage.setItem(FLAG, '1') } catch { /* ignore */ }
 }
 
+// Bump to re-import when the Excel is regenerated. Recorded in the cloud (see
+// below), so bumping it re-imports once for the whole bakery, not once per PC.
+const EXCEL_VERSION = 'v7'
+
+/** Record in Firestore that this Excel version has been imported. */
+async function markExcelImported(db) {
+  try {
+    const { doc, setDoc } = await import('firebase/firestore')
+    await setDoc(doc(db, 'acc_settings', 'main'), { excelImport: EXCEL_VERSION }, { merge: true })
+    return true
+  } catch (err) {
+    reportCloudError('mark import', 'acc_settings', err)
+    return false
+  }
+}
+
 /**
  * One-time import of the owner's Excel history (April–July 2026) into
  * acc_orders / acc_expenses. Deterministic ids (xl-o-N / xl-e-N) → running it
- * again just overwrites the same docs, never duplicates. Idempotent, flag-gated.
+ * again just overwrites the same docs, never duplicates.
+ *
+ * It DELETES every existing `xl-` doc and re-writes it with `set` (no merge),
+ * so it must run **once per database, not once per device**. The gate used to be
+ * a localStorage flag alone — which meant a second PC opening this page for the
+ * first time silently reverted every cloud edit made to an imported row (a
+ * changed amount, or the "✓ Taken to cash" flag) back to the Excel baseline.
+ * The cloud marker `acc_settings/main.excelImport` is now the real gate.
  */
 export async function importExcelDataIfNeeded() {
-  const FLAG = 'cc_acc_excel_v7' // bump to re-import when the Excel is updated
-  try { if (localStorage.getItem(FLAG)) return null } catch { /* ignore */ }
+  const FLAG = `cc_acc_excel_${EXCEL_VERSION}`
+  let localDone = false
+  try { localDone = !!localStorage.getItem(FLAG) } catch { /* ignore */ }
+
+  const db = await getDb()
+
+  if (db) {
+    let cloudVersion
+    try {
+      const { doc, getDoc } = await import('firebase/firestore')
+      const snap = await getDoc(doc(db, 'acc_settings', 'main'))
+      cloudVersion = snap.exists() ? (snap.data().excelImport || null) : null
+    } catch (err) {
+      // Can't tell whether the cloud already has it — importing on a guess
+      // would wipe real edits, so do nothing.
+      reportCloudError('import check', 'acc_settings', err)
+      return { error: errText(err) }
+    }
+    if (cloudVersion === EXCEL_VERSION) {
+      try { localStorage.setItem(FLAG, '1') } catch { /* ignore */ }
+      return null
+    }
+    if (localDone) {
+      // This device imported before the marker existed. Backfill it so no other
+      // device repeats the destructive import.
+      await markExcelImported(db)
+      return null
+    }
+  } else if (localDone) {
+    return null
+  }
+
   const { EXCEL_ORDERS, EXCEL_EXPENSES } = await import('../data/excelImport.js')
   const stamp = new Date().toISOString()
   const orderRecs = EXCEL_ORDERS.map((o, i) => ({ id: `xl-o-${i}`, ...o, createdAt: stamp }))
   const expenseRecs = EXCEL_EXPENSES.map((e, i) => ({ id: `xl-e-${i}`, ...e, createdAt: stamp }))
   const fromExcel = (r) => String(r.id).startsWith('xl-') // only touch imported rows, never manual entries
 
-  const db = await getDb()
   if (!db) {
     const rewrite = (coll, recs) => {
       const kept = readLocal(coll).filter((r) => !fromExcel(r))
@@ -223,19 +324,15 @@ export async function importExcelDataIfNeeded() {
       writes.slice(i, i + 400).forEach(([c, r]) => { const { id, ...data } = r; batch.set(doc(db, c, id), data) })
       await batch.commit()
     }
+    await markExcelImported(db)
     await listDocs(ACC.ORDERS); await listDocs(ACC.EXPENSES)
     try { localStorage.setItem(FLAG, '1') } catch { /* ignore */ }
     return { orders: orderRecs.length, expenses: expenseRecs.length }
   } catch (err) {
-    console.error('[accounting] excel import failed', err)
+    reportCloudError('excel import', 'acc_orders/acc_expenses', err)
     return { error: errText(err) }
   }
 }
-
-// Firestore failures above degrade to localStorage and only log to the console,
-// so an import that silently wrote nothing looks identical to one that worked.
-// Return the reason instead of a bare null.
-const errText = (err) => err?.code || err?.message || String(err)
 
 // ───────────────────── settings (Expense Taken for Use) ─────────────────────
 const TAKEN_LS = 'cc_acc_taken'
@@ -262,7 +359,7 @@ export async function getExpenseTakenForUse() {
       try { localStorage.setItem(TAKEN_LS, String(v)) } catch { /* ignore */ }
       return v
     }
-  } catch (err) { console.error('[accounting] getTaken failed', err) }
+  } catch (err) { reportCloudError('read', 'acc_settings', err) }
   return local ?? TAKEN_DEFAULT
 }
 
@@ -274,7 +371,7 @@ export async function setExpenseTakenForUse(n) {
   try {
     const { doc, setDoc } = await import('firebase/firestore')
     await setDoc(doc(db, 'acc_settings', 'main'), { expenseTakenForUse: v }, { merge: true })
-  } catch (err) { console.error('[accounting] setTaken failed', err) }
+  } catch (err) { reportCloudError('save', 'acc_settings', err) }
 }
 
 // ───────────────────── pure calculations (client-side) ─────────────────────

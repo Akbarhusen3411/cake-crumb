@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { FiLock, FiLogOut, FiRefreshCw } from 'react-icons/fi'
+import { FiAlertTriangle, FiLock, FiLogOut, FiRefreshCw } from 'react-icons/fi'
 import { getFirebaseAuth, isFirebaseEnabled } from '../firebase.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import {
-  ACC, listDocs, seedMenuIfEmpty, ensurePerPieceMenu, ensureCakePopPrices, importExcelDataIfNeeded,
+  ACC, listDocs, subscribeDocs, onCloudError,
+  seedMenuIfEmpty, ensurePerPieceMenu, ensureCakePopPrices, importExcelDataIfNeeded,
 } from '../services/accounting.js'
 import AdminNav from '../components/admin/AdminNav.jsx'
 import DashboardTab from '../components/admin/accounting/DashboardTab.jsx'
@@ -44,6 +45,11 @@ export default function AdminAccounting() {
   const [expenses, setExpenses] = useState([])
   const [withdrawals, setWithdrawals] = useState([])
   const [loading, setLoading] = useState(false)
+  // Cloud writes fall back to this browser's localStorage and never throw, so a
+  // broken Firestore rule looks exactly like a healthy database until you open
+  // the page on a second device. Say it out loud instead.
+  const [cloudError, setCloudError] = useState('')
+  useEffect(() => onCloudError(setCloudError), [])
 
   useEffect(() => {
     let unsub = () => {}, active = true
@@ -65,17 +71,32 @@ export default function AdminAccounting() {
     setLoading(false)
   }
 
+  // Live subscriptions, not a one-shot read: an entry made on the shop PC shows
+  // up here without a refresh, and two devices can't drift out of step.
   useEffect(() => {
     if (!isAdmin) return
     let active = true
+    const unsubs = []
     ;(async () => {
       await seedMenuIfEmpty()
       await ensurePerPieceMenu() // adds "Per piece" prices for Cake Pop & Cupcakes
       await ensureCakePopPrices() // owner's Cake Pop prices + Pistachio
       await importExcelDataIfNeeded() // one-time import of the Excel history
-      if (active) await reload()
+      if (!active) return
+      setLoading(true)
+      const feeds = [
+        [ACC.MENU, setMenu], [ACC.ORDERS, setOrders],
+        [ACC.EXPENSES, setExpenses], [ACC.WITHDRAWALS, setWithdrawals],
+      ]
+      feeds.forEach(([coll, set]) => {
+        unsubs.push(subscribeDocs(coll, (rows) => {
+          if (!active) return
+          set(rows)
+          setLoading(false)
+        }))
+      })
     })()
-    return () => { active = false }
+    return () => { active = false; unsubs.forEach((u) => u()) }
   }, [isAdmin])
 
   async function login(e) {
@@ -142,6 +163,19 @@ export default function AdminAccounting() {
         {loading ? <span className="text-muted small">Loading…</span> : null}
         <button className="btn btn-sm btn-outline-secondary ms-auto" onClick={logout}><FiLogOut /> Sign out</button>
       </div>
+
+      {cloudError ? (
+        <div className="alert alert-warning d-flex align-items-start gap-2 py-2 px-3" style={{ borderRadius: 12 }}>
+          <FiAlertTriangle className="flex-shrink-0 mt-1" />
+          <div className="small">
+            <strong>Not saved to the cloud.</strong> This change is only on this device, so other
+            devices won’t see it. Check the Firestore rules for the <code>acc_*</code> collections
+            (see <code>ACCOUNTING_SETUP.md</code>), then refresh.
+            <div className="text-muted mt-1" style={{ fontSize: '0.78rem' }}>{cloudError}</div>
+          </div>
+          <button type="button" className="btn-close ms-auto" onClick={() => setCloudError('')} aria-label="Dismiss" />
+        </div>
+      ) : null}
 
       <div className="d-flex flex-wrap gap-2 mb-4">
         {TABS.map((t) => {
