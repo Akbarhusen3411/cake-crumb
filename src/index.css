@@ -5269,6 +5269,7 @@ header[style*="sticky"] {
   line-height: 1.1;
 }
 .cc-invoice-no { font-weight: 700; font-size: 0.9rem; margin-top: 0.15rem; }
+.cc-invoice-ref { font-size: 0.8rem; color: #7a6b66; }
 .cc-invoice-date { font-size: 0.82rem; color: #7a6b66; }
 .cc-invoice-contact {
   margin-top: 0.9rem;
@@ -5293,6 +5294,12 @@ header[style*="sticky"] {
   font-size: 1.15rem;
   color: #3f3330;
 }
+.cc-invoice-sub { font-size: 0.82rem; color: #7a6b66; }
+.cc-invoice-fulfil {
+  font-size: 0.8rem;
+  color: #7a6b66;
+  margin: -0.5rem 0 0.9rem;
+}
 
 .cc-invoice-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
 .cc-invoice-table th {
@@ -5309,6 +5316,13 @@ header[style*="sticky"] {
 .cc-invoice-table .num { text-align: right; white-space: nowrap; padding-left: 0.75rem; }
 .cc-invoice-variant { color: #8a7a75; }
 .cc-invoice-table tfoot td { border-bottom: 0; padding-top: 0.8rem; }
+.cc-invoice-table tfoot .cc-invoice-subrow td {
+  padding-top: 0.3rem;
+  padding-bottom: 0;
+  font-size: 0.85rem;
+  color: #7a6b66;
+}
+.cc-invoice-table tfoot .cc-invoice-subrow + .cc-invoice-subrow td { padding-top: 0.1rem; }
 .cc-invoice-total-label {
   font-size: 0.72rem;
   letter-spacing: 0.12em;
@@ -5337,6 +5351,7 @@ header[style*="sticky"] {
 .cc-invoice-status.is-paid { color: #1d7a44; border-color: #a9dcc0; }
 .cc-invoice-status.is-unpaid { color: #a5591b; border-color: #f0d3a8; }
 .cc-invoice-method { color: #7a6b66; }
+.cc-invoice-balance { margin-top: 0.35rem; font-size: 0.82rem; color: #a5591b; font-weight: 600; }
 .cc-invoice-notes { margin-top: 0.9rem; font-size: 0.85rem; color: #5b4e4a; }
 
 .cc-invoice-foot {

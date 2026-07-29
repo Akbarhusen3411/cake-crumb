@@ -3,13 +3,14 @@ import { FiPlus, FiEdit2, FiTrash2, FiRepeat, FiFileText } from 'react-icons/fi'
 import OrderForm from './OrderForm.jsx'
 import FilterChips from './FilterChips.jsx'
 import PeriodSelect from './PeriodSelect.jsx'
-import InvoiceModal from './InvoiceModal.jsx'
+import InvoiceModal from '../InvoiceModal.jsx'
 import {
   ACC, addDocRec, updateDocRec, deleteDocRec, orderTotal, orderQty, monthsFrom,
 } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
 import { fmtDate, inPeriod } from '../../../utils/adminDate.js'
 import { orderLines, fullItem, oneLine } from '../../../utils/orderItems.js'
+import { buildAccountingInvoice } from '../../../utils/invoice.js'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
 
 // Compact summary: first two items, then "+N more". withQty shows ×N per item
@@ -274,7 +275,23 @@ export default function OrdersTab({ orders, menu, reload }) {
         />
       )}
 
-      {invoiceOf && <InvoiceModal order={invoiceOf} onClose={() => setInvoiceOf(null)} />}
+      {invoiceOf && (
+        <InvoiceModal
+          invoice={buildAccountingInvoice(invoiceOf, {
+            lines: orderLines(invoiceOf)
+              .filter((it) => it.item || it.category)
+              .map((it) => ({
+                label: fullItem(it),
+                sub: it.variant,
+                qty: Number(it.qty) || 0,
+                rate: Number(it.unitPrice) || 0,
+                amount: Math.round((Number(it.qty) || 0) * (Number(it.unitPrice) || 0)),
+              })),
+            total: orderTotal(invoiceOf),
+          })}
+          onClose={() => setInvoiceOf(null)}
+        />
+      )}
     </div>
   )
 }

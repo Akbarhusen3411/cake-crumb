@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  FiXCircle, FiRefreshCw, FiLock, FiLogOut, FiChevronDown, FiAlertTriangle,
+  FiXCircle, FiRefreshCw, FiLock, FiLogOut, FiChevronDown, FiAlertTriangle, FiFileText,
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import {
@@ -14,6 +14,8 @@ import { inr } from '../data/format.js'
 import { isBulkOrder } from '../data/shopConfig.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import AdminNav from '../components/admin/AdminNav.jsx'
+import InvoiceModal from '../components/admin/InvoiceModal.jsx'
+import { buildWebsiteInvoice } from '../utils/invoice.js'
 
 // Human-readable payment summary for an order card.
 function paymentLabel(o) {
@@ -172,6 +174,7 @@ export default function AdminOrders() {
   const [expandedId, setExpandedId] = useState(null)
   const [filter, setFilter] = useState('all')
   const [feedError, setFeedError] = useState('')
+  const [invoiceOf, setInvoiceOf] = useState(null)
 
   const isAdmin = !!user
 
@@ -522,7 +525,17 @@ export default function AdminOrders() {
                     </div>
                   )}
 
-                  <div className="d-flex gap-2 mt-3 flex-wrap" style={{ maxWidth: 460 }}>
+                  <div className="d-flex gap-2 mt-3 flex-wrap align-items-center">
+                    <button
+                      className="btn-outline-rose"
+                      onClick={() => setInvoiceOf(o)}
+                      style={{ gap: '0.4rem' }}
+                    >
+                      <FiFileText size={14} /> Invoice
+                    </button>
+                  </div>
+
+                  <div className="d-flex gap-2 mt-2 flex-wrap" style={{ maxWidth: 460 }}>
                     {actionsFor(o).map((a) => {
                       const isDanger = a.kind === 'danger'
                       const isOutline = a.kind === 'outline'
@@ -552,6 +565,10 @@ export default function AdminOrders() {
           )
         })}
       </div>
+
+      {invoiceOf && (
+        <InvoiceModal invoice={buildWebsiteInvoice(invoiceOf)} onClose={() => setInvoiceOf(null)} />
+      )}
     </section>
   )
 }
