@@ -5418,17 +5418,28 @@ header[style*="sticky"] {
 
 .cc-invoice-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.6rem;
   justify-content: center;
   padding: 0.9rem 1.25rem;
   border-top: 1px solid #f3e3e6;
 }
+/* Shown only when window.print() is missing or throws — see InvoiceModal.jsx. */
+.cc-invoice-printerr {
+  flex: 1 0 100%;
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #a5591b;
+}
 
 /* Phone: the sheet is only ~370px wide here, so the two corners collide — the
    wordmark ends up shoved against the date. Stack instead: mark above wordmark,
    both centred, INVOICE and the date centred under them. Print is A4-wide, so
-   it keeps the desktop two-corner masthead. */
-@media (max-width: 575.98px) {
+   it keeps the desktop two-corner masthead — hence `screen`: without the media
+   type this also matched the printed page whenever a mobile browser laid the
+   page box out at device width rather than A4. */
+@media screen and (max-width: 575.98px) {
   .cc-invoice { padding: 1.25rem 1.1rem 1rem; }
   .cc-invoice-head {
     flex-direction: column;
@@ -5443,16 +5454,34 @@ header[style*="sticky"] {
 }
 
 @media print {
+  /* Un-clip the document before anything else. Two things lock it: the site-wide
+     `overflow-x: clip` on html/body, and the inline `overflow: hidden` the modal
+     writes onto <body> as its scroll lock. Desktop Blink re-lays the document out
+     for paged media and never noticed, but Android Chrome and iOS Safari
+     paginate from the layout viewport — a locked body there yields one cropped
+     or blank page. `!important` outranks the modal's inline style, so the
+     component needs no print-time bookkeeping of its own. */
+  html, body {
+    overflow: visible !important;
+    overflow-x: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
+  }
   /* The app is a sibling of the portal, so it can be removed outright — hiding
      it in place would leave its layout behind and print blank pages after the
-     invoice. */
-  #root { display: none !important; }
+     invoice. The second selector catches anything else parked on <body> (other
+     portals, toasts) for the same reason. */
+  #root,
+  body > *:not(.cc-invoice-overlay) { display: none !important; }
   .cc-invoice-overlay {
     position: static !important;
     background: none !important;
     padding: 0 !important;
     overflow: visible !important;
     display: block !important;
+    height: auto !important;
   }
   .cc-invoice-sheet {
     max-width: none !important;
