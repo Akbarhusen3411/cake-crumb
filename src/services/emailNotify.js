@@ -1,4 +1,5 @@
 import emailjs from '@emailjs/browser'
+import { inr } from '../data/format.js'
 
 const SERVICE_ID           = import.meta.env.VITE_EMAILJS_SERVICE_ID
 const TEMPLATE_ID          = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
@@ -22,7 +23,7 @@ function buildParams(order) {
   const c = order.customer || {}
   const t = order.totals || {}
   const itemsText = (order.items || [])
-    .map((i) => `• ${i.name} × ${i.qty} = ₹${(i.price || 0) * (i.qty || 1)}`)
+    .map((i) => `• ${i.name} × ${i.qty} = ${inr((i.price || 0) * (i.qty || 1))}`)
     .join('\n')
 
   return {
@@ -33,14 +34,14 @@ function buildParams(order) {
     customer_email: c.email || '—',
     customer_address: [c.address, c.city, c.pincode].filter(Boolean).join(', '),
     items: itemsText,
-    subtotal: `₹${t.subtotal || 0}`,
-    delivery: t.delivery === 0 ? 'FREE' : `₹${t.delivery || 0}`,
-    total: `₹${t.total || 0}`,
+    subtotal: inr(t.subtotal || 0),
+    delivery: t.delivery === 0 ? 'FREE' : inr(t.delivery || 0),
+    total: inr(t.total || 0),
     payment_method:
       order.payment?.method === 'upi'
         ? 'UPI / QR — paid in full (verify in bank)'
         : order.payment?.method === 'deposit'
-          ? `Advance ₹${order.payment?.depositAmount || 0} paid (verify in bank) + ₹${order.payment?.balanceDue || 0} cash on delivery`
+          ? `Advance ${inr(order.payment?.depositAmount || 0)} paid (verify in bank) + ${inr(order.payment?.balanceDue || 0)} cash on delivery`
           : 'Cash on Delivery',
     utr: '—', // UTR system removed; bakery verifies the credit in its bank
     delivery_date: order.deliveryDate || '—',

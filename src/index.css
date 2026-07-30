@@ -5328,11 +5328,24 @@ header[style*="sticky"] {
 }
 .cc-invoice-table td { padding: 0.6rem 0; border-bottom: 1px solid #f2e6e8; vertical-align: top; }
 /* Fixed, snug figure columns so Qty/Rate/Amount read as one group at the right
-   and the item name absorbs whatever width is left. */
-.cc-invoice-table .num { text-align: right; white-space: nowrap; padding-left: 0.6rem; }
-.cc-invoice-table th.num:nth-child(2), .cc-invoice-table td.num:nth-child(2) { width: 48px; }
-.cc-invoice-table th.num:nth-child(3), .cc-invoice-table td.num:nth-child(3) { width: 72px; }
-.cc-invoice-table th.num:nth-child(4), .cc-invoice-table td.num:nth-child(4) { width: 84px; }
+   and the item name absorbs whatever width is left.
+   Centred, not right-aligned, at the owner's request: each figure sits directly
+   under its own heading, which is what makes the three read as a row you can
+   scan across. The widths had to grow with it — they were cut for whole rupees
+   ("₹140"), and two decimals made every figure wider than its column, which is
+   what pushed the headings out of line with the numbers underneath.
+   Trade-off accepted: right-aligned figures line up on the decimal point, so on
+   an invoice mixing ₹90.00 with ₹1,410.00 the column edges will look less even
+   than they would right-aligned. Bills here run to a few lines, so the clearer
+   heading-to-figure pairing wins. */
+.cc-invoice-table .num { text-align: center; white-space: nowrap; padding-left: 0.6rem; }
+.cc-invoice-table th.num:nth-child(2), .cc-invoice-table td.num:nth-child(2) { width: 56px; }
+.cc-invoice-table th.num:nth-child(3), .cc-invoice-table td.num:nth-child(3) { width: 96px; }
+.cc-invoice-table th.num:nth-child(4), .cc-invoice-table td.num:nth-child(4) { width: 104px; }
+/* The Subtotal/Delivery labels span the first three columns, so centring them
+   would strand the word in the middle of the sheet. They stay pushed up against
+   the figure they introduce. */
+.cc-invoice-table tfoot .cc-invoice-subrow td:first-child { text-align: right; }
 .cc-invoice-variant { color: #8a7a75; }
 .cc-invoice-table tbody tr:last-child td { border-bottom: 0; }
 .cc-invoice-table tfoot td { border-bottom: 0; padding-top: 0.5rem; vertical-align: middle; }
@@ -5396,10 +5409,18 @@ header[style*="sticky"] {
   border-top: 1px solid #f2e6e8;
   text-align: center;
 }
+/* Playfair italic, not the Allura script the rest of the brand uses for
+   flourishes. Customers reported not being able to read the line through —
+   Allura's joined, high-contrast letterforms are decorative at a glance and hard
+   work as an actual sentence, especially printed small or rasterised into the
+   PDF. Playfair's italic keeps the sheet feeling written-by-hand while staying
+   legible at speed. It also needs far less size to carry, hence 1.45rem → 1.08:
+   the script only ran that large because it had to. */
 .cc-invoice-quote {
-  font-family: var(--font-script, cursive);
-  font-size: 1.45rem;
-  line-height: 1.35;
+  font-family: var(--font-heading, Georgia, serif);
+  font-style: italic;
+  font-size: 1.08rem;
+  line-height: 1.45;
   color: var(--cc-rose, #e0617a);
 }
 .cc-invoice-thanks {

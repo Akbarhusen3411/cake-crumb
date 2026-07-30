@@ -15,7 +15,7 @@ import { isBulkOrder } from '../data/shopConfig.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import AdminNav from '../components/admin/AdminNav.jsx'
 import InvoiceModal from '../components/admin/InvoiceModal.jsx'
-import { buildWebsiteInvoice } from '../utils/invoice.js'
+import { buildWebsiteInvoice, pendingQuote } from '../utils/invoice.js'
 
 // Human-readable payment summary for an order card.
 function paymentLabel(o) {
@@ -55,6 +55,25 @@ function buildCustomerMessage(order, status) {
   const id = order.orderId
   const items = (order.items || []).map((i) => `  • ${i.name} × ${i.qty}`)
   switch (status) {
+    // Message-only — the order stays `placed`. Sent when a customer rings up
+    // asking where their order has got to, or when one has been sitting
+    // unactioned and the bakery wants a yes/no before buying ingredients.
+    // pendingQuote() is its OWN pool, not the invoice's: an invoice quote signs
+    // off something finished, while this one has to pull a reply out of someone
+    // who has gone quiet. Keyed to the order, so a second nudge reads as the same
+    // message rather than a new one.
+    case 'pending_nudge':
+      return [
+        `⏳ *Order Pending* — ${id}`, '',
+        `Hi ${name},`, '',
+        `We have your order and it's *waiting on your confirmation* before we start baking. 🎂`, '',
+        '*Your Items:*', ...items, '',
+        `💰 *Total:* ${inr(order.totals?.total || 0)}`, '',
+        `Please reply *YES* to confirm and we'll begin right away.`,
+        `Reply *NO* if you'd like to cancel — no problem at all. 🙏`, '',
+        `_${pendingQuote(order.orderId)}_`, '',
+        `— Cake & Crumb`,
+      ].join('\n')
     case 'cancelled':
       return [
         `🎂 *Order Update* — ${id}`, '',
@@ -127,6 +146,11 @@ function actionsFor(o) {
   if (s === 'placed') {
     return [
       { status: 'confirmed', label: 'Confirm', kind: 'primary' },
+      // Message-only: nudges the customer for a yes/no without moving the order
+      // out of `placed`. Deliberately NOT a status — nothing new to teach the
+      // tracking mirror, statusMeta() or the Firestore rules, and "pending" is
+      // what `placed` already means.
+      { status: 'pending_nudge', label: 'Ask to Confirm', kind: 'outline', messageOnly: true },
       { status: 'cancelled', label: 'Cancel', kind: 'danger' },
     ]
   }
@@ -254,7 +278,7 @@ export default function AdminOrders() {
     setOrders([])
   }
 
-  function act(order, status) {
+  function act(order, status, messageOnly = false) {
     const num = waNumber(order.customer?.phone)
     if (!num) {
       alert('No customer phone number on this order — cannot message the customer.')
@@ -265,6 +289,10 @@ export default function AdminOrders() {
     // (async) Firestore status update — otherwise the message never opens on phones.
     const msg = buildCustomerMessage(order, status)
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer')
+
+    // A nudge is just a message — there's no such status to persist, and writing
+    // one would put a value in the tracking mirror that statusMeta() can't render.
+    if (messageOnly) return
 
     // Persist the status change in the background; the live listener refreshes the badge.
     const key = order.firebaseId || order.orderId
@@ -525,30 +553,33 @@ export default function AdminOrders() {
                     </div>
                   )}
 
-                  <div className="d-flex gap-2 mt-3 flex-wrap align-items-center">
+                  {/* Invoice shares the row with the status actions. On its own
+                      line it stayed button-sized while a lone "Re-send message"
+                      stretched the full width below it, so the two read as
+                      unrelated controls. Equal `flex` with a cap makes every
+                      button a matched medium width: two sit side by side, four
+                      wrap to two tidy rows instead of one stretching. */}
+                  <div className="d-flex gap-2 mt-3 flex-wrap" style={{ maxWidth: 560 }}>
                     <button
                       className="btn-outline-rose"
                       onClick={() => setInvoiceOf(o)}
-                      style={{ gap: '0.4rem' }}
+                      style={{ flex: '1 1 140px', maxWidth: 200, justifyContent: 'center', gap: '0.4rem' }}
                     >
                       <FiFileText size={14} /> Invoice
                     </button>
-                  </div>
-
-                  <div className="d-flex gap-2 mt-2 flex-wrap" style={{ maxWidth: 460 }}>
                     {actionsFor(o).map((a) => {
                       const isDanger = a.kind === 'danger'
                       const isOutline = a.kind === 'outline'
                       const onClick = isDanger
                         ? () => { if (confirm(`Cancel order ${o.orderId}?`)) act(o, a.status) }
-                        : () => act(o, a.status)
+                        : () => act(o, a.status, a.messageOnly)
                       return (
                         <button
                           key={a.label}
                           disabled={busy}
                           className={isDanger || isOutline ? 'btn-outline-rose' : 'btn-rose'}
                           onClick={onClick}
-                          style={{ flex: '1 1 0', justifyContent: 'center', gap: '0.4rem' }}
+                          style={{ flex: '1 1 140px', maxWidth: 200, justifyContent: 'center', gap: '0.4rem' }}
                         >
                           {a.kind === 'primary' ? <FaWhatsapp size={14} /> : (isDanger ? <FiXCircle size={14} /> : null)}
                           {a.label}
@@ -557,7 +588,8 @@ export default function AdminOrders() {
                     })}
                   </div>
                   <p style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', margin: '0.4rem 0 0' }}>
-                    Each button updates the status and opens WhatsApp to message the customer.
+                    Invoice opens the printable bill. The rest open WhatsApp — “Ask to Confirm”
+                    only sends a message, the others also move the order on.
                   </p>
                 </div>
               )}

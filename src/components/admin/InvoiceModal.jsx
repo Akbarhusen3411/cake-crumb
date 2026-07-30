@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useRef, useState } from 'react'
-import { FiPrinter, FiX } from 'react-icons/fi'
+import { FiDownload, FiPrinter, FiX } from 'react-icons/fi'
 import Logo from '../Logo.jsx'
 import HeartDivider from '../HeartDivider.jsx'
 import { inr } from '../../data/format.js'
@@ -61,6 +61,61 @@ ${styles}
 </body></html>`
 }
 
+/** Safe as a filename on every OS — no slashes, colons or trailing dots. */
+const pdfFileName = (ref) =>
+  `Invoice ${String(ref || 'Cake and Crumb').replace(/[\\/:*?"<>|]+/g, '-')}`.trim().slice(0, 80) + '.pdf'
+
+/**
+ * Save the invoice as a real PDF file.
+ *
+ * This exists because a *printed* page can't be made clean. Browsers stamp the
+ * page URL, the date and "Page 1 of 1" into the paper margin themselves; that's
+ * drawn outside the document, where no CSS reaches. Desktop Chrome lets the user
+ * switch it off, Android Chrome offers no such setting at all — so on the owner's
+ * phone every printed invoice carried the site URL across the bottom. A generated
+ * PDF has no margin furniture at all, on any device.
+ *
+ * CLAUDE.md used to rule a PDF library out over bundle size. That objection is
+ * gone: both libraries are dynamically imported here, inside an admin-only modal,
+ * so nothing reaches a customer's page load — the eager storefront chunk is
+ * byte-identical with and without this — and even the admin pages fetch them only
+ * if the button is tapped.
+ *
+ * html-to-image, NOT html2canvas: html2canvas re-implements CSS and throws on the
+ * `oklch()` colours Tailwind 4 emits, while this rasterises through the browser's
+ * own engine via foreignObject, so the sheet comes out exactly as rendered —
+ * real Playfair/Lato, the logo, the rose rules.
+ *
+ * The page is sized to the sheet's own proportions rather than forced onto A4, so
+ * there's no band of empty paper around it — it opens full-bleed on a phone and
+ * in WhatsApp. Printing on real paper still goes through Print, at A4 landscape.
+ */
+async function downloadInvoicePdf(node, ref) {
+  const [{ toPng }, { jsPDF }] = await Promise.all([
+    import('html-to-image'),
+    import('jspdf'),
+  ])
+
+  const dataUrl = await toPng(node, {
+    pixelRatio: 3, // crisp when the customer zooms in, or prints it
+    backgroundColor: '#ffffff',
+    cacheBust: true,
+  })
+
+  const w = node.offsetWidth || 560
+  const h = node.offsetHeight || 800
+  const pageW = 210 // mm — A4's width, so it prints at a familiar scale
+  const pageH = Math.max(1, Math.round((pageW * h) / w))
+
+  const pdf = new jsPDF({
+    unit: 'mm',
+    format: [pageW, pageH],
+    orientation: pageH >= pageW ? 'portrait' : 'landscape',
+  })
+  pdf.addImage(dataUrl, 'PNG', 0, 0, pageW, pageH)
+  pdf.save(pdfFileName(ref))
+}
+
 /**
  * Print the invoice from a hidden iframe.
  *
@@ -116,10 +171,8 @@ function printViaIframe(node, number) {
  * know whether it came from a walk-in in the accounting book or a customer order
  * off the website.
  *
- * Print-to-PDF rather than a PDF library: jsPDF/html2canvas would add a few
- * hundred KB and rasterise the page, so the text couldn't be selected or
- * searched. Printing keeps real Playfair/Lato text, and the browser's
- * "Save as PDF" is one click in the same dialog as printing on paper.
+ * Two ways out: Download PDF (see downloadInvoicePdf) and Print. The download
+ * leads, because a printed page can't be made clean — see that comment.
  *
  * Rendered through a portal onto document.body so the print rule can simply
  * hide #root — hiding the app in place leaves its layout behind and Chrome
@@ -134,6 +187,7 @@ export default function InvoiceModal({ invoice, onClose }) {
   const titleRef = useRef('')
   const sheetRef = useRef(null)
   const [printErr, setPrintErr] = useState('')
+  const [pdfBusy, setPdfBusy] = useState(false)
   const isMobile = useIsMobile()
   // The single reference printed on the sheet (see the ids block in the markup).
   // It names the saved PDF too, so the file and the paper agree.
@@ -200,6 +254,20 @@ export default function InvoiceModal({ invoice, onClose }) {
       // Falling back is better than a button that does nothing.
       printInPlace()
     })
+  }
+
+  async function handleDownload() {
+    setPrintErr('')
+    const node = sheetRef.current?.querySelector('.cc-invoice')
+    if (!node || pdfBusy) return
+    setPdfBusy(true)
+    try {
+      await downloadInvoicePdf(node, printRef)
+    } catch {
+      setPrintErr('Could not build the PDF. Use Print instead, or try again.')
+    } finally {
+      setPdfBusy(false)
+    }
   }
 
   if (!invoice) return null
@@ -319,10 +387,18 @@ export default function InvoiceModal({ invoice, onClose }) {
           </div>
         </div>
 
+        {/* Download leads: it's the clean copy — no browser URL or date stamped
+            into the paper margin — and it's what gets sent on WhatsApp. Print
+            stays for actual paper. */}
         <div className="cc-invoice-actions">
           <button className="btn text-white d-inline-flex align-items-center gap-2"
-            style={{ background: 'var(--cc-rose,#e0617a)' }} onClick={handlePrint}>
-            <FiPrinter /> Print / Save as PDF
+            style={{ background: 'var(--cc-rose,#e0617a)' }}
+            onClick={handleDownload} disabled={pdfBusy}>
+            <FiDownload /> {pdfBusy ? 'Preparing…' : 'Download PDF'}
+          </button>
+          <button className="btn btn-light d-inline-flex align-items-center gap-2"
+            onClick={handlePrint} disabled={pdfBusy}>
+            <FiPrinter /> Print
           </button>
           {printErr ? <div className="cc-invoice-printerr">{printErr}</div> : null}
         </div>

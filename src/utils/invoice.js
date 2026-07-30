@@ -30,16 +30,28 @@ export function invoiceNumber(order) {
   return `CC-INV-${stamp}-${suffix}`
 }
 
-// A warm line to close the invoice on. Kept short — it sits under the total in
-// script type, so anything longer than a breath reads as filler.
+// A warm line to close the invoice on.
+//
+// Keep any replacement to one clause, under about 60 characters: it renders in
+// Playfair italic at 1.08rem on a ~500px-wide sheet, which fits one line, and
+// two lines here read as a paragraph rather than a sign-off. (It was Allura at
+// 1.45rem, which capped it nearer 46 — the script was dropped because customers
+// couldn't read the line through.)
+//
+// Written to sound like the baker rather than a brand: no "guaranteed", no
+// exclamation marks, and no thank-you (the line directly below already says it,
+// and hearing it twice makes both sound automatic). Each one points at the care
+// that went in, not at the customer's wallet.
 const QUOTES = [
-  'May your day be as sweet as what’s inside.',
-  'Baked by hand this morning, just for you.',
-  'Life is short — eat the cake first.',
-  'Made with butter, sugar and a little love.',
-  'Every crumb, made for your happiest moments.',
-  'Good things take time. This took a whole morning.',
-  'Sweetness delivered, happiness guaranteed.',
+  'Handmade, unhurried, and just for you.',
+  'May this be the sweetest part of your day.',
+  'Butter, sugar, and a good deal of love.',
+  'Made in a small kitchen, with a full heart.',
+  'Some things are worth the wait. This is one.',
+  'Baked this morning — nothing here was rushed.',
+  'From our kitchen to your table, with love.',
+  'We hope it makes the moment a little sweeter.',
+  'Sweetness delivered, happiness guaranteed.', // the bakery's own line, kept at the owner's request
 ]
 
 /**
@@ -49,6 +61,33 @@ const QUOTES = [
  */
 export function invoiceQuote(key) {
   return QUOTES[hash(key) % QUOTES.length]
+}
+
+/**
+ * The line that closes the "your order is waiting on you" WhatsApp nudge.
+ *
+ * A separate pool from QUOTES because the two are doing opposite jobs: an
+ * invoice quote signs off something finished, while this one has to pull a reply
+ * out of someone who has gone quiet. So each of these leaves the sentence
+ * unfinished on the customer's side — the oven is warm, the butter is out, and
+ * the only missing thing is their word. Warm, never pushy: this goes to someone
+ * who has already chosen to order, and guilt would be a poor thank-you.
+ *
+ * Keyed to the order like invoiceQuote, so a second nudge on the same order
+ * reads as the same message rather than a new one.
+ */
+const PENDING_QUOTES = [
+  'Every cake starts with a yes — we’re waiting on yours.',
+  'Say the word, and the oven goes on. ♥',
+  'The butter’s out and the oven’s warm — we’re only waiting on you.',
+  'Your treats are one little message away.',
+  'We’ve saved a place in the oven, just for you.',
+  'Nothing’s baking until you say so — and we’d love to begin.',
+  'One yes from you, and we start mixing. 🧁',
+]
+
+export function pendingQuote(key) {
+  return PENDING_QUOTES[hash(key) % PENDING_QUOTES.length]
 }
 
 // ───────────────────── builders ─────────────────────

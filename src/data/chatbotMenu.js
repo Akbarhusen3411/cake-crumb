@@ -8,6 +8,7 @@
 // Sub-headings inside a category come from each product's optional `group` field.
 
 import { shopProducts } from './products.js'
+import { inr } from './format.js'
 
 // Category order + presentation. `category` must match products.js exactly.
 // `strip` trims the redundant category noun off row labels so rows stay narrow
@@ -35,7 +36,9 @@ const HEADER_LABELS = {
   'Per piece': 'Each',
 }
 
-const money = (n) => `₹${n}`
+// Through the shared formatter, not a template string — the bot's price cards
+// sit beside its cart total and its WhatsApp receipt, and those all read `inr()`.
+const money = (n) => inr(n)
 const headerLabel = (label) => HEADER_LABELS[label] || label
 
 // Primary size label (the `price` field) and secondary (the `slice` field).

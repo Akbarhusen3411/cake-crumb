@@ -4,6 +4,7 @@ import {
   FiShoppingBag, FiHeart, FiAlertCircle, FiStar, FiCalendar, FiCheck,
 } from 'react-icons/fi'
 import { asset } from '../data/images.js'
+import { inr } from '../data/format.js'
 import { generateOrderId } from '../services/orderId.js'
 import { saveOrder } from '../services/orders.js'
 import { deliveryFee, isBulkOrder, depositAmount, DEPOSIT_PCT } from '../data/shopConfig.js'
@@ -236,10 +237,10 @@ function OrderSummaryCard({ data }) {
               <p className="text-[12px] font-semibold leading-tight" style={{ color: '#5b3e36' }}>{it.name}</p>
               <p className="text-[10.5px] mt-0.5">
                 <span className="font-bold text-berry">×{it.qty}</span>{' '}
-                <span className="text-chocolate-light/70">₹{it.price}</span>
+                <span className="text-chocolate-light/70">{inr(it.price)}</span>
               </p>
             </div>
-            <span className="text-[12.5px] font-bold shrink-0" style={{ color: '#5b3e36' }}>₹{it.price * it.qty}</span>
+            <span className="text-[12.5px] font-bold shrink-0" style={{ color: '#5b3e36' }}>{inr(it.price * it.qty)}</span>
           </div>
         ))}
       </div>
@@ -248,12 +249,12 @@ function OrderSummaryCard({ data }) {
       <div className="px-3.5 pt-2 pb-1 mt-0.5 border-t border-dashed border-berry/30">
         <div className="flex justify-between text-[12px] mb-1">
           <span className="text-chocolate-light/70">Subtotal</span>
-          <span className="font-semibold" style={{ color: '#5b3e36' }}>₹{subtotal}</span>
+          <span className="font-semibold" style={{ color: '#5b3e36' }}>{inr(subtotal)}</span>
         </div>
         <div className="flex justify-between text-[12px]">
           <span className="text-chocolate-light/70">Delivery</span>
           <span className={`font-bold ${delivery === 0 ? 'text-berry' : ''}`} style={delivery !== 0 ? { color: '#5b3e36' } : undefined}>
-            {delivery === 0 ? 'FREE' : '₹' + delivery}
+            {delivery === 0 ? 'FREE' : inr(delivery)}
           </span>
         </div>
       </div>
@@ -262,7 +263,7 @@ function OrderSummaryCard({ data }) {
         style={{ background: 'linear-gradient(135deg,rgba(224,97,122,0.12),rgba(247,227,223,0.55))', border: '1px solid #f3d7d9' }}
       >
         <span className="text-[13px] font-bold" style={{ fontFamily: "'Playfair Display',serif", color: '#5b3e36' }}>Total</span>
-        <span className="text-[18px] font-extrabold" style={{ color: '#cf3e63' }}>₹{total}</span>
+        <span className="text-[18px] font-extrabold" style={{ color: '#cf3e63' }}>{inr(total)}</span>
       </div>
 
       {bulk && (
@@ -271,7 +272,7 @@ function OrderSummaryCard({ data }) {
           style={{ background: '#fff', border: '1px dashed #d7a7ae', color: '#7a584d' }}
         >
           <span>Pay now · {Math.round(DEPOSIT_PCT * 100)}% advance</span>
-          <strong style={{ color: '#cf3e63' }}>₹{deposit}</strong>
+          <strong style={{ color: '#cf3e63' }}>{inr(deposit)}</strong>
         </div>
       )}
 
@@ -315,10 +316,10 @@ function CartPreviewCard({ items, subtotal }) {
               <p className="text-[12px] font-semibold leading-tight" style={{ color: '#5b3e36' }}>{it.name}</p>
               <p className="text-[10.5px] mt-0.5">
                 <span className="font-bold text-berry">×{it.qty}</span>{' '}
-                <span className="text-chocolate-light/70">₹{it.price} each</span>
+                <span className="text-chocolate-light/70">{inr(it.price)} each</span>
               </p>
             </div>
-            <span className="text-[12.5px] font-bold shrink-0" style={{ color: '#5b3e36' }}>₹{it.price * it.qty}</span>
+            <span className="text-[12.5px] font-bold shrink-0" style={{ color: '#5b3e36' }}>{inr(it.price * it.qty)}</span>
           </div>
         ))}
       </div>
@@ -326,7 +327,7 @@ function CartPreviewCard({ items, subtotal }) {
       <div className="px-3.5 pt-2 pb-2.5 mt-0.5 border-t border-dashed border-berry/30">
         <div className="flex justify-between items-center">
           <span className="text-[13px] font-bold" style={{ fontFamily: "'Playfair Display',serif", color: '#5b3e36' }}>Subtotal</span>
-          <span className="text-[16px] font-extrabold" style={{ color: '#cf3e63' }}>₹{subtotal}</span>
+          <span className="text-[16px] font-extrabold" style={{ color: '#cf3e63' }}>{inr(subtotal)}</span>
         </div>
         <p className="text-[10.5px] mt-1.5 text-chocolate-light/70">🚚 Delivery is added after you enter your address.</p>
       </div>
@@ -433,7 +434,7 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
                             {v.label}
                             {min > 1 && <span className="text-[10px] font-bold text-berry/70 ml-1">min {min}</span>}
                           </span>
-                          <span className="text-[13px] font-bold text-berry shrink-0">₹{v.price}</span>
+                          <span className="text-[13px] font-bold text-berry shrink-0">{inr(v.price)}</span>
                         </div>
                         {q > 0 ? (
                           <div className="flex items-center justify-between">
@@ -475,7 +476,7 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
             <div key={item.name} className={`flex items-center justify-between px-3.5 py-2.5 transition-colors ${qty > 0 ? 'bg-berry/5' : ''}`}>
               <div className="flex-1 min-w-0 pr-2">
                 <p className="text-[12.5px] font-medium text-chocolate truncate leading-tight">{item.name}</p>
-                <p className="text-[11px] text-berry font-bold mt-0.5">₹{item.price}</p>
+                <p className="text-[11px] text-berry font-bold mt-0.5">{inr(item.price)}</p>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 {qty > 0 && (
@@ -516,7 +517,7 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
               <FiShoppingBag size={14} />
               Done · {cartCount} item{cartCount > 1 ? 's' : ''}
             </span>
-            <span className="text-[13.5px] font-bold">₹{total}</span>
+            <span className="text-[13.5px] font-bold">{inr(total)}</span>
           </>
         ) : (
           <>
@@ -661,7 +662,7 @@ export default function ChatBot() {
     setActiveOrderCat(null)
     const total = getCartTotal()
     if (total > 0) {
-      await addBotMessage(`*Your cart so far:* ₹${total}\n\nSelect a category to add items, or review your order:`)
+      await addBotMessage(`*Your cart so far:* ${inr(total)}\n\nSelect a category to add items, or review your order:`)
     } else {
       await addBotMessage('Select a category to start adding items to your order:')
     }
@@ -710,7 +711,7 @@ export default function ChatBot() {
     Object.entries(grouped).forEach(([cat, catItems]) => {
       orderLines += `\n*${cat}*\n`
       catItems.forEach(({ name, qty, price }) => {
-        orderLines += `  • ${name} × ${qty} = ₹${price * qty}\n`
+        orderLines += `  • ${name} × ${qty} = ${inr(price * qty)}\n`
       })
     })
 
@@ -721,7 +722,7 @@ export default function ChatBot() {
     // orders from being a no-show fraud risk — mirrors the checkout deposit rule).
     const bulk = isBulkOrder(subtotal)
     const advanceLine = bulk
-      ? `*💳 Advance:* ₹${depositAmount(total)} (${Math.round(DEPOSIT_PCT * 100)}%) requested before baking · balance on delivery\n`
+      ? `*💳 Advance:* ${inr(depositAmount(total))} (${Math.round(DEPOSIT_PCT * 100)}%) requested before baking · balance on delivery\n`
       : ''
 
     const msg =
@@ -735,9 +736,9 @@ export default function ChatBot() {
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `*📋 Order Items:*${orderLines}\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
-      `*Subtotal:* ₹${subtotal}\n` +
-      `*Delivery:* ${fee === 0 ? 'FREE (far areas confirmed by us)' : '₹' + fee}\n` +
-      `*💰 Total: ₹${total}*\n` +
+      `*Subtotal:* ${inr(subtotal)}\n` +
+      `*Delivery:* ${fee === 0 ? 'FREE (far areas confirmed by us)' : inr(fee)}\n` +
+      `*💰 Total: ${inr(total)}*\n` +
       advanceLine +
       `\n━━━━━━━━━━━━━━━━━━━━\n\n` +
       `⚠️ *Cancel window:* 30 min from order time.\n\n` +
@@ -929,7 +930,7 @@ export default function ChatBot() {
     scrollToBottom()
     // Large-order advance notice — mirrors the website's bulk banner.
     if (isBulkOrder(subtotal)) {
-      await addBotMessage(`💳 *This is a larger order.* We'll request a *${Math.round(DEPOSIT_PCT * 100)}% advance* (₹${depositAmount(total)}) on WhatsApp before baking — the balance is paid on delivery.`)
+      await addBotMessage(`💳 *This is a larger order.* We'll request a *${Math.round(DEPOSIT_PCT * 100)}% advance* (${inr(depositAmount(total))}) on WhatsApp before baking — the balance is paid on delivery.`)
     }
     await addBotMessage('Ready to send this order to our bakery on WhatsApp? 🎂')
     setOptions([
@@ -1168,7 +1169,7 @@ export default function ChatBot() {
                 style={{ background: 'linear-gradient(to bottom right, #e0617a, #cf3e63)', boxShadow: '0 4px 12px rgba(207, 62, 99, 0.35)' }}
               >
                 <FiShoppingBag size={11} />
-                ₹{getCartTotal()}
+                {inr(getCartTotal())}
               </div>
             )}
             <button
@@ -1262,7 +1263,7 @@ export default function ChatBot() {
                   onDone={async () => {
                     setActiveOrderCat(null)
                     const total = getCartTotal()
-                    if (total > 0) await addBotMessage(`*Cart updated!* 🛒\nTotal so far: *₹${total}*`)
+                    if (total > 0) await addBotMessage(`*Cart updated!* 🛒\nTotal so far: *${inr(total)}*`)
                     await showOrderCategories()
                   }}
                 />
