@@ -7,6 +7,7 @@ import { asset } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { generateOrderId } from '../services/orderId.js'
 import { saveOrder } from '../services/orders.js'
+import { sendOrderEmail, sendCustomerConfirmation } from '../services/emailNotify.js'
 import { deliveryFee, isBulkOrder, depositAmount, DEPOSIT_PCT } from '../data/shopConfig.js'
 import { kmFromBakeryByPincode } from '../services/delivery.js'
 import { WHATSAPP_PHONE } from './WhatsAppButton.jsx'
@@ -16,6 +17,22 @@ import {
 } from '../data/chatbotMenu.js'
 
 const WHATSAPP_NUMBER = WHATSAPP_PHONE
+// Where a self-pickup customer collects from. Same wording as AdminOrders' own
+// pickup message, so the bot and the bakery's WhatsApp reply name one place.
+const PICKUP_LOCATION = 'Vaso, Kheda, Gujarat 387380'
+
+// The details questions, in one place so a Back button can re-ask any of them
+// without the wording drifting from where it's first asked.
+const STEP_PROMPT = {
+  name: 'Please type your *full name*:',
+  phone: 'Now enter your *phone number*:',
+  email: 'Your *email* for an order confirmation — or tap *Skip*:',
+  address: 'Enter your *full delivery address*\n(House/Flat, Street, Area, City):',
+  pincode: 'Enter your *6-digit pincode* 📮\n(so we can calculate delivery to your area):',
+}
+// Where Back goes from each step. `name` and `address` are special-cased in
+// handleAction (to the cart review, and to the delivery/pickup question).
+const PREV_STEP = { phone: 'name', email: 'phone', pincode: 'address' }
 
 // ─── Category preview thumbnails (optional eye-candy when showing prices) ───
 // Keyed by the category keys in data/chatbotMenu.js. Purely decorative — a key
@@ -206,7 +223,7 @@ function PriceCard({ cat }) {
 
 // ─── Order summary card (chat-styled version of the website checkout summary) ───
 function OrderSummaryCard({ data }) {
-  const { items, subtotal, delivery, total, bulk, deposit, info } = data
+  const { items, subtotal, delivery, total, bulk, deposit, info, pickup } = data
   return (
     <div
       className="flex-1 min-w-0 rounded-2xl rounded-tl-sm shadow-md overflow-hidden border border-gold/15"
@@ -252,7 +269,7 @@ function OrderSummaryCard({ data }) {
           <span className="font-semibold" style={{ color: '#5b3e36' }}>{inr(subtotal)}</span>
         </div>
         <div className="flex justify-between text-[12px]">
-          <span className="text-chocolate-light/70">Delivery</span>
+          <span className="text-chocolate-light/70">{pickup ? 'Pickup' : 'Delivery'}</span>
           <span className={`font-bold ${delivery === 0 ? 'text-berry' : ''}`} style={delivery !== 0 ? { color: '#5b3e36' } : undefined}>
             {delivery === 0 ? 'FREE' : inr(delivery)}
           </span>
@@ -279,7 +296,9 @@ function OrderSummaryCard({ data }) {
       {/* Contact */}
       <div className="px-3.5 py-2 border-t border-cream-dark/50 text-[11px] leading-relaxed" style={{ color: '#7a584d' }}>
         <div className="truncate">👤 {info.name}{info.phone ? ` · 📞 ${info.phone}` : ''}</div>
-        {info.address && <div className="truncate">📍 {info.address}{info.pincode ? `, ${info.pincode}` : ''}</div>}
+        {pickup
+          ? <div className="truncate">🛍️ Self-pickup · {PICKUP_LOCATION}</div>
+          : info.address && <div className="truncate">📍 {info.address}{info.pincode ? `, ${info.pincode}` : ''}</div>}
         {info.date && <div>📅 {info.date}</div>}
       </div>
     </div>
@@ -545,10 +564,15 @@ export default function ChatBot() {
   const [lastOrderId, setLastOrderId] = useState(null)
   const [lastOrderTime, setLastOrderTime] = useState(null)
   const [lastWaUrl, setLastWaUrl] = useState(null) // fallback link if a pop-up is blocked
-  const [orderInfo, setOrderInfo] = useState({ name: '', phone: '', address: '', pincode: '', date: '' })
+  const [orderInfo, setOrderInfo] = useState({ name: '', phone: '', email: '', address: '', pincode: '', date: '' })
   // Straight-line km from the bakery, geocoded from the pincode in the address —
   // drives the distance-based delivery fee so the bot matches the website checkout.
   const [deliveryKm, setDeliveryKm] = useState(null)
+  // 'delivery' | 'pickup', asked after the contact details. The bot used to
+  // hardcode delivery, so a customer happy to collect was charged a fee they
+  // didn't need — while the bot's own Delivery message advertised the free
+  // pickup it couldn't actually take.
+  const [deliveryMethod, setDeliveryMethod] = useState('delivery')
   const scrollRef = useRef(null)
   const chatPanelRef = useRef(null)
   const chatToggleRef = useRef(null)
@@ -669,37 +693,97 @@ export default function ChatBot() {
     setOptions(ORDER_CATEGORIES)
   }
 
+  // Ask one details question, with a Back button on it. Every path into these
+  // steps goes through here so the wording can't diverge between the first ask
+  // and a re-ask after Back.
+  const askStep = async (step, prefix = '') => {
+    setOrderStep(step)
+    await addBotMessage(prefix + STEP_PROMPT[step])
+    setOptions([
+      ...(step === 'email' ? [{ label: '⏭️ Skip', action: 'skip_email' }] : []),
+      { label: '⬅️ Back', action: `back_${step}` },
+    ])
+  }
+
+  // Asked once the contact details are in, before anything address-shaped: the
+  // answer decides whether an address and pincode are needed at all.
+  const askFulfilment = async () => {
+    setOrderStep(null)
+    await addBotMessage('How would you like to get your order?')
+    setOptions([
+      { label: '🚚 Home Delivery', action: 'fulfil_delivery' },
+      { label: '🛍️ Self-Pickup (free)', action: 'fulfil_pickup' },
+      { label: '⬅️ Back', action: 'back_fulfilment' },
+    ])
+  }
+
   const sendOrderToWhatsApp = () => {
     const items = Object.entries(orderCart).filter(([, v]) => v.qty > 0)
     const subtotal = getCartTotal()
     // Distance-based delivery from the pincode in the address (geocoded at the date
     // step and stored in deliveryKm) — matches the website checkout so the same
     // address costs the same here. null (no pincode / lookup failed) → free.
-    const fee = deliveryFee('delivery', deliveryKm)
+    const isPickup = deliveryMethod === 'pickup'
+    const fee = deliveryFee(deliveryMethod, deliveryKm) // pickup is always 0
     const total = subtotal + fee
     const orderId = generateOrderId(orderInfo.name)
     setLastOrderId(orderId)
     setLastOrderTime(Date.now())
 
-    // Persist to Firestore (fire-and-forget, never blocks WhatsApp open).
-    // deliveryKm is geocoded from the address pincode (same as website checkout);
-    // stored so the admin dashboard shows "~N km away" for bot orders too.
-    saveOrder({
+    // A bulk order is recorded as `deposit`, NOT `cod`. shopConfig forbids plain
+    // Cash on Delivery at/above BULK_ORDER_MIN — that's the anti-fraud rule — and
+    // writing `cod` here meant the admin dashboard showed "Cash on Delivery" and
+    // the wrong verification steps for precisely the orders carrying the most
+    // risk, while depositAmount/balanceDue went unrecorded.
+    //
+    // But `paid` stays FALSE either way, unlike Checkout. The bot cannot take a
+    // UPI payment inline, so nothing has been received and nothing has even been
+    // claimed — the bakery requests the advance on WhatsApp. A `deposit` order
+    // with `paid: false` reads as "advance required, not yet in"; AdminOrders and
+    // the invoice both branch on `paid` so neither claims money that never
+    // arrived.
+    const bulk = isBulkOrder(subtotal)
+    const advance = bulk ? depositAmount(total) : 0
+
+    const orderData = {
       orderId,
       items: items.map(([name, { qty, price }]) => ({ name, qty, price, id: name.toLowerCase().replace(/\s+/g, '-') })),
       totals: { subtotal, delivery: fee, total },
       customer: {
         name: orderInfo.name,
         phone: orderInfo.phone,
-        address: orderInfo.address,
-        pincode: orderInfo.pincode,
+        email: orderInfo.email,
+        address: isPickup ? '' : orderInfo.address,
+        pincode: isPickup ? '' : orderInfo.pincode,
       },
-      payment: { method: 'cod' },
-      deliveryMethod: 'delivery',
-      deliveryKm,
-      notes: `Delivery: ${orderInfo.date}`,
+      payment: {
+        method: bulk ? 'deposit' : 'cod',
+        paid: false,
+        depositAmount: advance,
+        balanceDue: bulk ? total - advance : total,
+      },
+      // Its own field, not buried in `notes` — the invoice reads `deliveryDate`,
+      // so a bot order used to print "Home delivery" with no date on it.
+      deliveryDate: orderInfo.date,
+      deliveryMethod,
+      // Bakery-side only, and meaningless for a pickup — nothing was geocoded.
+      deliveryKm: isPickup ? null : deliveryKm,
+      notes: '',
       source: 'chatbot',
-    })
+    }
+
+    // Persist to Firestore (fire-and-forget, never blocks WhatsApp open).
+    // deliveryKm is geocoded from the address pincode (same as website checkout);
+    // stored so the admin dashboard shows "~N km away" for bot orders too.
+    saveOrder(orderData)
+
+    // Until now the bot notified nobody: the order landed in Firestore, WhatsApp
+    // opened, and that was the whole chain. A blocked pop-up or a customer who
+    // closed the tab at the last tap left a real order that the bakery never
+    // heard about. Both calls are fire-and-forget and never throw; the customer
+    // one no-ops without an email address, which is an optional step.
+    sendOrderEmail(orderData)
+    if (orderInfo.email) sendCustomerConfirmation(orderData)
 
     const grouped = {}
     items.forEach(([name, { qty, price }]) => {
@@ -720,9 +804,8 @@ export default function ChatBot() {
     // Large orders: the bot can't take a UPI payment inline, so it flags that the
     // bakery will request a 50% advance on WhatsApp before baking (keeps big COD
     // orders from being a no-show fraud risk — mirrors the checkout deposit rule).
-    const bulk = isBulkOrder(subtotal)
     const advanceLine = bulk
-      ? `*💳 Advance:* ${inr(depositAmount(total))} (${Math.round(DEPOSIT_PCT * 100)}%) requested before baking · balance on delivery\n`
+      ? `*💳 Advance:* ${inr(advance)} (${Math.round(DEPOSIT_PCT * 100)}%) requested before baking · balance on delivery\n`
       : ''
 
     const msg =
@@ -730,14 +813,18 @@ export default function ChatBot() {
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `*👤 Customer:* ${orderInfo.name}\n` +
       `*📞 Phone:* ${orderInfo.phone}\n` +
-      `*📍 Address:* ${orderInfo.address}\n` +
-      `*📅 Delivery:* ${orderInfo.date}\n` +
+      (isPickup
+        ? `*🛍️ Self-pickup:* ${PICKUP_LOCATION}\n`
+        : `*📍 Address:* ${orderInfo.address}\n`) +
+      `*📅 ${isPickup ? 'Pickup' : 'Delivery'} date:* ${orderInfo.date}\n` +
       `*🕐 Order Time:* ${orderTime}\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `*📋 Order Items:*${orderLines}\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `*Subtotal:* ${inr(subtotal)}\n` +
-      `*Delivery:* ${fee === 0 ? 'FREE (far areas confirmed by us)' : inr(fee)}\n` +
+      (isPickup
+        ? `*Pickup:* FREE\n`
+        : `*Delivery:* ${fee === 0 ? 'FREE (far areas confirmed by us)' : inr(fee)}\n`) +
       `*💰 Total: ${inr(total)}*\n` +
       advanceLine +
       `\n━━━━━━━━━━━━━━━━━━━━\n\n` +
@@ -771,12 +858,43 @@ export default function ChatBot() {
       return
     }
 
+    // Drop one line from the cart. The remaining items are computed here rather
+    // than read back from state after setOrderCart — the empty-cart branch has to
+    // be right immediately, and state won't have flushed yet.
+    if (action.startsWith('rm_')) {
+      const name = action.slice(3)
+      const remaining = Object.entries(orderCart).filter(([n, v]) => n !== name && v.qty > 0)
+      setOrderCart(Object.fromEntries(remaining))
+      setOptions([])
+      await addBotMessage(`Removed *${name}* 🗑️`)
+      if (!remaining.length) {
+        await addBotMessage('Your cart is empty now.')
+        await showOrderCategories()
+      } else {
+        await handleAction('review_order')
+      }
+      return
+    }
+
+    // Step back through the details questions. Each target re-asks its own
+    // question through askStep, so the prompts live in exactly one place.
+    if (action.startsWith('back_')) {
+      const from = action.slice(5)
+      setOptions([])
+      if (from === 'name') await handleAction('review_order')
+      else if (from === 'fulfilment') await askStep('email')
+      else if (from === 'address') await askFulfilment()
+      else await askStep(PREV_STEP[from])
+      return
+    }
+
     switch (action) {
       case 'home':
         setOrderCart({})
         setOrderStep(null)
-        setOrderInfo({ name: '', phone: '', address: '', pincode: '', date: '' })
+        setOrderInfo({ name: '', phone: '', email: '', address: '', pincode: '', date: '' })
         setDeliveryKm(null)
+        setDeliveryMethod('delivery')
         setShowDatePicker(false)
         await showMainMenu()
         break
@@ -811,6 +929,10 @@ export default function ChatBot() {
         setOptions([
           { label: '✅ Confirm & Enter Details', action: 'collect_info' },
           { label: '➕ Add More Items', action: 'order' },
+          // Between "add more" and "clear everything" there was nothing —
+          // changing your mind about one item meant emptying the cart and
+          // starting again.
+          ...(cartItems.length > 1 ? [{ label: '✕ Remove an Item', action: 'remove_item' }] : []),
           { label: '🗑️ Clear Cart', action: 'clear_cart' },
           { label: '🏠 Cancel', action: 'home' },
         ])
@@ -825,8 +947,8 @@ export default function ChatBot() {
       case 'collect_info':
         setOptions([])
         setActiveOrderCat(null)
-        await addBotMessage('Great! I need a few details for delivery.\n\nPlease type your *full name*:')
-        setOrderStep('name')
+        await addBotMessage('Great! I need a few details for your order.')
+        await askStep('name')
         break
       case 'confirm_send': {
         setOptions([])
@@ -846,6 +968,36 @@ export default function ChatBot() {
         ])
         break
       }
+      case 'remove_item': {
+        const entries = Object.entries(orderCart).filter(([, v]) => v.qty > 0)
+        if (!entries.length) { await showOrderCategories(); break }
+        setOptions([])
+        await addBotMessage('Which one should I take out?')
+        setOptions([
+          ...entries.map(([name, { qty }]) => ({ label: `✕ ${name} ×${qty}`, action: `rm_${name}` })),
+          { label: '⬅️ Back', action: 'review_order' },
+        ])
+        break
+      }
+      case 'skip_email':
+        setOptions([])
+        await askFulfilment()
+        break
+      case 'fulfil_delivery':
+        setOptions([])
+        setDeliveryMethod('delivery')
+        await askStep('address')
+        break
+      case 'fulfil_pickup':
+        // Pickup skips address AND pincode — there's nothing to geocode and
+        // nothing to charge, so choosing it makes the flow shorter, not longer.
+        setOptions([])
+        setDeliveryMethod('pickup')
+        setDeliveryKm(null)
+        setOrderStep('date')
+        setShowDatePicker(true)
+        await addBotMessage(`Perfect — collect from *${PICKUP_LOCATION}* 🛍️\n\nNow pick your preferred *date* below:`)
+        break
       case 'open_wa_fallback':
         if (lastWaUrl) window.open(lastWaUrl, '_blank', 'noopener,noreferrer')
         break
@@ -875,7 +1027,18 @@ export default function ChatBot() {
         break
       case 'delivery':
         setOptions([])
-        await addBotMessage('*Delivery Information*\n\n📍 *Area:* All Gujarat districts\n⏰ *Notice:* Please order 24 hours in advance\n🚗 *Delivery:* Home delivery or free self-pickup — the charge (if any) is confirmed by Cake & Crumb on WhatsApp\n📦 *Packaging:* Included in price')
+        // Describes what the bot actually does now: it geocodes the pincode and
+        // quotes a real charge in the summary, and it can take a pickup order.
+        // Never mention the distance or any "within N km" wording — the km is
+        // bakery-side only (see the delivery notes in CLAUDE.md).
+        await addBotMessage(
+          '*Delivery Information*\n\n' +
+          '📍 *Area:* All Gujarat districts\n' +
+          '⏰ *Notice:* Please order 24 hours in advance\n' +
+          '🚚 *Home delivery:* the charge is worked out from your pincode and shown in your order summary before you send it — many nearby areas are free\n' +
+          `🛍️ *Self-pickup:* always free — collect from ${PICKUP_LOCATION}\n` +
+          '📦 *Packaging:* included in the price'
+        )
         setOptions([{ label: '🛒 Place Order', action: 'order' }, { label: '🏠 Main Menu', action: 'home' }])
         break
       case 'location':
@@ -900,8 +1063,9 @@ export default function ChatBot() {
     setOrderStep(null)
     setShowDatePicker(false)
     const subtotal = getCartTotal()
-    // deliveryKm was geocoded from the pincode step (same rule as the website).
-    const fee = deliveryFee('delivery', deliveryKm)
+    // deliveryKm was geocoded from the pincode step (same rule as the website);
+    // pickup never reaches that step and is free regardless.
+    const fee = deliveryFee(deliveryMethod, deliveryKm)
     const total = subtotal + fee
     const summaryItems = Object.entries(orderCart)
       .filter(([, v]) => v.qty > 0)
@@ -917,6 +1081,7 @@ export default function ChatBot() {
           total,
           bulk: isBulkOrder(subtotal),
           deposit: depositAmount(total),
+          pickup: deliveryMethod === 'pickup',
           info: {
             name: orderInfo.name,
             phone: orderInfo.phone,
@@ -932,7 +1097,7 @@ export default function ChatBot() {
     if (isBulkOrder(subtotal)) {
       await addBotMessage(`💳 *This is a larger order.* We'll request a *${Math.round(DEPOSIT_PCT * 100)}% advance* (${inr(depositAmount(total))}) on WhatsApp before baking — the balance is paid on delivery.`)
     }
-    await addBotMessage('Ready to send this order to our bakery on WhatsApp? 🎂')
+    await addBotMessage(`Ready to send this ${deliveryMethod === 'pickup' ? 'pickup ' : ''}order to our bakery on WhatsApp? 🎂`)
     setOptions([
       { label: '✅ Send Order via WhatsApp', action: 'confirm_send' },
       { label: '✏️ Edit Details', action: 'collect_info' },
@@ -951,8 +1116,7 @@ export default function ChatBot() {
         return
       }
       setOrderInfo((prev) => ({ ...prev, name: text.trim() }))
-      setOrderStep('phone')
-      await addBotMessage(`Thanks *${text.trim()}*! Now enter your *phone number*:`)
+      await askStep('phone', `Thanks *${text.trim()}*! `)
       return
     }
     if (orderStep === 'phone') {
@@ -962,8 +1126,21 @@ export default function ChatBot() {
         return
       }
       setOrderInfo((prev) => ({ ...prev, phone: text }))
-      setOrderStep('address')
-      await addBotMessage('Enter your *full delivery address*\n(House/Flat, Street, Area, City):')
+      // Email is optional on purpose — it only feeds the customer confirmation;
+      // the bakery's own notification goes out either way, so nobody should have
+      // to hand over an address to finish ordering. askStep adds the Skip button.
+      await askStep('email')
+      return
+    }
+    if (orderStep === 'email') {
+      const email = text.trim()
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        await addBotMessage("That doesn't look like an email address. Try again, or tap *Skip*:")
+        return
+      }
+      setOptions([])
+      setOrderInfo((prev) => ({ ...prev, email }))
+      await askFulfilment()
       return
     }
     if (orderStep === 'address') {
@@ -972,8 +1149,7 @@ export default function ChatBot() {
         return
       }
       setOrderInfo((prev) => ({ ...prev, address: text.trim() }))
-      setOrderStep('pincode')
-      await addBotMessage('Enter your *6-digit pincode* 📮\n(so we can calculate delivery to your area):')
+      await askStep('pincode')
       return
     }
     if (orderStep === 'pincode') {
@@ -983,6 +1159,10 @@ export default function ChatBot() {
         return
       }
       setOrderInfo((prev) => ({ ...prev, pincode: pin }))
+      // Clear the step's Back button before the date picker takes over — going
+      // "back" from a date to a pincode that's already been geocoded reads as a
+      // dead end, and Edit Details covers a real change of mind.
+      setOptions([])
       // Brief feedback so the geocode round-trip doesn't feel like a freeze.
       await addBotMessage('Got it! Calculating delivery to your area… ⏳')
       // Geocode now (same as website checkout) so the delivery fee is ready for the

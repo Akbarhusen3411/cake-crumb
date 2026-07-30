@@ -22,7 +22,14 @@ function paymentLabel(o) {
   const p = o.payment || {}
   if (p.method === 'upi') return 'UPI — paid in full (verify in your bank)'
   if (p.method === 'deposit') {
-    return `Advance ${inr(p.depositAmount || 0)} paid (verify in bank) + ${inr(p.balanceDue || 0)} cash on delivery`
+    // A deposit order can arrive two ways. From Checkout the customer has already
+    // paid the advance by UPI and `paid` is their claim, to be verified. From the
+    // ChatBot nothing has been taken at all — the bot can't accept a payment — so
+    // the advance is still to be collected. Saying "paid" for the second would
+    // report money that was never received.
+    return p.paid
+      ? `Advance ${inr(p.depositAmount || 0)} paid (verify in bank) + ${inr(p.balanceDue || 0)} cash on delivery`
+      : `Advance ${inr(p.depositAmount || 0)} REQUIRED — not received yet · ${inr(p.balanceDue || 0)} on delivery`
   }
   return 'Cash on Delivery'
 }
@@ -499,18 +506,25 @@ export default function AdminOrders() {
                       </summary>
                       <ol style={{ margin: '6px 0 0', paddingLeft: 18 }}>
                         <li><strong>Call the customer</strong> ({o.customer?.phone || 'no number'}) to confirm the order is genuine.</li>
-                        {o.payment?.method === 'deposit'
+                        {o.payment?.method === 'deposit' && o.payment?.paid
                           ? <li>Confirm the <strong>{inr(o.payment?.depositAmount || 0)} advance</strong> landed in your bank (see “verify payment” below).</li>
-                          : o.payment?.method === 'upi'
-                            ? <li>Confirm the <strong>full {inr(o.totals?.total || 0)}</strong> landed in your bank (see “verify payment” below).</li>
-                            : <li><strong>No advance was collected</strong> on this order — consider asking for one on WhatsApp before baking.</li>}
+                          : o.payment?.method === 'deposit'
+                            // Chat-bot order: an advance is required by the bulk rule but the
+                            // bot couldn't take one, so it has to be asked for on WhatsApp.
+                            ? <li><strong>Ask for the {inr(o.payment?.depositAmount || 0)} advance</strong> on WhatsApp and see it land in your bank — <strong>nothing has been paid yet</strong>.</li>
+                            : o.payment?.method === 'upi'
+                              ? <li>Confirm the <strong>full {inr(o.totals?.total || 0)}</strong> landed in your bank (see “verify payment” below).</li>
+                              : <li><strong>No advance was collected</strong> on this order — consider asking for one on WhatsApp before baking.</li>}
                         {o.deliveryMethod === 'delivery' && <li>Confirm the delivery address is real and reachable.</li>}
                         <li>Only then tap <strong>Confirm</strong> and start baking.</li>
                       </ol>
                     </details>
                   )}
 
-                  {(o.payment?.method === 'upi' || o.payment?.method === 'deposit') && (
+                  {/* Gated on `paid`: with nothing claimed there is no credit to
+                      look for, and "How to verify this payment" over an order
+                      that was never paid is worse than no panel at all. */}
+                  {o.payment?.paid && (o.payment?.method === 'upi' || o.payment?.method === 'deposit') && (
                     <div
                       className="mt-2"
                       style={{

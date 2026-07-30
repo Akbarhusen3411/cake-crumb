@@ -132,14 +132,18 @@ export function buildWebsiteInvoice(o) {
   const deposit = Number(p.depositAmount) || 0
   const balance = Number(p.balanceDue) || 0
 
-  const method = {
-    upi: 'UPI',
-    deposit: 'UPI advance + cash on delivery',
-    cod: 'Cash on delivery',
-  }[p.method] || 'Cash on delivery'
+  const method = p.method === 'deposit'
+    // Same split payment either way; only the tense differs, and an unpaid
+    // advance shouldn't read as one already handed over.
+    ? (p.paid ? 'UPI advance + cash on delivery' : 'Advance then cash on delivery')
+    : ({ upi: 'UPI', cod: 'Cash on delivery' }[p.method] || 'Cash on delivery')
 
+  // `deposit` alone doesn't mean money arrived. A Checkout deposit order has the
+  // advance paid (as claimed) and is genuinely part paid; a ChatBot one only has
+  // the advance *required* — the bot can't take a payment — so it is still fully
+  // unpaid, and printing "Part paid" on the customer's bill would be false.
   let statusLabel = 'Payment pending'
-  if (p.method === 'deposit' && deposit > 0) statusLabel = 'Part paid'
+  if (p.method === 'deposit' && p.paid && deposit > 0) statusLabel = 'Part paid'
   else if (p.paid) statusLabel = 'Paid'
 
   const fulfilment = o?.deliveryMethod === 'pickup' ? 'Self-pickup'
@@ -164,11 +168,13 @@ export function buildWebsiteInvoice(o) {
     subtotal: Number(t.subtotal) || 0,
     delivery: Number(t.delivery) || 0,
     total: Number(t.total) || 0,
-    paid: p.method === 'deposit' ? deposit > 0 : !!p.paid,
+    paid: !!p.paid,
     statusLabel,
     methodLabel: method,
     balanceNote: p.method === 'deposit' && balance > 0
-      ? `Advance ${inr(deposit)} received · ${inr(balance)} due on delivery`
+      ? (p.paid
+        ? `Advance ${inr(deposit)} received · ${inr(balance)} due on delivery`
+        : `Advance ${inr(deposit)} due before baking · ${inr(balance)} on delivery`)
       : '',
     fulfilment: [fulfilment, o?.deliveryDate].filter(Boolean).join(' · '),
     notes: o?.notes,

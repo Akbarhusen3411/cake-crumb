@@ -86,10 +86,16 @@ const pdfFileName = (ref) =>
  * own engine via foreignObject, so the sheet comes out exactly as rendered —
  * real Playfair/Lato, the logo, the rose rules.
  *
- * The page is sized to the sheet's own proportions rather than forced onto A4, so
- * there's no band of empty paper around it — it opens full-bleed on a phone and
- * in WhatsApp. Printing on real paper still goes through Print, at A4 landscape.
+ * Always A4 LANDSCAPE, at the owner's request — matching what Print produces, so
+ * the downloaded file and the printed sheet are the same page. The invoice is a
+ * tall, narrow receipt, so on a 297×210mm page it's height-constrained: it's
+ * scaled to fit and centred, which leaves white paper down either side. That's
+ * inherent to putting a portrait-shaped document on landscape paper, not a bug.
+ * (An earlier version sized the page to the sheet's own proportions, which was
+ * full-bleed but portrait.)
  */
+const PAGE = { w: 297, h: 210, margin: 8 } // A4 landscape, mm
+
 async function downloadInvoicePdf(node, ref) {
   const [{ toPng }, { jsPDF }] = await Promise.all([
     import('html-to-image'),
@@ -104,15 +110,15 @@ async function downloadInvoicePdf(node, ref) {
 
   const w = node.offsetWidth || 560
   const h = node.offsetHeight || 800
-  const pageW = 210 // mm — A4's width, so it prints at a familiar scale
-  const pageH = Math.max(1, Math.round((pageW * h) / w))
+  const availW = PAGE.w - PAGE.margin * 2
+  const availH = PAGE.h - PAGE.margin * 2
+  // Fit inside the page without distorting: whichever axis runs out first wins.
+  const scale = Math.min(availW / w, availH / h)
+  const drawW = w * scale
+  const drawH = h * scale
 
-  const pdf = new jsPDF({
-    unit: 'mm',
-    format: [pageW, pageH],
-    orientation: pageH >= pageW ? 'portrait' : 'landscape',
-  })
-  pdf.addImage(dataUrl, 'PNG', 0, 0, pageW, pageH)
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' })
+  pdf.addImage(dataUrl, 'PNG', (PAGE.w - drawW) / 2, (PAGE.h - drawH) / 2, drawW, drawH)
   pdf.save(pdfFileName(ref))
 }
 

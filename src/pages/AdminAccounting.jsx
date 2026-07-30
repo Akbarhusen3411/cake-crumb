@@ -16,6 +16,16 @@ import OwnerMoneyTab from '../components/admin/accounting/OwnerMoneyTab.jsx'
 import MonthlyTab from '../components/admin/accounting/MonthlyTab.jsx'
 import DangerZone from '../components/admin/accounting/DangerZone.jsx'
 
+// Re-lock the money pages after this long with no activity.
+//
+// The unattended signed-in tab is the ONE risk the PIN gate actually covers (see
+// PinGate.jsx — the real boundary is Auth + the Firestore rules), and it was only
+// covered while the owner remembered to press Lock. In practice an order gets
+// confirmed, the baking starts, and the tab sits open on the counter with every
+// figure on screen. Two minutes is deliberately short: this is a shop counter,
+// not a desk, and the cost of being wrong is one PIN entry.
+const IDLE_LOCK_MS = 2 * 60 * 1000
+
 const TABS = [
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'orders', label: 'Orders' },
@@ -59,6 +69,26 @@ export default function AdminAccounting() {
     setUnlocked(false)
   }
   const ready = isAdmin && unlocked
+
+  // Idle auto-lock. Only armed while actually unlocked, so it costs nothing on
+  // the PIN screen. Listeners are passive and on the capture phase so a click
+  // that lands inside a modal still counts as activity, and `visibilitychange`
+  // is in there because switching tabs is exactly when the phone gets put down.
+  useEffect(() => {
+    if (!unlocked) return
+    let timer
+    const arm = () => {
+      clearTimeout(timer)
+      timer = setTimeout(lock, IDLE_LOCK_MS)
+    }
+    const events = ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll', 'visibilitychange']
+    events.forEach((e) => document.addEventListener(e, arm, { passive: true, capture: true }))
+    arm()
+    return () => {
+      clearTimeout(timer)
+      events.forEach((e) => document.removeEventListener(e, arm, { capture: true }))
+    }
+  }, [unlocked])
 
   const [tab, setTab] = useState('dashboard')
   const [menu, setMenu] = useState([])
@@ -194,7 +224,11 @@ export default function AdminAccounting() {
         <h1 className="h4 m-0" style={{ fontFamily: 'var(--font-heading,serif)', color: '#cf3e63' }}>Daily Accounting</h1>
         <button className="btn btn-sm btn-light ms-2" onClick={reload} title="Refresh"><FiRefreshCw /></button>
         {loading ? <span className="text-muted small">Loading…</span> : null}
-        <button className="btn btn-sm btn-outline-secondary ms-auto" onClick={lock} title="Lock without signing out">
+        <button
+          className="btn btn-sm btn-outline-secondary ms-auto"
+          onClick={lock}
+          title="Lock without signing out — locks itself after 2 minutes idle"
+        >
           <FiLock /> Lock
         </button>
         <button className="btn btn-sm btn-outline-secondary" onClick={logout}><FiLogOut /> Sign out</button>

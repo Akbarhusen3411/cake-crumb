@@ -5,7 +5,7 @@ import Navbar from './components/Navbar.jsx'
 import Footer from './components/Footer.jsx'
 import MiniFooter from './components/MiniFooter.jsx'
 import CartToast from './components/CartToast.jsx'
-import ChatBot from './components/ChatBot.jsx'
+import DeferredChatBot from './components/DeferredChatBot.jsx'
 import FestivalBanner from './components/FestivalBanner.jsx'
 import BackToTop from './components/BackToTop.jsx'
 import Home from './pages/Home.jsx'
@@ -91,7 +91,7 @@ function App() {
         </main>
         {isAdmin ? null : hideFooter ? <MiniFooter /> : <Footer />}
         {!isAdmin && <CartToast />}
-        {!isAdmin && <ChatBot />}
+        {!isAdmin && <DeferredChatBot />}
         {!isAdmin && <BackToTop />}
       </div>
     </CartProvider>
