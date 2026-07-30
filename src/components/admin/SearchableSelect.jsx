@@ -136,14 +136,28 @@ export default function SearchableSelect({
                 onMouseDown={(e) => { e.preventDefault(); select(o) }}
                 onMouseEnter={() => setHi(i)}
                 style={{
-                  display: 'block', width: '100%', textAlign: 'left', border: 0,
+                  display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between',
+                  width: '100%', textAlign: 'left', border: 0,
                   padding: '9px 14px', cursor: 'pointer',
                   background: i === hi ? '#fce9ee' : (o.value === value ? '#fff4f7' : '#fff'),
                   color: '#5b3e36',
                 }}
               >
                 <span style={{ fontWeight: o.value === value ? 700 : 500 }}>{o.label}</span>
-                {o.sub ? <span style={{ color: '#b08', marginLeft: 8, fontSize: 12 }}>{o.sub}</span> : null}
+                {/* `sub` is always a price. It's the figure being compared when
+                    picking a size, so it gets its own weight and a chip pushed to
+                    the right edge — as trailing 12px grey text it read like an
+                    afterthought and the sizes all looked alike. Lining/tabular
+                    figures so ₹90 and ₹240 line up down the list. */}
+                {o.sub ? (
+                  <span style={{
+                    fontWeight: 800, fontSize: 13, whiteSpace: 'nowrap',
+                    color: 'var(--cc-rose-deep, #cf3e63)',
+                    background: '#fdeef2', border: '1px solid #f6d9e1',
+                    borderRadius: 999, padding: '1px 9px',
+                    fontVariantNumeric: 'lining-nums tabular-nums',
+                  }}>{o.sub}</span>
+                ) : null}
               </button>
             ))
           )}

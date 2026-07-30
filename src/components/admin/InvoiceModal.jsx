@@ -7,6 +7,7 @@ import { inr } from '../../data/format.js'
 import { fmtDate } from '../../utils/adminDate.js'
 import { invoiceQuote } from '../../utils/invoice.js'
 import { FSSAI, UDYAM } from '../../data/certifications.js'
+import { useIsMobile } from '../../hooks/useIsMobile.js'
 
 // Bakery details, matching index.html's meta/JSON-LD and the Footer.
 const BAKERY = {
@@ -14,6 +15,99 @@ const BAKERY = {
   phone: '+91 91731 83440',
   email: 'cakeandcrumb.in@gmail.com',
   instagram: '@cake_and_crumb_1',
+}
+
+/**
+ * The invoice as a self-contained document, for the mobile print path below.
+ *
+ * The app's own <style>/<link> tags are copied by reference, so the sheet is the
+ * one already on screen and there's no second copy of the invoice CSS to keep in
+ * step. Two details make that work and are easy to break:
+ *   - <base> is required. The frame is written with srcdoc, whose base URL is
+ *     `about:srcdoc`, so without it every relative href resolves to nothing and
+ *     the sheet arrives unstyled.
+ *   - the node is wrapped in .cc-invoice-overlay, because index.css's own print
+ *     rule hides `body > *:not(.cc-invoice-overlay)` — a bare .cc-invoice would
+ *     be hidden by the very stylesheet just copied in.
+ * The trailing <style> then neutralises the overlay's on-screen backdrop and
+ * restates @page, since this document must stand on its own.
+ *
+ * <title> is what names the saved PDF.
+ */
+function standaloneInvoiceHtml(node, number) {
+  const styles = Array.from(
+    document.querySelectorAll('link[rel="stylesheet"], style')
+  ).map((n) => n.outerHTML).join('\n')
+
+  return `<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="${document.baseURI}">
+<title>Invoice ${String(number || '').replace(/[<>&"]/g, '')}</title>
+${styles}
+<style>
+  @page { size: A4 landscape; margin: 0; }
+  html, body { margin: 0; padding: 0; background: #fff; overflow: visible; }
+  .cc-invoice-overlay {
+    position: static; inset: auto; background: #fff;
+    display: block; padding: 0; overflow: visible; z-index: auto;
+  }
+  .cc-invoice-sheet, .cc-invoice { max-width: 190mm; margin: 0 auto; }
+  .cc-invoice-actions, .cc-invoice-close { display: none; }
+</style>
+</head><body>
+<div class="cc-invoice-overlay">${node.outerHTML}</div>
+</body></html>`
+}
+
+/**
+ * Print the invoice from a hidden iframe.
+ *
+ * Printing the page in place works on desktop and does NOT work on the owner's
+ * phone — it was tried, and came back blank. Mobile browsers paginate from the
+ * layout viewport rather than re-laying the document out for paged media, so the
+ * modal's portal-over-app document defeats them however the CSS is written.
+ * Handing them a small document with nothing to hide is what actually works.
+ *
+ * An iframe rather than window.open: a visible second tab worked too, but the
+ * owner asked for the print dialog to come up on the tap with nothing in
+ * between. Same isolation, no window.
+ *
+ * The frame is left in the DOM for a minute — removing it as soon as print()
+ * returns cancels the job in browsers where the dialog is asynchronous.
+ */
+function printViaIframe(node, number) {
+  return new Promise((resolve, reject) => {
+    const frame = document.createElement('iframe')
+    frame.setAttribute('aria-hidden', 'true')
+    frame.setAttribute('tabindex', '-1')
+    frame.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;opacity:0;border:0;'
+    frame.onload = () => {
+      const win = frame.contentWindow
+      if (!win) { frame.remove(); reject(new Error('no frame window')); return }
+      const go = () => {
+        try {
+          win.focus()
+          win.print()
+          resolve()
+        } catch (err) {
+          frame.remove()
+          reject(err)
+          return
+        }
+        setTimeout(() => frame.remove(), 60000)
+      }
+      // Wait for the copied stylesheet and the webfonts, or the sheet prints in
+      // fallback fonts at the wrong metrics.
+      const fonts = win.document.fonts
+      if (fonts?.ready) fonts.ready.then(() => setTimeout(go, 120)).catch(() => setTimeout(go, 500))
+      else setTimeout(go, 500)
+    }
+    frame.onerror = () => { frame.remove(); reject(new Error('frame failed')) }
+    document.body.appendChild(frame)
+    frame.srcdoc = standaloneInvoiceHtml(node, number)
+  })
 }
 
 /**
@@ -38,7 +132,12 @@ const BAKERY = {
  */
 export default function InvoiceModal({ invoice, onClose }) {
   const titleRef = useRef('')
+  const sheetRef = useRef(null)
   const [printErr, setPrintErr] = useState('')
+  const isMobile = useIsMobile()
+  // The single reference printed on the sheet (see the ids block in the markup).
+  // It names the saved PDF too, so the file and the paper agree.
+  const printRef = invoice?.reference || invoice?.number || ''
 
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') onClose() }
@@ -53,31 +152,14 @@ export default function InvoiceModal({ invoice, onClose }) {
   }, [])
 
   /**
-   * One path, phone and desktop alike: print this page. The dialog opens on the
-   * tap, with no intermediate tab in between.
-   *
-   * That directness is only safe because the print rules in index.css un-clip
-   * the document first. Mobile browsers paginate from the layout viewport where
-   * desktop Blink re-lays the document out for paged media, so the modal's
-   * inline `overflow: hidden` scroll lock and the site-wide `overflow-x: clip`
-   * used to crop a phone's printout to one blank page — which is why this once
-   * needed a whole separate window. The `!important` overflow reset there is
-   * what makes printing in place work; don't remove it and leave this alone.
-   * (Desktop devtools "mobile view" can't test any of this — it resizes the
-   * viewport but keeps the desktop print engine.)
+   * Print the page itself. Correct on desktop, and the fallback everywhere else.
    *
    * The title swap is what names the saved PDF: browsers take the filename from
-   * document.title, which would otherwise be the admin page's own title.
+   * document.title, which here would otherwise be the admin page's own title.
    */
-  function handlePrint() {
-    setPrintErr('')
-    if (typeof window.print !== 'function') {
-      setPrintErr('This browser has no print support. Open the page in Chrome or Safari.')
-      return
-    }
-
+  function printInPlace() {
     const original = document.title
-    const printTitle = `Invoice ${invoice.number || ''}`.trim()
+    const printTitle = `Invoice ${printRef}`.trim()
     titleRef.current = original
     document.title = printTitle
 
@@ -94,6 +176,32 @@ export default function InvoiceModal({ invoice, onClose }) {
     try { window.print() } catch { restore(); setPrintErr('Printing was blocked by the browser.') }
   }
 
+  /**
+   * Desktop prints in place; a phone prints from the hidden frame.
+   *
+   * Printing in place was tried on mobile and came back blank — twice — so the
+   * split is empirical, not theoretical. Whatever the CSS says, mobile browsers
+   * won't paginate this portal-over-app document; they will happily print a
+   * small self-contained one. Note that devtools "mobile view" cannot reproduce
+   * any of this: it resizes the viewport but keeps the desktop print engine, so
+   * it reports success either way.
+   */
+  function handlePrint() {
+    setPrintErr('')
+    if (typeof window.print !== 'function') {
+      setPrintErr('This browser has no print support. Open the page in Chrome or Safari.')
+      return
+    }
+    const node = sheetRef.current?.querySelector('.cc-invoice')
+    if (!isMobile || !node) { printInPlace(); return }
+
+    printViaIframe(node, printRef).catch(() => {
+      // Some mobile browsers (notably older iOS Safari) refuse to print a frame.
+      // Falling back is better than a button that does nothing.
+      printInPlace()
+    })
+  }
+
   if (!invoice) return null
 
   const { customer = {}, lines = [] } = invoice
@@ -102,7 +210,7 @@ export default function InvoiceModal({ invoice, onClose }) {
 
   return createPortal(
     <div className="cc-invoice-overlay" onMouseDown={onClose}>
-      <div className="cc-invoice-sheet" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="cc-invoice-sheet" ref={sheetRef} onMouseDown={(e) => e.stopPropagation()}>
         <button type="button" className="cc-invoice-close" aria-label="Close" title="Close" onClick={onClose}>
           <FiX />
         </button>
@@ -115,11 +223,17 @@ export default function InvoiceModal({ invoice, onClose }) {
             </div>
           </div>
 
-          {/* Centred under both corners — the reference is what gets quoted back
-              on the phone, so it shouldn't be tucked into a corner. */}
+          {/* ONE reference, centred under both corners — it's what gets quoted
+              back over the phone, so it shouldn't be tucked into a corner.
+              It used to print two: this order's number AND a separate invoice
+              number hashed from the doc id. Two near-identical codes on one small
+              bill is a liability when someone reads one aloud, and the hashed one
+              can't be looked up anywhere — the order number is the one that
+              exists in the admin list and in search. The hash stays as the
+              fallback for rows that predate order numbers, so a sheet is never
+              unlabelled. */}
           <div className="cc-invoice-ids">
-            <span className="cc-invoice-no">{invoice.number}</span>
-            {invoice.reference ? <span className="cc-invoice-ref">Order {invoice.reference}</span> : null}
+            <span className="cc-invoice-no">{printRef}</span>
           </div>
 
           <div className="text-center"><HeartDivider width={54} /></div>

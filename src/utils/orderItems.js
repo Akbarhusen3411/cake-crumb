@@ -22,7 +22,38 @@ export const fullItem = (it) => {
   return item.toLowerCase().includes(cat.toLowerCase()) ? item : `${item} ${cat}`
 }
 
-/** "Chocolate Cake Pop — Per piece ×10" for compact one-line summaries. */
-export const oneLine = (it, withQty) =>
-  (it.variant ? `${fullItem(it)} — ${it.variant}` : fullItem(it)) +
-  (withQty && Number(it.qty) > 1 ? ` ×${it.qty}` : '')
+/**
+ * A menu variant as it should READ anywhere it's shown.
+ *
+ * Boxed items store a bare count — `acc_menu` rows for Cake Pops are literally
+ * "6" and "12" — which renders as "Chocolate Cake Pop — 6" on a bill and as a
+ * lone "6" in the size dropdown. Neither says what the 6 is.
+ */
+export const variantLabel = (v) => {
+  const s = String(v || '').trim()
+  return /^\d+$/.test(s) ? `Box of ${s}` : s
+}
+
+/**
+ * The variant as it should READ on a bill.
+ *
+ * "Per piece" and "Per slice" are unit markers, not sizes — beside a Qty column
+ * they say nothing the quantity doesn't, and "Biscoff Cheesecake — Per slice"
+ * against a qty of 1 reads like a mistake. Dropped from display at the owner's
+ * request. Real sizes ("Box of 6", "Bento", "Tub", "4 inch") do carry
+ * information and stay.
+ *
+ * DISPLAY ONLY. The stored `variant` is untouched, because it's what
+ * `isPerPieceVariant()` in accounting.js reads to enforce the 2-piece minimum,
+ * and what the menu cascade matches a price on.
+ */
+const UNIT_VARIANT = /^\s*(per\s*(piece|pc|pcs|slice)|standard)\s*$/i
+export const displayVariant = (v) =>
+  (UNIT_VARIANT.test(String(v || '')) ? '' : variantLabel(v))
+
+/** "Chocolate Cake Pop ×10" for compact one-line summaries. */
+export const oneLine = (it, withQty) => {
+  const v = displayVariant(it.variant)
+  return (v ? `${fullItem(it)} — ${v}` : fullItem(it)) +
+    (withQty && Number(it.qty) > 1 ? ` ×${it.qty}` : '')
+}

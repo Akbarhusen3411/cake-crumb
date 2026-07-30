@@ -5,6 +5,7 @@ import SearchableSelect from '../SearchableSelect.jsx'
 import { inr } from '../../../data/format.js'
 import { todayIso } from '../../../utils/adminDate.js'
 import { isPerPieceVariant } from '../../../services/accounting.js'
+import { variantLabel } from '../../../utils/orderItems.js'
 
 const emptyLine = () => ({ category: '', item: '', variant: '', qty: 1, unitPrice: '' })
 
@@ -25,9 +26,12 @@ function OrderLine({ menu, line, onChange, onRemove, canRemove }) {
     () => menu.filter((m) => m.category === line.category && m.name === line.item),
     [menu, line.category, line.item]
   )
+  // `value` stays the raw stored variant — it's the key the menu price and the
+  // per-piece minimum are matched on. Only the label is prettified, so a bare
+  // "6" reads "Box of 6" without changing what gets saved.
   const variantOptions = variants.map((v) => ({
     value: v.variant || 'Standard',
-    label: v.variant && v.variant !== 'Standard' ? v.variant : 'Standard',
+    label: v.variant && v.variant !== 'Standard' ? variantLabel(v.variant) : 'Standard',
     sub: inr(v.price), price: v.price,
   }))
   const total = Math.round((Number(line.qty) || 0) * (Number(line.unitPrice) || 0))

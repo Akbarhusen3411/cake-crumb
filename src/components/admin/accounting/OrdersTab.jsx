@@ -10,7 +10,7 @@ import {
 } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
 import { fmtDate, inPeriod } from '../../../utils/adminDate.js'
-import { orderLines, fullItem, oneLine } from '../../../utils/orderItems.js'
+import { orderLines, fullItem, oneLine, displayVariant } from '../../../utils/orderItems.js'
 import { buildAccountingInvoice } from '../../../utils/invoice.js'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
 
@@ -311,7 +311,9 @@ export default function OrdersTab({ orders, menu, reload }) {
               .filter((it) => it.item || it.category)
               .map((it) => ({
                 label: fullItem(it),
-                sub: it.variant,
+                // "Per piece" / "Per slice" are dropped — the Qty column already
+                // says it. See displayVariant().
+                sub: displayVariant(it.variant),
                 qty: Number(it.qty) || 0,
                 rate: Number(it.unitPrice) || 0,
                 amount: Math.round((Number(it.qty) || 0) * (Number(it.unitPrice) || 0)),

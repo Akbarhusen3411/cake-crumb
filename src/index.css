@@ -5495,18 +5495,30 @@ header[style*="sticky"] {
   }
   .cc-invoice-actions,
   .cc-invoice-close { display: none !important; }
-  /* Chrome draws its own header/footer — the date, the page title and the URL —
-     into the @page margin. Zeroing the margin is what removes them; the paper
-     margin is then the invoice's own padding instead. (The print dialog's
-     "Headers and footers" tick-box does the same thing by hand.)
-     Trade-off: element padding applies once, not per page, so an invoice long
-     enough to break onto a second page would start that page at the paper edge.
-     Item lists that long don't happen here; revisit if they ever do.
-     Landscape at the owner's request — see the sheet width below, which stops it
-     stretching across the wider page. */
-  @page { size: A4 landscape; margin: 0; }
   .cc-invoice { padding: 14mm !important; }
 }
+
+/* @page lives at the TOP LEVEL, deliberately — not inside the @media print block
+   above, where it belongs logically. Nested there it was silently dropped
+   somewhere in the CSS pipeline and the printout came out portrait with Chrome's
+   header/footer intact, exactly as if the rule had never been written. @page only
+   ever applies to paged media anyway, so the @media wrapper bought nothing.
+   Caveat of hoisting it: it now governs printing ANY page of the site, not just
+   the invoice — acceptable, since the invoice is the only thing here anyone
+   prints and nothing else carries print styling.
+
+   Landscape is at the owner's request; the sheet is pinned to 190mm above so it
+   doesn't stretch across the wider page.
+
+   `margin: 0` is what removes the browser's own header and footer — the date,
+   the page title, the URL and the page number are all drawn INTO the page margin
+   box, so they're one group: there is no way to drop the URL and keep the page
+   number. The paper margin becomes the invoice's own 14mm padding instead. (The
+   print dialog's "Headers and footers" tick-box does the same thing by hand.)
+   Trade-off: element padding applies once, not per page, so an invoice long
+   enough to break onto a second page would start that page at the paper edge.
+   Item lists that long don't happen here; revisit if they ever do. */
+@page { size: A4 landscape; margin: 0; }
 
 /* Row action icons in the admin tables (edit / delete / invoice / mark paid).
    Bootstrap's .btn-sm .btn-link rendered these at the table's 14px font, which
