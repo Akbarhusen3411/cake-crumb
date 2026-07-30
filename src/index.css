@@ -5483,8 +5483,13 @@ header[style*="sticky"] {
     display: block !important;
     height: auto !important;
   }
+  /* Landscape A4 is 297mm wide — nearly twice the sheet's on-screen 560px. Left
+     to stretch, a short item name and its figures end up at opposite ends of the
+     page, which is the exact problem the 560px width was chosen to avoid. So the
+     sheet keeps a sane column and centres on the paper instead. */
   .cc-invoice-sheet {
-    max-width: none !important;
+    max-width: 190mm !important;
+    margin: 0 auto !important;
     box-shadow: none !important;
     border-radius: 0 !important;
   }
@@ -5496,8 +5501,10 @@ header[style*="sticky"] {
      "Headers and footers" tick-box does the same thing by hand.)
      Trade-off: element padding applies once, not per page, so an invoice long
      enough to break onto a second page would start that page at the paper edge.
-     Item lists that long don't happen here; revisit if they ever do. */
-  @page { size: A4; margin: 0; }
+     Item lists that long don't happen here; revisit if they ever do.
+     Landscape at the owner's request — see the sheet width below, which stops it
+     stretching across the wider page. */
+  @page { size: A4 landscape; margin: 0; }
   .cc-invoice { padding: 14mm !important; }
 }
 
