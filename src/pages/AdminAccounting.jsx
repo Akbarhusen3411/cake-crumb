@@ -16,16 +16,6 @@ import OwnerMoneyTab from '../components/admin/accounting/OwnerMoneyTab.jsx'
 import MonthlyTab from '../components/admin/accounting/MonthlyTab.jsx'
 import DangerZone from '../components/admin/accounting/DangerZone.jsx'
 
-// Re-lock the money pages after this long with no activity.
-//
-// The unattended signed-in tab is the ONE risk the PIN gate actually covers (see
-// PinGate.jsx — the real boundary is Auth + the Firestore rules), and it was only
-// covered while the owner remembered to press Lock. In practice an order gets
-// confirmed, the baking starts, and the tab sits open on the counter with every
-// figure on screen. Two minutes is deliberately short: this is a shop counter,
-// not a desk, and the cost of being wrong is one PIN entry.
-const IDLE_LOCK_MS = 2 * 60 * 1000
-
 const TABS = [
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'orders', label: 'Orders' },
@@ -70,23 +60,22 @@ export default function AdminAccounting() {
   }
   const ready = isAdmin && unlocked
 
-  // Idle auto-lock. Only armed while actually unlocked, so it costs nothing on
-  // the PIN screen. Listeners are passive and on the capture phase so a click
-  // that lands inside a modal still counts as activity, and `visibilitychange`
-  // is in there because switching tabs is exactly when the phone gets put down.
+  // Lock on the way out: leaving the page re-locks it, so switching to Website
+  // Orders and coming back asks for the PIN again. Replaced an idle timer, which
+  // was both fussier and weaker — it left the figures on screen for however long
+  // the timeout ran, and this way there's no window at all.
+  //
+  // The re-assert on mount is for StrictMode, which runs mount → cleanup → mount
+  // in dev: without it the cleanup would wipe the flag while React kept the
+  // `unlocked` state, and the next refresh would ask for a PIN that was never
+  // actually surrendered. sessionStorage still earns its place — it's what
+  // survives a refresh *while on the page*, since unload doesn't run cleanups.
   useEffect(() => {
-    if (!unlocked) return
-    let timer
-    const arm = () => {
-      clearTimeout(timer)
-      timer = setTimeout(lock, IDLE_LOCK_MS)
+    if (unlocked) {
+      try { sessionStorage.setItem(UNLOCK_KEY, '1') } catch { /* ignore */ }
     }
-    const events = ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll', 'visibilitychange']
-    events.forEach((e) => document.addEventListener(e, arm, { passive: true, capture: true }))
-    arm()
     return () => {
-      clearTimeout(timer)
-      events.forEach((e) => document.removeEventListener(e, arm, { capture: true }))
+      try { sessionStorage.removeItem(UNLOCK_KEY) } catch { /* ignore */ }
     }
   }, [unlocked])
 
@@ -227,7 +216,7 @@ export default function AdminAccounting() {
         <button
           className="btn btn-sm btn-outline-secondary ms-auto"
           onClick={lock}
-          title="Lock without signing out — locks itself after 2 minutes idle"
+          title="Lock without signing out — leaving this page locks it too"
         >
           <FiLock /> Lock
         </button>
