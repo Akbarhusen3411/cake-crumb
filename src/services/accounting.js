@@ -343,6 +343,84 @@ export async function verifyAccPin(pin, storedHash) {
   return (await pinDigest(String(pin).trim())) === storedHash
 }
 
+// ───────────────────── order numbers (DDMMYY-NN) ─────────────────────
+//
+// A short human handle for an accounting order — "CC-MF-300726-01" is Makbul
+// Fatema's order, the first of 30 July 2026, and the count restarts each day.
+// The owner reads these back instead of a customer name, which is long, repeats
+// across orders, and gets typed three different ways for the same person.
+//
+// Shaped to match the storefront's `services/orderId.js` (CC-AB-DDMMYY-XXXXX) so
+// the two books read alike; the last part differs on purpose — a website ID ends
+// in random characters because its `tracking/{orderId}` doc is world-readable and
+// must not be guessable, while this one is admin-only and wants a real sequence.
+//
+// The **sequence counts the day, not the customer**: the second order of the day
+// is -02 even if it's a different person, so the number also tells the owner how
+// many orders that day has seen.
+//
+// IT IS A LABEL, NOT A KEY. The Firestore doc id stays the primary key and
+// nothing looks an order up by this string. That matters because the counter is
+// derived from the orders already on screen, so two devices adding an order for
+// the same day at the same moment would both land on -01. As a label that's a
+// cosmetic clash the owner can edit; as a key it would silently overwrite one of
+// the two orders. This is the same trap `services/orderId.js` documents — a
+// per-day counter there gave two customers the identical storefront ID.
+//
+// The number is assigned once and never regenerated — not when the date is
+// corrected, and not when the customer name is fixed, so the initials can end up
+// reflecting the name as first typed. It's an identifier; every money figure
+// reads `date` and every list reads `customer`, never this.
+
+/** DDMMYY stamp from a "YYYY-MM-DD" date. */
+export function dayStamp(date) {
+  const p = String(date || '').slice(0, 10).split('-')
+  return p.length === 3 ? `${p[2]}${p[1]}${p[0].slice(2)}` : '000000'
+}
+
+/** First letters of the name, max 2, "CC" when there's nothing to take. */
+export function customerInitials(name = '') {
+  return (String(name).trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2) || 'CC').toUpperCase()
+}
+
+/** The day's sequence from an order number — the part after the last dash. */
+const seqOf = (no) => parseInt(String(no || '').slice(String(no || '').lastIndexOf('-') + 1), 10)
+
+/**
+ * The next free order number for `date`: CC-{initials}-DDMMYY-NN.
+ *
+ * Matched on the date segment rather than the whole prefix, so the day's count
+ * runs across every customer — and so a row written before initials existed
+ * ("300726-01") still counts toward it instead of handing out a duplicate.
+ *
+ * Numbers are never reused: deleting today's -02 still leaves the next one -03,
+ * because a reused number would make two different bills agree.
+ */
+export function nextOrderNo(orders, date, customer = '') {
+  const stamp = dayStamp(date)
+  let max = 0
+  for (const o of orders || []) {
+    const no = String(o?.orderNo || '')
+    if (!no.includes(`-${stamp}-`) && !no.startsWith(`${stamp}-`)) continue
+    const seq = seqOf(no)
+    if (Number.isFinite(seq) && seq > max) max = seq
+  }
+  return `CC-${customerInitials(customer)}-${stamp}-${String(max + 1).padStart(2, '0')}`
+}
+
+/**
+ * Sort key that puts the newest order first: by date, then by the day's own
+ * sequence, so -03 sits above -01 rather than wherever the collection happened
+ * to return it. Sorting on the number itself wouldn't work — it leads with the
+ * customer's initials, so it would group by name before date.
+ */
+export function orderSortKey(o) {
+  // Padded numerically, not lexically: as a plain string the day's 100th order
+  // would sort below its 99th.
+  const seq = seqOf(o?.orderNo)
+  return `${String(o?.date || '')}#${String(Number.isFinite(seq) ? seq : 0).padStart(4, '0')}`
+}
+
 // ───────────────────── pure calculations (client-side) ─────────────────────
 
 export const lineTotal = (o) => Math.round((Number(o.qty) || 0) * (Number(o.unitPrice) || 0))

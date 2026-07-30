@@ -6,6 +6,7 @@ import PeriodSelect from './PeriodSelect.jsx'
 import InvoiceModal from '../InvoiceModal.jsx'
 import {
   ACC, addDocRec, updateDocRec, deleteDocRec, orderTotal, orderQty, monthsFrom,
+  nextOrderNo, orderSortKey,
 } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
 import { fmtDate, inPeriod } from '../../../utils/adminDate.js'
@@ -43,9 +44,23 @@ const STATUS_INK = {
 }
 const statusInk = (s) => STATUS_INK[String(s || '').toLowerCase()] || '#7a6b66'
 // Search the label the row actually shows, so "cake pop" matches a "Chocolate"
-// cake pop the same way it matches a legacy "Red velvet cake pop".
+// cake pop the same way it matches a legacy "Red velvet cake pop". The order
+// number is in here too — it's the fastest way to find one order out of a day.
 const searchText = (o) =>
-  [o.customer, ...orderLines(o).map((it) => `${fullItem(it)} ${it.variant || ''}`)].join(' ').toLowerCase()
+  [o.orderNo, o.customer, ...orderLines(o).map((it) => `${fullItem(it)} ${it.variant || ''}`)]
+    .filter(Boolean).join(' ').toLowerCase()
+
+// Rows entered before order numbering show a dash rather than a fake number.
+// They pick one up the next time they're edited — see save().
+const OrderNo = ({ value, size = 13 }) => (
+  <span style={{
+    fontFamily: 'var(--font-body, Lato), sans-serif',
+    fontVariantNumeric: 'lining-nums tabular-nums',
+    fontWeight: 700, fontSize: size, color: value ? '#a34a67' : '#c3b4b0', whiteSpace: 'nowrap',
+  }}>
+    {value || '—'}
+  </span>
+)
 
 export default function OrdersTab({ orders, menu, reload }) {
   const [q, setQ] = useState('')
@@ -73,7 +88,9 @@ export default function OrdersTab({ orders, menu, reload }) {
   }, [orders])
   const rows = useMemo(() => {
     const s = q.trim().toLowerCase()
-    let list = [...orders].sort((a, b) => String(b.date).localeCompare(String(a.date)))
+    // Newest first, and within a day by its own sequence — so the list reads in
+    // the same order as the numbers the owner quotes.
+    let list = [...orders].sort((a, b) => orderSortKey(b).localeCompare(orderSortKey(a)))
     if (s) list = list.filter((o) => searchText(o).includes(s))
     if (payFilter !== 'all') list = list.filter((o) => (payFilter === 'paid' ? !!o.paid : !o.paid))
     if (methodFilter !== 'all') list = list.filter((o) => o.method === methodFilter)
@@ -93,8 +110,17 @@ export default function OrdersTab({ orders, menu, reload }) {
 
   async function save(data) {
     setBusy(true)
-    if (editing && editing.id) await updateDocRec(ACC.ORDERS, editing.id, data)
-    else await addDocRec(ACC.ORDERS, data)
+    if (editing && editing.id) {
+      // An existing number is never regenerated — it's this order's identity,
+      // even if the date or the customer name is being corrected. Rows from
+      // before numbering existed pick one up here, which is why there's no bulk
+      // backfill to run.
+      await updateDocRec(ACC.ORDERS, editing.id, {
+        ...data, orderNo: editing.orderNo || nextOrderNo(orders, data.date, data.customer),
+      })
+    } else {
+      await addDocRec(ACC.ORDERS, { ...data, orderNo: nextOrderNo(orders, data.date, data.customer) })
+    }
     setEditing(null)
     await reload()
     setBusy(false)
@@ -113,7 +139,8 @@ export default function OrdersTab({ orders, menu, reload }) {
     setBusy(false)
   }
   async function remove(o) {
-    if (!window.confirm(`Delete this order?\n${o.customer} — ${itemsLabel(o, true)} (${inr(orderTotal(o))})`)) return
+    const ref = o.orderNo ? `${o.orderNo} · ` : ''
+    if (!window.confirm(`Delete this order?\n${ref}${o.customer} — ${itemsLabel(o, true)} (${inr(orderTotal(o))})`)) return
     setBusy(true)
     await deleteDocRec(ACC.ORDERS, o.id)
     await reload()
@@ -128,7 +155,7 @@ export default function OrdersTab({ orders, menu, reload }) {
         </button>
         <input
           className="form-control" style={{ maxWidth: 280 }}
-          placeholder="Search customer or item…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }}
+          placeholder="Search order no, customer or item…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }}
         />
         <span className="cc-admin-count ms-auto text-muted small">
           {rows.length} order{rows.length === 1 ? '' : 's'}
@@ -173,6 +200,7 @@ export default function OrdersTab({ orders, menu, reload }) {
             <div key={o.id} style={{ border: '1px solid #f0e0e3', borderRadius: 12, padding: 12, background: o.paid ? '#fff' : '#fff7ec' }}>
               <div className="d-flex justify-content-between align-items-start">
                 <div>
+                  <OrderNo value={o.orderNo} size={12} />
                   <div className="fw-bold" style={{ color: '#5b3e36' }}>{o.customer}</div>
                   <div className="small text-muted">
                     {fmtDate(o.date)} · {o.method} ·{' '}
@@ -213,7 +241,7 @@ export default function OrdersTab({ orders, menu, reload }) {
           <table className="table table-hover align-middle mb-0" style={{ fontSize: 14 }}>
             <thead style={{ background: '#f9eef1' }}>
               <tr style={{ color: '#7a4a58' }}>
-                <th>Date</th><th>Customer</th><th>Item</th><th className="text-center">Qty</th>
+                <th>Order&nbsp;no</th><th>Date</th><th>Customer</th><th>Item</th><th className="text-center">Qty</th>
                 <th className="text-end">Total</th><th className="text-center">Paid</th>
                 <th className="text-center">Cash/Online</th><th>Status</th><th></th>
               </tr>
@@ -221,6 +249,7 @@ export default function OrdersTab({ orders, menu, reload }) {
             <tbody>
               {pageRows.map((o) => (
                 <tr key={o.id} style={{ background: o.paid ? undefined : '#fff7ec' }}>
+                  <td><OrderNo value={o.orderNo} /></td>
                   <td className="text-nowrap">{fmtDate(o.date)}</td>
                   <td>{o.customer}</td>
                   <td>{itemsLabel(o, orderLines(o).length > 1)}</td>

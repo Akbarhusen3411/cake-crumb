@@ -136,7 +136,9 @@ export default function OrderForm({ menu = [], customers = [], initial = null, o
     <Modal
       wide
       title={editing ? 'Edit Order' : 'New Order'}
-      subtitle="One customer can order several items. Add each item, pick its size — the total adds up."
+      // When editing, lead with the order number — it's how the owner identifies
+      // which order this is, and it's assigned by OrdersTab on save, not here.
+      subtitle={`${editing && initial?.orderNo ? `Order ${initial.orderNo} · ` : ''}One customer can order several items. Add each item, pick its size — the total adds up.`}
       onClose={onClose}
       footer={<>
         <button className="btn btn-light" onClick={onClose}>Cancel</button>

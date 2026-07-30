@@ -63,6 +63,10 @@ export function invoiceQuote(key) {
 export function buildAccountingInvoice(o, { lines, total }) {
   return {
     number: invoiceNumber(o),
+    // The book's own DDMMYY-NN handle, printed under the invoice number the same
+    // way a website invoice carries its customer-facing order ID — so the sheet
+    // in the customer's hand and the row in the book name the same order.
+    reference: o?.orderNo || '',
     quoteKey: o?.id,
     date: o?.date,
     customer: { name: o?.customer },
