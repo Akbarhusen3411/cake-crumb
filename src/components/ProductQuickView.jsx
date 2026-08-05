@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { FiX, FiShoppingBag, FiHeart, FiMinus, FiPlus } from 'react-icons/fi'
-import { u } from '../data/images.js'
+import { useEffect, useRef, useState } from 'react'
+import { FiX, FiShoppingBag, FiMinus, FiPlus } from 'react-icons/fi'
+import { u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { useCart } from '../context/CartContext.jsx'
 import AllergenTags from './AllergenTags.jsx'
@@ -21,17 +21,33 @@ export default function ProductQuickView({ product, onClose }) {
   // Shop keys this component by product id, so opening a different product
   // remounts it and qty re-initialises to that product's minimum.
   const [qty, setQty] = useState(minQty)
+  const modalRef = useRef(null)
 
   useEffect(() => {
     if (!product) return
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
-    }
+    return () => document.removeEventListener('keydown', onKey)
   }, [product, onClose])
+
+  // Scroll lock — event-based, like the mobile menu and the search overlay.
+  // This used to set `document.body.style.overflow = 'hidden'`, which is the
+  // pattern that gives iOS Safari its jump-to-top bug and (because html carries
+  // `overflow-x: clip`) doesn't even lock the page — it just turns body into a
+  // scroll container and un-sticks the header. Cancelling touchmove/wheel
+  // outside the modal locks it for real; the modal's own scroll still works.
+  useEffect(() => {
+    if (!product) return
+    const blockOutside = (e) => {
+      if (!modalRef.current?.contains(e.target)) e.preventDefault()
+    }
+    document.addEventListener('touchmove', blockOutside, { passive: false })
+    document.addEventListener('wheel', blockOutside, { passive: false })
+    return () => {
+      document.removeEventListener('touchmove', blockOutside)
+      document.removeEventListener('wheel', blockOutside)
+    }
+  }, [product])
 
   if (!product) return null
   const p = product
@@ -50,7 +66,7 @@ export default function ProductQuickView({ product, onClose }) {
       onClick={onClose}
       className="qv-backdrop"
     >
-      <div onClick={(e) => e.stopPropagation()} className="qv-modal">
+      <div ref={modalRef} onClick={(e) => e.stopPropagation()} className="qv-modal">
         <button
           onClick={onClose}
           aria-label="Close"
@@ -62,7 +78,15 @@ export default function ProductQuickView({ product, onClose }) {
         <div className="qv-grid">
           {/* IMAGE — fills its column on desktop, stays square on mobile */}
           <div className="qv-image-col">
-            <img src={u(p.img, 800, 800)} alt={p.name} className="qv-image" />
+            <img
+              src={u(p.img, 800, 800)}
+              srcSet={srcSet(p.img)}
+              /* The modal caps at 720px; the image column is 5/12 of it on
+                 desktop and the full width on a phone. */
+              sizes="(min-width: 720px) 300px, 100vw"
+              alt={p.name}
+              className="qv-image"
+            />
             {p.badge && <span className="qv-badge">{p.badge}</span>}
           </div>
 
@@ -174,9 +198,10 @@ export default function ProductQuickView({ product, onClose }) {
               </div>
             )}
 
-            <button className="qv-fav">
-              <FiHeart size={13} /> Save to favourites
-            </button>
+            {/* No "Save to favourites" button here. There was one, with no
+                handler and nowhere to view a saved list — it did nothing when
+                tapped. Build favourites properly (storage + a list page) before
+                putting the control back. */}
           </div>
         </div>
       </div>
@@ -230,6 +255,16 @@ export default function ProductQuickView({ product, onClose }) {
           object-fit: cover;
           display: block;
           border-radius: 16px 16px 0 0;
+        }
+        /* On a phone the modal scrolls internally, and a 4:3 photo pushed the
+           price and the Add button below the fold — the customer opened a
+           product and saw no way to buy it without scrolling. A 16:9 band buys
+           back ~90px and the allergen tags collapse to one line. */
+        @media (max-width: 480px) {
+          .qv-image { aspect-ratio: 16/9; }
+          .qv-info-col { padding: 1rem 1.1rem 1.2rem; }
+          .qv-desc { font-size: 0.78rem; margin-top: 0.6rem; }
+          .qv-options { margin-top: 0.75rem; gap: 0.5rem; }
         }
         .qv-badge {
           position: absolute; top: 12px; left: 12px;
@@ -457,19 +492,6 @@ export default function ProductQuickView({ product, onClose }) {
           box-shadow: 0 6px 16px rgba(207, 62, 99, 0.4);
         }
 
-        .qv-fav {
-          margin-top: 0.7rem;
-          background: none; border: none;
-          color: var(--cc-cocoa-soft);
-          font-size: 0.75rem;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.35rem;
-          cursor: pointer;
-          padding: 0.3rem 0.5rem;
-        }
-        .qv-fav:hover { color: var(--cc-rose); }
       `}</style>
     </div>
   )

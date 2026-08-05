@@ -491,7 +491,8 @@ export default function Checkout() {
           <div className="row g-4">
             <div className="col-lg-7">
               <div
-                className="p-4 mb-4"
+                id="checkout-details"
+                className="p-4 mb-4 cc-checkout-anchor"
                 style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14 }}
               >
                 <h4 className="mb-3" style={{ fontSize: '1.2rem' }}>Delivery Details</h4>
@@ -678,7 +679,8 @@ export default function Checkout() {
               </div>
 
               <div
-                className="p-4"
+                id="checkout-payment"
+                className="p-4 cc-checkout-anchor"
                 style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 14 }}
               >
                 <h4 className="mb-3" style={{ fontSize: '1.2rem' }}>Payment Method</h4>
@@ -1036,6 +1038,38 @@ export default function Checkout() {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Room to scroll clear of the fixed bar, so the terms line at the
+              bottom of the summary isn't stuck underneath it. */}
+          <div className="cc-checkout-bar__spacer" aria-hidden />
+
+          {/* Sticky action bar — phones and tablets only (hidden at lg+, where
+              the summary card is sticky beside the form and Place Order is
+              already in view). Without it the button sits below twenty fields
+              AND the whole order summary, so the customer scrolls the page
+              twice to buy.
+              Deliberately NOT disabled when the form is incomplete: a dead
+              button tells you nothing. It takes you to whichever section is
+              still missing something instead. */}
+          <div className="cc-checkout-bar">
+            <div className="cc-checkout-bar__total">
+              <span>Total</span>
+              <strong>{inr(total)}</strong>
+            </div>
+            <button
+              type="submit"
+              className="cc-checkout-bar__btn"
+              onClick={(e) => {
+                if (isFormValid) return // let it submit
+                e.preventDefault()
+                const target = !isDetailsValid ? 'checkout-details' : 'checkout-payment'
+                document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+            >
+              <FiCheckCircle size={17} />
+              {isFormValid ? 'Place Order' : 'Complete your details'}
+            </button>
           </div>
         </form>
       </div>

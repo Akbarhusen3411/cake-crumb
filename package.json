@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "optimize-images": "node scripts/convert-to-webp.js",
+    "check-images": "node scripts/check-product-images.js",
     "predeploy": "npm run build && node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\"",
     "deploy": "gh-pages -d dist"
   },

@@ -15,6 +15,10 @@ const QUICK_LINKS = [
   { to: '/shop',    label: 'Shop' },
   { to: '/gallery', label: 'Gallery' },
   { to: '/reviews', label: 'Reviews' },
+  // Sits before Contact on purpose — read the answer first, message us second.
+  // Both footers (the mobile dot-row and the desktop column) map this list, so
+  // one entry covers both.
+  { to: '/faq',     label: 'FAQs' },
   { to: '/contact', label: 'Contact Us' },
 ]
 

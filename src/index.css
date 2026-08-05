@@ -487,7 +487,12 @@ a:hover { color: var(--cc-rose-deep); }
   }
 }
 
-/* ─── Floating cart pill (shop page, replaces sidebar) ─── */
+/* ─── Floating cart pill (shop page, stands in for the sidebar below lg) ─── */
+@media (min-width: 992px) {
+  /* The real cart sidebar is on screen from here up — two carts would be one
+     too many. */
+  .shop-cart-pill { display: none; }
+}
 .shop-cart-pill {
   position: fixed;
   bottom: 22px;
@@ -962,6 +967,19 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
   transition: background 0.15s;
 }
 .qty-btn:hover { background: var(--cc-rose); color: #fff; }
+/* On a touch screen 26px is a miss-tap waiting to happen — the guidance is a
+   44px target. The circle grows to 36px and padding carries the rest of the hit
+   area, so the +/− still look small but are actually reachable with a thumb.
+   Same reasoning as .cc-row-action on the admin tables. */
+@media (pointer: coarse) {
+  .qty-btn {
+    width: 36px;
+    height: 36px;
+    padding: 4px;
+  }
+  .cc-shop-cart__qty,
+  .cc-cart-qty { gap: 0.15rem; }
+}
 
 /* Responsive logo — shrink on small screens */
 .logo-icon { height: 78px; flex-shrink: 0; }
@@ -1165,63 +1183,9 @@ html, body { overflow-x: hidden; }
   .chat-fab-ring, .wa-btn-bounce, .typing-dot { animation: none !important; }
 }
 
-.wa-float {
-  position: fixed;
-  bottom: 22px;
-  right: 22px;
-  z-index: 100;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: #25D366;
-  color: #fff !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none !important;
-  box-shadow: 0 8px 22px rgba(37, 211, 102, 0.45), 0 0 0 0 rgba(37, 211, 102, 0.5);
-  transition: transform 0.2s, box-shadow 0.2s, width 0.25s;
-  overflow: hidden;
-  white-space: nowrap;
-  animation: waPulse 2.4s ease-out infinite;
-}
-.wa-float:hover {
-  transform: scale(1.06);
-  width: auto;
-  padding: 0 22px 0 18px;
-  gap: 10px;
-  border-radius: 999px;
-  animation: none;
-  box-shadow: 0 10px 28px rgba(37, 211, 102, 0.5);
-}
-.wa-label {
-  font-family: 'Lato', system-ui, sans-serif;
-  font-size: 0.9rem;
-  font-weight: 700;
-  max-width: 0;
-  opacity: 0;
-  transition: max-width 0.25s, opacity 0.2s;
-}
-.wa-float:hover .wa-label {
-  max-width: 240px;
-  opacity: 1;
-}
-@keyframes waPulse {
-  0%   { box-shadow: 0 8px 22px rgba(37, 211, 102, 0.45), 0 0 0 0 rgba(37, 211, 102, 0.55); }
-  70%  { box-shadow: 0 8px 22px rgba(37, 211, 102, 0.45), 0 0 0 14px rgba(37, 211, 102, 0); }
-  100% { box-shadow: 0 8px 22px rgba(37, 211, 102, 0.45), 0 0 0 0 rgba(37, 211, 102, 0); }
-}
-@media (max-width: 576px) {
-  .wa-float {
-    bottom: 16px;
-    right: 16px;
-    width: 54px;
-    height: 54px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .wa-float { animation: none; }
-}
+/* (No .wa-float / .wa-label / waPulse — the floating WhatsApp FAB these styled
+   was never rendered by any page, and bottom-right is the chat launcher's
+   corner. See components/WhatsAppButton.jsx, which is now link helpers only.) */
 
 .payment-tab .icon-wrap {
   width: 36px;
@@ -2465,7 +2429,9 @@ html, body { overflow-x: hidden; }
   background: rgba(40, 25, 30, 0.45);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
-  z-index: 60;
+  /* Above the floating chat launcher (z-90), back-to-top and WhatsApp buttons
+     (z-100) — they used to sit on top of the open overlay. */
+  z-index: 110;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -2583,7 +2549,125 @@ html, body { overflow-x: hidden; }
   border-top: 1px solid var(--cc-border);
 }
 
-body.search-open { overflow: hidden; }
+/* No `body.search-open { overflow: hidden }` — see SearchOverlay.jsx: it locked
+   nothing (html's `overflow-x: clip` stops body's overflow propagating to the
+   viewport) and un-stuck the sticky header while open. The lock is event-based. */
+
+/* ─── Checkout sticky action bar (below lg only) ──────────────────────────── */
+.cc-checkout-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.7rem 1rem calc(0.7rem + env(safe-area-inset-bottom, 0px));
+  background: rgba(255, 252, 250, 0.97);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--cc-rose-soft);
+  box-shadow: 0 -6px 24px rgba(207, 62, 99, 0.14);
+}
+@media (min-width: 992px) {
+  /* The summary card is sticky beside the form from here up. */
+  .cc-checkout-bar { display: none; }
+}
+.cc-checkout-bar__total {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  flex: 0 0 auto;
+}
+.cc-checkout-bar__total span {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cc-cocoa-soft);
+}
+.cc-checkout-bar__total strong {
+  font-family: 'Lato', system-ui, sans-serif;
+  font-size: 1.15rem;
+  color: var(--cc-rose);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-checkout-bar__btn {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.85rem 1rem;
+  background: var(--cc-rose);
+  color: #fff;
+  font-family: 'Lato', system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(207, 62, 99, 0.35);
+}
+.cc-checkout-bar__btn:active { transform: translateY(1px); }
+/* Lets the page scroll clear of the fixed bar. A spacer rather than padding on
+   the section, because Bootstrap's .py-5 carries !important. */
+.cc-checkout-bar__spacer { height: 88px; }
+@media (min-width: 992px) {
+  .cc-checkout-bar__spacer { display: none; }
+}
+/* Scroll targets for the bar's "Complete your details" jump. */
+#checkout-details,
+#checkout-payment { scroll-margin-top: calc(var(--cc-header-h, 82px) + 1rem); }
+
+/* ─── "Read the FAQs first" nudge above the Contact form ──────────────────── */
+.cc-faq-nudge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--cc-rose-soft);
+  border-radius: 12px;
+  background: var(--cc-blush-soft);
+  color: var(--cc-cocoa);
+  text-decoration: none;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.cc-faq-nudge:hover {
+  background: var(--cc-blush);
+  border-color: var(--cc-rose);
+  color: var(--cc-cocoa);
+  transform: translateY(-1px);
+}
+.cc-faq-nudge strong { color: var(--cc-rose-deep); }
+.cc-faq-nudge__icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--cc-rose);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.cc-faq-nudge__arrow {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--cc-rose);
+}
+@media (max-width: 575.98px) {
+  .cc-faq-nudge { font-size: 0.8rem; padding: 0.75rem 0.85rem; gap: 0.6rem; }
+  /* The arrow is decoration on a phone — the whole card is the tap target. */
+  .cc-faq-nudge__arrow { display: none; }
+}
 
 /* ─── Track Order form ────────────────────────────────────────────────────── */
 .cc-track-form {
@@ -3672,26 +3756,9 @@ header[style*="sticky"] {
   color: var(--cc-cocoa-soft);
   font-size: 0.95rem;
 }
-.cc-about-certs__notes {
-  list-style: none;
-  max-width: 620px;
-  margin: 1.5rem auto 0;
-  padding: 0;
-  text-align: center;
-}
-.cc-about-certs__notes li {
-  font-size: 0.86rem;
-  color: var(--cc-cocoa-soft);
-  line-height: 1.6;
-  margin-bottom: 0.6rem;
-}
-.cc-about-certs__notes li:last-child { margin-bottom: 0; }
-.cc-about-certs__notes strong { color: var(--cc-cocoa); }
-.cc-about-certs__notes a {
-  color: var(--cc-rose);
-  white-space: nowrap;
-}
-.cc-about-certs__notes a:hover { color: var(--cc-rose-deep); }
+/* (No .cc-about-certs__notes — the blurb + "Verify on the …" list under the
+   badges was removed; the badges carry the numbers, which is what gets
+   checked.) */
 
 .cc-about-kitchen {
   background: #fdeae8;
@@ -3852,10 +3919,15 @@ header[style*="sticky"] {
   flex-direction: column;
   padding: 0.2rem 0.4rem 0.35rem 0;
 }
-/* Phones: stack the card — full-width image on top, details below. Fixes the
-   cramped side-by-side layout that clipped prices/images on narrow screens. */
+/* Phones: stack the card — image on top, details below. Fixes the cramped
+   side-by-side layout that clipped prices/images on narrow screens.
+   The photo is a 21:9 BAND, not a 16:10 block: there are eight of these cards
+   now (one per Shop category), and at 16:10 each card ran ~520px, making the
+   page about 4,500px of scrolling on a phone. A band still shows the treat,
+   crops to the middle of the shot, and gives back roughly a third of the
+   height. */
 @media (max-width: 575.98px) {
-  .cc-menu-grid { gap: 1.5rem; }
+  .cc-menu-grid { gap: 1.35rem; }
   .cc-menu-card {
     flex-direction: column;
     gap: 0;
@@ -3864,12 +3936,18 @@ header[style*="sticky"] {
   }
   .cc-menu-card__img {
     width: 100%;
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 21 / 9;
+    object-position: center;
     border-radius: 0;
   }
   .cc-menu-card__body {
-    padding: 1.05rem 1.2rem 1.3rem;
+    padding: 0.95rem 1.1rem 1.15rem;
   }
+  .cc-menu-card__title { font-size: 1.25rem; }
+  .cc-menu-card__rule { margin: 0.35rem 0 0.6rem; }
+  /* Tighter rows — five of them per card, eight cards deep. */
+  .cc-menu-row { padding: 0.45rem 0; font-size: 0.88rem; }
+  .cc-menu-card__note { margin-top: 0.55rem; }
 }
 .cc-menu-card__title {
   font-family: 'Playfair Display', Georgia, serif;
@@ -3901,6 +3979,23 @@ header[style*="sticky"] {
   min-width: 0;
 }
 .cc-menu-row:last-child { border-bottom: none; }
+/* Each row links to its own product in the Shop (which then flashes the card),
+   so it has to look tappable without turning the menu into a wall of links —
+   the underline appears on hover/focus only. */
+.cc-menu-row--link {
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease;
+  margin: 0 -0.4rem;
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+  border-radius: 6px;
+}
+.cc-menu-row--link:hover,
+.cc-menu-row--link:focus-visible {
+  background: var(--cc-cream);
+}
+.cc-menu-row--link:hover .cc-menu-row__name { text-decoration: underline; }
 .cc-menu-row__name {
   color: var(--cc-cocoa);
   /* flex-basis 0 so the name only takes leftover space and always yields
@@ -4230,6 +4325,20 @@ header[style*="sticky"] {
 @media (min-width: 768px) {
   .cc-shop-grid { grid-template-columns: repeat(3, 1fr); }
 }
+/* Narrow phones: two cards across leaves ~155px each, which squeezes the name
+   to two clipped lines and the "Add to Cart" label to the edge of its pill.
+   Tighter padding and a smaller add button buy that back without dropping to a
+   single column (one-up would double the scroll length). */
+@media (max-width: 400px) {
+  .cc-shop-grid { gap: 0.7rem; }
+  .cc-product-card__body { padding: 0.7rem 0.6rem 0.8rem; }
+  .cc-product-card__name { font-size: 0.92rem; }
+  .cc-product-card__add {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    letter-spacing: 0.04em;
+  }
+}
 .cc-shop-empty {
   grid-column: 1 / -1;
   text-align: center;
@@ -4251,6 +4360,41 @@ header[style*="sticky"] {
   color: var(--cc-cocoa);
 }
 .cc-shop-note svg { color: var(--cc-rose); flex-shrink: 0; }
+/* The always-on lead-time line. Quieter than the contextual notes — it is
+   standing information, not something that just changed. */
+.cc-shop-note--lead {
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--cc-rose-soft);
+  border-radius: 0;
+  padding: 0 0 0.55rem;
+  margin-top: -0.5rem;
+  color: var(--cc-cocoa-soft);
+  font-size: 0.78rem;
+}
+
+/* Sub-heading inside the product grid (Classic · Exotic · Premium …). Spans
+   every column so the cards below it read as belonging to it. */
+.cc-shop-group {
+  grid-column: 1 / -1;
+  margin: 0.6rem 0 -0.25rem;
+  font-family: 'Lato', system-ui, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cc-rose-deep);
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.cc-shop-group::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--cc-rose-soft), transparent);
+}
+.cc-shop-grid > .cc-shop-group:first-child { margin-top: 0; }
 
 /* Pagination — small rose-bordered page buttons under the grid */
 .cc-shop-pagination {
@@ -4258,6 +4402,18 @@ header[style*="sticky"] {
   justify-content: center;
   gap: 0.4rem;
   margin-top: 1.75rem;
+}
+/* The "…" between page numbers — text, not a control. */
+.cc-shop-pagination__gap {
+  min-width: 18px;
+  height: 34px;
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  color: var(--cc-cocoa-soft);
+  font-weight: 700;
+  line-height: 1;
+  padding-bottom: 0.4rem;
 }
 .cc-shop-pagination__btn {
   min-width: 34px;
@@ -4304,24 +4460,29 @@ header[style*="sticky"] {
   transform: translateY(-3px);
   box-shadow: 0 14px 30px -12px rgba(207, 62, 99, 0.24);
 }
-.cc-product-card__heart {
-  position: absolute;
-  top: 0.6rem;
-  right: 0.6rem;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.88);
-  border: none;
-  color: var(--cc-rose);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 2;
-  transition: background 0.15s;
+/* Arriving from a search result: the card the customer actually asked for
+   pulses three times so it is obvious which of the 24 cheesecakes is theirs.
+   A ring, not a background wash — the card's photo has to stay readable.
+   `scroll-margin-top` keeps the sticky header off it when it scrolls in. */
+.cc-product-card { scroll-margin-top: calc(var(--cc-header-h, 82px) + 1.5rem); }
+@keyframes cc-card-flash {
+  0%, 100% { box-shadow: 0 6px 22px -10px rgba(207, 62, 99, 0.18); }
+  40%      { box-shadow: 0 0 0 4px var(--cc-rose-deep), 0 12px 30px -8px rgba(207, 62, 99, 0.45); }
 }
-.cc-product-card__heart:hover { background: #fff; }
+.cc-product-card.is-flash {
+  animation: cc-card-flash 0.85s ease-in-out 3;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Same message, no pulsing — a steady ring for as long as the flash lasts. */
+  .cc-product-card.is-flash {
+    animation: none;
+    box-shadow: 0 0 0 4px var(--cc-rose-deep), 0 12px 30px -8px rgba(207, 62, 99, 0.45);
+  }
+}
+/* (No .cc-product-card__heart — the Shop card has no favourite button. The
+   rules for one were left behind after it was removed; so was the dead "Save to
+   favourites" button in the quick view. Bring both back together if favourites
+   are ever built for real.) */
 .cc-product-card__img-btn {
   display: block;
   width: 100%;
@@ -4356,6 +4517,17 @@ header[style*="sticky"] {
   line-height: 1.25;
   color: var(--cc-cocoa);
   margin: 0 0 0.4rem;
+  min-height: 2.5em;
+}
+/* The heading holds a real <button> (keyboard-reachable), so the clamp and the
+   hover live on the button — it is what actually wraps the text. */
+.cc-product-card__name-btn {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
   cursor: pointer;
   /* Clamp to 2 lines so long names don't make cards uneven heights */
   display: -webkit-box;
@@ -4363,9 +4535,8 @@ header[style*="sticky"] {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 2.5em;
 }
-.cc-product-card__name:hover { color: var(--cc-rose); }
+.cc-product-card__name-btn:hover { color: var(--cc-rose); }
 .cc-product-card__price {
   color: var(--cc-rose);
   font-weight: 700;
@@ -4418,6 +4589,13 @@ header[style*="sticky"] {
     max-height: 86vh;
     overflow-y: auto;
   }
+}
+/* Below lg the cart column stacks under the products, where it repeats what the
+   floating pill already says. Everything after this panel (Need Something
+   Special, the trust strip) still shows. */
+@media (max-width: 991.98px) {
+  .cc-shop-cart__panel { display: none; }
+  .cc-shop-cart { padding-top: 0; }
 }
 .cc-shop-cart__head {
   display: flex;
@@ -4844,15 +5022,8 @@ header[style*="sticky"] {
   align-items: center;
   gap: 4px;
 }
-.cc-review-card__heart {
-  margin-left: auto;
-  border: none;
-  background: transparent;
-  color: var(--cc-rose);
-  cursor: pointer;
-  padding: 0;
-}
-.cc-review-card__heart:hover { color: var(--cc-rose-deep); }
+/* (No .cc-review-card__heart — the "Helpful" button it styled did nothing when
+   tapped and was removed. See Reviews.jsx.) */
 .cc-review-card__stars {
   display: flex;
   align-items: center;
@@ -4912,6 +5083,31 @@ header[style*="sticky"] {
   color: #fff;
 }
 
+/* Foot of the review list — the button plus how many are left, or a closing
+   line once they have all been read. Ends the column on something rather than
+   on empty background. */
+.cc-reviews-foot {
+  text-align: center;
+  margin-top: 1.25rem;
+}
+.cc-reviews-foot__count {
+  margin: 0.6rem 0 0;
+  font-size: 0.78rem;
+  color: var(--cc-cocoa-soft);
+}
+.cc-reviews-foot__end {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.7rem 1.2rem;
+  border-top: 1px solid rgba(224, 97, 122, 0.18);
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--cc-cocoa-soft);
+}
+.cc-reviews-foot__end svg { color: var(--cc-rose); flex-shrink: 0; }
+
 /* Admin login pill in the list header */
 .cc-admin-pill {
   background: rgba(207, 62, 99, 0.1);
@@ -4945,6 +5141,36 @@ header[style*="sticky"] {
   border: 1px solid var(--cc-rose-soft);
   border-radius: 14px;
   padding: 1.4rem 1.25rem;
+  /* Landing point for the mobile "Write a review" jump — keeps the sticky
+     header off the form's heading. */
+  scroll-margin-top: calc(var(--cc-header-h, 82px) + 1rem);
+}
+
+/* Mobile-only shortcut to the form, which stacks below the whole list here. */
+.cc-write-review {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 1rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--cc-rose);
+  background: #fff;
+  color: var(--cc-rose);
+  font-family: 'Lato', system-ui, sans-serif;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.cc-write-review:active { background: var(--cc-rose); color: #fff; }
+@media (min-width: 992px) {
+  /* The form is already on screen beside the list. */
+  .cc-write-review { display: none; }
 }
 .cc-share-form__heading {
   font-family: 'Lato', system-ui, sans-serif;

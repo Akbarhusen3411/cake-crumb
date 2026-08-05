@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   FiMapPin, FiPhone, FiClock, FiInstagram, FiHeart,
-  FiCheckCircle, FiChevronDown,
+  FiCheckCircle, FiChevronDown, FiHelpCircle, FiArrowRight,
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import HeartDivider from '../components/HeartDivider.jsx'
@@ -160,6 +161,19 @@ export default function Contact() {
       {/* Full-width custom order form — no sidebar, no sticky */}
       <section className="py-4 py-md-5">
         <div className="container" style={{ maxWidth: 820 }}>
+          {/* Sits ABOVE the form, not below it: the point is to answer the
+              question before it turns into a message the bakery types out by
+              hand. Allergens, lead time, delivery, cancellation and storage are
+              all already written up on /faq. */}
+          <Link to="/faq" className="cc-faq-nudge">
+            <span className="cc-faq-nudge__icon"><FiHelpCircle size={16} /></span>
+            <span>
+              <strong>Quick question?</strong> Allergens, lead time, delivery and
+              cancellation are all answered in our FAQs.
+            </span>
+            <FiArrowRight size={15} className="cc-faq-nudge__arrow" />
+          </Link>
+
           <div className="row">
             <div className="col-12">
               <form

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   FiStar, FiHeart, FiCheckCircle, FiTrash2, FiLock, FiLogOut,
-  FiSmile, FiTruck, FiShield, FiChevronDown, FiCamera, FiX,
+  FiSmile, FiTruck, FiShield, FiChevronDown, FiCamera, FiX, FiEdit3,
 } from 'react-icons/fi'
 import { compressImage } from '../utils/compressImage.js'
 import { TbLeaf, TbCake, TbToolsKitchen2, TbHandStop } from 'react-icons/tb'
@@ -66,7 +66,10 @@ const PROMISE_STRIP = [
   { Icon: FiShield,        title: 'Safe & Secure',     text: 'Secure checkout and careful packaging always.' },
 ]
 
-const PAGE_SIZE = 4
+// Six, not four. The reviews sit in a col-lg-8 beside a tall sidebar (the
+// submit form + "What customers love"), so a short list left a column of empty
+// cream next to the sidebar's lower half. Six cards outrun the sidebar.
+const PAGE_SIZE = 6
 
 export default function Reviews() {
   usePageMeta({
@@ -94,6 +97,14 @@ export default function Reviews() {
   const [photoBusy, setPhotoBusy] = useState(false)
   const fileRef = useRef(null)
   const hpRef = useRef(null) // honeypot — real users never fill this
+  const formRef = useRef(null)
+
+  // Scroll the submit form into view and put the cursor in its first field.
+  // `scroll-margin-top` on the form keeps the sticky header off it.
+  function jumpToForm() {
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setTimeout(() => formRef.current?.querySelector('input[name="name"], .cc-input')?.focus(), 500)
+  }
 
   async function onPickPhoto(e) {
     const file = e.target.files?.[0]
@@ -344,11 +355,21 @@ export default function Reviews() {
 
       {/* ───── REVIEWS LIST + SUBMIT FORM (2-col) ───── */}
       <section className="cc-reviews-body">
-        <div className="container pb-5">
+        {/* pb-4, not pb-5: the promise strip below brings its own py-5, and the
+            two together left a band of empty cream under the columns. */}
+        <div className="container pb-4">
           <div className="row g-4 g-lg-5">
 
             {/* LEFT — reviews list */}
             <div className="col-lg-8">
+              {/* Phones only: the form sits below the entire list here, so
+                  someone who came to WRITE a review had to scroll past everyone
+                  else's first. Hidden on lg+, where the form is already in view
+                  on the right. */}
+              <button type="button" className="cc-write-review" onClick={jumpToForm}>
+                <FiEdit3 size={14} /> Write a review
+              </button>
+
               <div className="cc-reviews-list__head">
                 <h3 className="cc-reviews-list__title">What Our Customers Are Saying</h3>
                 <div className="d-flex align-items-center" style={{ gap: '0.6rem' }}>
@@ -432,7 +453,9 @@ export default function Reviews() {
                     <FiHeart size={22} />
                   </span>
                   <h5 className="mt-3">No reviews yet</h5>
-                  <p>Be the first to share your sweet experience — use the form on the right.</p>
+                  {/* "on the right" was only true on desktop — on a phone the
+                      form sits below the whole list. */}
+                  <p>Be the first to share your sweet experience — the "Share Your Experience" form is all yours.</p>
                 </div>
               )}
 
@@ -458,13 +481,9 @@ export default function Reviews() {
                         <span className="cc-review-card__pill">
                           <FiCheckCircle size={10} /> Verified Buyer
                         </span>
-                        <button
-                          type="button"
-                          className="cc-review-card__heart"
-                          aria-label="Helpful"
-                        >
-                          <FiHeart size={16} />
-                        </button>
+                        {/* No "Helpful" heart here: it had no handler and no
+                            counter behind it, so tapping it did nothing at all.
+                            Add it back with real storage, or not at all. */}
                       </div>
                       <div className="cc-review-card__stars">
                         <Stars count={Number(r.rating) || 5} size={13} />
@@ -489,15 +508,31 @@ export default function Reviews() {
                 )
               })}
 
-              {!loading && hasMore && (
-                <div className="text-center mt-3">
-                  <button
-                    type="button"
-                    className="cc-load-more"
-                    onClick={() => setShownCount((n) => n + PAGE_SIZE)}
-                  >
-                    Load More Reviews <FiChevronDown size={14} />
-                  </button>
+              {/* Closes the list off instead of ending on blank cream: either a
+                  button with the count still to come, or a full stop once the
+                  reader has seen them all. */}
+              {!loading && reviews.length > 0 && (
+                <div className="cc-reviews-foot">
+                  {hasMore ? (
+                    <>
+                      <button
+                        type="button"
+                        className="cc-load-more"
+                        onClick={() => setShownCount((n) => n + PAGE_SIZE)}
+                      >
+                        Load More Reviews <FiChevronDown size={14} />
+                      </button>
+                      <p className="cc-reviews-foot__count">
+                        Showing {visible.length} of {reviews.length} reviews
+                      </p>
+                    </>
+                  ) : (
+                    reviews.length > PAGE_SIZE && (
+                      <p className="cc-reviews-foot__end">
+                        <FiHeart size={13} /> That's all {reviews.length} reviews — thank you for reading.
+                      </p>
+                    )
+                  )}
                 </div>
               )}
             </div>
@@ -505,7 +540,7 @@ export default function Reviews() {
             {/* RIGHT — Submit form + What Customers Love sidebar */}
             <aside className="col-lg-4">
               {/* Share Your Experience form */}
-              <form className="cc-share-form" onSubmit={onSubmit}>
+              <form ref={formRef} className="cc-share-form" onSubmit={onSubmit}>
                 {/* Honeypot — hidden from humans; bots that fill every field trip it. */}
                 <input
                   ref={hpRef}

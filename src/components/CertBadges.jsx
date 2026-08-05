@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { FiShield, FiAward } from 'react-icons/fi'
 import { FSSAI, UDYAM } from '../data/certifications.js'
 
@@ -19,18 +20,27 @@ const CERTS = [
  */
 export default function CertBadges({ variant = 'pills', className = '' }) {
   if (variant === 'line') {
+    // Both registrations come out of the same loop, so they cannot end up
+    // styled differently — which is exactly what happened when they were two
+    // hand-written spans: one bolded only its number, the other bolded the
+    // label too, and MSME sat darker than FSSAI on the same line.
     return (
       <span className={`cc-cert-line ${className}`.trim()}>
         <FiShield size={14} aria-hidden />
-        <span>FSSAI Reg. No. <strong>{FSSAI.number}</strong></span>
-        <span className="cc-cert-line__sep" aria-hidden>·</span>
-        <span>Udyam <strong>{UDYAM.number}</strong></span>
+        {CERTS.map(({ number, prefix }, i) => (
+          <Fragment key={number}>
+            {i > 0 && <span className="cc-cert-line__sep" aria-hidden>·</span>}
+            <span>{prefix} <strong>{number}</strong></span>
+          </Fragment>
+        ))}
       </span>
     )
   }
 
   return (
     <div className={`cc-cert-pills ${className}`.trim()}>
+      {/* The pill's own label names the scheme ("MSME · Udyam Registered"), so
+          the line below it is the bare number — no prefix repeated twice. */}
       {CERTS.map(({ number, label, Icon }) => (
         <div className="cc-cert-pill" key={number}>
           <span className="cc-cert-pill__icon"><Icon size={16} /></span>

@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  FiHeart, FiShoppingBag, FiX, FiPlus, FiMinus, FiCheckCircle,
+  FiHeart, FiShoppingBag, FiX, FiPlus, FiMinus, FiCheckCircle, FiClock,
   FiShield, FiTruck, FiChevronLeft, FiChevronRight, FiChevronDown, FiSliders,
 } from 'react-icons/fi'
 import { TbLeaf, TbToolsKitchen2 } from 'react-icons/tb'
 import HeartDivider from '../components/HeartDivider.jsx'
 import { shopProducts } from '../data/products.js'
-import { img, u } from '../data/images.js'
+import { img, u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { useCart } from '../context/CartContext.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
@@ -34,6 +34,24 @@ const lowestPrice = (p) => (p.slice != null ? Math.min(p.price, p.slice) : p.pri
 // per-piece rate, not the box.
 const isPerPiece = (p) => p.slice != null && (p.minQty || 1) > 1
 
+/**
+ * Page numbers to show, with gaps: 1 … 4 5 6 … 10.
+ * "All Products" is 10 pages, which as a plain row of circles wrapped onto two
+ * lines on a phone and read as a barcode. Always shows the first and last page
+ * plus the current one and its neighbours.
+ */
+function pageWindow(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const out = [1]
+  const start = Math.max(2, current - 1)
+  const end = Math.min(total - 1, current + 1)
+  if (start > 2) out.push('…')
+  for (let i = start; i <= end; i += 1) out.push(i)
+  if (end < total - 1) out.push('…')
+  out.push(total)
+  return out
+}
+
 const PRICE_RANGES = [
   { id: 'all',  label: 'All Prices',     test: () => true },
   { id: '0-200',    label: '₹0 – ₹200',  test: (p) => lowestPrice(p) <= 200 },
@@ -42,6 +60,9 @@ const PRICE_RANGES = [
   { id: '1000+',    label: '₹1000+',     test: (p) => lowestPrice(p) > 1000 },
 ]
 
+// No product count beside the label — it was tried and taken off: a bare
+// number floating at the end of a filter row read as a price or a quantity,
+// not as "how many products".
 function Radio({ checked, onChange, label }) {
   return (
     <label className="cc-shop-radio">
@@ -92,8 +113,11 @@ export default function Shop() {
   })
 
   // Allow deep-linking to a filtered view, e.g. /shop?category=Cheesecakes (from the Menu page).
-  const [searchParams] = useSearchParams()
+  // `?product=cc-biscoff` (from the search overlay) additionally jumps to that
+  // one card and flashes it — see the jump effect below.
+  const [searchParams, setSearchParams] = useSearchParams()
   const paramCategory = searchParams.get('category')
+  const paramProduct = searchParams.get('product')
   const [category, setCategory] = useState(
     paramCategory && CATEGORIES.includes(paramCategory) ? paramCategory : 'All Products'
   )
@@ -102,6 +126,7 @@ export default function Shop() {
   const [page, setPage] = useState(1)
   const [quickView, setQuickView] = useState(null)
   const [filtersOpen, setFiltersOpen] = useState(false) // mobile-only collapse
+  const [flashId, setFlashId] = useState(null)          // product to scroll to + flash
 
   // Count of applied filters — shown on the mobile toggle so users know filters
   // are active even while the panel is collapsed.
@@ -127,6 +152,27 @@ export default function Shop() {
   const rangeStart = filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
   const rangeEnd = Math.min(page * PAGE_SIZE, filtered.length)
 
+  // Sub-headings inside the grid (Classic · Exotic · Chocolate · Premium for
+  // cheesecakes; Brownies · Blondies · Cakesicles for bakes; Mojitos ·
+  // Milkshakes · Iced · Hot for drinks). `group` already rides on every product
+  // — until now only the ChatBot read it, while the Shop showed 24 cheesecakes
+  // as one undifferentiated wall.
+  //
+  // Only when one category is selected AND the order is still "Featured": a
+  // price sort deliberately mixes the groups, so heading them would be a lie.
+  const showGroups = category !== 'All Products' && sort === 'featured'
+  const sections = useMemo(() => {
+    if (!showGroups) return [{ name: null, items: visible }]
+    const out = []
+    for (const p of visible) {
+      const name = p.group || null
+      const last = out[out.length - 1]
+      if (last && last.name === name) last.items.push(p)
+      else out.push({ name, items: [p] })
+    }
+    return out
+  }, [showGroups, visible])
+
   // Follow the URL ?category= param (e.g. navigating between Menu "View All" links)
   useEffect(() => {
     if (paramCategory && CATEGORIES.includes(paramCategory)) setCategory(paramCategory)
@@ -134,6 +180,54 @@ export default function Shop() {
 
   // Reset to page 1 whenever filters/sort change so users don't land on an empty page
   useEffect(() => { setPage(1) }, [category, priceRange, sort])
+
+  // ── Jump to one product (?product=cc-biscoff, from the search overlay) ──
+  // Searching "biscoff" and landing on 24 cheesecakes is no answer: the customer
+  // still has to find the row. So we widen the filters enough for the product to
+  // be reachable, turn to its page, scroll it into view and flash it.
+  //
+  // Split in two because the target's page can only be worked out AFTER the
+  // filters have settled — `filtered` is recomputed from state the first effect
+  // sets, so the second re-runs once that lands. The URL param is consumed
+  // immediately (a ref would do, but dropping it also keeps a shared/reloaded
+  // link from re-flashing) and `flashId` carries the rest.
+  const jumpedRef = useRef(null)
+  useEffect(() => {
+    // Cleared on the pass that follows dropping the param, so clicking the same
+    // search result twice in a row flashes twice.
+    if (!paramProduct) { jumpedRef.current = null; return }
+    if (jumpedRef.current === paramProduct) return
+    const target = shopProducts.find((p) => p.id === paramProduct)
+    if (!target) return
+    jumpedRef.current = paramProduct
+    // A price band left over from an earlier visit could hide the product
+    // outright, and the card's price may sit outside the band it filters under
+    // (per-piece products — see lowestPrice). Clearing it is the honest move.
+    setPriceRange('all')
+    setCategory((c) => (c === 'All Products' || c === target.category ? c : target.category))
+    setFlashId(paramProduct)
+    const next = new URLSearchParams(searchParams)
+    next.delete('product')
+    setSearchParams(next, { replace: true })
+  }, [paramProduct, searchParams, setSearchParams])
+
+  const scrolledRef = useRef(null)
+  useEffect(() => {
+    if (!flashId) { scrolledRef.current = null; return }
+    // Once we've scrolled, this effect is done — otherwise paging away during
+    // the 2.6s flash would drag the customer straight back to our page.
+    if (scrolledRef.current === flashId) return
+    const idx = filtered.findIndex((p) => p.id === flashId)
+    if (idx === -1) return
+    const targetPage = Math.floor(idx / PAGE_SIZE) + 1
+    if (targetPage !== page) { setPage(targetPage); return } // re-runs once it renders
+    scrolledRef.current = flashId
+    document.getElementById(`product-${flashId}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // Long enough for the three pulses in .cc-product-card.is-flash to finish.
+    const t = setTimeout(() => setFlashId(null), 2600)
+    return () => clearTimeout(t)
+  }, [flashId, filtered, page])
 
   const clearFilters = () => {
     setCategory('All Products')
@@ -145,9 +239,14 @@ export default function Shop() {
   // results. Auto-scroll to the top of the grid (offset for the sticky header)
   // so the filtered products come straight into view. No-op on desktop (lg+),
   // where the sidebar is beside the grid and already visible.
+  // The mobile panel also collapses itself on a pick: it's a radio list, so one
+  // tap is the whole interaction, and leaving it open pushes the results the
+  // user just asked for a screen further down.
   const gridRef = useRef(null)
-  function scrollToProducts() {
-    if (typeof window === 'undefined' || window.innerWidth >= 992) return
+  function scrollToProducts({ everyScreen = false } = {}) {
+    if (typeof window === 'undefined') return
+    if (!everyScreen && window.innerWidth >= 992) return
+    setFiltersOpen(false)
     requestAnimationFrame(() => {
       const el = gridRef.current
       if (!el) return
@@ -159,6 +258,14 @@ export default function Shop() {
   }
   const selectCategory = (c) => { setCategory(c); scrollToProducts() }
   const selectPriceRange = (id) => { setPriceRange(id); scrollToProducts() }
+
+  // Paging happens from BELOW the grid, so it needs the scroll on every screen
+  // size, not just mobile: without it the next twelve products render above the
+  // fold and the page looks like it did nothing.
+  const goToPage = (n) => {
+    setPage(n)
+    scrollToProducts({ everyScreen: true })
+  }
 
   return (
     <>
@@ -271,6 +378,12 @@ export default function Shop() {
                 </label>
               </div>
 
+              {/* Everything is baked to order — say so where the decision is
+                  made, not only in the quick view and the footer. */}
+              <p className="cc-shop-note cc-shop-note--lead">
+                <FiClock size={12} /> Freshly baked to order — please order at least 1 day in advance.
+              </p>
+
               {category === 'Cupcakes' && (
                 <p className="cc-shop-note">
                   <FiHeart size={12} /> Cupcakes come as a box of 6, or buy them by the piece (minimum 2) — tap any cupcake to choose how many. Add ₹20 for floral or additional decoration.
@@ -278,8 +391,17 @@ export default function Shop() {
               )}
 
               <div className="cc-shop-grid">
-                {visible.map((p) => (
-                  <article key={p.id} className="cc-product-card">
+                {sections.map((section) => (
+                <Fragment key={section.name || '_'}>
+                {section.name && (
+                  <h3 className="cc-shop-group">{section.name}</h3>
+                )}
+                {section.items.map((p) => (
+                  <article
+                    key={p.id}
+                    id={`product-${p.id}`}
+                    className={'cc-product-card' + (p.id === flashId ? ' is-flash' : '')}
+                  >
                     <button
                       type="button"
                       onClick={() => setQuickView(p)}
@@ -288,18 +410,27 @@ export default function Shop() {
                     >
                       <img
                         src={u(p.img, 500, 500)}
+                        srcSet={srcSet(p.img)}
+                        /* 2 across on a phone, 3 in the middle column on desktop */
+                        sizes="(min-width: 992px) 230px, 48vw"
                         alt={p.name}
                         loading="lazy"
                       />
                     </button>
                     <div className="cc-product-card__body">
                       <div className="cc-product-card__cat">{p.category}</div>
-                      <h6
-                        className="cc-product-card__name"
-                        onClick={() => setQuickView(p)}
-                        title={p.name}
-                      >
-                        {p.name}
+                      {/* A real <button> inside the heading, not a clickable
+                          <h6>: the title opens the quick view, so it has to be
+                          reachable by keyboard and announced as a control. */}
+                      <h6 className="cc-product-card__name">
+                        <button
+                          type="button"
+                          className="cc-product-card__name-btn"
+                          onClick={() => setQuickView(p)}
+                          title={p.name}
+                        >
+                          {p.name}
+                        </button>
                       </h6>
                       <div className="cc-product-card__price">
                         {isPerPiece(p) ? (
@@ -315,6 +446,12 @@ export default function Shop() {
                       </div>
                       <button
                         className="cc-product-card__add"
+                        /* Twelve buttons all reading "Add to Cart" is what a
+                           screen reader hears without this. Two-tier products
+                           open the size chooser rather than adding. */
+                        aria-label={
+                          p.slice ? `Choose a size for ${p.name}` : `Add ${p.name} to cart`
+                        }
                         onClick={() => {
                           if (p.slice) setQuickView(p)
                           else add(p)
@@ -324,6 +461,8 @@ export default function Shop() {
                       </button>
                     </div>
                   </article>
+                ))}
+                </Fragment>
                 ))}
                 {filtered.length === 0 && (
                   <div className="cc-shop-empty">
@@ -337,30 +476,37 @@ export default function Shop() {
                   <button
                     type="button"
                     className="cc-shop-pagination__btn"
-                    onClick={() => setPage((n) => Math.max(1, n - 1))}
+                    onClick={() => goToPage(Math.max(1, page - 1))}
                     disabled={page === 1}
                     aria-label="Previous page"
                   >
                     <FiChevronLeft size={14} />
                   </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      className={
-                        'cc-shop-pagination__btn cc-shop-pagination__num' +
-                        (n === page ? ' is-active' : '')
-                      }
-                      onClick={() => setPage(n)}
-                      aria-current={n === page ? 'page' : undefined}
-                    >
-                      {n}
-                    </button>
-                  ))}
+                  {pageWindow(page, totalPages).map((n, i) =>
+                    n === '…' ? (
+                      <span key={`gap-${i}`} className="cc-shop-pagination__gap" aria-hidden>
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={n}
+                        type="button"
+                        className={
+                          'cc-shop-pagination__btn cc-shop-pagination__num' +
+                          (n === page ? ' is-active' : '')
+                        }
+                        onClick={() => goToPage(n)}
+                        aria-label={`Page ${n}`}
+                        aria-current={n === page ? 'page' : undefined}
+                      >
+                        {n}
+                      </button>
+                    )
+                  )}
                   <button
                     type="button"
                     className="cc-shop-pagination__btn"
-                    onClick={() => setPage((n) => Math.min(totalPages, n + 1))}
+                    onClick={() => goToPage(Math.min(totalPages, page + 1))}
                     disabled={page === totalPages}
                     aria-label="Next page"
                   >
@@ -373,6 +519,13 @@ export default function Shop() {
             {/* CART SIDEBAR */}
             <aside className="col-lg-3">
               <div className="cc-shop-cart">
+                {/* The cart proper is desktop-only (hidden below lg in CSS). On a
+                    phone this whole column lands UNDER twelve products, so the
+                    reader scrolled past their own cart, the subtotal and two
+                    buttons before reaching anything new — and the floating pill
+                    already shows the count and total there. The Special card and
+                    the trust strip below stay on every screen. */}
+                <div className="cc-shop-cart__panel">
                 <div className="cc-shop-cart__head">
                   <span className="cc-shop-cart__title">Your Cart ({count})</span>
                   {count > 0 && (
@@ -393,6 +546,8 @@ export default function Shop() {
                   <div key={c.id} className="cc-shop-cart__item">
                     <img
                       src={u(c.img, 200, 200)}
+                      srcSet={srcSet(c.img)}
+                      sizes="64px"
                       alt=""
                       className="cc-shop-cart__item-img"
                     />
@@ -426,8 +581,12 @@ export default function Shop() {
                   <span>SUBTOTAL</span>
                   <strong>{inr(subtotal)}</strong>
                 </div>
+                {/* Must say the same thing as the Cart page's order summary —
+                    delivery is worked out from the pincode at checkout now, not
+                    agreed over WhatsApp. Two pages promising two different
+                    things is how a customer ends up arguing about a fee. */}
                 <p className="cc-shop-cart__note">
-                  Home delivery charges confirmed on WhatsApp. Pickup is free.
+                  Delivery calculated at checkout. Self-pickup is always free.
                 </p>
                 <Link
                   to="/cart"
@@ -447,6 +606,7 @@ export default function Shop() {
                 >
                   <FiCheckCircle size={14} /> Checkout
                 </Link>
+                </div>
 
                 {/* Need Something Special card */}
                 <div className="cc-shop-special">
@@ -505,6 +665,21 @@ export default function Shop() {
           </div>
         </div>
       </section>
+
+      {/* Floating cart pill — the sidebar sits BELOW 111 products on a phone, so
+          without this the only sign an item landed is the toast and the header
+          badge. Hidden on lg+ in CSS, where the sidebar is visible anyway; sits
+          bottom-centre, clear of the back-to-top (bottom-left) and the chat and
+          WhatsApp buttons (bottom-right). */}
+      {count > 0 && (
+        <Link to="/cart" className="shop-cart-pill">
+          <FiShoppingBag size={15} />
+          <span>
+            <strong>{count}</strong> {count === 1 ? 'item' : 'items'} · {inr(subtotal)}
+          </span>
+          <span className="shop-cart-pill__cta">View cart</span>
+        </Link>
+      )}
 
       {/* Keyed by id: this modal stays mounted with product=null, so without a
           key its quantity state would never re-init for the next product. */}

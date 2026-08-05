@@ -3,7 +3,6 @@ import { TbLeaf, TbCake } from 'react-icons/tb'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import HeartDivider from '../components/HeartDivider.jsx'
 import CertBadges from '../components/CertBadges.jsx'
-import { FSSAI, UDYAM } from '../data/certifications.js'
 import { img, u } from '../data/images.js'
 
 const STORY_FEATURES = [
@@ -148,18 +147,12 @@ export default function About() {
             </p>
           </div>
 
+          {/* The badges carry the numbers, which is the whole point — anyone who
+              wants to check looks the number up on the government portal. The
+              blurb-plus-"Verify on the …" list that used to sit here just said
+              the same thing again in longer form. `blurb` / `verifyUrl` /
+              `verifyLabel` stay in certifications.js as reference. */}
           <CertBadges />
-
-          <ul className="cc-about-certs__notes">
-            {[FSSAI, UDYAM].map((c) => (
-              <li key={c.number}>
-                <strong>{c.label}</strong> — {c.blurb}{' '}
-                <a href={c.verifyUrl} target="_blank" rel="noopener noreferrer">
-                  Verify on the {c.verifyLabel}
-                </a>
-              </li>
-            ))}
-          </ul>
         </div>
       </section>
 

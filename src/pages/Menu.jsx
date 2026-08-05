@@ -2,105 +2,137 @@ import { Link } from 'react-router-dom'
 import { FiArrowRight, FiHeart } from 'react-icons/fi'
 import { TbCake } from 'react-icons/tb'
 import HeartDivider from '../components/HeartDivider.jsx'
-import { img, u } from '../data/images.js'
+import { img, u, srcSet } from '../data/images.js'
+import { shopProducts } from '../data/products.js'
+import { menuCardPhoto } from '../data/productImages.js'
 import { inr } from '../data/format.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { useJsonLd } from '../hooks/useJsonLd.js'
 
-// Curated 5-item lists per card — keeps the page light. Full lists live in /shop.
-// Each card maps to a real Shop category — "View All" deep-links to /shop?category=…
+// Curated 5-item teasers per card — the page stays light, full lists live in /shop.
+//
+// ONLY THE PICKS ARE HAND-WRITTEN. The name, price and badge of every row are
+// read out of products.js by product id, so this page can no longer quote a
+// price the Shop has moved on from — it used to hold its own copy of ~30
+// prices, which is what CLAUDE.md means by "the one place a price can drift".
+// Change a price in products.js and this page follows on the next render.
+//
+//   picks   — product ids from shopProducts, in the order they should be listed
+//   tier    — 'price' (default) or 'slice' when the card quotes the second tier
+//             (cupcakes are quoted as a box of 6, which is the `slice` price)
+//   strip   — trailing words to drop from the name; the card title already says
+//             "Cheesecakes", so the row reads "Strawberry", not "Strawberry
+//             Cheesecake"
+//   suffix  — appended to every row on the card, e.g. "(Bento)"
+//   note    — a function so the figures inside it are derived too
+//
+// The card photo is NOT set here: it's looked up by `title` in productImages.js
+// (MENU_CARD_IMAGES), same as every product photo, so there is one place to edit.
+const BY_ID = Object.fromEntries(shopProducts.map((p) => [p.id, p]))
+
+/** Cheapest tier across a set of products — for "from ₹X" notes. */
+const cheapest = (list, key = 'price') =>
+  Math.min(...list.map((p) => p[key]).filter((n) => typeof n === 'number'))
+
+const inCategory = (c) => shopProducts.filter((p) => p.category === c)
+const inGroup = (g) => shopProducts.filter((p) => p.group === g)
+
 const CARDS = [
   {
     title: 'Cheesecakes',
     category: 'Cheesecakes',
-    image: img.rcCheesecakeBlueberry,
-    items: [
-      { n: 'Strawberry', p: 350 },
-      { n: 'Mango', p: 350 },
-      { n: 'Blueberry', p: 410 },
-      { n: 'Nutella', p: 440 },
-      { n: 'Pistachio', p: 470, badge: 'Premium' },
-    ],
+    strip: /\s*Cheesecake$/,
+    picks: ['cc-strawberry', 'cc-mango', 'cc-blueberry', 'cc-nutella', 'cc-pistachio'],
   },
   {
     title: 'Sponge Cakes',
     category: 'Sponge Cakes',
-    image: img.rcCakeYellowRose,
-    items: [
-      { n: 'Vanilla (Bento)', p: 450 },
-      { n: 'Chocolate (Bento)', p: 470 },
-      { n: 'Mango (Bento)', p: 480 },
-      { n: 'Biscoff (Bento)', p: 490 },
-      { n: 'Pistachio (Bento)', p: 510, badge: 'Premium' },
-    ],
-    note: '♥ Also available as single-serve tubs from ₹100.',
+    strip: /\s*Sponge Cake$/,
+    suffix: '(Bento)',
+    picks: ['sp-vanilla', 'sp-chocolate', 'sp-mango', 'sp-biscoff', 'sp-pistachio'],
+    note: () => `♥ Also available as single-serve tubs from ₹${cheapest(inCategory('Sponge Cakes'), 'slice')}.`,
   },
   {
     title: 'Milk Cakes',
     category: 'Milk Cakes',
-    image: img.rcMilkcakeRosePistachioDomes,
-    items: [
-      { n: 'Trés Léches (Bento)', p: 420 },
-      { n: 'Rose (Bento)', p: 420 },
-      { n: 'Mango (Bento)', p: 440 },
-      { n: 'Biscoff (Bento)', p: 480 },
-      { n: 'Pistachio (Bento)', p: 520, badge: 'Premium' },
-    ],
-    note: '♥ Also available as single-serve tubs from ₹120.',
+    strip: /\s*Milk Cake$/,
+    suffix: '(Bento)',
+    picks: ['mc-tres', 'mc-rose', 'mc-mango', 'mc-biscoff', 'mc-pistachio'],
+    note: () => `♥ Also available as single-serve tubs from ₹${cheapest(inCategory('Milk Cakes'), 'slice')}.`,
   },
   {
     title: 'Cupcakes',
     category: 'Cupcakes',
-    image: img.rcCupcakesRedVelvet,
-    items: [
-      { n: 'Vanilla (Box of 6)', p: 150 },
-      { n: 'Chocolate (Box of 6)', p: 180 },
-      { n: 'Strawberry (Box of 6)', p: 180 },
-      { n: 'Red Velvet (Box of 6)', p: 180 },
-      { n: 'Pistachio (Box of 6)', p: 210, badge: 'Premium' },
-    ],
-    note: '♥ Also sold by the piece from ₹25 (minimum 2). Add ₹20 for floral or additional decoration.',
+    strip: /\s*Cupcakes$/,
+    // Quoted as a box of 6 — the `slice` tier. Never the per-piece rate: a card
+    // reading "from ₹25" beside a photo of six is read as six for ₹25.
+    tier: 'slice',
+    suffix: '(Box of 6)',
+    picks: ['cup-vanilla', 'cup-chocolate', 'cup-strawberry', 'cup-redvelvet', 'cup-pistachio'],
+    note: () =>
+      `♥ Also sold by the piece from ₹${cheapest(inCategory('Cupcakes'))} (minimum 2). Add ₹20 for floral or additional decoration.`,
   },
   {
     title: 'Cookies',
     category: 'Cookies',
-    image: img.rcCookiesDoubleChocolate,
-    items: [
-      { n: 'Classic (Box of 6)', p: 280 },
-      { n: 'White Choc (Box of 6)', p: 280 },
-      { n: 'Triple Choc (Box of 6)', p: 340 },
-      { n: 'Almond (Box of 6)', p: 400 },
-      { n: 'Pistachio & Rose', p: 400, badge: 'Special' },
-    ],
+    strip: /\s*Cookies$/,
+    suffix: '(Box of 6)',
+    picks: ['ck-classic', 'ck-white', 'ck-triple', 'ck-almond', 'ck-pistachio'],
+    note: () => `♥ Boxes of 12 from ₹${cheapest(inCategory('Cookies'), 'slice')}.`,
   },
   {
     title: 'Dessert Cups',
     category: 'Dessert Cups',
-    image: img.rcCupAssortedFlatlay,
-    items: [
-      { n: 'Ghas (Milk Pudding) Cup', p: 40 },
-      { n: 'Jelly Cup', p: 50 },
-      { n: 'Vanilla Custard Cup', p: 60 },
-      { n: 'Mango Custard Cup', p: 80 },
-      { n: 'Trifle Cup', p: 100 },
-    ],
+    picks: ['dc-grass', 'dc-jelly', 'dc-custard-vanilla', 'dc-custard-mango', 'dc-trifle'],
+  },
+  {
+    // Bakes replaces the old hand-typed "Sweet Treats & More" block: same
+    // treats, but the prices come from products.js and each row deep-links to
+    // its product, and the category finally has a card of its own.
+    title: 'Bakes',
+    category: 'Bakes',
+    picks: ['bk-brownie-classic', 'bk-brownie-nutella', 'bk-blondie-classic', 'bk-cakepop', 'bk-cakesickle-heart'],
+    note: () =>
+      `♥ Brownies & blondies also come by the box of 6, from ₹${cheapest(inGroup('Brownies'), 'slice')}. Macarons, cookie fries & dipping boxes in the shop.`,
+  },
+  {
+    // Drinks were missing from this page entirely — 24 of them, and the
+    // priciest things the kitchen sells.
+    title: 'Drinks',
+    category: 'Drinks',
+    picks: ['dr-virginmojito', 'dr-strawberrydelight', 'dr-oreo-shake', 'dr-iced-classic', 'dr-hot-classic'],
+    note: () => `♥ ${inCategory('Drinks').length} in all — mojitos, milkshakes, iced & hot coffee.`,
   },
 ]
 
-const SWEET_TREATS_LEFT = [
-  { n: 'Brownies', p: 'from ₹60' },
-  { n: 'Blondies', p: 'from ₹60' },
-  { n: 'Cake Pops (Box of 6)', p: '₹120' },
-]
-const SWEET_TREATS_RIGHT = [
-  { n: 'Cakesicles', p: 'from ₹110' },
-  { n: 'Choc Covered Strawberry', p: '₹40' },
-  { n: 'Custom Orders', p: 'Message us' },
-]
+/**
+ * Resolve a card's picks into display rows. An id that no longer exists is
+ * dropped rather than rendering a blank row — renaming a product in
+ * products.js should never blank out the Menu page.
+ */
+function rowsFor(card) {
+  return card.picks
+    .map((id) => {
+      const p = BY_ID[id]
+      if (!p) return null
+      const price = card.tier === 'slice' ? p.slice : p.price
+      if (typeof price !== 'number') return null
+      const base = card.strip ? p.name.replace(card.strip, '') : p.name
+      return {
+        id,
+        name: card.suffix ? `${base} ${card.suffix}` : base,
+        price,
+        badge: p.badge,
+        // Land on the product itself, flashing — not on 24 unlabelled siblings.
+        to: `/shop?category=${encodeURIComponent(p.category)}&product=${encodeURIComponent(id)}`,
+      }
+    })
+    .filter(Boolean)
+}
 
-function PriceRow({ name, price, badge }) {
-  return (
-    <div className="cc-menu-row">
+function PriceRow({ name, price, badge, to }) {
+  const inner = (
+    <>
       <span className="cc-menu-row__name">
         {name}
         {badge && <span className="cc-menu-row__badge">{badge}</span>}
@@ -108,7 +140,13 @@ function PriceRow({ name, price, badge }) {
       <span className="cc-menu-row__price">
         {typeof price === 'number' ? inr(price) : price}
       </span>
-    </div>
+    </>
+  )
+  if (!to) return <div className="cc-menu-row">{inner}</div>
+  return (
+    <Link to={to} className="cc-menu-row cc-menu-row--link">
+      {inner}
+    </Link>
   )
 }
 
@@ -117,17 +155,22 @@ export default function Menu() {
     title: 'Menu',
     description: 'Cheesecakes, milk cakes, cookies, cupcakes, bakes, dessert cups and drinks. Banto 4" cakes, 6" milk cakes — whole or per slice.',
   })
+
+  // Resolved once — the structured data and the visible rows must be the same
+  // numbers, or search engines flag the page as contradicting itself.
+  const cards = CARDS.map((c) => ({ ...c, rows: rowsFor(c) }))
+
   useJsonLd('menu', {
     '@context': 'https://schema.org',
     '@type': 'Menu',
     name: 'Cake & Crumb Menu',
-    hasMenuSection: CARDS.map((c) => ({
+    hasMenuSection: cards.map((c) => ({
       '@type': 'MenuSection',
       name: c.title,
-      hasMenuItem: c.items.map((it) => ({
+      hasMenuItem: c.rows.map((it) => ({
         '@type': 'MenuItem',
-        name: it.n,
-        offers: { '@type': 'Offer', price: it.p, priceCurrency: 'INR' },
+        name: it.name,
+        offers: { '@type': 'Offer', price: it.price, priceCurrency: 'INR' },
       })),
     })),
   })
@@ -161,7 +204,7 @@ export default function Menu() {
         </div>
       </section>
 
-      {/* ───── OUR DELICIOUS TREATS — 4 category cards (2x2) ───── */}
+      {/* ───── OUR DELICIOUS TREATS — one card per Shop category (2 across) ───── */}
       <section className="cc-menu-treats">
         <div className="container py-5">
           <div className="text-center mb-5">
@@ -172,10 +215,14 @@ export default function Menu() {
           </div>
 
           <div className="cc-menu-grid">
-            {CARDS.map((card) => (
+            {cards.map((card) => (
               <article className="cc-menu-card" key={card.title}>
                 <img
-                  src={u(card.image, 600, 700)}
+                  src={u(menuCardPhoto(card.title), 600, 700)}
+                  srcSet={srcSet(menuCardPhoto(card.title))}
+                  /* Image sits left of the text on tablet+, full width above it
+                     on a phone. */
+                  sizes="(min-width: 768px) 210px, 100vw"
                   alt={card.title}
                   className="cc-menu-card__img"
                   loading="lazy"
@@ -184,12 +231,18 @@ export default function Menu() {
                   <h3 className="cc-menu-card__title">{card.title}</h3>
                   <span className="cc-menu-card__rule" aria-hidden />
                   <div className="cc-menu-card__items">
-                    {card.items.map((it) => (
-                      <PriceRow key={it.n} name={it.n} price={it.p} badge={it.badge} />
+                    {card.rows.map((it) => (
+                      <PriceRow
+                        key={it.id}
+                        name={it.name}
+                        price={it.price}
+                        badge={it.badge}
+                        to={it.to}
+                      />
                     ))}
                   </div>
                   {card.note && (
-                    <p className="cc-menu-card__note">{card.note}</p>
+                    <p className="cc-menu-card__note">{card.note()}</p>
                   )}
                   <Link
                     to={`/shop?category=${encodeURIComponent(card.category)}`}
@@ -202,35 +255,11 @@ export default function Menu() {
             ))}
           </div>
 
-          {/* Sweet Treats & More */}
-          <div className="row g-4 align-items-center mt-5">
-            <div className="col-md-4">
-              <img
-                src={u(img.rcBrownieBoxes, 700, 600)}
-                alt="Sweet Treats — brownies, blondies and cake pops"
-                className="cc-menu-sweet__img"
-              />
-            </div>
-            <div className="col-md-8">
-              <h3 className="cc-menu-sweet__title">Sweet Treats &amp; More</h3>
-              <span className="cc-menu-card__rule" aria-hidden />
-              <div className="row g-md-4 mt-2">
-                <div className="col-md-6">
-                  {SWEET_TREATS_LEFT.map((it) => (
-                    <PriceRow key={it.n} name={it.n} price={it.p} />
-                  ))}
-                </div>
-                <div className="col-md-6">
-                  {SWEET_TREATS_RIGHT.map((it) => (
-                    <PriceRow key={it.n} name={it.n} price={it.p} />
-                  ))}
-                </div>
-              </div>
-              <Link to="/shop" className="cc-menu-card__viewall mt-3">
-                View All Treats <FiArrowRight />
-              </Link>
-            </div>
-          </div>
+          {/* The old "Sweet Treats & More" block lived here: a second, hand-typed
+              price list for brownies, blondies, cakesicles and cake pops. Those
+              are the Bakes category, which now has a card of its own with
+              derived prices — keeping both meant maintaining the same figures
+              twice. Custom Orders kept its place in the banner below. */}
 
           {/* Custom Orders banner */}
           <div className="cc-menu-custom mt-5">

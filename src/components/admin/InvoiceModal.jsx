@@ -388,7 +388,7 @@ export default function InvoiceModal({ invoice, onClose }) {
               {BAKERY.phone} · {BAKERY.email} · {BAKERY.instagram}
             </div>
             <div className="cc-invoice-regs">
-              FSSAI {FSSAI.number} · {UDYAM.number}
+              {FSSAI.display} · {UDYAM.display}
             </div>
           </div>
         </div>

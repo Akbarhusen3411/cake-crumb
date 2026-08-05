@@ -12,9 +12,32 @@ export const asset = (path) => {
 }
 
 // Same idea for `u()`: local paths get base prefix + WebP. External Unsplash ids are kept as-is.
+// NOTE the asymmetry: for an Unsplash id, w/h resize the image; for a LOCAL
+// path they are ignored — the file is whatever was dropped into /public. That
+// is what `srcSet()` below is for.
 export const u = (idOrPath, w = 800, h = 800) => {
   if (typeof idOrPath === 'string' && idOrPath.startsWith('/')) return BASE + toWebP(idOrPath)
   return `https://images.unsplash.com/photo-${idOrPath}?w=${w}&h=${h}&fit=crop&auto=format&q=80`
+}
+
+// Widths written by `npm run optimize-images` (VARIANT_WIDTHS in
+// scripts/convert-to-webp.js — the two lists must match). The script always
+// writes every width, so a srcset can name them all without checking.
+const VARIANT_WIDTHS = [400, 800]
+
+/**
+ * `srcset` for a LOCAL image, so a 190px card stops downloading a 1290px photo.
+ * Pair it with a `sizes` describing the slot, e.g.
+ *
+ *   <img src={u(p.img)} srcSet={srcSet(p.img)} sizes="(min-width: 992px) 230px, 48vw" />
+ *
+ * Returns undefined for Unsplash ids (u() already resizes those server-side)
+ * and for anything that isn't a /public path, so it is safe to spread anywhere.
+ */
+export const srcSet = (idOrPath) => {
+  if (typeof idOrPath !== 'string' || !idOrPath.startsWith('/')) return undefined
+  const webp = BASE + toWebP(idOrPath)
+  return VARIANT_WIDTHS.map((w) => `${webp.replace(/\.webp$/, `-${w}.webp`)} ${w}w`).join(', ')
 }
 
 const p = (name) => `/products/${name}`
