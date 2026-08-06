@@ -243,7 +243,7 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
    */
   function exportCsv() {
     const out = []
-    let qtySum = 0, amountSum = 0, orderSum = 0
+    let qtySum = 0, amountSum = 0, orderSum = 0, receivedSum = 0, toCollectSum = 0
     for (const o of rows) {
       const counts = statusKey(o) !== 'cancelled'
       const lines = orderLines(o).filter((it) => it.item || it.category)
@@ -262,9 +262,18 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
           i === 0 ? (o.notes || '') : '',
         ])
       })
-      if (counts) orderSum += total
+      if (counts) {
+        orderSum += total
+        if (o.paid) receivedSum += total; else toCollectSum += total
+      }
     }
+    // The Total column mixes paid and unpaid, so its raw sum is what was
+    // *invoiced*, not what came in. Split it the same way the Dashboard does —
+    // Earnings is money received, and Earnings + Still to collect = TOTAL — or
+    // the file quotes a figure the books never claimed.
     out.push(['TOTAL — cancelled excluded', '', '', '', '', '', qtySum, '', amountSum, orderSum, '', '', '', ''])
+    out.push(['EARNINGS — paid orders only', '', '', '', '', '', '', '', '', receivedSum, '', '', '', ''])
+    out.push(['STILL TO COLLECT — unpaid', '', '', '', '', '', '', '', '', toCollectSum, '', '', '', ''])
     downloadCsv(
       `cake-crumb-orders-${todayIso()}.csv`,
       ['Order ID', 'Date', 'Customer', 'Category', 'Item', 'Size', 'Qty', 'Rate', 'Amount',
