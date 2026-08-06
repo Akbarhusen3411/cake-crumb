@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { FiX, FiShoppingBag, FiMinus, FiPlus } from 'react-icons/fi'
 import { u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
+import { describe } from '../data/products.js'
 import { useCart } from '../context/CartContext.jsx'
 import AllergenTags from './AllergenTags.jsx'
 
@@ -101,8 +102,12 @@ export default function ProductQuickView({ product, onClose }) {
               </div>
             )}
 
-            <p className="qv-desc">
-              Handcrafted with the finest ingredients. Each order is freshly prepared.
+            {/* What this one actually is. Every product used to carry the same
+                sentence, which told a customer choosing between two cheesecakes
+                nothing at all. The making-and-timing line stays, smaller. */}
+            <p className="qv-desc">{describe(p)}</p>
+            <p className="qv-desc" style={{ fontSize: '0.82rem', opacity: 0.85 }}>
+              Handcrafted with the finest ingredients and freshly prepared.
               Please pre-order at least 1 day in advance.
             </p>
 

@@ -218,6 +218,84 @@ export const priceLabel = (p) =>
     : p.slice != null ? `From ${inr(lowestPrice(p))}`
       : inr(p.price)
 
+// ─────────────────────────── what a product IS ───────────────────────────
+// Every product carried the same sentence in the quick view — "Handcrafted with
+// the finest ingredients…" — which told a customer choosing between two
+// cheesecakes precisely nothing, and left the JSON-LD `Product` with no
+// description at all. Built from the name and the category rather than typed
+// 111 times, so a new product is never left blank; set `desc` on any entry to
+// overrule it.
+
+// "Vanilla Bean Dream (Iced)" → "Vanilla Bean Dream"; "Pistachio (Premium)
+// Cheesecake" → "Pistachio". What's left is the flavour, which is the only part
+// worth putting in a sentence — the rest is the category, said twice.
+const NOUN = /\s*(cheesecakes?|milk cakes?|sponge cakes?|cookies?|cupcakes?|mojito|iced latte|latte|macchiato|mochaccino|brew|iced coffee|hot coffee|coffee|milkshake|brownie|blondie|cup)\s*$/i
+const flavourOf = (p) =>
+  p.name.replace(/\s*\((premium|iced|hot|nutella filled|stack of \d+)\)\s*/gi, ' ')
+    .replace(NOUN, '').trim() || p.name
+
+// Mid-sentence the flavour is lower case — "a triple choc cookie", not "a
+// triple Choc cookie" — but the brands in it keep their capital.
+const PROPER = /^(nutella|biscoff|oreo|lotus|turkish|trés|tres|léches|leches|ghas|krispies|dubai|ferrero|kitkat)$/i
+const lower = (s) =>
+  s.split(/\s+/)
+    .map((w) => (PROPER.test(w) ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w.toLowerCase()))
+    .join(' ')
+
+/** One sentence saying what it is. `p.desc` wins when an entry sets it. */
+export function describe(p) {
+  if (p.desc) return p.desc
+  const f = lower(flavourOf(p))
+  const two = p.slice != null
+  const name = p.name.toLowerCase()
+
+  switch (p.category) {
+    case 'Cheesecakes':
+      return `A baked ${f} cheesecake on a buttery biscuit base${two ? ', whole or by the slice' : ''}.`
+    case 'Milk Cakes':
+      return `Sponge soaked in sweetened milk and finished with ${f} cream${two ? ' — whole, or a single-serve tub' : ''}.`
+    case 'Sponge Cakes':
+      return `A light ${f} sponge layered with fresh cream${two ? ' — a whole bento cake, or a tub for one' : ''}.`
+    case 'Cookies':
+      return `A thick, chewy ${f} cookie baked to order${two ? ' — singly or by the box' : ''}.`
+    case 'Cupcakes':
+      return `A ${f} cupcake under a swirl of buttercream — by the piece (two or more) or as a box of six.`
+    case 'Dessert Cups':
+      return `A chilled ${f} cup, layered and ready to spoon.`
+    case 'Platters':
+      return /pancake/.test(name)
+        ? 'A stack of three warm pancakes, served with syrup and fruit.'
+        : 'Thin crêpes rolled around Nutella and finished with a dusting of cocoa.'
+    case 'Drinks':
+      if (/mojito|lagoon/.test(name)) return `A chilled ${f} mojito — fizzy, sharp and not sweet.`
+      if (/milkshake/.test(name)) {
+        // "Lotus Luxury Milkshake (Biscoff)" — the word sits mid-name and the
+        // bracket repeats the flavour, so strip both or it reads "milkshake
+        // (biscoff) milkshake".
+        const shake = lower(p.name.replace(/\(.*?\)/g, '').replace(/milkshake/i, '').trim())
+        return `A thick ${shake} milkshake, blended to order and served cold.`
+      }
+      // `group` is 'Hot Coffee' / 'Iced Coffee' and says it outright; the name
+      // doesn't (a "Caramel Macchiato" is hot, a "Strawberry Silk Latte" iced).
+      return /hot/i.test(p.group || '')
+        ? `${p.name} — pulled fresh and served hot.`
+        : `${p.name} — brewed fresh and served over ice.`
+    case 'Bakes':
+      if (/brownie box|dipping box/.test(name)) return `${p.name} — a sharing box with a warm dip on the side.`
+      if (/brownie/.test(name)) return `A dense, fudgy ${f} brownie${two ? ' — one piece or a box of six' : ''}.`
+      if (/blondie/.test(name)) return `A chewy white-chocolate blondie with ${f}${two ? ' — one piece or a box of six' : ''}.`
+      if (/cakesicle/.test(name)) return 'Cake on a stick, dipped in chocolate and decorated by hand.'
+      if (/cake pops/.test(name)) return 'Bite-size cake rolled and dipped in chocolate — sold by the piece.'
+      if (/strawberry/.test(name)) return 'Fresh strawberries dipped in chocolate and set to a snap.'
+      if (/cookie fries/.test(name)) return 'Cookie dough cut into fries and baked crisp — made for dipping.'
+      if (/macaron/.test(name)) return 'Almond shells with a soft centre, in the day’s flavours.'
+      if (/krispies/.test(name)) return 'Crisp rice and marshmallow, set into squares.'
+      return `${p.name} — freshly baked to order.`
+    default:
+      return `${p.name} — freshly made to order.`
+  }
+}
+
 // Auto-attach allergen tags based on product category + name keywords.
 // Lets us avoid pasting `allergens: [...]` on every line.
 function attachAllergens(p) {
@@ -247,7 +325,19 @@ function attachAllergens(p) {
       if (isShake) {
         tags = ['contains-dairy']
         if (hasNuts) tags.push('contains-nuts')
-      } else if (isMojito || isCoffee) tags = []
+      } else if (isMojito) {
+        // Fruit, lime and soda. This said `[]`, and an empty list renders
+        // nothing at all — indistinguishable from "we never checked". Say the
+        // true thing instead: there's nothing in it to avoid.
+        tags = ['eggless', 'vegan']
+      } else if (isCoffee || /coffee/i.test(p.group || '') || /latte|macchiato|mochaccino|brew/.test(name)) {
+        // Also `[]` before, which was simply wrong — a latte, mocha or
+        // macchiato is milk. If any of these is ever served black, drop the tag
+        // on that entry rather than here.
+        tags = ['contains-dairy']
+        if (/cookie|biscoff|oreo/.test(name)) tags.push('contains-gluten')
+        if (hasNuts) tags.push('contains-nuts')
+      }
       break
     default:
       tags = []

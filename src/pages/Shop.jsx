@@ -6,7 +6,7 @@ import {
 } from 'react-icons/fi'
 import { TbLeaf, TbToolsKitchen2 } from 'react-icons/tb'
 import HeartDivider from '../components/HeartDivider.jsx'
-import { shopProducts, lowestPrice, isPerPiece } from '../data/products.js'
+import { shopProducts, lowestPrice, isPerPiece, describe } from '../data/products.js'
 import { img, u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { useCart } from '../context/CartContext.jsx'
@@ -88,6 +88,9 @@ export default function Shop() {
       item: {
         '@type': 'Product',
         name: p.name,
+        // The same sentence the quick view shows — structured data that says
+        // something different from the page is worse than none.
+        description: describe(p),
         category: p.category,
         image: typeof window !== 'undefined'
           ? new URL(u(p.img, 800, 800), window.location.origin).href

@@ -29,7 +29,7 @@ Find the subsystem your task touches and read that section first:
 | The bakery's books | **Accounting ERP** | A second admin app with its own data layer, money model and lock |
 | The chat widget | **ChatBot** | A *complete second order path* with its own cart |
 | Bills and printing | **Invoices** | Print/PDF differ on desktop vs mobile for hard-won reasons |
-| Prices or the catalogue | **Product catalog**, **Cupcakes**, **Delivery** | Prices live in several hand-maintained places; `lowestPrice()` has a trap |
+| Prices or the catalogue | **Product catalog**, **Cupcakes**, **Delivery** | `products.js` is the source; `lowestPrice()` has a trap, and `featured` keeps its own copy |
 
 Two cross-cutting rules: **all money goes through `inr()`** (`src/data/format.js`, always two decimals), and **a change to any total must move all five places at once** — see *No discount system*.
 
@@ -175,7 +175,7 @@ The bakery's **manual daily bookkeeping** (walk-ins, expenses, owner's cash) —
 - **It fires the same side-effects as Checkout** — `saveOrder()` + `sendOrderEmail()` + `sendCustomerConfirmation()`. It once called only `saveOrder()`, so a blocked pop-up left a real order nobody was told about. The confirmation needs an address, hence an **optional `email` step** with a Skip. It writes **`deliveryDate`** as its own field (the invoice reads it). Its order shape matches Checkout's, so no rules change was needed.
 - Prices render through **`inr()`** (`money()` in `chatbotMenu.js` and every figure in the component) — it used to build `₹${price}` strings, which is why it had no lakh grouping.
 
-**`src/pages/Menu.jsx` is an independent hand-written list** (`CARDS`) — a curated teaser that deliberately doesn't read `products.js`. **The one place a price can still drift** — check it when prices change, and anything it lists must exist in `products.js`.
+**`src/pages/Menu.jsx` hand-picks *which* products to show, not what they cost.** `CARDS` lists product **ids** (`picks`) and `rowsFor()` looks each one up in `products.js`, so names, prices and badges follow a price change on the next render — it used to hold its own copy of ~30 prices, which is what made it the page a price could drift on. What's still hand-maintained: the picks themselves, the card order, the `strip` regexes and the notes. An id that no longer exists silently drops its row, so check the page after renaming or removing a product. The "from …" figures in the notes are derived too, and go through `inr()`.
 
 ### Delivery — flat slabs, chosen alongside method
 
@@ -195,7 +195,7 @@ Checkout asks **Home Delivery** or **Self-Pickup**. Pricing lives once in `shopC
 
 `ProductQuickView` is where the piece count is chosen (stepper from `minQty`, live total). Shop passes `key={quickView?.id}` — the modal stays mounted with `product={null}`, so without the key `qty` never re-inits. The cart line name carries the **tier** (`Vanilla Cupcakes (1 pc)`), never the count, since `add()` merges by id.
 
-Four surfaces carry cupcake prices: `products.js`, `Menu.jsx`, `chatbotMenu.js`, and `featured` in `products.js` (`feat-2` is the ₹180 box, a separate cart id).
+Three surfaces carry cupcake prices: `shopProducts`, `featured` (both in `products.js` — `feat-2` is the ₹180 box under a separate cart id) and `chatbotMenu.js`, which derives its own. `Menu.jsx` reads `products.js` and needs no edit.
 
 ### Cart
 
