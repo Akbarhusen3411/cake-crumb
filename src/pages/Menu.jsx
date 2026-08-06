@@ -30,7 +30,11 @@ import { useJsonLd } from '../hooks/useJsonLd.js'
 // (MENU_CARD_IMAGES), same as every product photo, so there is one place to edit.
 const BY_ID = Object.fromEntries(shopProducts.map((p) => [p.id, p]))
 
-/** Cheapest tier across a set of products — for "from ₹X" notes. */
+/** Cheapest tier across a set of products — for the "from …" notes below.
+ *  The figure goes through inr() like every other price on the site: these are
+ *  *derived* numbers, so hand-writing ₹ around them dropped the decimals and
+ *  the grouping, and a four-digit note would have read "₹1000" beside the
+ *  "₹1,000.00" on the card next to it. */
 const cheapest = (list, key = 'price') =>
   Math.min(...list.map((p) => p[key]).filter((n) => typeof n === 'number'))
 
@@ -50,7 +54,7 @@ const CARDS = [
     strip: /\s*Sponge Cake$/,
     suffix: '(Bento)',
     picks: ['sp-vanilla', 'sp-chocolate', 'sp-mango', 'sp-biscoff', 'sp-pistachio'],
-    note: () => `♥ Also available as single-serve tubs from ₹${cheapest(inCategory('Sponge Cakes'), 'slice')}.`,
+    note: () => `♥ Also available as single-serve tubs from ${inr(cheapest(inCategory('Sponge Cakes'), 'slice'))}.`,
   },
   {
     title: 'Milk Cakes',
@@ -58,7 +62,7 @@ const CARDS = [
     strip: /\s*Milk Cake$/,
     suffix: '(Bento)',
     picks: ['mc-tres', 'mc-rose', 'mc-mango', 'mc-biscoff', 'mc-pistachio'],
-    note: () => `♥ Also available as single-serve tubs from ₹${cheapest(inCategory('Milk Cakes'), 'slice')}.`,
+    note: () => `♥ Also available as single-serve tubs from ${inr(cheapest(inCategory('Milk Cakes'), 'slice'))}.`,
   },
   {
     title: 'Cupcakes',
@@ -70,7 +74,7 @@ const CARDS = [
     suffix: '(Box of 6)',
     picks: ['cup-vanilla', 'cup-chocolate', 'cup-strawberry', 'cup-redvelvet', 'cup-pistachio'],
     note: () =>
-      `♥ Also sold by the piece from ₹${cheapest(inCategory('Cupcakes'))} (minimum 2). Add ₹20 for floral or additional decoration.`,
+      `♥ Also sold by the piece from ${inr(cheapest(inCategory('Cupcakes')))} (minimum 2). Add ₹20 for floral or additional decoration.`,
   },
   {
     title: 'Cookies',
@@ -78,7 +82,7 @@ const CARDS = [
     strip: /\s*Cookies$/,
     suffix: '(Box of 6)',
     picks: ['ck-classic', 'ck-white', 'ck-triple', 'ck-almond', 'ck-pistachio'],
-    note: () => `♥ Boxes of 12 from ₹${cheapest(inCategory('Cookies'), 'slice')}.`,
+    note: () => `♥ Boxes of 12 from ${inr(cheapest(inCategory('Cookies'), 'slice'))}.`,
   },
   {
     title: 'Dessert Cups',
@@ -93,7 +97,7 @@ const CARDS = [
     category: 'Bakes',
     picks: ['bk-brownie-classic', 'bk-brownie-nutella', 'bk-blondie-classic', 'bk-cakepop', 'bk-cakesickle-heart'],
     note: () =>
-      `♥ Brownies & blondies also come by the box of 6, from ₹${cheapest(inGroup('Brownies'), 'slice')}. Macarons, cookie fries & dipping boxes in the shop.`,
+      `♥ Brownies & blondies also come by the box of 6, from ${inr(cheapest(inGroup('Brownies'), 'slice'))}. Macarons, cookie fries & dipping boxes in the shop.`,
   },
   {
     // Drinks were missing from this page entirely — 24 of them, and the

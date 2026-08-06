@@ -373,7 +373,9 @@ export default function Checkout() {
     return (
       <section className="bg-cream py-5">
         <div className="container py-5 text-center">
-          <h2 className="section-title">Nothing to checkout</h2>
+          {/* One h1 per route — these three are alternate branches (empty,
+              placed, and the form itself), so only one renders at a time. */}
+          <h1 className="section-title">Nothing to checkout</h1>
           <p className="mt-2">Add some sweet treats to your cart first.</p>
           <Link to="/shop" className="btn-rose mt-3">
             <FiShoppingBag /> Browse Shop
@@ -392,7 +394,7 @@ export default function Checkout() {
           <span className="feature-icon mb-3" style={{ width: 84, height: 84, color: 'var(--cc-rose)' }}>
             <FiCheckCircle size={40} />
           </span>
-          <h2 className="section-title">Order Placed!</h2>
+          <h1 className="section-title">Order Placed!</h1>
           <p className="mt-2">Thank you for your sweet order. We'll start baking right away.</p>
           <div
             className="d-inline-flex flex-column align-items-center mt-3 mb-3 px-4 py-3"
@@ -475,7 +477,7 @@ export default function Checkout() {
         </div>
         <div className="text-center mb-4">
           <span className="eyebrow">Checkout</span>
-          <h2 className="section-title mt-2">Almost There</h2>
+          <h1 className="section-title mt-2">Almost There</h1>
         </div>
 
         <CheckoutProgress step={progressStep} />

@@ -2,8 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { FiSearch, FiX, FiShoppingBag } from 'react-icons/fi'
-import { shopProducts } from '../data/products.js'
-import { inr } from '../data/format.js'
+import { shopProducts, priceLabel } from '../data/products.js'
 import { u, srcSet } from '../data/images.js'
 
 const MAX_RESULTS = 12
@@ -136,16 +135,10 @@ export default function SearchOverlay({ open, onClose }) {
                   <div className="cc-search-overlay__cat">{p.category}</div>
                   <div className="cc-search-overlay__name">{p.name}</div>
                 </div>
-                <strong className="cc-search-overlay__price">
-                  {/* Per-piece products (minQty > 1) quote the BOX price here for
-                      the same reason the Shop card does — "from ₹25" beside the
-                      name "Vanilla Cupcakes" reads as six of them for ₹25. */}
-                  {p.slice == null
-                    ? inr(p.price)
-                    : (p.minQty || 1) > 1
-                      ? inr(p.slice)
-                      : `from ${inr(Math.min(p.price, p.slice))}`}
-                </strong>
+                {/* Shared with the Shop card and the cart suggestions, so the
+                    same product can't be quoted three ways (it read "from ₹210"
+                    here and "From ₹210" there). */}
+                <strong className="cc-search-overlay__price">{priceLabel(p)}</strong>
               </Link>
             ))
           )}

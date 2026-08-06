@@ -6014,6 +6014,25 @@ header[style*="sticky"] {
   .cc-ototal { margin-top: 0.5rem; border-radius: 12px; border: 1px solid #f6dde3; }
 }
 
+/* The round action on a "You might also like" card — a + that adds, or a chevron
+   that opens the product when a size has to be chosen first. */
+.cc-related__btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--cc-rose);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(207, 62, 99, 0.3);
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+.cc-related__btn:hover { background: var(--cc-rose-deep); color: #fff; transform: scale(1.05); }
+.cc-related__btn:focus-visible { outline: 2px solid var(--cc-rose-deep); outline-offset: 2px; }
+
 /* Today's line above the orders list. This is a *daily* book, but every other
    figure on the page is a month or all-time. */
 .cc-today {

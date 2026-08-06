@@ -1,4 +1,5 @@
 import { photoFor } from './productImages.js'
+import { inr } from './format.js'
 
 // All prices in INR. Sourced from menu.html.
 
@@ -184,6 +185,38 @@ export const shopProducts = [
   { id: 'lo-brownie-box', name: 'Brownie Dipping Box', price: 450, category: 'Bakes', sizeLabel: 'Box', group: 'Look Out For' },
   { id: 'lo-brookie-box', name: 'Brookie Dipping Box', price: 470, category: 'Bakes', sizeLabel: 'Box', group: 'Look Out For' },
 ].map(attachAllergens).map(withPhoto)
+
+// ─────────────────────── how a product is priced on screen ───────────────────
+// These three live here, not in the pages, because the rule has been got wrong
+// twice by being re-implemented per file. Shop, SearchOverlay and
+// RelatedProducts all import them; nothing re-derives them.
+
+/**
+ * The entry price. **Never `slice || price`** — `slice` is the *cheaper*
+ * per-slice tier for cheesecakes but the *pricier* box-of-12 for cookies (26 of
+ * the products here), so assuming it's the smaller one made a ₹340 cookie box
+ * advertise "From ₹700".
+ */
+export const lowestPrice = (p) => (p.slice != null ? Math.min(p.price, p.slice) : p.price)
+
+/** Sold by the piece with a minimum — cupcakes today. `price` is one piece. */
+export const isPerPiece = (p) => p.slice != null && (p.minQty || 1) > 1
+
+/**
+ * What a card, a search result or a suggestion should QUOTE.
+ *
+ * A per-piece product quotes its BOX price, never the per-piece rate: "From
+ * ₹25" under "Vanilla Cupcakes" beside a photo of six reads as six for ₹25, and
+ * customers did read it that way. The rate belongs in the quick view, where the
+ * count is chosen. Filters and sort still use `lowestPrice()` — see CLAUDE.md.
+ */
+export const cardPrice = (p) => (isPerPiece(p) ? p.slice : lowestPrice(p))
+
+/** …and the words around it, so three surfaces can't word it three ways. */
+export const priceLabel = (p) =>
+  isPerPiece(p) ? inr(p.slice)
+    : p.slice != null ? `From ${inr(lowestPrice(p))}`
+      : inr(p.price)
 
 // Auto-attach allergen tags based on product category + name keywords.
 // Lets us avoid pasting `allergens: [...]` on every line.

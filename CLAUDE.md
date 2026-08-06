@@ -220,7 +220,7 @@ Pre-fill from `cc_customer_v1` / `cc_customer_draft_v1` was removed — customer
 
 ### Routing & lazy loading
 
-`App.jsx` `lazy()`-loads every route except `Home`. Firebase loads on demand rather than per-route. `vite.config.js` splits a `react-vendor` chunk via `manualChunks`; Firebase gets its own async chunk by virtue of being dynamically imported. The wildcard `<Route path="*">` + the `predeploy` 404.html copy make deep links resolve (a harmless 404 on first load is inherent to GH Pages project sites).
+`App.jsx` `lazy()`-loads every route except `Home`. **The wildcard renders `NotFound`, not `Home`** — a dead link used to show the homepage under the wrong URL, which reads as "it worked" to a customer and as a soft 404 to a crawler. The 404.html copy still boots real deep links, so only genuinely unknown paths reach it. Firebase loads on demand rather than per-route. `vite.config.js` splits a `react-vendor` chunk via `manualChunks`; Firebase gets its own async chunk by virtue of being dynamically imported. The wildcard `<Route path="*">` + the `predeploy` 404.html copy make deep links resolve (a harmless 404 on first load is inherent to GH Pages project sites).
 
 **The ChatBot is deferred, not routed** — `DeferredChatBot.jsx` mounts it at the first idle moment (`requestIdleCallback`, 2.5s backstop) or on the first interaction. It can't lazy-load on click because the launcher lives *inside* it. Moving it off the critical path took the eager chunk from **116 kB to 67 kB** (31.2 → 17.3 kB gzipped). `Suspense fallback={null}` on purpose.
 
@@ -232,7 +232,9 @@ Pre-fill from `cc_customer_v1` / `cc_customer_draft_v1` was removed — customer
 
 `data/products.js` is hand-maintained: `featured` (Home) and `shopProducts` (Shop + Menu). Some entries have a `slice` second price tier.
 
-**`slice`-price gotcha (bit us once):** the "From" price, price filter and price sort all use `lowestPrice(p)` = `Math.min(price, slice)` — **never `slice || price`**. `slice` is the *cheaper* per-slice tier for cheesecakes but the *pricier* box-of-12 for cookies, so assuming it's smaller made a ₹340 cookie box show "From ₹700". Same rule in `SearchOverlay.jsx` and the JSON-LD Offer.
+**`slice`-price gotcha (bit us twice):** the "From" price, price filter and price sort all use `lowestPrice(p)` = `Math.min(price, slice)` — **never `slice || price`**. `slice` is the *cheaper* per-slice tier for cheesecakes but the *pricier* box-of-12 for cookies (26 products), so assuming it's smaller made a ₹340 cookie box show "From ₹700" — first in Shop, then again in `RelatedProducts`, which also billed the *other* tier when you added it.
+
+**`lowestPrice` / `isPerPiece` / `cardPrice` / `priceLabel` now live in `data/products.js`** and are imported, never re-derived — being re-implemented per file is exactly how it went wrong twice. `priceLabel()` owns the wording too ("From ₹210.00"), so the same product can't be quoted three ways. Shop still writes its own JSX for the per-piece card (it appends `sliceLabel`), but takes the rules from there.
 
 Shop is a 3-column layout (filters / grid / sticky cart), 12 per page, filters reset to page 1. Search lives in `SearchOverlay.jsx` and deep-links to `/shop?category=…`.
 

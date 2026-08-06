@@ -29,6 +29,7 @@ const ConfirmOrder = lazy(() => import('./pages/ConfirmOrder.jsx'))
 const TrackOrder = lazy(() => import('./pages/TrackOrder.jsx'))
 const AdminOrders = lazy(() => import('./pages/AdminOrders.jsx'))
 const AdminAccounting = lazy(() => import('./pages/AdminAccounting.jsx'))
+const NotFound = lazy(() => import('./pages/NotFound.jsx'))
 
 // Routes inside the buying / admin-confirm flow render without the footer
 // so customers stay focused on the cart → checkout → done path.
@@ -84,7 +85,12 @@ function App() {
                 <Route path="/track-order" element={<TrackOrder />} />
                 <Route path="/admin/orders" element={<AdminOrders />} />
                 <Route path="/admin/accounting" element={<AdminAccounting />} />
-                <Route path="*" element={<Home />} />
+                {/* A dead link showed the homepage under the wrong URL — the
+                    customer thought it worked, and search engines read it as a
+                    soft 404. GH Pages still serves 404.html (a copy of
+                    index.html) so real deep links boot the app; only genuinely
+                    unknown paths reach this. */}
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </ErrorBoundary>

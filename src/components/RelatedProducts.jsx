@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
-import { FiPlus } from 'react-icons/fi'
+import { Link } from 'react-router-dom'
+import { FiPlus, FiChevronRight } from 'react-icons/fi'
 import { u } from '../data/images.js'
-import { inr } from '../data/format.js'
-import { shopProducts } from '../data/products.js'
+import { shopProducts, priceLabel } from '../data/products.js'
 import { useCart } from '../context/CartContext.jsx'
 
 /**
@@ -100,33 +100,38 @@ export default function RelatedProducts() {
                 >
                   {p.name}
                 </div>
+                {/* The shared rule, not a local guess: this quoted `p.slice`
+                    outright, which for the 26 products whose second tier is the
+                    *pricier* one (a cookie box of 12) advertised nearly double
+                    the entry price — and then the button added the other one. */}
                 <div style={{ fontSize: '0.85rem', color: 'var(--cc-rose)', fontWeight: 700, marginTop: 'auto' }}>
-                  {p.slice ? `From ${inr(p.slice)}` : inr(p.price)}
+                  {priceLabel(p)}
                 </div>
               </div>
-              <button
-                onClick={() => add({ ...p, name: p.slice ? `${p.name} (${p.sizeLabel || 'Whole'})` : p.name })}
-                aria-label={`Add ${p.name} to cart`}
-                className="border-0 align-self-center"
-                style={{
-                  flexShrink: 0,
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  background: 'var(--cc-rose)',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 2px 8px rgba(207, 62, 99, 0.3)',
-                  cursor: 'pointer',
-                  transition: 'background 0.15s, transform 0.15s',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--cc-rose-deep)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--cc-rose)')}
-              >
-                <FiPlus size={18} />
-              </button>
+              {/* A two-tier product can't be added from here — which size, at
+                  which price? It used to guess "Whole" and bill that while the
+                  card quoted the other tier. Shop opens its size chooser for
+                  exactly this case; with no quick view here, the button takes
+                  you to the product instead. */}
+              {p.slice != null ? (
+                <Link
+                  to={`/shop?product=${p.id}`}
+                  aria-label={`Choose a size for ${p.name}`}
+                  title={`Choose a size for ${p.name}`}
+                  className="cc-related__btn align-self-center"
+                >
+                  <FiChevronRight size={18} />
+                </Link>
+              ) : (
+                <button
+                  onClick={() => add(p)}
+                  aria-label={`Add ${p.name} to cart`}
+                  title={`Add ${p.name} to cart`}
+                  className="cc-related__btn border-0 align-self-center"
+                >
+                  <FiPlus size={18} />
+                </button>
+              )}
             </article>
           </div>
         ))}

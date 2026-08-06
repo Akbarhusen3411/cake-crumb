@@ -22,7 +22,9 @@ export default function Cart() {
           <span className="feature-icon mb-3" style={{ width: 84, height: 84 }}>
             <FiShoppingBag size={32} />
           </span>
-          <h2 className="section-title">Your cart is empty</h2>
+          {/* The page's own title, so every route has exactly one h1. The two
+              here are alternate branches — only one ever renders. */}
+          <h1 className="section-title">Your cart is empty</h1>
           <p className="mt-2">Discover our handcrafted treats and add some sweetness to your day.</p>
           <Link to="/shop" className="btn-rose mt-3">
             <FiShoppingBag /> Continue Shopping
@@ -37,7 +39,7 @@ export default function Cart() {
       <div className="container px-2 px-md-3">
         <div className="text-center mb-4">
           <span className="eyebrow">Your Cart</span>
-          <h2 className="section-title mt-2">A Sweet Selection</h2>
+          <h1 className="section-title mt-2">A Sweet Selection</h1>
         </div>
 
         <div className="row g-3 g-lg-4">

@@ -6,7 +6,7 @@ import {
 } from 'react-icons/fi'
 import { TbLeaf, TbToolsKitchen2 } from 'react-icons/tb'
 import HeartDivider from '../components/HeartDivider.jsx'
-import { shopProducts } from '../data/products.js'
+import { shopProducts, lowestPrice, isPerPiece } from '../data/products.js'
 import { img, u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { useCart } from '../context/CartContext.jsx'
@@ -18,21 +18,15 @@ const CATEGORIES = [
   'All Products', 'Cheesecakes', 'Milk Cakes', 'Sponge Cakes', 'Cookies', 'Cupcakes', 'Bakes', 'Dessert Cups', 'Drinks',
 ]
 
-// A product's lowest orderable price. `slice` is the SMALLER tier for cheesecakes
-// (per-slice) but the LARGER box for cookies/brownies (box of 12), so never assume
-// — take the min so "From" prices, filters and sort all use the true entry price.
-const lowestPrice = (p) => (p.slice != null ? Math.min(p.price, p.slice) : p.price)
-
-// A per-piece product (`minQty > 1` — cupcakes) shows ONLY its box price + size
-// on the card ("₹150" / "Box of 6"). "From ₹25" under a card named "Vanilla
-// Cupcakes" showing six of them reads as "six cupcakes for ₹25", which is
-// exactly how customers misread it — and the owner's call is that a single
-// unambiguous box price beats any sub-line quoting the per-piece rate. The
-// per-piece rate appears only in the quick-view, where the count is chosen; the
-// category note above the grid is what advertises that pieces are an option.
-// NOTE: filters + sort still use lowestPrice() — the true entry price is 2 × the
-// per-piece rate, not the box.
-const isPerPiece = (p) => p.slice != null && (p.minQty || 1) > 1
+// `lowestPrice` and `isPerPiece` now live in data/products.js — they were
+// defined here, re-implemented in SearchOverlay and got wrong in
+// RelatedProducts, which quoted a cookie box at nearly double its entry price.
+// The rules and the reasoning are documented there.
+//
+// Filters and sort below still use lowestPrice(), while the CARD quotes the box
+// for a per-piece product: the true entry price is 2 × the per-piece rate, not
+// the box, so a cupcake can appear under a band its card price sits outside.
+// That trade is deliberate — see CLAUDE.md.
 
 /**
  * Page numbers to show, with gaps: 1 … 4 5 6 … 10.
