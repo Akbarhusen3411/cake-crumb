@@ -331,10 +331,11 @@ function attachAllergens(p) {
         // true thing instead: there's nothing in it to avoid.
         tags = ['eggless', 'vegan']
       } else if (isCoffee || /coffee/i.test(p.group || '') || /latte|macchiato|mochaccino|brew/.test(name)) {
-        // Also `[]` before, which was simply wrong — a latte, mocha or
-        // macchiato is milk. If any of these is ever served black, drop the tag
-        // on that entry rather than here.
-        tags = ['contains-dairy']
+        // The two "Classic" coffees are served black — no milk, so nothing to
+        // declare, and like the mojitos they say that outright instead of
+        // rendering an empty row. Everything else here is a latte, mocha or
+        // macchiato, which is milk (this branch used to declare nothing at all).
+        tags = /^classic /.test(name) ? ['eggless', 'vegan'] : ['contains-dairy']
         if (/cookie|biscoff|oreo/.test(name)) tags.push('contains-gluten')
         if (hasNuts) tags.push('contains-nuts')
       }
