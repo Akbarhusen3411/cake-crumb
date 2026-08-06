@@ -51,6 +51,39 @@ const UNIT_VARIANT = /^\s*(per\s*(piece|pc|pcs|slice)|standard)\s*$/i
 export const displayVariant = (v) =>
   (UNIT_VARIANT.test(String(v || '')) ? '' : variantLabel(v))
 
+/**
+ * Sizes read in the same order for every item: piece → slice → tub → box → whole.
+ *
+ * `acc_menu` keeps them in the order they were typed, so Cheesecake listed
+ * "Banto (3 slices)" above "Per slice" while Cookies listed "1 pc" first — the
+ * owner had to re-read the list for every item instead of reaching for the same
+ * position. Ranked by what the size IS, then by how much of it you get.
+ */
+const VARIANT_RANKS = [
+  [/per\s*(piece|pc|pcs)\b|^\s*1\s*(pc|pcs|piece)?\s*$/i, 0],  // a single piece
+  [/per\s*slice\b/i, 1],                                        // a single slice
+  [/\btub\b|\bcup\b|\d+\s*ml\b/i, 2],                           // served in a pot
+  [/\bbox\b|per\s*box\b|^\s*\d+\s*$/i, 3],                      // a box of several
+  [/bento|banto|whole|heart|circle|square/i, 4],                // the whole cake
+]
+export const variantRank = (v) => {
+  const s = String(v || '')
+  for (const [re, rank] of VARIANT_RANKS) if (re.test(s)) return rank
+  return 5
+}
+/** The count inside a size ("Box of 12" → 12), so boxes run small to large. */
+const variantCount = (v) => {
+  const m = String(v || '').match(/\d+/)
+  return m ? Number(m[0]) : 0
+}
+/** Sort menu rows for display. Same rank → fewer pieces / cheaper first. */
+export const sortVariants = (rows, getVariant = (r) => r.variant, getPrice = (r) => r.price) =>
+  [...rows].sort((a, b) =>
+    variantRank(getVariant(a)) - variantRank(getVariant(b)) ||
+    variantCount(getVariant(a)) - variantCount(getVariant(b)) ||
+    (Number(getPrice(a)) || 0) - (Number(getPrice(b)) || 0)
+  )
+
 /** "Chocolate Cake Pop ×10" for compact one-line summaries. */
 export const oneLine = (it, withQty) => {
   const v = displayVariant(it.variant)

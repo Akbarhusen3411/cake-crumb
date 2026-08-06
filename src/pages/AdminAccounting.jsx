@@ -80,6 +80,12 @@ export default function AdminAccounting() {
   }, [unlocked])
 
   const [tab, setTab] = useState('dashboard')
+  // A filter the Orders tab should open with, set by the Dashboard's "still to
+  // collect" line. Cleared whenever a tab pill is used, so it applies to the one
+  // jump that asked for it and not to every later visit.
+  const [ordersPreset, setOrdersPreset] = useState(null)
+  const goTab = (key) => { setOrdersPreset(null); setTab(key) }
+  const showUnpaid = () => { setOrdersPreset({ pay: 'unpaid', period: 'all' }); setTab('orders') }
   const [menu, setMenu] = useState([])
   const [orders, setOrders] = useState([])
   const [expenses, setExpenses] = useState([])
@@ -242,7 +248,7 @@ export default function AdminAccounting() {
           return (
             <button
               key={t.key}
-              onClick={() => setTab(t.key)}
+              onClick={() => goTab(t.key)}
               style={{
                 border: '1px solid var(--cc-rose-soft, #d7a7ae)', borderRadius: 999,
                 padding: '6px 16px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
@@ -257,8 +263,12 @@ export default function AdminAccounting() {
         })}
       </div>
 
-      {tab === 'dashboard' && <DashboardTab orders={orders} expenses={expenses} withdrawals={withdrawals} />}
-      {tab === 'orders' && <OrdersTab orders={orders} menu={menu} reload={reload} />}
+      {tab === 'dashboard' && (
+        <DashboardTab orders={orders} expenses={expenses} withdrawals={withdrawals} onShowUnpaid={showUnpaid} />
+      )}
+      {/* Tabs mount fresh on every switch, so OrdersTab reads the preset in its
+          state initialisers — no effect, no second render. */}
+      {tab === 'orders' && <OrdersTab orders={orders} menu={menu} reload={reload} preset={ordersPreset} />}
       {tab === 'menu' && <MenuTab menu={menu} reload={reload} />}
       {tab === 'expenses' && <ExpensesTab expenses={expenses} reload={reload} />}
       {tab === 'withdrawals' && <OwnerMoneyTab withdrawals={withdrawals} reload={reload} />}

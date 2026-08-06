@@ -355,9 +355,12 @@ export async function verifyAccPin(pin, storedHash) {
 // in random characters because its `tracking/{orderId}` doc is world-readable and
 // must not be guessable, while this one is admin-only and wants a real sequence.
 //
-// The **sequence counts the day, not the customer**: the second order of the day
-// is -02 even if it's a different person, so the number also tells the owner how
-// many orders that day has seen.
+// The **sequence counts the month, not the day and not the customer**: the date
+// segment still says which day the order was taken, but the counter keeps
+// climbing until the month turns over — 010826-01, 010826-02, then 020826-03 the
+// next morning. So the last number of a month is also that month's order count.
+// (It counted the day until the owner asked for this; a per-day reset made the
+// same "-01" come round thirty times a month and told them nothing.)
 //
 // IT IS A LABEL, NOT A KEY. The Firestore doc id stays the primary key and
 // nothing looks an order up by this string. That matters because the counter is
@@ -383,26 +386,31 @@ export function customerInitials(name = '') {
   return (String(name).trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2) || 'CC').toUpperCase()
 }
 
-/** The day's sequence from an order number — the part after the last dash. */
+/** The sequence from an order number — the part after the last dash. */
 const seqOf = (no) => parseInt(String(no || '').slice(String(no || '').lastIndexOf('-') + 1), 10)
+
+/** The DDMMYY segment of an order number, whatever precedes it. Rows written
+ *  before initials existed read "300726-01"; both shapes are matched. */
+const stampOf = (no) => (String(no || '').match(/(\d{6})-\d+\s*$/) || [])[1] || ''
 
 /**
  * The next free order number for `date`: CC-{initials}-DDMMYY-NN.
  *
- * Matched on the date segment rather than the whole prefix, so the day's count
- * runs across every customer — and so a row written before initials existed
- * ("300726-01") still counts toward it instead of handing out a duplicate.
+ * Matched on the MONTH inside the date segment, not the whole prefix and not the
+ * day: the count runs across every customer and every day of that month, so it
+ * carries on until the month ends and then restarts at -01.
  *
- * Numbers are never reused: deleting today's -02 still leaves the next one -03,
- * because a reused number would make two different bills agree.
+ * Numbers are never reused: deleting this month's -02 still leaves the next one
+ * -03, because a reused number would make two different bills agree.
  */
 export function nextOrderNo(orders, date, customer = '') {
   const stamp = dayStamp(date)
+  const month = stamp.slice(2) // MMYY — the period the counter runs for
   let max = 0
   for (const o of orders || []) {
-    const no = String(o?.orderNo || '')
-    if (!no.includes(`-${stamp}-`) && !no.startsWith(`${stamp}-`)) continue
-    const seq = seqOf(no)
+    const s = stampOf(o?.orderNo)
+    if (!s || s.slice(2) !== month) continue
+    const seq = seqOf(o?.orderNo)
     if (Number.isFinite(seq) && seq > max) max = seq
   }
   return `CC-${customerInitials(customer)}-${stamp}-${String(max + 1).padStart(2, '0')}`
@@ -462,7 +470,10 @@ export function orderQty(o) {
 export function computeSummary(orders, expenses, withdrawals, month) {
   const inMonth = (d) => !month || String(d || '').slice(0, 7) === month
   const s = {
-    receivedCash: 0, receivedOnline: 0, toCollect: 0, orderCount: 0, unpaidCount: 0,
+    // orderCount is every order that still counts (cancelled ones are skipped);
+    // paidCount is the subset that has actually been paid for. They were one
+    // number, and "N paid orders" under Earnings counted the unpaid ones too.
+    receivedCash: 0, receivedOnline: 0, toCollect: 0, orderCount: 0, paidCount: 0, unpaidCount: 0,
     expensesCash: 0, expensesOnline: 0, withdrawnCash: 0, withdrawnOnline: 0,
     investedCash: 0, investedOnline: 0,
     onlineTakenToCash: 0, // online payments the owner has withdrawn from the bank
@@ -473,6 +484,7 @@ export function computeSummary(orders, expenses, withdrawals, month) {
     const t = orderTotal(o)
     s.orderCount++
     if (o.paid) {
+      s.paidCount++
       if (o.method === 'Online') { s.receivedOnline += t; if (o.withdrawn) s.onlineTakenToCash += t }
       else s.receivedCash += t
     } else { s.toCollect += t; s.unpaidCount++ }

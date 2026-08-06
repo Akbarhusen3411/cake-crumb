@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react'
 import { FiArrowDownLeft, FiArrowUpRight, FiEdit2, FiTrash2 } from 'react-icons/fi'
 import Modal from '../Modal.jsx'
 import FilterChips from './FilterChips.jsx'
-import { ACC, addDocRec, updateDocRec, deleteDocRec } from '../../../services/accounting.js'
+import PeriodSelect from './PeriodSelect.jsx'
+import { ACC, addDocRec, updateDocRec, deleteDocRec, monthsFrom } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
-import { todayIso, fmtDate } from '../../../utils/adminDate.js'
+import { todayIso, fmtDate, inPeriod } from '../../../utils/adminDate.js'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
 
 // The owner's own money moving in and out of the bakery. Both live in
@@ -32,20 +33,26 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
   const [q, setQ] = useState('')
   const [dirFilter, setDirFilter] = useState('all')
   const [methodFilter, setMethodFilter] = useState('all')
+  const [period, setPeriod] = useState('all') // all | today | YYYY-MM
   const [editing, setEditing] = useState(null) // row, or { direction } for new
   const [busy, setBusy] = useState(false)
+  const [page, setPage] = useState(1)
   const mobile = useIsMobile()
 
+  const months = useMemo(() => monthsFrom(withdrawals), [withdrawals])
   const rows = useMemo(() => {
     const s = q.trim().toLowerCase()
     let list = [...withdrawals].sort((a, b) => String(b.date).localeCompare(String(a.date)))
     if (s) list = list.filter((w) => String(w.notes || '').toLowerCase().includes(s))
     if (dirFilter !== 'all') list = list.filter((w) => dirOf(w) === dirFilter)
     if (methodFilter !== 'all') list = list.filter((w) => w.method === methodFilter)
+    if (period !== 'all') list = list.filter((w) => inPeriod(w.date, period))
     return list
-  }, [withdrawals, q, dirFilter, methodFilter])
+  }, [withdrawals, q, dirFilter, methodFilter, period])
 
-  const filtered = dirFilter !== 'all' || methodFilter !== 'all' || q.trim() !== ''
+  const filtered = dirFilter !== 'all' || methodFilter !== 'all' || period !== 'all' || q.trim() !== ''
+  // Totals follow the filter, not the page — "Money in, this month" has to add
+  // up whichever page you're standing on.
   const totals = useMemo(() => {
     let put = 0, took = 0
     for (const w of rows) {
@@ -54,6 +61,12 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
     }
     return { put, took }
   }, [rows])
+
+  // Paged like the other lists. This one rendered every row ever entered.
+  const pageSize = mobile ? 10 : 25
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize))
+  const p = Math.min(page, pageCount)
+  const pageRows = rows.slice((p - 1) * pageSize, p * pageSize)
 
   async function save(data) {
     setBusy(true)
@@ -89,7 +102,7 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
         </button>
         <input
           className="form-control" style={{ maxWidth: 240 }}
-          placeholder="Search reason…" value={q} onChange={(e) => setQ(e.target.value)}
+          placeholder="Search reason…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }}
         />
         <div className="cc-admin-count ms-auto text-end small">
           <div style={{ color: IN_INK, fontWeight: 700 }}>In {inr(totals.put)}</div>
@@ -98,12 +111,15 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
       </div>
 
       <div className="cc-admin-filters d-flex flex-wrap align-items-center gap-3 mb-3">
-        <FilterChips label="Direction" options={DIR_FILTERS} value={dirFilter} onChange={setDirFilter} />
-        <FilterChips label="Cash/Online" options={METHOD_FILTERS} value={methodFilter} onChange={setMethodFilter} />
+        <FilterChips label="Direction" options={DIR_FILTERS} value={dirFilter}
+          onChange={(v) => { setDirFilter(v); setPage(1) }} />
+        <FilterChips label="Cash/Online" options={METHOD_FILTERS} value={methodFilter}
+          onChange={(v) => { setMethodFilter(v); setPage(1) }} />
+        <PeriodSelect value={period} months={months} onChange={(v) => { setPeriod(v); setPage(1) }} />
         {filtered && (
           <button
             type="button" className="btn btn-sm btn-link text-secondary p-0"
-            onClick={() => { setQ(''); setDirFilter('all'); setMethodFilter('all') }}
+            onClick={() => { setQ(''); setDirFilter('all'); setMethodFilter('all'); setPeriod('all'); setPage(1) }}
           >
             Clear filters
           </button>
@@ -117,7 +133,7 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
         </div>
       ) : mobile ? (
         <div className="d-flex flex-column gap-2">
-          {rows.map((w) => {
+          {pageRows.map((w) => {
             const isIn = dirOf(w) === IN
             return (
               <div key={w.id} style={{ border: '1px solid #f0e0e3', borderRadius: 12, padding: 12, background: '#fff' }}>
@@ -130,40 +146,43 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
                       {fmtDate(w.date)} · {isIn ? 'put in as' : 'taken from'} {w.method}
                     </div>
                   </div>
-                  <div className="d-flex gap-2">
-                    <button className="btn btn-sm btn-light" onClick={() => setEditing(w)}><FiEdit2 /></button>
-                    <button className="btn btn-sm btn-light text-danger" onClick={() => remove(w)}><FiTrash2 /></button>
-                  </div>
                 </div>
                 {w.notes ? <div className="small mt-1" style={{ color: '#7a584d' }}>{w.notes}</div> : null}
+                <div className="cc-card-actions">
+                  <button className="cc-card-action" style={{ color: '#cf3e63' }} title="Edit" aria-label="Edit"
+                    onClick={() => setEditing(w)}><FiEdit2 /></button>
+                  <button className="cc-card-action text-danger" title="Delete" aria-label="Delete"
+                    onClick={() => remove(w)}><FiTrash2 /></button>
+                </div>
               </div>
             )
           })}
         </div>
       ) : (
-        <div className="table-responsive" style={{ borderRadius: 12, border: '1px solid #f0e0e3' }}>
-          <table className="table table-hover align-middle mb-0" style={{ fontSize: 14 }}>
+        // Ruled, centred and scrolling at ten rows — same as Orders and Expenses.
+        <div className="table-responsive cc-table-scroll" style={{ borderRadius: 12, border: '1px solid #f0e0e3' }}>
+          <table className="table table-hover align-middle mb-0 cc-grid-table" style={{ fontSize: 14 }}>
             <thead style={{ background: '#f9eef1' }}>
               <tr style={{ color: '#7a4a58' }}>
-                <th>Date</th><th>In / Out</th><th className="text-end">Amount</th>
-                <th className="text-center">Cash/Online</th><th>Reason</th><th></th>
+                <th>Date</th><th>In / Out</th><th>Amount</th>
+                <th>Cash/Online</th><th>Reason</th><th></th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((w) => {
+              {pageRows.map((w) => {
                 const isIn = dirOf(w) === IN
                 return (
                   <tr key={w.id}>
                     <td className="text-nowrap">{fmtDate(w.date)}</td>
-                    <td style={{ color: isIn ? IN_INK : OUT_INK, fontWeight: 600 }}>
+                    <td className="text-nowrap" style={{ color: isIn ? IN_INK : OUT_INK, fontWeight: 600 }}>
                       {isIn ? 'Money in' : 'Money out'}
                     </td>
-                    <td className="text-end fw-semibold" style={{ color: isIn ? IN_INK : OUT_INK }}>
+                    <td className="fw-semibold text-nowrap" style={{ color: isIn ? IN_INK : OUT_INK }}>
                       {isIn ? '+' : '−'} {inr(w.amount)}
                     </td>
-                    <td className="text-center">{w.method}</td>
+                    <td>{w.method}</td>
                     <td>{w.notes}</td>
-                    <td className="text-nowrap text-end">
+                    <td className="text-nowrap">
                       <button className="cc-row-action" style={{ color: '#cf3e63' }} title="Edit" onClick={() => setEditing(w)}><FiEdit2 /></button>
                       <button className="cc-row-action text-danger" title="Delete" onClick={() => remove(w)}><FiTrash2 /></button>
                     </td>
@@ -172,6 +191,13 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+      {pageCount > 1 && (
+        <div className="d-flex justify-content-center align-items-center gap-3 mt-3">
+          <button className="btn btn-sm btn-light" disabled={p <= 1} onClick={() => setPage(p - 1)}>‹ Prev</button>
+          <span className="small text-muted">Page {p} of {pageCount}</span>
+          <button className="btn btn-sm btn-light" disabled={p >= pageCount} onClick={() => setPage(p + 1)}>Next ›</button>
         </div>
       )}
       {busy ? <div className="text-muted small mt-2">Saving…</div> : null}

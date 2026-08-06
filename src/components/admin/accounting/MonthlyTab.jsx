@@ -1,8 +1,10 @@
 import { useMemo } from 'react'
+import { FiDownload } from 'react-icons/fi'
 import { computeSummary, monthsFrom } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
-import { monthLabel } from '../../../utils/adminDate.js'
+import { monthLabel, todayIso } from '../../../utils/adminDate.js'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
+import { downloadCsv } from '../../../utils/csv.js'
 
 // One label/value stat inside a mobile month card.
 function Stat({ label, value, strong, color }) {
@@ -22,8 +24,28 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
     [months, orders, expenses, withdrawals]
   )
 
+  // Money as numbers, months as "YYYY-MM" so a spreadsheet sorts them, and an
+  // all-months TOTAL row so the file answers "the year so far" on its own.
+  function exportCsv() {
+    const out = rows.map(({ m, s }) =>
+      [m, s.orderCount, s.invested, s.received, s.totalExpenses, s.totalWithdrawn, s.toCollect, s.profit])
+    const sum = (i) => out.reduce((n, r) => n + (Number(r[i]) || 0), 0)
+    out.push(['TOTAL', sum(1), sum(2), sum(3), sum(4), sum(5), sum(6), sum(7)])
+    downloadCsv(
+      `cake-crumb-monthly-${todayIso()}.csv`,
+      ['Month', 'Orders', 'Invested', 'Earnings', 'Expenses', 'Taken out', 'To collect', 'Profit'],
+      out
+    )
+  }
+
   return (
     <div>
+      <div className="d-flex justify-content-end mb-2">
+        <button className="btn btn-sm btn-light d-inline-flex align-items-center gap-1"
+          onClick={exportCsv} disabled={!rows.length} title="Download this table as a spreadsheet">
+          <FiDownload /> CSV
+        </button>
+      </div>
       <p className="text-muted small mb-3">
         Every month totalled automatically. <strong>Profit = Earnings − Expenses</strong>, the same
         figure the Dashboard shows. Money you invest or take out is your own, so it changes neither
@@ -55,27 +77,28 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
         </div>
       ) : (
         // ── desktop: table ──
-        <div className="table-responsive" style={{ borderRadius: 12, border: '1px solid #f0e0e3' }}>
-          <table className="table table-hover align-middle mb-0" style={{ fontSize: 14 }}>
+        // Ruled, centred and scrolling at ten rows — same as Orders and Expenses.
+        <div className="table-responsive cc-table-scroll" style={{ borderRadius: 12, border: '1px solid #f0e0e3' }}>
+          <table className="table table-hover align-middle mb-0 cc-grid-table" style={{ fontSize: 14 }}>
             <thead style={{ background: '#f9eef1' }}>
               <tr style={{ color: '#7a4a58' }}>
-                <th>Month</th><th className="text-center">Orders</th>
-                <th className="text-end">Invested</th><th className="text-end">Earnings</th>
-                <th className="text-end">Expenses</th><th className="text-end">Taken out</th>
-                <th className="text-end">To Collect</th><th className="text-end">Profit</th>
+                <th>Month</th><th>Orders</th>
+                <th>Invested</th><th>Earnings</th>
+                <th>Expenses</th><th>Taken out</th>
+                <th>To Collect</th><th>Profit</th>
               </tr>
             </thead>
             <tbody>
               {rows.map(({ m, s }) => (
                 <tr key={m}>
-                  <td className="fw-semibold">{monthLabel(m)}</td>
-                  <td className="text-center">{s.orderCount}</td>
-                  <td className="text-end" style={{ color: '#1b7f5e' }}>{inr(s.invested)}</td>
-                  <td className="text-end">{inr(s.received)}</td>
-                  <td className="text-end">{inr(s.totalExpenses)}</td>
-                  <td className="text-end">{inr(s.totalWithdrawn)}</td>
-                  <td className="text-end">{inr(s.toCollect)}</td>
-                  <td className="text-end fw-semibold" style={{ color: s.profit >= 0 ? '#1b7f5e' : '#b23b3b' }}>{inr(s.profit)}</td>
+                  <td className="fw-semibold text-nowrap">{monthLabel(m)}</td>
+                  <td>{s.orderCount}</td>
+                  <td className="text-nowrap" style={{ color: '#1b7f5e' }}>{inr(s.invested)}</td>
+                  <td className="text-nowrap">{inr(s.received)}</td>
+                  <td className="text-nowrap" style={{ color: '#b23b3b' }}>{inr(s.totalExpenses)}</td>
+                  <td className="text-nowrap">{inr(s.totalWithdrawn)}</td>
+                  <td className="text-nowrap" style={{ color: '#c67c17' }}>{inr(s.toCollect)}</td>
+                  <td className="fw-semibold text-nowrap" style={{ color: s.profit >= 0 ? '#1b7f5e' : '#b23b3b' }}>{inr(s.profit)}</td>
                 </tr>
               ))}
             </tbody>

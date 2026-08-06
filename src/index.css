@@ -5825,3 +5825,466 @@ header[style*="sticky"] {
     margin-right: 0 !important;
   }
 }
+
+/* ─────────── admin accounting: the New / Edit Order sheet ───────────
+   One item is one row of a small rose-headed table: #, the three pickers, qty,
+   the menu's rate, the line's total, remove. The fields carry their own borders
+   and the columns are separated by nothing else, so the sheet stays light —
+   ruled cells around bordered inputs drew every line twice. */
+.cc-oitems__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+.cc-oitems__title {
+  font-family: var(--font-heading, serif);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--cc-cocoa, #5b3e36);
+}
+.cc-oitems__hint {
+  flex: 1 1 auto;
+  text-align: right;
+  font-size: 0.7rem;
+  color: #a8887f;
+}
+/* Add item: a labelled pill, because it's the one control the owner reaches for
+   over and over while writing a bill. */
+.cc-additem {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid #f3ccd8;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--cc-rose-deep, #cf3e63);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.12s ease, box-shadow 0.12s ease;
+}
+.cc-additem:hover { background: #fdeef2; box-shadow: 0 2px 10px rgba(207, 62, 99, 0.14); }
+.cc-additem:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 2px; }
+
+.cc-otable {
+  border: 1px solid #f4dfe4;
+  border-radius: 14px;
+  background: #fff;
+}
+/* Past six items the grid scrolls on its own, so the total and the Save button
+   stay where they were. The dropdowns are portalled onto <body>, so this can't
+   clip them. */
+.cc-otable--scroll {
+  max-height: 17.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.cc-otable--scroll .cc-oline--head { position: sticky; top: 0; z-index: 2; }
+
+.cc-oline { display: flex; flex-wrap: wrap; align-items: center; }
+.cc-oline + .cc-oline { border-top: 1px solid #f9edf0; }
+.cc-oline__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 2.9rem;
+  padding: 0.2rem 0.3rem;
+}
+.cc-oline .form-control {
+  width: 100%;
+  border: 1px solid #eddbe0;
+  border-radius: 9px;
+  background: #fff;
+  font-size: 0.85rem;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-oline .form-control:focus {
+  border-color: var(--cc-rose, #e0617a);
+  box-shadow: 0 0 0 3px rgba(224, 97, 122, 0.14);
+}
+.cc-oline__cell > div { width: 100%; }
+
+.cc-oline__n {
+  flex: 0 0 1.8rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #9a7c74;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-oline__cat { flex: 1 1 8rem; }
+.cc-oline__item { flex: 2 1 10rem; }
+.cc-oline__size { flex: 1 1 7.5rem; }
+.cc-oline__qty { flex: 0 0 4rem; }
+.cc-oline__price { flex: 0 0 5.4rem; }
+.cc-oline__total { flex: 0 0 5.6rem; }
+.cc-oline__del { flex: 0 0 3rem; }
+/* Figures centre under the caption that names them — a right-aligned value
+   under a centred caption read as two different columns. */
+.cc-oline__qty .form-control,
+.cc-oline__price .form-control { text-align: center; }
+.cc-oline__fixed,
+.cc-oline__total {
+  font-size: 0.86rem;
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+/* The menu's rate, shown not typed — see the comment in OrderForm. */
+.cc-oline__fixed { color: #6d5049; font-weight: 600; }
+.cc-oline__fixed--none { color: #c3aeb2; }
+.cc-oline__total { color: #1b7f5e; }
+/* Per-piece item still on 1 — the save will refuse it, so say so on the row. */
+.cc-oline--short .cc-oline__qty .form-control {
+  border-color: var(--cc-rose-deep, #cf3e63);
+  background: #fdeef2;
+}
+
+.cc-oline--head {
+  background: #fdeef2;
+  border-radius: 13px 13px 0 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--cc-rose-deep, #cf3e63);
+}
+.cc-oline--head .cc-oline__cell {
+  min-height: 2.3rem;
+  color: inherit;
+  font: inherit;
+}
+
+/* The order's total closes the table on its own band, so it reads as the sum of
+   the column above it rather than as one more field in the form. */
+.cc-ototal {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 0.55rem 0.9rem;
+  background: #fdeef2;
+  border-top: 1px solid #f6dde3;
+  border-radius: 0 0 13px 13px;
+}
+.cc-ototal span { font-size: 0.85rem; font-weight: 600; color: #7a584d; }
+.cc-ototal b {
+  font-size: 1.35rem;
+  color: var(--cc-rose-deep, #cf3e63);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* A select with a glyph in its gutter — the three closing choices read as one
+   set that way, instead of three identical grey boxes. */
+.cc-isel { position: relative; }
+.cc-isel > svg {
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--cc-rose, #e0617a);
+  pointer-events: none;
+}
+.cc-isel .form-select { padding-left: 2.2rem; }
+
+@media (max-width: 767.98px) {
+  /* Folded: the captions no longer sit over what they name, so they go, and
+     each item becomes its own boxed block instead of a table row. */
+  .cc-oline--head { display: none; }
+  .cc-oitems__hint { display: none; }
+  .cc-otable { border: 0; background: none; }
+  /* Folded rows are blocks, not lines — six of them don't fit a phone window
+     worth scrolling inside. The sheet's own scroll does the job here. */
+  .cc-otable--scroll { max-height: none; overflow: visible; }
+  .cc-oline {
+    border: 1px solid #f4dfe4;
+    border-radius: 12px;
+    background: #fdf9fa;
+    padding: 0.3rem;
+  }
+  .cc-oline + .cc-oline { margin-top: 0.45rem; border-top: 1px solid #f4dfe4; }
+  .cc-oline__cell { min-height: 2.6rem; }
+  .cc-oline__n { flex: 0 0 1.4rem; }
+  .cc-oline__cat, .cc-oline__item { flex: 1 1 9rem; }
+  .cc-oline__size { flex: 1 1 100%; }
+  .cc-oline__qty, .cc-oline__price { flex: 1 1 4rem; }
+  .cc-oline__total { flex: 1 1 auto; }
+  .cc-ototal { margin-top: 0.5rem; border-radius: 12px; border: 1px solid #f6dde3; }
+}
+
+/* Today's line above the orders list. This is a *daily* book, but every other
+   figure on the page is a month or all-time. */
+.cc-today {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 1rem;
+  margin-bottom: 0.85rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid #f4dfe4;
+  border-radius: 12px;
+  background: linear-gradient(160deg, #fff6f2 0%, #fdeef2 100%);
+  font-size: 0.85rem;
+  color: #7a584d;
+}
+.cc-today__label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cc-rose-deep, #cf3e63);
+}
+.cc-today__stat b { font-variant-numeric: lining-nums tabular-nums; }
+.cc-today__btn {
+  margin-left: auto;
+  border: 1px solid #f3ccd8;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cc-rose-deep, #cf3e63);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.7rem;
+  cursor: pointer;
+}
+.cc-today__btn:hover { background: #fdeef2; }
+
+/* A name in a list that filters to itself. Looks like text until you need it. */
+.cc-name-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  border-bottom: 1px dashed transparent;
+}
+.cc-name-link:hover { color: var(--cc-rose-deep, #cf3e63); border-bottom-color: currentColor; }
+.cc-name-link:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 2px; }
+
+/* The dashboard's one actionable figure — it opens the orders it refers to. */
+.cc-acc-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--cc-rose-deep, #cf3e63);
+  cursor: pointer;
+  border-bottom: 1px dashed rgba(207, 62, 99, 0.4);
+}
+.cc-acc-link:hover { border-bottom-style: solid; }
+
+/* Actions on a stacked admin card — icon only, evenly spread, real hit areas. */
+.cc-card-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid #f4e3e7;
+}
+.cc-card-action {
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.2rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid #f0e0e3;
+  border-radius: 10px;
+  background: #fff;
+  color: #7a584d;
+  cursor: pointer;
+}
+.cc-card-action svg { width: 18px; height: 18px; }
+.cc-card-action:active { background: #fdeef2; }
+
+/* Icon-only add button — the expense sheet's version of .cc-additem. */
+.cc-oadd {
+  flex: 0 0 auto;
+  width: 1.9rem;
+  height: 1.9rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--cc-rose-soft, #d7a7ae);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cc-rose-deep, #cf3e63);
+  cursor: pointer;
+  transition: background-color 0.12s ease, transform 0.12s ease;
+}
+.cc-oadd svg { width: 17px; height: 17px; }
+.cc-oadd:hover { background: #fdeef2; transform: scale(1.06); }
+.cc-oadd:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 2px; }
+
+/* Expense items: Item · Qty · ₹ each · line total · remove. */
+.cc-exp-row { display: flex; align-items: center; gap: 0.5rem; }
+.cc-exp-row--head {
+  font-size: 0.68rem;
+  color: #a8887f;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+/* Captions borrow the cells' widths, not the Total cell's red bold. */
+.cc-exp-row--head > * { color: inherit; font: inherit; letter-spacing: inherit; }
+.cc-exp-row .cc-exp-name { flex: 1 1 8rem; min-width: 0; }
+.cc-exp-row .cc-exp-qty { flex: 0 0 3.6rem; text-align: center; }
+.cc-exp-row .cc-exp-rate { flex: 0 0 5rem; text-align: center; }
+.cc-exp-row .cc-exp-total {
+  flex: 0 0 5.2rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: #b23b3b;
+  white-space: nowrap;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-exp-row .cc-exp-del { flex: 0 0 2.6rem; padding: 0.35rem; }
+@media (max-width: 575.98px) {
+  /* Five cells won't sit on a phone line: the name takes its own, the figures
+     share the next. The captions stop lining up, so they go. */
+  .cc-exp-row { flex-wrap: wrap; }
+  .cc-exp-row--head { display: none; }
+  .cc-exp-row .cc-exp-name { flex: 1 1 100%; }
+  .cc-exp-row .cc-exp-qty, .cc-exp-row .cc-exp-rate { flex: 1 1 4rem; }
+  .cc-exp-row .cc-exp-total { flex: 1 1 auto; }
+}
+
+/* Expense items: same six-then-scroll rule as the order grid. */
+.cc-explist--scroll {
+  max-height: 17.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.25rem;
+}
+
+/* Ruled admin table. Bootstrap draws only horizontal lines, which left ten
+   columns of text with nothing to hold a value to its own column. */
+.cc-grid-table > :not(caption) > * > * {
+  border-right: 1px solid #f4e3e7;
+  text-align: center;
+  vertical-align: middle;
+}
+.cc-grid-table > :not(caption) > * > *:last-child { border-right: 0; }
+/* The item breakdown is a little table of its own — its lines keep name left,
+   money right, which is the only way three figures per line stay readable. */
+.cc-grid-table .cc-items-cell { text-align: left; }
+
+/* About ten rows tall, then the list scrolls inside its own frame. A row with
+   seven items is taller than a one-item row, so this is a height, not a count —
+   ten ordinary rows plus the header is what fits. */
+.cc-table-scroll {
+  max-height: 33rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* The inner scrollers keep their scrolling and lose their bar. The site-wide
+   rose `scrollbar-color` is meant for the page; inside a framed list it drew a
+   second coloured rail right down the middle of the admin. Each of these has a
+   visibly cut-off row at its edge, which is the cue to scroll. */
+.cc-table-scroll,
+.cc-otable--scroll,
+.cc-explist--scroll,
+.cc-modal-body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.cc-table-scroll::-webkit-scrollbar,
+.cc-otable--scroll::-webkit-scrollbar,
+.cc-explist--scroll::-webkit-scrollbar,
+.cc-modal-body::-webkit-scrollbar { width: 0; height: 0; display: none; }
+/* The header has to stay put and paint its own background — a background on
+   <thead> doesn't travel with a sticky <th>. */
+.cc-table-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #f9eef1;
+}
+
+/* An unpaid order, warm-tinted end to end with a bar down its left edge. The
+   Paid chip alone was one small mark in a wide row and got missed. `!important`
+   because Bootstrap paints `--bs-table-bg` onto every cell, which is what hid
+   the colour when it sat on the <tr>. */
+.cc-grid-table > tbody > tr.cc-row-unpaid > * {
+  background-color: #fff4e6 !important;
+  border-color: #f6e0c4;
+}
+.cc-grid-table > tbody > tr.cc-row-unpaid > *:first-child {
+  box-shadow: inset 3px 0 0 0 #e39a4a;
+}
+
+/* A cancelled order counts for nothing — computeSummary drops it and so does
+   the list total — but it looked exactly like a live one. Greyed, with the
+   amount struck through so the figure itself reads as void. Cancelled beats
+   unpaid: it shouldn't also be shouting for money. */
+.cc-grid-table > tbody > tr.cc-row-cancelled > * {
+  background-color: #fafafa !important;
+  color: #9b9490;
+}
+/* `.cc-amount` marks the money cell in both layouts — targeting the column by
+   position would break the day a column is added. `!important` beats the inline
+   paid/unpaid ink. */
+.cc-row-cancelled .cc-amount,
+.cc-card-cancelled .cc-amount {
+  color: #9b9490 !important;
+  text-decoration: line-through;
+}
+.cc-row-cancelled .cc-item-line__amt,
+.cc-card-cancelled .cc-item-line__amt { text-decoration: line-through; }
+.cc-grid-table > tbody > tr.cc-row-cancelled .cc-name-link { color: inherit; }
+.cc-card-cancelled { color: #9b9490; }
+
+/* What this customer still owes across every one of their orders. */
+.cc-owes {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: #ffe1c2;
+  color: #a5591b;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.cc-items-cell { display: flex; flex-direction: column; gap: 1px; }
+.cc-item-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+  color: var(--cc-cocoa, #5b3e36);
+}
+.cc-item-line__name { flex: 1 1 auto; min-width: 0; }
+.cc-item-line__qty {
+  flex: 0 0 auto;
+  font-size: 0.74rem;
+  color: #9a7c74;
+  white-space: nowrap;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-item-line__amt {
+  flex: 0 0 4.8rem;
+  text-align: right;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* The dialog on a phone: edge to edge, full height, header and buttons pinned
+   while the middle scrolls. `align-items: stretch` was tried and is wrong — it
+   sizes the sheet to the viewport and lets taller content spill out past its
+   own white background, which is how the page behind showed through. */
+.cc-modal-body { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+
+@media (max-width: 575.98px) {
+  .cc-modal-backdrop { padding: 0 !important; }
+  .cc-modal { border-radius: 0 !important; height: 100%; }
+  .cc-modal-head, .cc-modal-foot { padding-inline: 0.9rem !important; }
+  .cc-modal-body { padding: 0.9rem !important; }
+}

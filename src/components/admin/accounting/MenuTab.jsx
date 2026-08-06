@@ -11,7 +11,7 @@ export default function MenuTab({ menu, reload }) {
   const [q, setQ] = useState('')
   const [editing, setEditing] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [open, setOpen] = useState(() => new Set()) // manually-expanded categories
+  const [open, setOpen] = useState('') // the one manually-expanded category
   const mobile = useIsMobile()
 
   const categories = useMemo(() => [...new Set(menu.map((m) => m.category).filter(Boolean))].sort(), [menu])
@@ -33,8 +33,11 @@ export default function MenuTab({ menu, reload }) {
   const shownCats = Object.keys(grouped).sort()
   const filtering = !!(q.trim() || cat)
   const totalShown = shownCats.reduce((n, c) => n + Object.values(grouped[c]).reduce((k, v) => k + v.length, 0), 0)
-  const isOpen = (c) => filtering || open.has(c)
-  const toggle = (c) => setOpen((p) => { const n = new Set(p); n.has(c) ? n.delete(c) : n.add(c); return n })
+  const isOpen = (c) => filtering || open === c
+  // One category at a time: opening Cheesecake closes Cake Pop. Several open at
+  // once (Cheesecake alone is 23 items) buried the next heading pages down.
+  // Filtering still opens everything that matched — that's the point of it.
+  const toggle = (c) => setOpen((p) => (p === c ? '' : c))
 
   async function save(data) {
     setBusy(true)

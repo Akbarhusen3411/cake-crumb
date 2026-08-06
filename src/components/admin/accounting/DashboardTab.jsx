@@ -130,7 +130,7 @@ function TrendChart({ orders, expenses, withdrawals, months }) {
  * decisions, and the owner said so. The cash/bank split survives as one small line
  * because the "In bank → Taken to cash" button on an online order feeds it.
  */
-export default function DashboardTab({ orders, expenses, withdrawals }) {
+export default function DashboardTab({ orders, expenses, withdrawals, onShowUnpaid }) {
   const months = useMemo(() => monthsFrom(orders, expenses, withdrawals), [orders, expenses, withdrawals])
   const [period, setPeriod] = useState('ALL')
   const sel = months.includes(period) ? period : 'ALL'
@@ -160,8 +160,11 @@ export default function DashboardTab({ orders, expenses, withdrawals }) {
       <div className="cc-acc-hero">
         <div className="cc-acc-card cc-acc-card--hero cc-acc-card--accent">
           <div className="cc-acc-label">Money in hand</div>
-          <div className="cc-acc-value mt-1" style={{ color: s.moneyInHand < 0 ? '#c23a2b' : '#c23a2b' }}>
+          {/* Both branches of this used to be the same colour, so a negative —
+              more taken out than came in — read exactly like a healthy figure. */}
+          <div className="cc-acc-value mt-1" style={{ color: s.moneyInHand < 0 ? '#a3172c' : '#c23a2b' }}>
             {inr(s.moneyInHand)}
+            {s.moneyInHand < 0 ? <span className="cc-acc-note d-block">More has gone out than came in.</span> : null}
           </div>
           <div className="cc-acc-note">
             Invested {inr(s.invested)} + earnings {inr(s.received)} − expenses {inr(s.totalExpenses)}
@@ -183,15 +186,27 @@ export default function DashboardTab({ orders, expenses, withdrawals }) {
 
       <div className="cc-acc-kpis mt-3">
         <Stat label="Invested" value={inr(s.invested)} color={INK_IN} note="Your own money put in" />
+        {/* paidCount, not orderCount — this figure is money received, and
+            orderCount includes the ones still unpaid. */}
         <Stat label="Earnings" value={inr(s.received)} color={SERIES_SALES}
-          note={`${s.orderCount} paid order${s.orderCount === 1 ? '' : 's'}`} />
+          note={`${s.paidCount} paid order${s.paidCount === 1 ? '' : 's'} of ${s.orderCount}`} />
         <Stat label="Expenses" value={inr(s.totalExpenses)} color={SERIES_EXPENSES} note="Material & supplies" />
         <Stat label="Taken out" value={inr(s.totalWithdrawn)} note="For yourself, not the bakery" />
       </div>
 
       <p className="cc-acc-note mt-3 mb-0 text-center">
-        Still to collect <strong>{inr(s.toCollect)}</strong> from {s.unpaidCount} unpaid
-        order{s.unpaidCount === 1 ? '' : 's'}
+        {/* Money owed is the one figure here you can act on, so it opens the
+            orders it refers to instead of leaving you to filter for them. */}
+        {s.unpaidCount > 0 && onShowUnpaid ? (
+          <button type="button" className="cc-acc-link" onClick={onShowUnpaid}
+            title="Open these orders in the Orders tab">
+            Still to collect <strong>{inr(s.toCollect)}</strong> from {s.unpaidCount} unpaid
+            order{s.unpaidCount === 1 ? '' : 's'} →
+          </button>
+        ) : (
+          <>Still to collect <strong>{inr(s.toCollect)}</strong> from {s.unpaidCount} unpaid
+            order{s.unpaidCount === 1 ? '' : 's'}</>
+        )}
         {allTime ? <> · Cash <strong>{inr(s.cashInHand)}</strong> · In bank <strong>{inr(s.bankOnline)}</strong></> : null}
       </p>
 
