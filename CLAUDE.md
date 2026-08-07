@@ -9,13 +9,22 @@ npm run dev               # Vite dev server (http://localhost:5173/cake-crumb/)
 npm run build             # Production build → dist/
 npm run preview           # Serve the built dist/
 npm run lint              # ESLint over the repo
+npm run check-images      # Every product has a photo, every photo exists
 npm run optimize-images   # Regenerate .webp siblings for everything in /public
 npm run deploy            # Build + copy index.html → 404.html + push dist/ to gh-pages
 ```
 
 No automated tests — verify by running `npm run dev` and clicking through. **Don't run `build`, `deploy` or `git push` unless explicitly asked.** Don't update this file unless explicitly asked either.
 
-`npm run lint` exits 0 with warnings (`eslint.config.js` downgrades `react-refresh/only-export-components`, `react-hooks/set-state-in-effect`, `react-hooks/purity`). Baseline is **17 warnings, 0 errors** — read the output, don't just check the exit code.
+`npm run lint` exits 0 with warnings (`eslint.config.js` downgrades `react-refresh/only-export-components`, `react-hooks/set-state-in-effect`, `react-hooks/purity`). Baseline is **18 warnings, 0 errors** — read the output, don't just check the exit code, and check whether any warning names a file you touched rather than counting.
+
+**Checking logic without a test runner.** Pure data and util modules can be exercised straight from Node, which is how the price rules, the order-number sequence and the CSV shape were each verified:
+
+```bash
+node --input-type=module -e "import {describe} from './src/data/products.js'; console.log(describe(...))"
+```
+
+It works for `data/*` and `utils/*` — but **anything that reaches `src/firebase.js` throws**, because `import.meta.env` is undefined outside Vite. `services/accounting.js` is the usual casualty; copy the pure function out, or drive it through a module that doesn't import Firebase.
 
 ## Start here
 
@@ -230,7 +239,9 @@ Pre-fill from `cc_customer_v1` / `cc_customer_draft_v1` was removed — customer
 
 ### Product catalog
 
-`data/products.js` is hand-maintained: `featured` (Home) and `shopProducts` (Shop + Menu). Some entries have a `slice` second price tier.
+`data/products.js` is hand-maintained: `featured` (Home) and `shopProducts` (Shop + Menu). An entry is `{ id, name, price, category }` plus any of `slice` + `sizeLabel`/`sliceLabel` (second price tier), `minQty` (per-piece minimum), `group` (sub-heading), `badge`, `desc`. **`img` and `allergens` are never written by hand** — `withPhoto()` looks the photo up by *name* in `productImages.js` (so renaming a product means renaming its key there, or it silently falls back), and `attachAllergens()` derives the tags from category + name keywords.
+
+**Two fields are generated, and both are load-bearing.** `attachAllergens()` must never leave a product with `[]` — an empty list renders no badges, which reads as "we never checked" rather than "there's nothing in it", so a genuinely free-from item (mojitos, black coffee) gets `['eggless','vegan']` instead. `describe(p)` builds the one-sentence description the quick view and the JSON-LD `Product` both show, from the name and category; set `desc` on an entry to overrule it. Neither may return nothing for a new product.
 
 **`slice`-price gotcha (bit us twice):** the "From" price, price filter and price sort all use `lowestPrice(p)` = `Math.min(price, slice)` — **never `slice || price`**. `slice` is the *cheaper* per-slice tier for cheesecakes but the *pricier* box-of-12 for cookies (26 products), so assuming it's smaller made a ₹340 cookie box show "From ₹700" — first in Shop, then again in `RelatedProducts`, which also billed the *other* tier when you added it.
 

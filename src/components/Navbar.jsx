@@ -11,14 +11,18 @@ import { asset } from '../data/images.js'
 import { useCart } from '../context/CartContext.jsx'
 import { WHATSAPP_PHONE } from './WhatsAppButton.jsx'
 
+// Order is the browsing journey, not the sitemap: look at what's on offer
+// (Menu), buy it (Shop), then the softer pages. About sits last because it's
+// the page a customer reads once, if at all — it used to sit second, ahead of
+// everything the bakery actually sells.
 const links = [
   { to: '/', label: 'Home', icon: FiHome },
-  { to: '/about', label: 'About', icon: FiInfo },
   { to: '/menu', label: 'Menu', icon: FiBook },
   { to: '/shop', label: 'Shop', icon: FiShoppingBag },
   { to: '/gallery', label: 'Gallery', icon: FiImage },
   { to: '/reviews', label: 'Reviews', icon: FiStar },
   { to: '/contact', label: 'Contact', icon: FiPhone },
+  { to: '/about', label: 'About', icon: FiInfo },
 ]
 
 export default function Navbar() {
