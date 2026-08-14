@@ -45,6 +45,12 @@
     <meta name="twitter:image" content="https://akbarhusen3411.github.io/cake-crumb/products/cheesecake-trio-flavors.webp" />
 
     <!-- JSON-LD: Bakery -->
+    <!-- NOTE: no openingHoursSpecification here, deliberately. This is a
+         made-to-order kitchen, not a shop counter — orders arrive on WhatsApp
+         at any hour, the date is agreed with the customer, and baking starts
+         after that. Publishing hours would have Google show a "Closed now"
+         badge and turn people away at times an order is perfectly welcome.
+         (JSON-LD is strict JSON: never put // comments inside the block.) -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -54,20 +60,39 @@
         "url": "https://akbarhusen3411.github.io/cake-crumb/",
         "image": "https://akbarhusen3411.github.io/cake-crumb/products/cheesecake-trio-flavors.webp",
         "telephone": "+91-91731-83440",
+        "email": "cakeandcrumb.in@gmail.com",
         "priceRange": "₹₹",
         "servesCuisine": ["Desserts", "Bakery"],
         "paymentAccepted": ["UPI", "Cash on Delivery", "GPay", "PhonePe", "Paytm"],
         "currenciesAccepted": "INR",
-        "sameAs": ["https://www.instagram.com/cake_and_crumb_1/"]
+        "sameAs": ["https://www.instagram.com/cake_and_crumb_1/"],
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Vaso",
+          "addressLocality": "Vaso",
+          "addressRegion": "Gujarat",
+          "postalCode": "387380",
+          "addressCountry": "IN"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 22.665087,
+          "longitude": 72.756359
+        },
+        "areaServed": { "@type": "State", "name": "Gujarat" }
       }
     </script>
 
-    <!-- Plausible analytics — privacy-friendly, cookieless, free up to 10K pageviews/mo.
-         To enable: sign up at https://plausible.io, add domain "akbarhusen3411.github.io",
-         then uncomment the script tag below. Defer attribute keeps it off the critical path. -->
-    <!--
+    <!-- Plausible analytics — cookieless, no personal data, no consent banner
+         needed. `defer` keeps it off the critical path, and a blocked or
+         failed load costs the page nothing.
+
+         ⚠ REQUIRES AN ACCOUNT TO COLLECT ANYTHING. Sign up at
+         https://plausible.io and add the site "akbarhusen3411.github.io".
+         Until that exists this script loads and reports nowhere — harmless,
+         but you will see no data. Remove the tag if you'd rather not send
+         pageviews to a third party at all. -->
     <script defer data-domain="akbarhusen3411.github.io" src="https://plausible.io/js/script.js"></script>
-    -->
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -78,12 +103,12 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Lato:wght@300;400;500;600;700;800;900&family=Allura&display=swap"
     />
-    <script type="module" crossorigin src="/cake-crumb/assets/index-DTjV570a.js"></script>
+    <script type="module" crossorigin src="/cake-crumb/assets/index-vS7Pl_lw.js"></script>
     <link rel="modulepreload" crossorigin href="/cake-crumb/assets/rolldown-runtime-jpDsebLB.js">
-    <link rel="modulepreload" crossorigin href="/cake-crumb/assets/react-vendor-DV9dzQ9d.js">
+    <link rel="modulepreload" crossorigin href="/cake-crumb/assets/react-vendor-CksvodCd.js">
     <link rel="modulepreload" crossorigin href="/cake-crumb/assets/certifications-D94C_YYf.js">
     <link rel="modulepreload" crossorigin href="/cake-crumb/assets/format-XQan9feh.js">
-    <link rel="stylesheet" crossorigin href="/cake-crumb/assets/index-DD9c6yMM.css">
+    <link rel="stylesheet" crossorigin href="/cake-crumb/assets/index-D48UTIuI.css">
   </head>
   <body>
     <div id="root"></div>
