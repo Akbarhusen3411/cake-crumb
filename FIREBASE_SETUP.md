@@ -32,7 +32,7 @@ service cloud.firestore {
       allow read: if true;
       allow create: if
         request.resource.data.keys().hasOnly(
-          ['name','email','rating','title','text','orderItem','photo','createdAt']
+          ['name','rating','title','text','orderItem','photo','createdAt']
         ) &&
         request.resource.data.name is string &&
         request.resource.data.name.size() > 0 &&

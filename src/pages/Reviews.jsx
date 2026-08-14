@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   FiStar, FiHeart, FiCheckCircle, FiTrash2, FiLock, FiLogOut,
-  FiSmile, FiTruck, FiShield, FiChevronDown, FiCamera, FiX, FiEdit3,
+  FiTruck, FiChevronDown, FiCamera, FiX, FiEdit3,
 } from 'react-icons/fi'
 import { compressImage } from '../utils/compressImage.js'
-import { TbLeaf, TbCake, TbToolsKitchen2, TbHandStop } from 'react-icons/tb'
+import { TbLeaf, TbCake, TbToolsKitchen2 } from 'react-icons/tb'
 import HeartDivider from '../components/HeartDivider.jsx'
 import { addReview, deleteReview, getReviews, summarize, timeAgo } from '../services/reviews.js'
 import { isFirebaseEnabled, getFirebaseAuth } from '../firebase.js'
@@ -45,30 +45,35 @@ function Stars({ count = 5, size = 14 }) {
   )
 }
 
-const SUB_RATINGS = [
-  { Icon: TbCake,      title: 'Delicious Treats',   score: 4.9 },
-  { Icon: TbLeaf,      title: 'Fresh Ingredients',  score: 4.9 },
-  { Icon: TbHandStop,  title: 'Customer Service',   score: 4.8 },
-  { Icon: FiHeart,     title: 'Packaging',          score: 4.9 },
-]
+/** Reviews needed before an average is worth publishing to search engines. */
+const MIN_REVIEWS_FOR_SCHEMA = 5
 
-const WHAT_LOVE = [
-  { Icon: FiHeart,  title: 'Beautiful Designs',  text: 'Our treats look as good as they taste.' },
-  { Icon: TbCake,   title: 'Delicious Flavors',  text: 'Made with love and the finest ingredients.' },
-  { Icon: FiTruck,  title: 'Fresh & Timely',     text: 'Always fresh, always delivered on time.' },
-  { Icon: FiSmile,  title: 'Great Service',      text: 'Friendly, helpful, and always here for you.' },
-]
-
+/**
+ * ONE strip, not three.
+ *
+ * This page carried SUB_RATINGS, WHAT_LOVE and PROMISE_STRIP — twelve tiles
+ * saying four things. "Fresh Ingredients" appeared twice; so did service, and
+ * so did freshness/timeliness. On a page whose whole job is showing what
+ * CUSTOMERS said, twelve tiles of what the bakery says crowded them out.
+ *
+ * Two content rules kept while merging:
+ *   • Nothing is attributed to customers. The old "What customers love" heading
+ *     put four hardcoded lines in their mouths — the same fault as the invented
+ *     4.9 rating, just without a number. These are the bakery's own claims,
+ *     written in the bakery's own voice.
+ *   • No absolute guarantees. "Always delivered on time" and "on time, every
+ *     time" are promises one kitchen cannot make; the wording now says what is
+ *     actually done instead.
+ */
 const PROMISE_STRIP = [
-  { Icon: TbLeaf,          title: 'Fresh Ingredients', text: 'We use only the finest and freshest ingredients.' },
-  { Icon: TbToolsKitchen2, title: 'Made with Love',    text: 'Every treat is handmade with care and passion.' },
-  { Icon: FiTruck,         title: 'On-Time Delivery',  text: 'We deliver your treats fresh and on time, every time.' },
-  { Icon: FiShield,        title: 'Safe & Secure',     text: 'Secure checkout and careful packaging always.' },
+  { Icon: TbCake,          title: 'Baked to order',    text: 'Nothing sits on a shelf — your order is made for you.' },
+  { Icon: TbLeaf,          title: 'Real ingredients',  text: 'Real cream, real fruit, real chocolate.' },
+  { Icon: TbToolsKitchen2, title: 'Finished by hand',  text: 'Every cake is piped and decorated by hand.' },
+  { Icon: FiTruck,         title: 'Boxed with care',   text: 'Packed so it arrives exactly as it left the kitchen.' },
 ]
 
-// Six, not four. The reviews sit in a col-lg-8 beside a tall sidebar (the
-// submit form + "What customers love"), so a short list left a column of empty
-// cream next to the sidebar's lower half. Six cards outrun the sidebar.
+// Six, not four. The reviews sit in a col-lg-8 beside the submit-form sidebar,
+// so a short list left a column of empty cream next to its lower half.
 const PAGE_SIZE = 6
 
 export default function Reviews() {
@@ -76,21 +81,12 @@ export default function Reviews() {
     title: 'Reviews',
     description: 'See what our customers say about Cake & Crumb — verified reviews on cheesecakes, milk cakes, cookies and custom cakes.',
   })
-  useJsonLd('aggregate-rating', {
-    '@context': 'https://schema.org',
-    '@type': 'Bakery',
-    name: 'Cake & Crumb',
-    aggregateRating: {
-      '@type': 'AggregateRating', ratingValue: 4.9, reviewCount: 245, bestRating: 5, worstRating: 1,
-    },
-  })
-
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
   const [sort, setSort] = useState('recent')
   const [shownCount, setShownCount] = useState(PAGE_SIZE)
   const [hover, setHover] = useState(0)
-  const [form, setForm] = useState({ name: '', email: '', rating: 5, title: '', text: '', orderItem: '', photo: '' })
+  const [form, setForm] = useState({ name: '', rating: 5, title: '', text: '', orderItem: '', photo: '' })
   const [submitting, setSubmitting] = useState(false)
   const [submitMsg, setSubmitMsg] = useState('')
   const [submitOk, setSubmitOk] = useState(false)
@@ -231,7 +227,7 @@ export default function Reviews() {
     if (isHoneypotTripped(hpRef.current?.value)) {
       setSubmitMsg('Your Sweet Words Mean the World to Us! 💕')
       setSubmitOk(true)
-      setForm({ name: '', email: '', rating: 5, title: '', text: '', orderItem: '', photo: '' })
+      setForm({ name: '', rating: 5, title: '', text: '', orderItem: '', photo: '' })
       return
     }
 
@@ -249,7 +245,7 @@ export default function Reviews() {
     try {
       await addReview(form)
       markReviewSubmitted()
-      setForm({ name: '', email: '', rating: 5, title: '', text: '', orderItem: '', photo: '' })
+      setForm({ name: '', rating: 5, title: '', text: '', orderItem: '', photo: '' })
       setSubmitMsg('Your Sweet Words Mean the World to Us! 💕')
       setSubmitOk(true)
       reload()
@@ -262,16 +258,38 @@ export default function Reviews() {
 
   const stats = summarize(reviews)
   const breakdown = stats.breakdown
-  // Mockup-faithful totals when there are no real reviews yet, so the rating
-  // breakdown isn't a blank panel on first render.
-  const showcaseTotal = stats.total > 0 ? stats.total : 245
-  const showcaseAvg = stats.total > 0 ? stats.avg : 4.9
-  const showcaseBreakdown = stats.total > 0
-    ? breakdown
-    : [
-      { stars: 5, count: 220 }, { stars: 4, count: 18 }, { stars: 3, count: 5 },
-      { stars: 2, count: 1 }, { stars: 1, count: 1 },
-    ]
+  const hasReviews = stats.total > 0
+
+  /**
+   * Ratings shown here are the REAL ones or none at all.
+   *
+   * This panel used to fall back to "4.9 from 245 reviews" with an invented
+   * star breakdown whenever no reviews had loaded — a placeholder from the
+   * original mockup that shipped to production and told every visitor the
+   * bakery had 245 reviews it did not have. The same two numbers were also
+   * published as schema.org `aggregateRating`, which Google treats as review
+   * spam and penalises by hand. Both are gone: the panel now shows an
+   * invitation until real reviews exist.
+   */
+  useJsonLd(
+    'aggregate-rating',
+    // Below a handful of reviews an average is noise, and rich results won't
+    // show it anyway — so publish nothing rather than something flattering.
+    stats.total >= MIN_REVIEWS_FOR_SCHEMA
+      ? {
+        '@context': 'https://schema.org',
+        '@type': 'Bakery',
+        name: 'Cake & Crumb',
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: Number(stats.avg.toFixed(1)),
+          reviewCount: stats.total,
+          bestRating: 5,
+          worstRating: 1,
+        },
+      }
+      : null,
+  )
 
   return (
     <>
@@ -308,18 +326,37 @@ export default function Reviews() {
           <div className="cc-reviews-stats">
             {/* Overall rating */}
             <div className="cc-reviews-stats__overall">
-              <div className="cc-reviews-stats__overall-label">Overall Rating</div>
-              <div className="cc-reviews-stats__overall-num">{showcaseAvg.toFixed(1)}</div>
-              <div className="my-2"><Stars count={Math.round(showcaseAvg)} size={16} /></div>
-              <div className="cc-reviews-stats__overall-meta">
-                Based on {showcaseTotal} reviews
-              </div>
+              {hasReviews ? (
+                <>
+                  <div className="cc-reviews-stats__overall-label">Overall Rating</div>
+                  <div className="cc-reviews-stats__overall-num">{stats.avg.toFixed(1)}</div>
+                  <div className="my-2"><Stars count={Math.round(stats.avg)} size={16} /></div>
+                  <div className="cc-reviews-stats__overall-meta">
+                    Based on {stats.total} {stats.total === 1 ? 'review' : 'reviews'}
+                  </div>
+                </>
+              ) : (
+                /* No reviews yet — say so and ask, rather than invent a score.
+                   An empty panel is a worse first impression than an honest
+                   invitation, and this is the one place a visitor is already
+                   thinking about leaving one. */
+                <>
+                  <div className="cc-reviews-stats__overall-label">Reviews</div>
+                  <div className="my-2"><Stars count={0} size={16} /></div>
+                  <div className="cc-reviews-stats__overall-meta">
+                    No reviews yet — yours would be the first.
+                  </div>
+                  <button type="button" className="cc-reviews-empty-cta" onClick={jumpToForm}>
+                    Write a review
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Breakdown bars */}
             <div className="cc-reviews-stats__bars">
-              {showcaseBreakdown.map((b) => {
-                const pct = showcaseTotal > 0 ? (b.count / showcaseTotal) * 100 : 0
+              {breakdown.map((b) => {
+                const pct = hasReviews ? (b.count / stats.total) * 100 : 0
                 return (
                   <div key={b.stars} className="cc-reviews-stats__bar-row">
                     <span className="cc-reviews-stats__bar-label">
@@ -337,15 +374,15 @@ export default function Reviews() {
               })}
             </div>
 
-            {/* Sub-rating tiles */}
+            {/* The one promise strip — see PROMISE_STRIP. */}
             <div className="cc-reviews-stats__subs">
-              {SUB_RATINGS.map(({ Icon, title, score }) => (
+              {PROMISE_STRIP.map(({ Icon, title, text }) => (
                 <div key={title} className="cc-reviews-stats__sub">
                   <span className="cc-features-card__icon cc-features-card__icon--lg">
                     <Icon size={22} />
                   </span>
                   <div className="cc-reviews-stats__sub-title">{title}</div>
-                  <div className="cc-reviews-stats__sub-score">{score}</div>
+                  <div className="cc-reviews-stats__sub-text">{text}</div>
                 </div>
               ))}
             </div>
@@ -584,13 +621,6 @@ export default function Reviews() {
                   onChange={(e) => update('name', e.target.value)}
                   required
                 />
-                <input
-                  className="cc-input mb-2"
-                  placeholder="Your Email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => update('email', e.target.value)}
-                />
                 <select
                   className="cc-input mb-2"
                   value={form.orderItem}
@@ -686,21 +716,6 @@ export default function Reviews() {
                 )}
               </form>
 
-              {/* What Customers Love */}
-              <div className="cc-what-love">
-                <h6 className="cc-what-love__heading">What Customers Love</h6>
-                {WHAT_LOVE.map(({ Icon, title, text }) => (
-                  <div key={title} className="cc-what-love__row">
-                    <span className="cc-features-card__icon">
-                      <Icon size={16} />
-                    </span>
-                    <div>
-                      <div className="cc-what-love__title">{title}</div>
-                      <p className="cc-what-love__text">{text}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </aside>
           </div>
         </div>

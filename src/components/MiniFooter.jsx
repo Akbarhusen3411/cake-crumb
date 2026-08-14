@@ -1,6 +1,7 @@
 import { FiPhone } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import { WHATSAPP_PHONE } from './WhatsAppButton.jsx'
+import { COPYRIGHT } from './Footer.jsx'
 
 /**
  * Slim footer used on the cart / checkout / confirm-order routes where the
@@ -13,7 +14,7 @@ export default function MiniFooter() {
       <div className="container">
         <div className="cc-mini-footer__row">
           <span className="cc-mini-footer__copy">
-            © {new Date().getFullYear()} Cake &amp; Crumb &nbsp;·&nbsp; Baked with <span aria-hidden style={{ color: '#ff8e9e' }}>♥</span> in India
+            {COPYRIGHT(new Date().getFullYear())}
           </span>
           <a
             href={`https://wa.me/${WHATSAPP_PHONE}`}

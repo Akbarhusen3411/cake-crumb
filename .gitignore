@@ -29,3 +29,10 @@ dist-ssr
 
 # Design reference mockups (not used by the app)
 /images/
+
+# Camera originals — the untouched .HEIC / .MOV drops off the phone. They live
+# OUTSIDE /public on purpose: Vite copies everything in /public into dist/
+# verbatim, so a 113 MB .MOV there would be pushed to gh-pages and rejected
+# (GitHub caps a single file at 100 MB). Keep the masters here, ship the
+# converted files from public/products/ and public/videos/.
+/media-originals/

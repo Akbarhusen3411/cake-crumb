@@ -3,7 +3,7 @@ import { FiArrowRight, FiHeart } from 'react-icons/fi'
 import { TbCake } from 'react-icons/tb'
 import HeartDivider from '../components/HeartDivider.jsx'
 import { img, u, srcSet } from '../data/images.js'
-import { shopProducts } from '../data/products.js'
+import { shopProducts, EXTRA_TIERS } from '../data/products.js'
 import { menuCardPhoto } from '../data/productImages.js'
 import { inr } from '../data/format.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
@@ -39,6 +39,13 @@ const cheapest = (list, key = 'price') =>
   Math.min(...list.map((p) => p[key]).filter((n) => typeof n === 'number'))
 
 const inCategory = (c) => shopProducts.filter((p) => p.category === c)
+
+/**
+ * How many products in this card's category it does NOT list. Counted from
+ * `picks` rather than a hand-typed number so it can't drift when a product is
+ * added — the whole reason this page stopped keeping its own price copies.
+ */
+const moreCount = (card) => inCategory(card.category).length - card.picks.length
 const inGroup = (g) => shopProducts.filter((p) => p.group === g)
 
 const CARDS = [
@@ -72,9 +79,12 @@ const CARDS = [
     // reading "from ₹25" beside a photo of six is read as six for ₹25.
     tier: 'slice',
     suffix: '(Box of 6)',
-    picks: ['cup-vanilla', 'cup-chocolate', 'cup-strawberry', 'cup-redvelvet', 'cup-pistachio'],
+    picks: ['cup-vanilla', 'cup-chocolate', 'cup-strawberry', 'cup-redvelvet', 'cup-pistachio', 'cup-sprinkle'],
+    // `cup-variety` is deliberately NOT a pick: this card quotes the `slice`
+    // tier and a variety box has no per-piece tier to carry one, so rowsFor()
+    // would drop it silently. It gets a sentence here and a card in the shop.
     note: () =>
-      `♥ Also sold by the piece from ${inr(cheapest(inCategory('Cupcakes')))} (minimum 2). Add ₹20 for floral or additional decoration.`,
+      `♥ Also sold by the piece from ${inr(cheapest(inCategory('Cupcakes')))} (minimum 2), or a variety box of six flavours for ${inr(BY_ID['cup-variety'].price)}. Add ₹20 for floral or additional decoration.`,
   },
   {
     title: 'Cookies',
@@ -82,7 +92,8 @@ const CARDS = [
     strip: /\s*Cookies$/,
     suffix: '(Box of 6)',
     picks: ['ck-classic', 'ck-white', 'ck-triple', 'ck-almond', 'ck-pistachio'],
-    note: () => `♥ Boxes of 12 from ${inr(cheapest(inCategory('Cookies'), 'slice'))}.`,
+    note: () =>
+      `♥ Boxes of 12 from ${inr(cheapest(inCategory('Cookies'), 'slice'))}, or single cookies from ${inr(EXTRA_TIERS.Cookies[0].from)}.`,
   },
   {
     title: 'Dessert Cups',
@@ -90,14 +101,23 @@ const CARDS = [
     picks: ['dc-grass', 'dc-jelly', 'dc-custard-vanilla', 'dc-custard-mango', 'dc-trifle'],
   },
   {
+    // Platters had no card at all, so Pancakes and Crêpe Rolls appeared
+    // nowhere on this page — the only category of the nine that was invisible
+    // here. Both picks are the whole category, so there is no "+N more".
+    title: 'Platters',
+    category: 'Platters',
+    picks: ['pl-pancakes', 'pl-crepes'],
+    note: () => '♥ Served warm — best ordered for pickup or a short delivery.',
+  },
+  {
     // Bakes replaces the old hand-typed "Sweet Treats & More" block: same
     // treats, but the prices come from products.js and each row deep-links to
     // its product, and the category finally has a card of its own.
     title: 'Bakes',
     category: 'Bakes',
-    picks: ['bk-brownie-classic', 'bk-brownie-nutella', 'bk-blondie-classic', 'bk-cakepop', 'bk-cakesickle-heart'],
+    picks: ['bk-brownie-classic', 'bk-brownie-nutella', 'bk-blondie-classic', 'bk-cakepop-chocolate', 'bk-cakesickle-choc-heart'],
     note: () =>
-      `♥ Brownies & blondies also come by the box of 6, from ${inr(cheapest(inGroup('Brownies'), 'slice'))}. Macarons, cookie fries & dipping boxes in the shop.`,
+      `♥ Brownies & blondies come by the box of 6, from ${inr(cheapest(inGroup('Brownies'), 'slice'))} — and in ${EXTRA_TIERS.Brownies.map((t) => t.label).join(' and ')} to order. Cake pops come in four flavours — by the piece (minimum 2) or a box of six from ${inr(cheapest(inGroup('Cake Pops'), 'slice'))}. Macarons, cookie fries & dipping boxes in the shop.`,
   },
   {
     // Drinks were missing from this page entirely — 24 of them, and the
@@ -248,11 +268,18 @@ export default function Menu() {
                   {card.note && (
                     <p className="cc-menu-card__note">{card.note()}</p>
                   )}
+                  {/* The count matters: a card shows five rows of a category
+                      that may hold thirty, so without it "View All" reads as
+                      "see these five again". */}
                   <Link
                     to={`/shop?category=${encodeURIComponent(card.category)}`}
                     className="cc-menu-card__viewall"
                   >
-                    View All {card.title} <FiArrowRight />
+                    View All {card.title}
+                    {moreCount(card) > 0 && (
+                      <span className="cc-menu-card__more">+{moreCount(card)} more</span>
+                    )}
+                    <FiArrowRight />
                   </Link>
                 </div>
               </article>

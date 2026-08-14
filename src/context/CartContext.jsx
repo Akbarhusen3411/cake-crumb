@@ -6,7 +6,20 @@ const CartContext = createContext(null)
 // the old price against that id, and `add()` merges by id keeping the STORED
 // price, so a v1 cupcake line would bill new per-piece adds at the old box rate.
 // Bumping the key drops those carts once rather than mispricing them.
-const STORAGE_KEY = 'cc_cart_v2'
+// v3: the bakery's real counter prices landed (Aug 2026) and four cupcake ids
+// kept their name while changing price — `cup-chocolate` went ₹30/₹180 →
+// ₹28/₹170, `cup-pistachio`'s box ₹210 → ₹190, same for nutella and strawberry.
+// Same trap as v2: `add()` merges by id and keeps the STORED price, so a v2 cart
+// would quietly charge the old rate. `bk-cakepop` was retired in the same pass
+// (one generic row became four flavours), which a v2 cart would still hold at
+// ₹120. Dropping those carts once beats mispricing them.
+//
+// v3 also covers everything else in that same unreleased batch — the cakesicle
+// reprice (Circle ₹120 → ₹150, Ice Cream ₹140 → ₹160) and the split of
+// `bk-cakesickle-*` into eight flavour+shape ids. No customer can hold a v3
+// cart from before those landed, because v3 ships for the first time with them.
+// Bump to v4 only if a price or id changes AFTER this build is live.
+const STORAGE_KEY = 'cc_cart_v3'
 
 // Smallest quantity this line may sit at. Products carry `minQty` (cupcakes are
 // per-piece with a minimum of 2 — the bakery won't bake a single one); anything
@@ -49,7 +62,11 @@ export function CartProvider({ children }) {
       }
       return [...prev, { id: product.id, name: product.name, price: Number(product.price) || 0, img: product.img, qty: addQty, minQty: min }]
     })
-    showToast({ name: product.name, img: product.img, qty: addQty })
+    // `product.note` is an optional one-line aside for the toast — today the
+    // batch-bake message on a small order of loose pieces. It is deliberately
+    // NOT copied into the cart line above: it is about this add, not about the
+    // item, and a stale note would ride along in the order forever.
+    showToast({ name: product.name, img: product.img, qty: addQty, note: product.note })
   }
 
   function remove(id) {

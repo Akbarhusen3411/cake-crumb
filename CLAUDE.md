@@ -9,10 +9,24 @@ npm run dev               # Vite dev server (http://localhost:5173/cake-crumb/)
 npm run build             # Production build → dist/
 npm run preview           # Serve the built dist/
 npm run lint              # ESLint over the repo
+npm run photos            # Link + resize + check photos, in one step (see PHOTOS.md)
 npm run check-images      # Every product has a photo, every photo exists
+npm run check-prices      # Home's featured cards still quote the catalogue price
 npm run optimize-images   # Regenerate .webp siblings for everything in /public
+npm run convert-videos    # Phone clips → web-ready muted .mp4 + poster
 npm run deploy            # Build + copy index.html → 404.html + push dist/ to gh-pages
 ```
+
+**`npm run lint` does NOT check CSS.** ESLint only parses `.js`/`.jsx`, so `index.css` can be completely broken while lint reports a clean baseline — that happened: a scripted block-removal left a stray `}` and every page lost its styling while lint stayed green. After any stylesheet edit, especially a scripted one, check both:
+
+```bash
+# 1. braces balance (comments stripped so braces inside them don't count)
+node -e "const s=require('fs').readFileSync('src/index.css','utf8').replace(/\/\*[\s\S]*?\*\//g,m=>m.replace(/[{}]/g,' '));let d=0,b=[];s.split('\n').forEach((l,i)=>{for(const c of l){if(c==='{')d++;else if(c==='}'){d--;if(d<0){b.push(i+1);d=0}}}});console.log(d,b)"
+# 2. it actually compiles (balanced braces ≠ valid CSS)
+node --input-type=module -e "import {compile} from 'tailwindcss';import fs from 'node:fs';await compile(fs.readFileSync('src/index.css','utf8'),{base:process.cwd(),loadStylesheet:async()=>({base:process.cwd(),content:''}),loadModule:async()=>({base:process.cwd(),module:{}})});console.log('ok')"
+```
+
+**A JSX comment cannot be the first child of `{cond && ( … )}`.** A conditional expression takes one child; a comment plus an element is two, and it fails as `Parsing error: Unexpected token className`. Put the comment *above* the `{cond && (` line. Same for comments inside an opening tag's attribute list — use `//` on its own line there. Both were hit repeatedly.
 
 No automated tests — verify by running `npm run dev` and clicking through. **Don't run `build`, `deploy` or `git push` unless explicitly asked.** Don't update this file unless explicitly asked either.
 
@@ -39,6 +53,10 @@ Find the subsystem your task touches and read that section first:
 | The chat widget | **ChatBot** | A *complete second order path* with its own cart |
 | Bills and printing | **Invoices** | Print/PDF differ on desktop vs mobile for hard-won reasons |
 | Prices or the catalogue | **Product catalog**, **Cupcakes**, **Delivery** | `products.js` is the source; `lowestPrice()` has a trap, and `featured` keeps its own copy |
+| Swapping a product photo | **Photos** | `npm run photos` links + resizes + checks; a slug-named file needs no code edit |
+| Anything with video | **Video** | Phone `.MOV` is HEVC and plays in Safari only; sources must stay out of `/public` |
+| Reviews, ratings, testimonials | **Reviews** | Three separate fabrications were removed; reviewer emails were publicly readable |
+| Anything claiming a fact to a customer | **Timing**, **Reviews**, **Policy pages** | No opening hours, no invented ratings, no absolute guarantees — and the FAQ, policy pages and checkout must agree |
 
 Two cross-cutting rules: **all money goes through `inr()`** (`src/data/format.js`, always two decimals), and **a change to any total must move all five places at once** — see *No discount system*.
 
@@ -194,13 +212,27 @@ Checkout asks **Home Delivery** or **Self-Pickup**. Pricing lives once in `shopC
 
 **ChatBot:** asks delivery-or-pickup, then for delivery only a pincode step — name → phone → *email (optional)* → **delivery/pickup** → address → **pincode** → date. **Pickup skips address and pincode entirely** (nothing to geocode or charge) and stores `deliveryMethod: 'pickup'`, `deliveryKm: null`. Delivery uses the same `kmFromBakeryByPincode`, so a pincode costs the same in both paths. Its review renders a styled `OrderSummaryCard`. **Cart** shows a neutral "Calculated at checkout". Change the knobs in `shopConfig.js` and everything follows — don't hard-code a fee or print the word "flat".
 
-### Cupcakes — box price must stay a multiple of 6
+### Cupcakes — the ×6 rule is now a habit, not an invariant
 
-**`price × 6 === slice`** for every cupcake (₹25/₹30/₹35 → ₹150/₹180/₹210). Both tiers are quoted side by side, so a rounded per-piece rate would make six singles visibly cost more or less than the box. **Pick the BOX price first, then divide** — that's why boxes went ₹170 → ₹180 and ₹190 → ₹210.
+**`price × 6 === slice` no longer holds, and must not be "fixed".** Aug 2026 the owner's real counter prices (Menu & Prices in `/admin/accounting`) replaced the tidy ones, and they don't divide cleanly. That list, not `products.js`, is what a walk-in is charged, so the two have to agree:
+
+| | Per piece | Box of 6 | vs 6 singles |
+|---|---|---|---|
+| Vanilla · Red Velvet · Biscoff | ₹25 / ₹30 / ₹30 | ₹150 / ₹180 / ₹180 | exact ×6 |
+| Pistachio | ₹35 | ₹190 | box saves ₹20 |
+| Chocolate · Nutella · Strawberry | ₹28 | ₹170 | **box costs ₹2 more** |
+| Sprinkle | ₹25 | ₹155 | **box costs ₹5 more** |
+
+The reasoning behind the old rule still stands — both tiers are quoted side by side and customers do check the arithmetic, so the four rows where **six singles are cheaper than the box** are the ones to watch. **Raise it with the owner; don't silently re-round their prices.** `Variety Cupcakes (Box of 6)` is box-only (`price` with no `slice`), so it carries a `desc` override — the generic Cupcakes sentence offers a per-piece tier it doesn't have.
+
+**The counter menu is the source of truth for every price.** `/admin/accounting` → Menu & Prices is what a walk-in is actually charged; `products.js` must agree with it. The whole catalogue was reconciled against it (Aug 2026) and matched on all but two cakesicle prices. Two structures came out of that reconciliation and are worth knowing:
+
+- **Cakesicles are flavour × shape** — Chocolate and Vanilla across Heart ₹110 / Square ₹130 / Circle ₹150 / Ice Cream ₹160, so eight entries, one per pair, grouped as `Cakesicles`. The counter menu lists two *items* with the shapes as price rows; a product entry holds two prices and there are four shapes, hence the split. Both flavours price identically at every shape — that's the owner's list, not a copy-paste slip.
+- **A `Per Piece ₹25` cakesicle row in the counter menu is unresolved** and deliberately not on the site — six at ₹25 is ₹150, which matches no shape price, and the Chocolate row labels ₹110 as "Heart 6 Box" while Vanilla labels the same ₹110 as just "Heart". Ask before modelling it.
 
 **A per-piece product shows its BOX price — never the per-piece rate.** The one place `lowestPrice()` is deliberately *not* displayed: "From ₹25" under "Vanilla Cupcakes" with a photo of six reads as *six for ₹25*, and customers did read it that way. `isPerPiece(p)` (`slice != null && minQty > 1`) switches the **Shop card**, **SearchOverlay** and the **JSON-LD `Offer`** (structured data contradicting the visible price gets flagged) to the box price. A "₹25 per piece" sub-line was tried and **explicitly removed** — don't re-add it. The rate lives only in the **quick-view**, and the **category note above the grid** is what tells customers pieces exist — load-bearing, not decoration.
 
-**Filters and sort still use `lowestPrice()`**, so a cupcake can appear under a band its card price sits outside (Pistachio enters at ₹70, card shows ₹210). Accepted trade — don't feed the box price into the filter.
+**Filters and sort still use `lowestPrice()`**, so a cupcake can appear under a band its card price sits outside (Pistachio enters at ₹70 — 2 × ₹35 — while its card shows the ₹190 box). Accepted trade — don't feed the box price into the filter.
 
 `ProductQuickView` is where the piece count is chosen (stepper from `minQty`, live total). Shop passes `key={quickView?.id}` — the modal stays mounted with `product={null}`, so without the key `qty` never re-inits. The cart line name carries the **tier** (`Vanilla Cupcakes (1 pc)`), never the count, since `add()` merges by id.
 
@@ -208,11 +240,11 @@ Three surfaces carry cupcake prices: `shopProducts`, `featured` (both in `produc
 
 ### Cart
 
-`context/CartContext.jsx` is the single source of truth, persisted to `cc_cart_v2`. Item shape `{ id, name, price, img, qty, minQty }`. **No minimum order value** — `MIN_ORDER_INR` is a dead export; don't re-wire it without asking. (`updateQty` is exported but unused.)
+`context/CartContext.jsx` is the single source of truth, persisted to `cc_cart_v3`. Item shape `{ id, name, price, img, qty, minQty }`. **No minimum order value** — `MIN_ORDER_INR` is a dead export; don't re-wire it without asking. (`updateQty` is exported but unused.)
 
 **Per-line `minQty`** (only cupcakes, `2`). Three rules move together: `add()` **defaults qty to the minimum, not 1**; `decrement`/`updateQty` **drop the line** below the minimum (there's no valid quantity between 0 and 2); and the line stores its own `minQty` so a restored cart keeps the rule. Applies to the **base tier only**.
 
-The key went `v1` → `v2` when cupcake ids changed meaning (`cup-vanilla` was a ₹150 box, now a ₹25 piece) — `add()` merges by id keeping the **stored** price, so a surviving v1 line would bill at the old rate. **Bump the key again if you repurpose a product id.**
+The key went `v1` → `v2` when cupcake ids changed meaning (`cup-vanilla` was a ₹150 box, now a ₹25 piece), then `v2` → `v3` when four cupcake ids kept their names but changed price. Either way `add()` merges by id keeping the **stored** price, so a surviving old line bills at the old rate. **Bump the key when you repurpose a product id _or_ reprice an existing one** — it empties every saved cart once, which is the cheaper of the two mistakes.
 
 `add()` also sets `toast`, which is the only thing `<CartToast />` renders — surface new toasts from the context, not the component.
 
@@ -227,6 +259,10 @@ No coupon field, no promo code, no percentage off. Discounts were scoped and **e
 
 Pre-fill from `cc_customer_v1` / `cc_customer_draft_v1` was removed — customers saw stale data from past visits. `clearStoredCustomer()` deletes both keys on mount and on submit. **Don't reintroduce pre-fill** without asking.
 
+**Email is OPTIONAL** (validated only when something is typed). The customer confirmation mail is itself optional — it only sends when `VITE_EMAILJS_CUSTOMER_TEMPLATE_ID` is set — so demanding an address for a mail that may never be sent cost orders for nothing. Phone is the real channel.
+
+**The Delivery row must say something true at every stage**, and "free" is only claimed once a pincode has actually been looked up: `pickup` → FREE · pickup, `loading` → …, **`idle` → "Add pincode"**, **`unknown` → "Confirmed on WhatsApp"**, then the fee or FREE. It used to fall through to a bold **FREE** the moment Home Delivery was picked — before any pincode existed — which also contradicted the Home Delivery card's "charges depend on distance" directly above it. Note the **cart** still shows the subtotal only; `total = subtotal + delivery` is a checkout-only thing, and the FAQ says so.
+
 ### Routing & lazy loading
 
 `App.jsx` `lazy()`-loads every route except `Home`. **The wildcard renders `NotFound`, not `Home`** — a dead link used to show the homepage under the wrong URL, which reads as "it worked" to a customer and as a soft 404 to a crawler. The 404.html copy still boots real deep links, so only genuinely unknown paths reach it. Firebase loads on demand rather than per-route. `vite.config.js` splits a `react-vendor` chunk via `manualChunks`; Firebase gets its own async chunk by virtue of being dynamically imported. The wildcard `<Route path="*">` + the `predeploy` 404.html copy make deep links resolve (a harmless 404 on first load is inherent to GH Pages project sites).
@@ -234,6 +270,8 @@ Pre-fill from `cc_customer_v1` / `cc_customer_draft_v1` was removed — customer
 **The ChatBot is deferred, not routed** — `DeferredChatBot.jsx` mounts it at the first idle moment (`requestIdleCallback`, 2.5s backstop) or on the first interaction. It can't lazy-load on click because the launcher lives *inside* it. Moving it off the critical path took the eager chunk from **116 kB to 67 kB** (31.2 → 17.3 kB gzipped). `Suspense fallback={null}` on purpose.
 
 `NO_FOOTER_ROUTES = ['/cart', '/checkout', '/confirm-order']` render `<MiniFooter />`. `<ScrollToTop />` resets scroll on every route change — without it React Router leaves users at the bottom of the new page.
+
+**A new public route needs three things**, not one: the `lazy()` + `<Route>` in `App.jsx`, an entry in `public/sitemap.xml`, and a link from somewhere real. `/track-order` existed for months linked only from the 404 page; `/refund-policy` and `/privacy` were added with all three. `/cart`, `/checkout` and `/confirm-order` stay out of the sitemap deliberately (transactional), as does `/admin/*`.
 
 **Stale-chunk self-heal.** Suspense handles a *pending* chunk, not a *rejected* one — and every deploy emits new hashed names, so an open tab requests a chunk that no longer exists and white-screens. `ErrorBoundary.jsx` matches a cross-browser `CHUNK_ERROR` regex and reloads **once**, guarded by `sessionStorage['cc_chunk_reloaded']`; `App.jsx` calls `clearChunkReloadGuard()` on mount to re-arm. It resets on the `resetKey` **prop**, not via `key=` — remounting would re-flash the skeleton on every navigation.
 
@@ -245,9 +283,52 @@ Pre-fill from `cc_customer_v1` / `cc_customer_draft_v1` was removed — customer
 
 **`slice`-price gotcha (bit us twice):** the "From" price, price filter and price sort all use `lowestPrice(p)` = `Math.min(price, slice)` — **never `slice || price`**. `slice` is the *cheaper* per-slice tier for cheesecakes but the *pricier* box-of-12 for cookies (26 products), so assuming it's smaller made a ₹340 cookie box show "From ₹700" — first in Shop, then again in `RelatedProducts`, which also billed the *other* tier when you added it.
 
-**`lowestPrice` / `isPerPiece` / `cardPrice` / `priceLabel` now live in `data/products.js`** and are imported, never re-derived — being re-implemented per file is exactly how it went wrong twice. `priceLabel()` owns the wording too ("From ₹210.00"), so the same product can't be quoted three ways. Shop still writes its own JSX for the per-piece card (it appends `sliceLabel`), but takes the rules from there.
+**`lowestPrice` / `isPerPiece` / `hasUnit` / `cardPrice` / `priceLabel` now live in `data/products.js`** and are imported, never re-derived — being re-implemented per file is exactly how it went wrong twice. `priceLabel()` owns the wording too ("From ₹210.00"), so the same product can't be quoted three ways. Shop still writes its own JSX for the per-piece card (it appends `sliceLabel`), but takes the rules from there — its grid price and its JSON-LD `Offer` both call the shared helpers.
 
-Shop is a 3-column layout (filters / grid / sticky cart), 12 per page, filters reset to page 1. Search lives in `SearchOverlay.jsx` and deep-links to `/shop?category=…`.
+**A THIRD tier: `unit`.** Cookies are the only three-tier products — ₹50 a cookie, ₹280 for six, ₹580 for twelve. `unit` + `unitLabel` hold the loose single; `price`/`slice` stay the two boxes so neither box is lost. Consequences, all deliberate:
+
+- **`lowestPrice()` includes `unit`** (filters and sort use the true entry price) but **`cardPrice()` never does** — it falls back to `lowestBox()`, the old `lowestPrice`. A card showing a *box* of cookies must not advertise ₹50. That's the per-piece trap from the other direction.
+- `ProductQuickView` renders it as a third row with its own counter and its own cart line (`<id>-unit`), and `chatbotMenu.js` appends it as a third variant. Both are hand-wired; a fourth tier would need the same again.
+- **Don't add a third tier for linear pricing.** Cake pops are ₹15 / ₹90 / ₹180 — exactly ×6 and ×12 — so their box of 12 is stated in `describe()` instead. Only add `unit` when the tiers genuinely don't divide.
+
+**`piece: true`** marks a product whose `price` tier is one loose piece and that sells singly (brownies, blondies). It only gives the quick view a counter and the batch-bake note. It is **not** `minQty` (that's a minimum, and would flip `isPerPiece` so the card quoted the box) and **not** `unit` (that's for a third tier). Display-only.
+
+**`EXTRA_TIERS`** lists sizes sold at the counter that the site can't take an order for (cookie singles used to be here; brownie boxes of 4 and 12 still are). **Display-only** — nothing reaches the cart or the totals. Quoted in the category note so the site doesn't pretend they don't exist. If one becomes orderable it needs a real product entry, not a lookup here.
+
+**Size labels must not contain brackets.** The cart wraps every tier in brackets, so `Banto 4" (inch)` rendered as `Strawberry Cheesecake (Banto 4" (inch))` — on 23 cheesecakes and 10 sponge cakes, and in the WhatsApp receipt, the stored order and the invoice, since all four read the same field. Now `Banto 4"` and `Whole Bento`. **"Banto" is not a typo for "Bento"** — they're different sizes in the owner's own accounting menu (Banto = cheesecake, 3 slices; Bento = whole milk/sponge cake). Don't "correct" it.
+
+Shop is a 3-column layout (filters / grid / sticky cart). **12 at a time with "Show more"**, not numbered pages — 120 products was ten pages, and the pager had to yank the viewport back to the top of the grid on every click. `PAGE_SIZE` is module-scope so state can initialise from it; the `?product=` jump reveals rows up to the target instead of computing a page number. **Cards carry compact allergen markers** — `AllergenTags` in non-verbose mode, which shows nut warnings and genuine free-from tags only. `eggless-option` is excluded there on purpose: 95 of 120 products carry it, so it would badge nearly everything and bury the nut warning. The empty state carries its own "Clear filters" button, because the sidebar's is off-screen on a phone.
+
+**Menu page covers all 9 categories.** A missing card means those products appear nowhere on `/menu` — Platters was invisible for exactly that reason. A new card also needs a `MENU_CARD_IMAGES` entry or it silently falls back to the generic photo. Each card shows "+N more" beside View All, computed from `picks` against the live catalogue.
+
+**`npm run check-prices`** exists because `featured` (the four Home cards) keeps its **own copy** of each price, with nothing tying it to `shopProducts`. The script names which shop product and which *field* each card mirrors (the cupcake card quotes `slice`, the cookie card `price`) and exits 1 on drift. Add a fifth featured card and it will tell you to register it.
+
+**The Category filter can match a `group`, not just a `category`.** `CATEGORIES` in `Shop.jsx` is a flat list of strings; any name also listed in **`GROUP_FILTERS`** is matched by `p.group` instead (today `Cake Pops` and `Cakesicles`, both living inside Bakes). Everything routes through `inFilter(p, category)` — the grid, and the search-jump that widens filters to reach a product. **Prefer this to promoting a group into a real category:** `attachAllergens()` switches on `category` and CLAUDE.md's rule is that it must never return `[]`, so a new category would silently strip the allergen badges off those products, on top of needing `CATEGORY_CONFIG` / `CAT_IMAGES` / `describe()` entries. Group headings are suppressed for a group filter (every row shares it). Cake Pops and Cupcakes are per-piece, so both carry a **category note above the grid** — the only place a customer learns single pieces exist, since the card quotes the box.
+
+### Search — `SearchOverlay.jsx`
+
+- **`matches` and `results` are separate and must stay so.** `findProducts()` returns EVERY hit; the component slices to `MAX_RESULTS` for display. The count in the UI reads `matches.length`. It used to slice inside the filter, so "cake" (65 hits) reported **"12 results"** and silently dropped 53 — a specific wrong number is worse than truncation. Overflow gets a "See all N matches" link.
+- **`haystack(p)` is what a product can be found by** — name, category, `group`, all three size labels, `badge`, `describe(p)` and allergens (hyphens flattened, so "eggless" matches `eggless-option`). Name+category alone returned **zero** for "bento", "eggless" and "vegan" on a site that sells all three.
+- **`eggless-option` is deliberately excluded from the haystack.** Nearly every baked product carries it, so including it made "eggless" return 105 of 120 — true and useless. "eggless" now returns only what is eggless *as baked* (10 drinks). The cost: "eggless cheesecake" returns nothing, so the empty state shows a note (fired by `mentionsEggless()`, matching `/\begg/i`) saying most cakes can be made eggless on request. **Keep that note if you keep the exclusion** — without it a zero-result reads as "we don't do eggless".
+- Multi-word queries AND together, so "eggless cheesecake" narrows. Arrow keys wrap through results, Enter clicks the highlighted `<a>` rather than rebuilding the route.
+
+### Reviews — nothing may be invented
+
+This page had three separate fabrications and they are all gone. Do not reintroduce any of them.
+
+- **`aggregateRating` is computed from real reviews and omitted below `MIN_REVIEWS_FOR_SCHEMA` (5).** It was hardcoded `4.9 / 245` and published to schema.org regardless of what had been left. Google treats fabricated review markup as spam and penalises it by hand.
+- **The visible panel shows real numbers or an invitation.** It used to fall back to "4.9 from 245 reviews" with an invented star breakdown — a mockup placeholder that shipped. With no reviews it now says so and offers a Write-a-review button.
+- **The four promise tiles carry no scores.** They had invented per-aspect ratings (4.9/4.9/4.8/4.9) that nothing collects — the form asks for one overall star. Three overlapping strips (`SUB_RATINGS`, `WHAT_LOVE`, `PROMISE_STRIP`) became one, and nothing is attributed to customers: "What Customers Love" put four hardcoded lines in their mouths.
+- **The review form does NOT collect an email, and must not.** The `reviews` collection is `allow read: if true` — it has to be, the page lists reviews without auth — so every address written there was harvestable by anyone with the project ID. It was never displayed and nothing read it back. `email` is out of `addReview()` and out of the `hasOnly` list in `FIREBASE_SETUP.md`; **the Firebase console rule must be updated to match.** Any future contact field belongs in an admin-only collection.
+- **No absolute guarantees anywhere.** "on time, every time" and "Happiness Guaranteed" were removed from Reviews and About — a single kitchen can't promise them, and the second promised far more than the refund policy delivers.
+
+### Policy pages — `/refund-policy`, `/privacy`
+
+Lazy-routed, linked from both footers, the checkout terms line and the FAQ's Payment/Cancellation sections, and listed in `sitemap.xml`.
+
+- **Every refund term is the one already on `/faq`** — the 30-minute window, refunds only for a cancellation inside it or a confirmed quality issue, 100% within 24 hours if the bakery cancels. Deposit figures read from `shopConfig`. **Change `/faq` and the policy page together**; a policy that contradicts the FAQ is worse than neither.
+- **The privacy page describes what the site ACTUALLY does** — the PII-free public `tracking` mirror, that only the *pincode* goes to Nominatim and never the street address, that reviews and their photos are public, that no email is collected on a review, and that Plausible is cookieless. If any of that changes, change this page in the same commit.
+- They use a plain document header, **not `PageHero`** — that component always renders an image column and would emit a broken `<img>` without one.
 
 ### Contact, registrations & brand
 
@@ -259,9 +340,60 @@ Shop is a 3-column layout (filters / grid / sticky cart), 12 per page, filters r
 - **Mobile menu scroll lock is event-based, not style-based** — Navbar attaches `touchmove`/`wheel` listeners and `preventDefault()`s outside the panel. **Do not reintroduce** `position: fixed` + saved-scrollY (desyncs), `html.style.overflow = 'hidden'` or `body.menu-open { overflow: hidden }` (both cause the iOS jump-to-top bug). Nothing mutates the body, so it can't desync.
 - **Image pipeline** — drop rasters into `/public`, run `npm run optimize-images` (`scripts/convert-to-webp.js`, quality 78, skips fresh files). Originals are kept but the runtime always requests `.webp`.
 
+### Photos — `npm run photos`
+
+`scripts/update-photos.js` is the owner-facing path and the one to point a non-coder at (**`PHOTOS.md`** is that guide, written to be followed without you). It does three things in order: **link → resize → check**.
+
+- **Link.** A file in `public/products/` whose basename equals `slugify(product name)` is written into `PRODUCT_IMAGES` automatically, so the owner never edits code. `slugify` = strip accents (`Trés Léches` → `tres-leches`), `&` → `and` (or `Milk & Dark` and `Milk Dark` would collide), non-alphanumerics → `-`. It rewrites **only the quoted value** on that key's line, so padding and trailing comments survive; a key it can't find is reported, never inserted blind.
+- **Resize + check** just shell out to the two existing scripts. `productImages.js` stays the single source of truth and hand-editing it is still fully supported — the naming convention is a shortcut, not a requirement (shared/themed artwork can't use it and shouldn't).
+- **The "still sharing one photo" tail is the point.** It lists every product borrowing another's picture — i.e. the real "name says Strawberry, photo shows Mango" list — with the exact filename to save for each. Work that list down; don't hand-audit the map.
+- **"Unused" detection must scan `src/`, not just the map.** The Gallery names its photos through the `img` registry in `data/images.js`, so checking `PRODUCT_IMAGES` alone reported all the gallery artwork as unused and offered nonsense corrections for it. Nearest-name suggestions score by *fraction of the candidate matched*, not raw word hits, or every long product name wins on one common word ("cake", "choc").
+
+### Video — `npm run convert-videos` and the Gallery strip
+
+`scripts/convert-videos.js` → `public/videos/`, rendered by `components/VideoStrip.jsx` on **`/gallery` only**. `CLIPS` is hand-kept in *both* files; the script's list decides what gets encoded, the component's decides what shows and in what order.
+
+- **Phone clips are HEVC-in-`.MOV` and unplayable outside Safari** — no Chrome, no Firefox, no Android, in any wrapper. They're also 4K/60 at 15–115 MB, and **GitHub hard-caps a single file at 100 MB**. So everything is re-encoded to H.264 (`-profile:v main`, `yuv420p` — the one format every device decodes; iPhone 4:2:2 is silently refused by Android), longest side 1280, CRF 30, 30fps, trimmed to `MAX_SECONDS`. 649 MB of source became 6.6 MB.
+- **Audio is stripped (`-an`)**, not just muted in markup: it's what the owner asked for and what lets autoplay work at all.
+- **`+faststart` is not optional** — without it playback can't begin until the whole file downloads. Verify by checking `moov` appears before `mdat` in the first few KB.
+- **`portrait: true`** centre-crops a landscape source to 9:16 *at encode time*, so the crop is deliberate and the discarded pixels never ship. The cards are 9:16 with `object-fit: cover`, so a landscape clip would otherwise be crushed by the browser with no control over what survives. The expression is a no-op on anything already 9:16 or taller.
+- **Sources live OUTSIDE `/public`.** Vite copies `public/` into `dist/` verbatim, so a raw `.MOV` left there is pushed to gh-pages and a >100 MB one fails the deploy outright. Masters go to **`media-originals/`** (gitignored); the script searches `public/products/` *then* `media-originals/products/`, so a re-run still finds already-processed sources instead of calling them missing.
+- **Playback is IntersectionObserver-driven, not the `autoplay` attribute.** Android caps concurrent hardware decoders (often 2–4), so ten autoplaying clips leave the later ones permanently frozen. Only what's on screen plays. `muted` is set as a **DOM property** as well as an attribute (Safari checks the property), `playsInline` stops iOS hijacking into fullscreen, and `preload="none"` + poster keeps arrival cost near zero. A rejected `play()` promise falls back to poster + controls.
+- **The rail overflows on purpose and the scrollbar is hidden**, so `.cc-video-arrow` is the only desktop affordance — never `display: none` it on a pointer device. Tracks are a **fixed 200px, not `minmax(…, 1fr)`**: `1fr` resolves against the scroll container, so columns squeezed instead of overflowing and the last clip was unreachable. End-detection allows 2px of sub-pixel slack or "next" never disables.
+
+### Gallery page
+
+`pages/Gallery.jsx` holds the photo list (each entry needs a **`cat`** matching a name in `GalleryGrid`'s `FILTERS`, or it drops out of every chip but "All"); `components/GalleryGrid.jsx` renders it.
+
+- **Filter chips + `PAGE_SIZE` (18) + "Show more"** exist because 47 photos rendered flat was a twelve-row wall. Chips with a zero count auto-hide.
+- **Tiles are 4:5, not 1:1** — nearly every photo is a portrait phone capture and a square frame cut the tops off tall cakes. The lightbox carries the uncropped view.
+- **Deliberately NOT a CSS-columns masonry**: `columns` fills column-by-column, so the bakery's own photos — ordered first on purpose — would stack into the left column instead of reading across the top row.
+- **`sizes` must track the column counts in `.cc-gallery-mosaic`.** It's what selects the 400w variant for a ~200px tile; overstating it silently doubles image bytes for the whole page.
+- The lightbox **does not lock body scroll** — see the Navbar rule above; a fixed opaque overlay already hides what moves behind it.
+- **The lightbox always offers a way to buy** (`buyLink()`), resolved rather than hand-maintained across 47 entries: `p.img` is the same `/products/<file>` string the gallery lists, so one product → deep-link to it via `?product=`; several products sharing that photo → its category; no match → the entry's own `cat` mapped through `CAT_TO_SHOP`; `custom: true` (the three one-off cakes) or an unmapped cat → `/contact`. Before this the page had **zero links** — 47 photos and 10 videos with nowhere to go.
+- **Short viewports and narrow phones get their own lightbox rules.** At `max-height: 520px` (a phone held sideways) the image caps at 58vh — 78vh plus caption, button and padding overflowed a 360px-tall screen with no way to scroll. Below 576px the two 44px arrows stop being grid columns and float over the image; as columns they ate 128px of a 320px screen.
+
+### Header & footer
+
+- **The header is brand, nav, search and cart — nothing else.** A utility row (Track Order · phone) and a green "Order on WhatsApp" button were both built here and **taken back out**: above a delicate wordmark they read as clutter, and both live in the footer on every page and in the mobile menu. Don't re-add them as an "oversight fix".
+- **Anything added above `.cc-header` must sit OUTSIDE it.** That element is `position: sticky` and `--cc-header-h` is a hardcoded 82/76/68px that the Shop sticky cart, `.cc-product-card` scroll-margin, the checkout anchor and `#our-story` all measure from. Growing the sticky header without updating the variable misplaces every one of them.
+- **The mobile menu ends in one row of four icons** — Instagram · Email · WhatsApp · Track Order. Track Order was a full-width nav link and sat oddly among places to browse; the green "+91 …" button below the row was removed once WhatsApp joined it, as the same destination twice.
+- **`COPYRIGHT()` is exported from `Footer.jsx` and imported by `MiniFooter`.** There were three different wordings — mobile, desktop, and a third on cart/checkout/confirm-order. One function, every footer. It reads `© {year} Cake & Crumb`: copyright is automatic under Berne, so "All rights reserved" adds nothing. **Never add ®** — that asserts a registered trademark and is a false claim without one.
+- The address links to Google Maps using `DELIVERY.origin`, the same constant the delivery calculator uses, so the pin can't drift from the bakery. Same on `/contact`.
+
+### Timing — there are no opening hours
+
+The bakery is a made-to-order kitchen, not a shop counter: orders arrive on WhatsApp at any hour, the date is agreed with the customer, and baking starts after that. **Do not publish opening hours anywhere** — the Bakery JSON-LD deliberately has no `openingHoursSpecification` (it would make Google show a "Closed now" badge and turn away someone messaging at 10pm), and the footer column is titled **Ordering**, not Hours.
+
+One wording, used on Home, the footer, the cart, the FAQ and `/contact`: **order a day ahead; order late and it's ready the next day.** The FAQ used to promise "same-day for ready items if ordered before 11 AM", which contradicted five other surfaces and the About page's "nothing sits on a shelf".
+
 ### Conventions
 
-- `usePageMeta({ title, description })` at the top of every page; `useJsonLd(id, obj)` for structured data (Shop adds per-product `Product` — **no per-product ratings**, fabricated ones were removed; only Reviews carries a real `AggregateRating`).
+- `usePageMeta({ title, description })` at the top of every page; `useJsonLd(id, obj)` for structured data (Shop adds per-product `Product` — **no per-product ratings**, fabricated ones were removed; Reviews carries a real `AggregateRating` only once there are ≥5 reviews). `useJsonLd` re-runs on `JSON.stringify(data)`, so passing a value computed from state is fine — pass `null` to publish nothing.
+- **JSON-LD is strict JSON: never put `//` comments inside a `<script type="application/ld+json">` block.** It silently invalidates the whole thing. Explanations go in an HTML comment above the tag. Same rule for FAQ answers — each `a` string feeds both the page and the `acceptedAnswer`, so markup in one leaks into the other; a per-section `more: { to, label }` carries links instead.
+- **Bootstrap spacing utilities carry `!important`.** A `.cc-video-strip > .container { padding-bottom: … }` rule loses to `.py-5` with no warning — the gap between the video strip and the gallery "stayed broken" for exactly that reason. Set spacing on the element (`pt-4 pb-2`), not from the stylesheet.
+- **Equal-height cards need `height: 100%` on the card, not just the row.** Bootstrap's `.row` stretches the *columns*; the card inside still sizes to its own content and leaves a ragged bottom edge.
+- `AllergenTags` has two modes: **compact** (cards — nut warnings and genuine free-from only) and **`verbose`** (quick view — everything). Adding a tag to the compact `important` list badges a large share of the catalogue; check the count first.
 - **All money through `inr()`** (`data/format.js`), always two decimals, everywhere — storefront, ChatBot, emails, admin, invoice. Don't hand-build `₹${…}`. Literal `₹` in *static copy* is fine and deliberate (filter labels, budget ranges, "from ₹60" teasers, `DashboardTab`'s `₹1.5L` axis) — `Under ₹500.00` would read as a mistake.
 - `<SmartImage>` = `<img>` + shimmer skeleton + lazy load. `<HeartDivider width={…} />` under hero h1s.
 - `useIsMobile(bp = 768)` only where the *markup* must differ — prefer CSS for pure layout.
@@ -273,7 +405,7 @@ Shop is a 3-column layout (filters / grid / sticky cart), 12 per page, filters r
 
 | Key | Owner | Notes |
 |---|---|---|
-| `cc_cart_v2` | `CartContext.jsx` | Bump when a product id changes meaning |
+| `cc_cart_v3` | `CartContext.jsx` | Bump when a product id changes meaning **or its price changes** — `add()` merges by id keeping the STORED price. v3 = Aug 2026 real prices (4 cupcake ids repriced, `bk-cakepop` retired). |
 | `cc_customer_v1`, `cc_customer_draft_v1` | `Checkout.jsx` | Legacy pre-fill — **deleted**, never written |
 | `cc_orders_local_v1`, `cc_reviews_local_v1`, `cc_newsletter_local_v1` | `services/` | Offline mirrors (orders keeps the last 50) |
 | `cc_review_last_v1` | `reviewGuard.js` | One-per-minute review rate limit |
@@ -296,5 +428,9 @@ Shop is a 3-column layout (filters / grid / sticky cart), 12 per page, filters r
 |---|---|
 | `VITE_FIREBASE_*` | Reviews/orders/newsletter are localStorage-only. See `FIREBASE_SETUP.md`. |
 | `VITE_EMAILJS_SERVICE_ID` + `_TEMPLATE_ID` + `_PUBLIC_KEY` | No admin notification email. See `EMAILJS_SETUP.md`. |
-| `VITE_EMAILJS_CUSTOMER_TEMPLATE_ID` | No customer confirmation; admin email still works. |
-| `VITE_SNAPWIDGET_ID` | Optional Instagram feed widget. |
+| `VITE_EMAILJS_CUSTOMER_TEMPLATE_ID` | No customer confirmation; admin email still works. Checkout's email field is optional partly because of this. |
+| `VITE_SNAPWIDGET_ID` | `InstagramFeed` shows a hand-picked static grid instead of the live feed — and **retitles itself** ("A Few of Our Favourites" rather than "Follow Us on Instagram"), because the old Home markup headed static photos as a feed. |
+
+**Analytics.** `index.html` loads Plausible (cookieless, no consent banner needed, `defer`). It collects **nothing** until the site is registered at plausible.io — the tag loads and reports nowhere, which is harmless but means no data. It does send pageviews to a third party; remove the tag if that isn't wanted.
+
+**Local SEO.** The `Bakery` JSON-LD in `index.html` carries `address`, `geo` (the real lat/lng, matching `DELIVERY.origin`), `areaServed` and `email` — and deliberately **no `openingHoursSpecification`** (see *Timing*).

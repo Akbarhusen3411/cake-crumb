@@ -1423,7 +1423,16 @@ html, body { overflow-x: hidden; }
   color: var(--cc-cocoa-soft);
   text-align: center;
   margin: 0.8rem 0 0;
+  line-height: 1.5;
 }
+/* Underlined, not just tinted: at 0.68rem a colour shift alone is easy to miss,
+   and these two are the terms someone is agreeing to by tapping Place Order. */
+.cc-summary-terms a {
+  color: var(--cc-rose-deep);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.cc-summary-terms a:hover { color: var(--cc-rose); }
 
 /* ─── Header — glassmorphism, theme-matched, scroll-aware ────────────────── */
 .cc-header {
@@ -1816,7 +1825,17 @@ html, body { overflow-x: hidden; }
 }
 .mobile-menu__socials {
   display: flex;
-  gap: 0.6rem;
+  justify-content: center;
+  /* Four now, not two — Instagram · Email · WhatsApp · Track Order. Slightly
+     tighter so the row stays comfortably on one line on a 320px phone
+     (4 × 36px + 3 × 8px = 168px). */
+  gap: 0.5rem;
+}
+/* WhatsApp keeps its own colour on hover so the one order channel is
+   identifiable at a glance in a row of otherwise rose icons. */
+.mobile-menu__social--wa:hover {
+  background: #25d366;
+  color: #fff;
 }
 .mobile-menu__social {
   width: 36px;
@@ -1837,23 +1856,6 @@ html, body { overflow-x: hidden; }
   color: #ffffff;
   transform: translateY(-2px);
 }
-.mobile-menu__cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 1.2rem;
-  border-radius: 999px;
-  background: #25D366;
-  color: #ffffff;
-  font-size: 0.88rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-decoration: none;
-  box-shadow: 0 6px 16px rgba(37, 211, 102, 0.28);
-  transition: transform 0.2s ease;
-}
-.mobile-menu__cta:hover { transform: translateY(-1px); }
-
 /* ─── Checkout delivery-method picker ───────────────────────────────────── */
 .cc-delivery-method {
   display: grid;
@@ -2351,14 +2353,53 @@ html, body { overflow-x: hidden; }
 }
 
 /* ─── Contact page — horizontal contact strip ───────────────────────────── */
-.cc-contact-strip {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.75rem;
+/* The contact details are now a COLUMN beside the form, not a row above it.
+   As a six-across strip each tile got ~150px, which broke
+   "cakeandcrumb.in@gmail.com" mid-word and ran the lead time to three lines.
+   One per row, full width, nothing wraps badly.
+   `.cc-contact-strip` itself is gone; the tiles keep their class names. */
+.cc-contact-aside {
+  display: flex;
+  flex-direction: column;
+  /* Roomier than the 0.6rem it started at — stacked in a column the tiles read
+     as one crowded block, where a row had the page's whitespace either side. */
+  gap: 0.85rem;
   background: #ffffff;
   border: 1px solid var(--cc-border);
   border-radius: 16px;
-  padding: 0.75rem;
+  padding: 1.25rem;
+  /* Ends level with the form beside it. The .row already stretches the two
+     COLUMNS equally; this makes the card fill the column it sits in rather
+     than stopping at its own content and leaving a ragged bottom edge.
+     Whichever card is taller sets the height — so this stays correct when the
+     form grows (e.g. "Add more details" expanded). */
+  height: 100%;
+}
+/* A touch more breathing room inside each tile too, now that they are wide. */
+.cc-contact-aside .cc-contact-strip__cta,
+.cc-contact-aside .cc-contact-strip__item {
+  padding: 0.85rem 1rem;
+}
+
+/* THE GAP WAS ALREADY THERE AND YOU COULD NOT SEE IT.
+   The tiles fill with --cc-cream (#fff6f2) and the card behind them is white
+   (#ffffff) — about one percent apart. Stacked, 13.6px of near-white between
+   two near-white blocks reads as one continuous slab, so adding more gap just
+   made a taller slab. What was missing was an EDGE, not space: a hairline
+   border ends each tile, and the gap between them becomes visible for free. */
+.cc-contact-aside .cc-contact-strip__item {
+  border: 1px solid var(--cc-blush-soft);
+}
+.cc-contact-aside__head {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  color: var(--cc-cocoa);
+  margin: 0 0 0.25rem;
+}
+/* An email is one long unbreakable token — allow it to break anywhere rather
+   than push the card wider than its column. */
+.cc-contact-aside .cc-contact-strip__value {
+  overflow-wrap: anywhere;
 }
 .cc-contact-strip__cta,
 .cc-contact-strip__item {
@@ -3255,6 +3296,22 @@ header[style*="sticky"] {
   text-overflow: ellipsis;
   max-width: 46vw;
 }
+/* Optional third line — the batch-bake aside on a small order of loose pieces.
+   Wraps (the product name above it does not), so the toast grows only when a
+   note is actually present. */
+.cc-cart-toast__note {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--cc-cocoa-soft);
+  max-width: 46vw;
+  white-space: normal;
+}
+@media (max-width: 575.98px) {
+  .cc-cart-toast__note { max-width: 52vw; font-size: 0.68rem; }
+}
+
 .cc-cart-toast__cta {
   flex-shrink: 0;
   display: inline-flex;
@@ -4027,6 +4084,19 @@ header[style*="sticky"] {
   vertical-align: middle;
 }
 
+/* "+25 more" beside View All. Quieter than the link it sits in — it is a fact
+   about the category, not a second thing to click. */
+.cc-menu-card__more {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--cc-cocoa-soft);
+  background: var(--cc-blush-soft);
+  border-radius: 999px;
+  padding: 0.12rem 0.5rem;
+  margin-inline: 0.45rem 0.1rem;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
 .cc-menu-card__viewall {
   display: inline-flex;
   align-items: center;
@@ -4325,6 +4395,15 @@ header[style*="sticky"] {
 @media (min-width: 768px) {
   .cc-shop-grid { grid-template-columns: repeat(3, 1fr); }
 }
+/* 992–1199px is the squeeze: the layout goes 3/6/3 (filters / grid / cart), so
+   the grid column is only ~456px and three cards land at ~141px each — too
+   narrow for a photo, a name, a price and an Add button. The split widens to
+   3/7/2 at xl, where three cards are a comfortable ~203px. So drop to two
+   across for that one band only; they come out ~220px, matching xl.
+   MUST stay after the 768px rule — same specificity, so source order decides. */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .cc-shop-grid { grid-template-columns: repeat(2, 1fr); }
+}
 /* Narrow phones: two cards across leaves ~155px each, which squeezes the name
    to two clipped lines and the "Add to Cart" label to the edge of its pill.
    Tighter padding and a smaller add button buy that back without dropping to a
@@ -4397,6 +4476,41 @@ header[style*="sticky"] {
 .cc-shop-grid > .cc-shop-group:first-child { margin-top: 0; }
 
 /* Pagination — small rose-bordered page buttons under the grid */
+/* "Show more" — replaced the numbered pager. Full-width so it reads as the
+   bottom edge of the grid rather than a stray button, and centred because the
+   grid above it is centred at every breakpoint.
+   NOTE: .cc-shop-pagination below is now unused by Shop.jsx; kept only so a
+   half-applied revert doesn't leave the page unstyled. Safe to delete once the
+   load-more has shipped and settled. */
+.cc-shop-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.75rem;
+}
+.cc-shop-more__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1.9rem;
+  border: 1px solid var(--cc-rose-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cc-rose-deep);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.cc-shop-more__btn:hover {
+  background: var(--cc-rose-deep);
+  border-color: var(--cc-rose-deep);
+  color: #fff;
+}
+.cc-shop-more__n {
+  font-size: 0.76rem;
+  opacity: 0.7;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
 .cc-shop-pagination {
   display: flex;
   justify-content: center;
@@ -4925,11 +5039,31 @@ header[style*="sticky"] {
   margin-top: 0.55rem;
   line-height: 1.2;
 }
-.cc-reviews-stats__sub-score {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 1.2rem;
-  color: var(--cc-cocoa);
-  margin-top: 0.2rem;
+/* Replaced .cc-reviews-stats__sub-score, which rendered an invented per-aspect
+   number in Playfair. A sentence can't be mistaken for collected data. */
+.cc-reviews-stats__sub-text {
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--cc-cocoa-soft);
+  margin-top: 0.25rem;
+}
+
+/* Shown only while there are no reviews — the panel asks instead of boasting. */
+.cc-reviews-empty-cta {
+  margin-top: 0.75rem;
+  padding: 0.45rem 1.1rem;
+  border: 1px solid var(--cc-rose-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cc-rose-deep);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  transition: background 0.2s, color 0.2s;
+}
+.cc-reviews-empty-cta:hover {
+  background: var(--cc-rose-deep);
+  border-color: var(--cc-rose-deep);
+  color: #fff;
 }
 
 /* Reviews body 2-col */
@@ -5305,6 +5439,441 @@ header[style*="sticky"] {
 .cc-gallery-tile:hover {
   transform: scale(1.03);
   box-shadow: 0 16px 32px -16px rgba(207, 62, 99, 0.25);
+}
+
+/* ─── Kitchen video strip (components/VideoStrip.jsx) ───
+   Every clip is 720x1280 portrait, so the rail can pin one aspect ratio and
+   the cards never jump as each one loads. */
+.cc-video-strip {
+  background: linear-gradient(180deg, #fff 0%, var(--cc-cream) 100%);
+}
+.cc-video-strip__title {
+  font-family: var(--font-heading);
+  color: var(--cc-cocoa);
+  font-size: clamp(1.6rem, 4vw, 2.3rem);
+  margin-bottom: 0.5rem;
+}
+.cc-video-strip__lede {
+  color: var(--cc-cocoa-soft);
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+/* A scroll-snap rail rather than a wrapping grid: seven portrait clips in a
+   grid would be a wall of video several screens tall.
+
+   The rail INTENTIONALLY overflows — that's what the arrows scroll through. The
+   scrollbar stays hidden, so `.cc-video-arrow` is the only desktop affordance
+   and must never be display:none'd on a pointer device. */
+.cc-video-railwrap {
+  position: relative;
+}
+.cc-video-rail {
+  display: grid;
+  grid-auto-flow: column;
+  /* Fixed track width, NOT minmax(…, 1fr): `1fr` resolves against the scroll
+     container, so the columns squeezed to fit and the rail never overflowed
+     predictably. A fixed width means "how many fit" is decided by the viewport
+     and the remainder is genuinely scrollable. */
+  grid-auto-columns: 200px;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: 0;
+  padding-bottom: 0.5rem;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.cc-video-rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* Round arrow buttons straddling the rail's edges. */
+.cc-video-arrow {
+  position: absolute;
+  top: 38%;
+  z-index: 3;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--cc-blush-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cc-rose-deep);
+  font-size: 1.25rem;
+  box-shadow: 0 8px 20px -8px rgba(207, 62, 99, 0.35);
+  transition: background 0.2s, color 0.2s, opacity 0.2s;
+}
+.cc-video-arrow:hover:not(:disabled) {
+  background: var(--cc-rose-deep);
+  color: #fff;
+}
+.cc-video-arrow:disabled {
+  opacity: 0;
+  pointer-events: none; /* invisible AND unclickable at the ends */
+}
+.cc-video-arrow--prev { left: -14px; }
+.cc-video-arrow--next { right: -14px; }
+
+@media (max-width: 767.98px) {
+  /* Touch devices swipe; the arrows would only cover a card. */
+  .cc-video-arrow { display: none; }
+}
+
+.cc-video-card {
+  scroll-snap-align: start;
+  margin: 0;
+}
+.cc-video-card__media {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  display: block;
+  border-radius: 14px;
+  background: var(--cc-blush-soft); /* what shows while the poster loads */
+  box-shadow: 0 14px 30px -16px rgba(207, 62, 99, 0.3);
+}
+/* Playfair italic, not Lato. A photo caption is an aside, and setting it in
+   the same sans as the body made it read as UI text bolted under the video.
+   The italic serif is the same voice the invoice's closing line uses, so it
+   already belongs to the brand.
+   (Safe here because captions are WORDS. Never use --font-heading for figures —
+   Playfair's old-style digits sit at uneven heights; see CLAUDE.md.) */
+.cc-video-card__caption {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: 0.86rem;
+  color: var(--cc-cocoa-soft);
+  text-align: center;
+  margin-top: 0.5rem;
+  line-height: 1.35;
+}
+
+@media (max-width: 575.98px) {
+  /* Bleed past the container so a partial card sits at the edge — that half
+     card is what tells a thumb there is more to swipe.
+
+     Cards were 60vw: on a 390px phone that is a 234px card standing 416px tall,
+     so barely one and a half fitted and the strip read as two broken images
+     rather than a row. At 42vw three are in view, each a comfortable 164×291,
+     and the cut edge of the fourth is clearly a "there's more" rather than a
+     rendering fault. */
+  .cc-video-rail {
+    margin-inline: calc(var(--bs-gutter-x, 1.5rem) * -0.5);
+    padding-inline: calc(var(--bs-gutter-x, 1.5rem) * 0.5);
+    grid-auto-columns: 38vw;
+    gap: 0.6rem;
+    /* Snap to the start of a card so a swipe never leaves one bisected. */
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: calc(var(--bs-gutter-x, 1.5rem) * 0.5);
+  }
+  .cc-video-card { scroll-snap-align: start; }
+  /* Two lines maximum, then ellipsis. A three-line caption under a 164px card
+     pushed the next section down and left ragged gaps between cards. */
+  .cc-video-card__caption {
+    /* A shade larger than the sans it replaced — Playfair's smaller x-height
+       makes an italic serif read smaller than a sans at the same rem. */
+    font-size: 0.76rem;
+    margin-top: 0.4rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.1em; /* equal card heights whether the caption wraps or not */
+  }
+  .cc-video-strip__lede { font-size: 0.88rem; }
+}
+
+/* ═══════════════ GALLERY — filters, mosaic, lightbox ═══════════════ */
+
+.cc-gallery-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.75rem;
+}
+
+/* On a phone the eight chips wrapped onto THREE rows — about 130px of filter
+   furniture above the photos, which is most of what the screen had left after
+   the header. This is the same horizontal snap strip the admin tabs use: one
+   row, scrolls sideways, and bleeds to the viewport edge so a half-cut chip
+   signals there are more. Chips keep their full hit area; nothing is hidden. */
+@media (max-width: 767.98px) {
+  .cc-gallery-filters {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    margin-inline: calc(var(--bs-gutter-x, 1.5rem) * -0.5);
+    padding-inline: calc(var(--bs-gutter-x, 1.5rem) * 0.5);
+    padding-bottom: 0.25rem;
+    margin-bottom: 1.1rem;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+  .cc-gallery-filters::-webkit-scrollbar { display: none; }
+  .cc-gallery-chip {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+}
+.cc-gallery-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.42rem 0.95rem;
+  border: 1px solid var(--cc-blush-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cc-cocoa-soft);
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+  line-height: 1;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.cc-gallery-chip:hover {
+  border-color: var(--cc-rose-soft);
+  color: var(--cc-rose-deep);
+}
+.cc-gallery-chip.is-active {
+  background: var(--cc-rose-deep);
+  border-color: var(--cc-rose-deep);
+  color: #fff;
+}
+.cc-gallery-chip__n {
+  font-size: 0.72rem;
+  opacity: 0.7;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Explicit column counts rather than auto-fill: auto-fill kept giving eight
+   thin columns on a wide screen and one fat one on a narrow tablet.
+   Thumbnail-sized on purpose — more of the collection is visible per screen and
+   the lightbox is there for detail, so the tile only has to be big enough to
+   recognise a cake, not to study it. Two columns is the floor: three on a
+   360px phone leaves ~110px, too small to tell two chocolate cakes apart. */
+.cc-gallery-mosaic {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+@media (min-width: 576px) { .cc-gallery-mosaic { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 768px) { .cc-gallery-mosaic { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 992px) { .cc-gallery-mosaic { grid-template-columns: repeat(5, 1fr); gap: 0.75rem; } }
+@media (min-width: 1400px) { .cc-gallery-mosaic { grid-template-columns: repeat(6, 1fr); } }
+
+.cc-gallery-cell {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: zoom-in;
+}
+/* 4:5, not the old 1:1 — almost every photo here is a portrait phone capture,
+   and a square frame was cutting the tops off tall cakes. */
+.cc-gallery-tile {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  display: block;
+  border-radius: 14px;
+  background: var(--cc-blush-soft);
+  transition: transform 0.35s, box-shadow 0.35s;
+}
+.cc-gallery-cell:hover .cc-gallery-tile {
+  transform: scale(1.04);
+  box-shadow: 0 18px 34px -18px rgba(207, 62, 99, 0.3);
+}
+/* The caption rides in on hover on a pointer device and is always present for a
+   screen reader. */
+.cc-gallery-cell__cap {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 1.3rem 0.5rem 0.45rem;
+  background: linear-gradient(180deg, rgba(60, 30, 25, 0) 0%, rgba(60, 30, 25, 0.78) 100%);
+  color: #fff;
+  /* Matches the video captions — same italic serif voice for both kinds of
+     photo caption. Bumped a step and given a soft shadow: a light serif over a
+     photograph needs more help than sans-serif does. */
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: 0.74rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+  line-height: 1.3;
+  text-align: left;
+  /* Tiles are thumbnails now — a four-line caption would cover the cake it is
+     naming, so clamp it and let the lightbox carry the full text. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(0.4rem);
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+}
+.cc-gallery-cell:hover .cc-gallery-cell__cap,
+.cc-gallery-cell:focus-visible .cc-gallery-cell__cap {
+  opacity: 1;
+  transform: none;
+}
+@media (hover: none) {
+  /* No hover on a phone — the caption would never appear, so pin it on. */
+  .cc-gallery-cell__cap { opacity: 1; transform: none; }
+}
+
+.cc-gallery-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.62rem 1.5rem;
+  border: 1px solid var(--cc-rose-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cc-rose-deep);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  transition: background 0.2s, color 0.2s;
+}
+.cc-gallery-more:hover {
+  background: var(--cc-rose-deep);
+  border-color: var(--cc-rose-deep);
+  color: #fff;
+}
+.cc-gallery-more__n {
+  font-size: 0.75rem;
+  opacity: 0.65;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* ─── Lightbox ─── */
+.cc-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: clamp(0.75rem, 3vw, 2rem);
+  background: rgba(38, 20, 17, 0.92);
+  backdrop-filter: blur(4px);
+  overscroll-behavior: contain;
+}
+.cc-lightbox__figure {
+  grid-column: 2;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+/* The whole point of this view: the photo's own proportions, uncropped. */
+.cc-lightbox__img {
+  max-width: 100%;
+  max-height: 78vh;
+  width: auto;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.8);
+}
+.cc-lightbox__cap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #f7e3df;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  text-align: center;
+}
+.cc-lightbox__count {
+  color: var(--cc-rose-soft);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+/* The order button — the gallery's only route into the shop, so it is the one
+   filled, full-colour element on an otherwise dark, quiet overlay. */
+.cc-lightbox__buy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.4rem;
+  border-radius: 999px;
+  background: var(--cc-rose-deep);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.2s;
+}
+.cc-lightbox__buy:hover {
+  background: var(--cc-rose);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.cc-lightbox__nav,
+.cc-lightbox__x {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 1.35rem;
+  transition: background 0.2s;
+}
+.cc-lightbox__nav:hover,
+.cc-lightbox__x:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+.cc-lightbox__nav--prev { grid-column: 1; }
+.cc-lightbox__nav--next { grid-column: 3; }
+.cc-lightbox__x {
+  position: absolute;
+  top: clamp(0.75rem, 3vw, 1.5rem);
+  right: clamp(0.75rem, 3vw, 1.5rem);
+  width: 38px;
+  height: 38px;
+  font-size: 1.1rem;
+}
+
+/* Narrow phones: as grid columns the two 44px arrows plus gaps and padding ate
+   128px of a 320px screen — 40% of the viewport spent on chrome, leaving the
+   photo 192px. Float them over the image instead so it gets the full width. */
+@media (max-width: 575.98px) {
+  .cc-lightbox {
+    grid-template-columns: 1fr;
+  }
+  .cc-lightbox__figure {
+    grid-column: 1;
+  }
+  .cc-lightbox__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background: rgba(20, 10, 8, 0.55);
+  }
+  .cc-lightbox__nav--prev { left: 0.4rem; }
+  .cc-lightbox__nav--next { right: 0.4rem; }
+}
+
+/* Short viewports — a phone held sideways is ~360px tall. 78vh of that is
+   281px, and the caption, the order button and the padding add ~106px more:
+   the sheet ran past the bottom of the screen with no way to scroll it. */
+@media (max-height: 520px) {
+  .cc-lightbox__img { max-height: 58vh; }
+  .cc-lightbox__cap { font-size: 0.78rem; }
+  .cc-lightbox__buy { padding: 0.4rem 1.1rem; font-size: 0.82rem; }
+  .cc-lightbox__figure { gap: 0.45rem; }
 }
 
 .cc-ig-grid {
@@ -6307,3 +6876,362 @@ header[style*="sticky"] {
   .cc-modal-head, .cc-modal-foot { padding-inline: 0.9rem !important; }
   .cc-modal-body { padding: 0.9rem !important; }
 }
+
+/* ═══════════════ HOME — "Ordering is simple" ═══════════════
+   Added because the home page linked to /shop exactly once and never said how
+   an order actually happens. Three steps, the two facts people hesitate over,
+   then the one button that matters. */
+.cc-home-how {
+  background: var(--cc-cream);
+}
+.cc-home-how__title {
+  font-family: var(--font-heading);
+  color: var(--cc-cocoa);
+  font-size: clamp(1.6rem, 4vw, 2.3rem);
+  margin-bottom: 0.5rem;
+}
+.cc-home-how__steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 768px) {
+  .cc-home-how__steps { grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+}
+.cc-home-how__step {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--cc-blush-soft);
+  border-radius: 16px;
+  padding: 1.6rem 1.2rem 1.3rem;
+  text-align: center;
+}
+/* The step number sits behind the icon as a watermark rather than beside it —
+   it orders the cards without competing with the words. */
+.cc-home-how__num {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.9rem;
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--cc-blush-soft);
+  font-variant-numeric: lining-nums;
+  pointer-events: none;
+}
+.cc-home-how__step-title {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  color: var(--cc-cocoa);
+  margin: 0.7rem 0 0.35rem;
+}
+.cc-home-how__step-text {
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--cc-cocoa-soft);
+  margin: 0;
+}
+
+.cc-home-how__facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1.5rem;
+  margin-top: 1.5rem;
+  font-size: 0.83rem;
+  color: var(--cc-cocoa-soft);
+}
+.cc-home-how__facts span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.cc-home-how__facts svg { color: var(--cc-rose); flex: 0 0 auto; }
+
+.cc-home-how__cta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  margin-top: 1.75rem;
+}
+.cc-home-how__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--cc-rose-deep);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+.cc-home-how__link:hover { color: var(--cc-rose); text-decoration: underline; }
+
+/* ═══════════════ POLICY PAGES (/refund-policy, /privacy) ═══════════════
+   Document pages, not marketing pages: a measured column, generous line
+   height, no hero image pushing the answer below the fold. */
+.cc-policy-head {
+  background: linear-gradient(180deg, var(--cc-blush) 0%, var(--cc-cream) 100%);
+}
+.cc-policy-head__title {
+  font-family: var(--font-heading);
+  color: var(--cc-cocoa);
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  margin: 0.5rem 0;
+}
+.cc-policy { background: #fff; }
+.cc-policy__body {
+  max-width: 46rem;  /* ~75 characters — the comfortable reading measure */
+  margin: 0 auto;
+  color: var(--cc-cocoa-soft);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+.cc-policy__intro {
+  font-size: 1.05rem;
+  color: var(--cc-cocoa);
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--cc-blush-soft);
+}
+.cc-policy__h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  color: var(--cc-cocoa);
+  margin: 2rem 0 0.75rem;
+}
+.cc-policy__h2 svg { color: var(--cc-rose); flex: 0 0 auto; }
+.cc-policy__list { padding-left: 1.1rem; margin: 0; }
+.cc-policy__list li { margin-bottom: 0.6rem; }
+.cc-policy__body strong { color: var(--cc-cocoa); }
+.cc-policy__body code {
+  background: var(--cc-cream);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.86em;
+  color: var(--cc-rose-deep);
+}
+.cc-policy__cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  margin: 2.25rem 0 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--cc-blush-soft);
+}
+.cc-policy__link { color: var(--cc-rose-deep); font-size: 0.9rem; }
+.cc-policy__note {
+  font-size: 0.8rem;
+  opacity: 0.85;
+  border-top: 1px solid var(--cc-blush-soft);
+  padding-top: 1rem;
+}
+
+/* ═══════════════ FOOTER additions ═══════════════ */
+/* WhatsApp gets its own colour — it is the channel every order goes through,
+   so it should not look like one more social icon. */
+.cc-footer__social--wa:hover { background: #25d366 !important; border-color: #25d366 !important; color: #fff !important; }
+
+.cc-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  padding: 0.75rem 1rem 0;
+  font-size: 0.78rem;
+}
+.cc-footer__legal a { color: inherit; opacity: 0.85; text-decoration: none; }
+.cc-footer__legal a:hover { opacity: 1; text-decoration: underline; }
+.cc-footer__legal--ribbon { padding: 0; gap: 0.75rem; }
+
+/* Ribbon now carries the copyright AND the legal links. */
+.cc-footer-d__ribbon {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem 1.25rem;
+}
+
+.cc-footer-d__newsletter { margin-top: 1.25rem; max-width: 20rem; }
+.cc-footer-d__news-head {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  opacity: 0.9;
+}
+
+
+/* Spacing between the video strip and the gallery grid is set on the elements
+   themselves (VideoStrip.jsx / Gallery.jsx). It CANNOT be done from here:
+   Bootstrap's .py-5 ships padding with !important, so any
+   `.cc-video-strip > .container` rule loses to it without warning — which is
+   exactly what happened the first time this gap was "fixed". */
+@media (max-width: 767.98px) {
+  /* No room reserved under the rail for a scrollbar that is hidden anyway. */
+  .cc-video-rail { padding-bottom: 0; }
+}
+
+
+/* ─── Contact: blocked-pop-up fallback ───
+   Shown only when window.open returned null. Amber rather than rose so it
+   reads as "something needs your attention", not as decoration — and it must
+   never look like a failure the customer caused. */
+.cc-contact-blocked {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #f0c98a;
+  border-radius: 14px;
+  background: #fff8ec;
+}
+.cc-contact-blocked__head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.35rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--cc-cocoa);
+}
+.cc-contact-blocked__head svg { color: #d38b1f; flex: 0 0 auto; }
+.cc-contact-blocked__text {
+  margin: 0 0 0.75rem;
+  font-size: 0.82rem;
+  color: var(--cc-cocoa-soft);
+}
+.cc-contact-blocked__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+.cc-contact-blocked__copy {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--cc-rose-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cc-rose-deep);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  transition: background 0.2s, color 0.2s;
+}
+.cc-contact-blocked__copy:hover {
+  background: var(--cc-rose-deep);
+  border-color: var(--cc-rose-deep);
+  color: #fff;
+}
+
+/* ─── About: scroll target + closing CTA ───
+   #our-story is where the hero's "Our Journey" button lands; the offset keeps
+   the sticky header from covering the heading (never hard-code the px —
+   --cc-header-h changes at two breakpoints). */
+#our-story { scroll-margin-top: calc(var(--cc-header-h, 82px) + 1rem); }
+
+.cc-about-cta {
+  background: linear-gradient(180deg, var(--cc-cream) 0%, var(--cc-blush) 100%);
+}
+.cc-about-cta__lede {
+  max-width: 34rem;
+  margin: 1rem auto 0;
+  color: var(--cc-cocoa-soft);
+}
+.cc-about-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  margin-top: 1.5rem;
+}
+.cc-about-cta__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--cc-rose-deep);
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+.cc-about-cta__link:hover { color: var(--cc-rose); text-decoration: underline; }
+
+/* Recovery inside the Shop's empty state. The sidebar's "Clear Filters" button
+   is the same action, but on a phone it sits in a collapsed panel above the
+   grid — off-screen exactly when it is the only thing that helps. */
+.cc-shop-empty__clear {
+  padding: 0.45rem 1.2rem;
+  border: 1px solid var(--cc-rose-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cc-rose-deep);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  transition: background 0.2s, color 0.2s;
+}
+.cc-shop-empty__clear:hover {
+  background: var(--cc-rose-deep);
+  border-color: var(--cc-rose-deep);
+  color: #fff;
+}
+
+/* FAQ → policy cross-link, at the foot of a section that restates those terms. */
+.faq-section__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--cc-rose-deep);
+  text-decoration: none;
+}
+.faq-section__more:hover { color: var(--cc-rose); text-decoration: underline; }
+
+/* Track Order — help link inside the not-found / error notices. */
+.cc-track-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: #25d366;
+  color: #fff;
+  font-size: 0.82rem;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.cc-track-help:hover { background: #1da851; color: #fff; }
+
+/* Search: arrow-key highlight + the see-all overflow link. */
+.cc-search-overlay__result.is-active {
+  background: var(--cc-blush-soft);
+  outline: 2px solid var(--cc-rose-soft);
+  outline-offset: -2px;
+}
+.cc-search-overlay__more {
+  display: block;
+  text-align: center;
+  padding: 0.75rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--cc-border);
+  color: var(--cc-rose-deep);
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+.cc-search-overlay__more:hover { background: var(--cc-cream); color: var(--cc-rose); }
+
+/* Search empty-state aside — the "you can still ask for it" note. */
+.cc-search-overlay__aside {
+  max-width: 26rem;
+  margin: 0.5rem auto 0;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--cc-blush-soft);
+  border-radius: 12px;
+  background: var(--cc-cream);
+  color: var(--cc-cocoa-soft);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.cc-search-overlay__aside strong { color: var(--cc-cocoa); }

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import {
   FiSearch, FiShoppingBag, FiHome, FiInfo, FiBook, FiImage,
-  FiStar, FiPhone, FiInstagram, FiMail, FiX,
+  FiStar, FiPhone, FiInstagram, FiMail, FiX, FiTruck,
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import Logo from './Logo.jsx'
@@ -99,6 +99,11 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  // A utility row (Track Order · phone) and a green "Order on WhatsApp" button
+  // were tried here and taken back out: above a delicate wordmark they read as
+  // clutter, and both were already reachable elsewhere — WhatsApp and Track
+  // Order sit in the footer on every page, and in the mobile menu. The header
+  // stays brand, navigation, search and cart.
   return (
     <header className={`cc-header${scrolled ? ' is-scrolled' : ''}`}>
       <div className="container py-3">
@@ -238,20 +243,23 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* Footer block — socials + WhatsApp CTA */}
+          {/* Footer block — one row of actions.
+              Four in a row. Track Order used to be a full-width nav link up
+              with Home/Menu/Shop, where it sat oddly — it is not a place to
+              browse, it is a thing you do once, after ordering. As an icon
+              beside the other actions it stops competing with the nav.
+
+              The big green "+91 …" button that used to sit under this row is
+              gone: with WhatsApp in the row it was the same destination twice
+              in the same block. The number itself is still on every page, in
+              the footer and on /contact. */}
           <div className="mobile-menu__footer">
             <div className="mobile-menu__socials">
               <a href="https://www.instagram.com/cake_and_crumb_1/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="mobile-menu__social"><FiInstagram size={15} /></a>
               <a href="mailto:cakeandcrumb.in@gmail.com" aria-label="Email" className="mobile-menu__social"><FiMail size={15} /></a>
+              <a href={`https://wa.me/${WHATSAPP_PHONE}`} target="_blank" rel="noopener noreferrer" aria-label="Order on WhatsApp" className="mobile-menu__social mobile-menu__social--wa"><FaWhatsapp size={15} /></a>
+              <Link to="/track-order" onClick={() => setOpen(false)} aria-label="Track your order" title="Track Order" className="mobile-menu__social"><FiTruck size={15} /></Link>
             </div>
-            <a
-              href={`https://wa.me/${WHATSAPP_PHONE}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mobile-menu__cta"
-            >
-              <FaWhatsapp size={16} /> +91 91731 83440
-            </a>
           </div>
           </div>{/* /.mobile-menu__inner */}
         </div>{/* /.mobile-menu__panel */}

@@ -10,6 +10,9 @@ export default function CartToast() {
   const name = typeof toast === 'string' ? toast : toast.name
   const img = typeof toast === 'string' ? null : toast.img
   const qty = typeof toast === 'string' ? null : toast.qty
+  // Optional aside — set by the caller of add(), e.g. the batch-bake message on
+  // a one-or-two-piece order. Absent on every ordinary add.
+  const note = typeof toast === 'string' ? null : toast.note
 
   return (
     <div className="cc-cart-toast" role="status" aria-live="polite">
@@ -32,6 +35,7 @@ export default function CartToast() {
           <span className="cc-cart-toast__name" title={name}>
             {qty > 1 ? `${qty} × ` : ''}{name}
           </span>
+          {note && <span className="cc-cart-toast__note">{note}</span>}
         </span>
 
         <Link to="/cart" className="cc-cart-toast__cta" aria-label="View cart">

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  FiMapPin, FiPhone, FiClock, FiInstagram, FiHeart,
+  FiMapPin, FiPhone, FiClock, FiInstagram, FiHeart, FiMail,
   FiCheckCircle, FiChevronDown, FiHelpCircle, FiArrowRight,
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
@@ -9,6 +9,7 @@ import HeartDivider from '../components/HeartDivider.jsx'
 import { img, u } from '../data/images.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
+import { DELIVERY } from '../data/shopConfig.js'
 
 const OCCASIONS = [
   'Birthday', 'Wedding', 'Anniversary', 'Engagement',
@@ -37,6 +38,10 @@ export default function Contact() {
 
   const minDate = useMemo(() => tomorrowISO(), [])
   const [showMore, setShowMore] = useState(false)
+  // Fallback state for a blocked WhatsApp pop-up — see onSubmit.
+  const [blocked, setBlocked] = useState(false)
+  const [waLink, setWaLink] = useState('')
+  const [copied, setCopied] = useState(false)
   const [form, setForm] = useState({
     name: '', phone: '', email: '',
     occasion: '', needBy: '',
@@ -68,10 +73,36 @@ export default function Contact() {
     return lines.join('\n')
   }
 
+  /**
+   * A blocked pop-up used to lose the whole enquiry.
+   *
+   * `window.open` is called synchronously off the click — that part is right,
+   * and must stay: any `await` before it and mobile browsers block the window
+   * outright (the same lesson AdminOrders records). But when it IS blocked,
+   * `open()` returns null and the old code did nothing at all. The customer
+   * had filled in nine fields, tapped submit, and got silence — and since this
+   * form stores nothing anywhere, that lead was simply gone.
+   *
+   * Now a null return raises a fallback panel with a plain link and a copy
+   * button, so the message always survives the failure.
+   */
   function onSubmit(e) {
     e.preventDefault()
     if (!required) return
-    window.open(buildWhatsAppLink(buildMessage()), '_blank', 'noopener,noreferrer')
+    const link = buildWhatsAppLink(buildMessage())
+    setWaLink(link)
+    const win = window.open(link, '_blank', 'noopener,noreferrer')
+    setBlocked(!win || win.closed || typeof win.closed === 'undefined')
+    setCopied(false)
+  }
+
+  async function copyMessage() {
+    try {
+      await navigator.clipboard.writeText(buildMessage())
+      setCopied(true)
+    } catch {
+      setCopied(false) // clipboard denied — the link below still works
+    }
   }
 
   return (
@@ -103,64 +134,19 @@ export default function Contact() {
         </div>
       </section>
 
-      {/* Horizontal contact strip — replaces the sticky left card.
-          Sits below the hero, gives quick access to WhatsApp / Phone /
-          IG / hours without floating into the sticky header zone. */}
-      <section className="py-4">
-        <div className="container">
-          <div className="cc-contact-strip">
-            <a
-              href={buildWhatsAppLink()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="cc-contact-strip__cta"
-            >
-              <FaWhatsapp size={18} />
-              <div>
-                <div className="cc-contact-strip__label">Fastest reply</div>
-                <div className="cc-contact-strip__value">WhatsApp Us</div>
-              </div>
-            </a>
-            <a href="tel:+919173183440" className="cc-contact-strip__item">
-              <span className="cc-contact-strip__icon"><FiPhone size={14} /></span>
-              <div>
-                <div className="cc-contact-strip__label">Call</div>
-                <div className="cc-contact-strip__value">+91 91731 83440</div>
-              </div>
-            </a>
-            <a
-              href="https://www.instagram.com/cake_and_crumb_1/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="cc-contact-strip__item"
-            >
-              <span className="cc-contact-strip__icon"><FiInstagram size={14} /></span>
-              <div>
-                <div className="cc-contact-strip__label">DM us</div>
-                <div className="cc-contact-strip__value">@cake_and_crumb_1</div>
-              </div>
-            </a>
-            <div className="cc-contact-strip__item cc-contact-strip__item--info">
-              <span className="cc-contact-strip__icon"><FiClock size={14} /></span>
-              <div>
-                <div className="cc-contact-strip__label">Lead time</div>
-                <div className="cc-contact-strip__value">Pre-order 1 day in advance</div>
-              </div>
-            </div>
-            <div className="cc-contact-strip__item cc-contact-strip__item--info">
-              <span className="cc-contact-strip__icon"><FiMapPin size={14} /></span>
-              <div>
-                <div className="cc-contact-strip__label">Delivery</div>
-                <div className="cc-contact-strip__value">Home delivery or pickup</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Two columns: how to reach us on the left, the custom-order form on the
+          right.
 
-      {/* Full-width custom order form — no sidebar, no sticky */}
+          This was a horizontal strip of six tiles above the form. Six across
+          left each one ~150px, so "cakeandcrumb.in@gmail.com" broke mid-word
+          into "cakeandcrumb.in@g / mail.com" and the lead time ran to three
+          ragged lines. Stacked in a column each row gets the full width and
+          nothing wraps badly.
+
+          NOT sticky — an earlier version of this left card was, and it floated
+          up into the sticky header. It scrolls with the page. */}
       <section className="py-4 py-md-5">
-        <div className="container" style={{ maxWidth: 820 }}>
+        <div className="container" style={{ maxWidth: 1100 }}>
           {/* Sits ABOVE the form, not below it: the point is to answer the
               question before it turns into a message the bakery types out by
               hand. Allergens, lead time, delivery, cancellation and storage are
@@ -174,8 +160,84 @@ export default function Contact() {
             <FiArrowRight size={15} className="cc-faq-nudge__arrow" />
           </Link>
 
-          <div className="row">
-            <div className="col-12">
+          <div className="row g-4">
+            {/* LEFT — how to reach us */}
+            <div className="col-lg-4">
+              <div className="cc-contact-aside">
+                <h2 className="cc-contact-aside__head">Reach us</h2>
+
+                <a
+                  href={buildWhatsAppLink()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cc-contact-strip__cta"
+                >
+                  <FaWhatsapp size={18} />
+                  <div>
+                    <div className="cc-contact-strip__label">Fastest reply</div>
+                    <div className="cc-contact-strip__value">WhatsApp Us</div>
+                  </div>
+                </a>
+                <a href="tel:+919173183440" className="cc-contact-strip__item">
+                  <span className="cc-contact-strip__icon"><FiPhone size={14} /></span>
+                  <div>
+                    <div className="cc-contact-strip__label">Call</div>
+                    <div className="cc-contact-strip__value">+91 91731 83440</div>
+                  </div>
+                </a>
+                <a
+                  href="https://www.instagram.com/cake_and_crumb_1/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cc-contact-strip__item"
+                >
+                  <span className="cc-contact-strip__icon"><FiInstagram size={14} /></span>
+                  <div>
+                    <div className="cc-contact-strip__label">DM us</div>
+                    <div className="cc-contact-strip__value">@cake_and_crumb_1</div>
+                  </div>
+                </a>
+                {/* The contact page listed no email at all — it was in the footer
+                    on every page except the one whose job is contact. */}
+                <a href="mailto:cakeandcrumb.in@gmail.com" className="cc-contact-strip__item">
+                  <span className="cc-contact-strip__icon"><FiMail size={14} /></span>
+                  <div>
+                    <div className="cc-contact-strip__label">Email</div>
+                    <div className="cc-contact-strip__value">cakeandcrumb.in@gmail.com</div>
+                  </div>
+                </a>
+                <div className="cc-contact-strip__item cc-contact-strip__item--info">
+                  <span className="cc-contact-strip__icon"><FiClock size={14} /></span>
+                  <div>
+                    <div className="cc-contact-strip__label">Lead time</div>
+                    <div className="cc-contact-strip__value">Order a day ahead — late orders are ready the next day</div>
+                  </div>
+                </div>
+                {/* The old tile said "Home delivery or pickup" but never said pick
+                    up FROM WHERE. Coordinates come from DELIVERY.origin, the same
+                    constant the delivery calculator uses, so the pin cannot drift. */}
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${DELIVERY.origin.lat},${DELIVERY.origin.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cc-contact-strip__item"
+                >
+                  <span className="cc-contact-strip__icon"><FiMapPin size={14} /></span>
+                  <div>
+                    <div className="cc-contact-strip__label">Delivery or pickup</div>
+                    <div className="cc-contact-strip__value">Vaso, Kheda, Gujarat 387380</div>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            {/* RIGHT — the custom order form */}
+            <div className="col-lg-8">
+              {/* height:100% so this and the "Reach us" card end level.
+                  Bootstrap's .row already stretches the two COLUMNS to equal
+                  height; without this the card inside each column still sized
+                  to its own content, so the shorter one stopped early and left
+                  a ragged bottom edge between them. */}
               <form
                 onSubmit={onSubmit}
                 className="p-4 p-md-4"
@@ -183,6 +245,7 @@ export default function Contact() {
                   background: '#fff',
                   border: '1px solid var(--cc-border)',
                   borderRadius: 14,
+                  height: '100%',
                 }}
               >
                 <div className="d-flex align-items-center mb-3" style={{ gap: '0.6rem' }}>
@@ -219,19 +282,28 @@ export default function Contact() {
                       required
                     />
                   </div>
+                  {/* These two share a row and MUST both carry a label, or they
+                      don't line up: "Need by" needs one (a bare dd-mm-yyyy box
+                      explains nothing), and without a matching one on Occasion
+                      the date field started a label's height lower than the
+                      select beside it. */}
                   <div className="col-md-6">
+                    <label className="cc-field-label" htmlFor="contact-occasion">Occasion *</label>
                     <select
+                      id="contact-occasion"
                       className="cc-input"
                       value={form.occasion}
                       onChange={(e) => update('occasion', e.target.value)}
                       required
                     >
-                      <option value="">Occasion *</option>
+                      <option value="">Choose an occasion</option>
                       {OCCASIONS.map((o) => <option key={o} value={o}>{o}</option>)}
                     </select>
                   </div>
                   <div className="col-md-6">
                     <label className="cc-field-label" htmlFor="contact-need-by">Need by *</label>
+                    {/* No aria-label here — it would override the <label> above
+                        and is the same words twice. */}
                     <input
                       id="contact-need-by"
                       className="cc-input"
@@ -240,8 +312,6 @@ export default function Contact() {
                       value={form.needBy}
                       onChange={(e) => update('needBy', e.target.value)}
                       required
-                      aria-label="Need by date"
-                      title="Need by"
                     />
                   </div>
                   <div className="col-md-6">
@@ -353,6 +423,27 @@ export default function Contact() {
                     Opens WhatsApp with your details prefilled. Attach photos there — we reply with a quote within a few hours.
                   </span>
                 </div>
+
+                {/* Only appears when the browser refused the pop-up. Without
+                    this the form looked broken and the enquiry vanished. */}
+                {blocked && (
+                  <div className="cc-contact-blocked" role="alert">
+                    <p className="cc-contact-blocked__head">
+                      <FiHelpCircle size={15} /> Your browser blocked the WhatsApp window
+                    </p>
+                    <p className="cc-contact-blocked__text">
+                      Nothing is lost — your details are still filled in below. Use either option:
+                    </p>
+                    <div className="cc-contact-blocked__actions">
+                      <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn-rose">
+                        <FaWhatsapp size={15} /> Open WhatsApp
+                      </a>
+                      <button type="button" onClick={copyMessage} className="cc-contact-blocked__copy">
+                        {copied ? 'Copied — paste it to us' : 'Copy my enquiry'}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <button
                   type="submit"

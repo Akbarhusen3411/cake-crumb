@@ -2,21 +2,54 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   FiHeart, FiShoppingBag, FiX, FiPlus, FiMinus, FiCheckCircle, FiClock,
-  FiShield, FiTruck, FiChevronLeft, FiChevronRight, FiChevronDown, FiSliders,
+  FiShield, FiTruck, FiChevronDown, FiSliders,
 } from 'react-icons/fi'
 import { TbLeaf, TbToolsKitchen2 } from 'react-icons/tb'
 import HeartDivider from '../components/HeartDivider.jsx'
-import { shopProducts, lowestPrice, isPerPiece, describe } from '../data/products.js'
+import { shopProducts, lowestPrice, isPerPiece, cardPrice, priceLabel, describe, EXTRA_TIERS } from '../data/products.js'
 import { img, u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { useCart } from '../context/CartContext.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { useJsonLd } from '../hooks/useJsonLd.js'
 import ProductQuickView from '../components/ProductQuickView.jsx'
+import AllergenTags from '../components/AllergenTags.jsx'
 
+/**
+ * The Category radio list.
+ *
+ * Every entry here is a product `category` EXCEPT the ones named in
+ * GROUP_FILTERS below, which are a `group` inside one. 'Cake Pops' is the first
+ * of those: it lives inside Bakes, but the bakery sells four flavours of it and
+ * customers come looking for "cake pops" by name, so it earns its own filter
+ * rather than being buried behind Bakes → scroll → Cake Pops.
+ *
+ * Kept as a flat list of STRINGS on purpose — `category` state, the
+ * `?category=` deep link, `activeFilterCount` and the reset effects all compare
+ * plain strings, so promoting a group costs one line here and one match rule
+ * below instead of a refactor.
+ */
 const CATEGORIES = [
-  'All Products', 'Cheesecakes', 'Milk Cakes', 'Sponge Cakes', 'Cookies', 'Cupcakes', 'Bakes', 'Dessert Cups', 'Drinks',
+  'All Products', 'Cheesecakes', 'Milk Cakes', 'Sponge Cakes', 'Cookies', 'Cupcakes',
+  'Bakes', 'Cake Pops', 'Cakesicles', 'Dessert Cups', 'Platters', 'Drinks',
 ]
+
+// How many products render before "Show more". 120 products at 12 a page meant
+// ten numbered pages to see the catalogue; appending keeps the customer's place
+// and their scroll position instead of resetting both.
+const PAGE_SIZE = 12
+
+/** Filter names that match a `group` instead of a `category`. */
+const GROUP_FILTERS = {
+  'Cake Pops': (p) => p.group === 'Cake Pops',
+  'Cakesicles': (p) => p.group === 'Cakesicles',
+}
+
+/** Does this product belong under the selected filter? */
+const inFilter = (p, category) =>
+  category === 'All Products' ? true
+    : GROUP_FILTERS[category] ? GROUP_FILTERS[category](p)
+      : p.category === category
 
 // `lowestPrice` and `isPerPiece` now live in data/products.js — they were
 // defined here, re-implemented in SearchOverlay and got wrong in
@@ -27,24 +60,6 @@ const CATEGORIES = [
 // for a per-piece product: the true entry price is 2 × the per-piece rate, not
 // the box, so a cupcake can appear under a band its card price sits outside.
 // That trade is deliberate — see CLAUDE.md.
-
-/**
- * Page numbers to show, with gaps: 1 … 4 5 6 … 10.
- * "All Products" is 10 pages, which as a plain row of circles wrapped onto two
- * lines on a phone and read as a barcode. Always shows the first and last page
- * plus the current one and its neighbours.
- */
-function pageWindow(current, total) {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-  const out = [1]
-  const start = Math.max(2, current - 1)
-  const end = Math.min(total - 1, current + 1)
-  if (start > 2) out.push('…')
-  for (let i = start; i <= end; i += 1) out.push(i)
-  if (end < total - 1) out.push('…')
-  out.push(total)
-  return out
-}
 
 const PRICE_RANGES = [
   { id: 'all',  label: 'All Prices',     test: () => true },
@@ -101,7 +116,7 @@ export default function Shop() {
           // flag the structured data as contradicting the landing page — so
           // per-piece products publish their box price, not the per-piece rate.
           '@type': 'Offer',
-          price: isPerPiece(p) ? p.slice : lowestPrice(p),
+          price: cardPrice(p),
           priceCurrency: 'INR',
           availability: 'https://schema.org/InStock',
         },
@@ -120,7 +135,7 @@ export default function Shop() {
   )
   const [priceRange, setPriceRange] = useState('all')
   const [sort, setSort] = useState('featured')
-  const [page, setPage] = useState(1)
+  const [shown, setShown] = useState(PAGE_SIZE)
   const [quickView, setQuickView] = useState(null)
   const [filtersOpen, setFiltersOpen] = useState(false) // mobile-only collapse
   const [flashId, setFlashId] = useState(null)          // product to scroll to + flash
@@ -132,22 +147,17 @@ export default function Shop() {
     (priceRange !== 'all' ? 1 : 0)
   const { items, count, subtotal, add, increment, decrement, remove, clear } = useCart()
 
-  const PAGE_SIZE = 12
 
   const filtered = useMemo(() => {
     const priceTest = PRICE_RANGES.find((r) => r.id === priceRange)?.test ?? (() => true)
-    let list = shopProducts.filter(
-      (p) => (category === 'All Products' || p.category === category) && priceTest(p)
-    )
+    let list = shopProducts.filter((p) => inFilter(p, category) && priceTest(p))
     if (sort === 'lowhigh') list = [...list].sort((a, b) => lowestPrice(a) - lowestPrice(b))
     else if (sort === 'highlow') list = [...list].sort((a, b) => lowestPrice(b) - lowestPrice(a))
     return list
   }, [category, priceRange, sort])
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-  const rangeStart = filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
-  const rangeEnd = Math.min(page * PAGE_SIZE, filtered.length)
+  const visible = filtered.slice(0, shown)
+  const remaining = filtered.length - visible.length
 
   // Sub-headings inside the grid (Classic · Exotic · Chocolate · Premium for
   // cheesecakes; Brownies · Blondies · Cakesicles for bakes; Mojitos ·
@@ -157,7 +167,9 @@ export default function Shop() {
   //
   // Only when one category is selected AND the order is still "Featured": a
   // price sort deliberately mixes the groups, so heading them would be a lie.
-  const showGroups = category !== 'All Products' && sort === 'featured'
+  // Not for a group filter: every row already shares that one group, so the
+  // heading would just repeat the filter the customer just picked.
+  const showGroups = category !== 'All Products' && sort === 'featured' && !GROUP_FILTERS[category]
   const sections = useMemo(() => {
     if (!showGroups) return [{ name: null, items: visible }]
     const out = []
@@ -176,7 +188,7 @@ export default function Shop() {
   }, [paramCategory])
 
   // Reset to page 1 whenever filters/sort change so users don't land on an empty page
-  useEffect(() => { setPage(1) }, [category, priceRange, sort])
+  useEffect(() => { setShown(PAGE_SIZE) }, [category, priceRange, sort])
 
   // ── Jump to one product (?product=cc-biscoff, from the search overlay) ──
   // Searching "biscoff" and landing on 24 cheesecakes is no answer: the customer
@@ -201,7 +213,11 @@ export default function Shop() {
     // outright, and the card's price may sit outside the band it filters under
     // (per-piece products — see lowestPrice). Clearing it is the honest move.
     setPriceRange('all')
-    setCategory((c) => (c === 'All Products' || c === target.category ? c : target.category))
+    // Keep the current filter if the target is already visible under it — that
+    // covers 'All Products', its own category, AND a group filter like
+    // 'Cake Pops' (whose products report category 'Bakes', so comparing
+    // categories alone would needlessly widen the view).
+    setCategory((c) => (inFilter(target, c) ? c : target.category))
     setFlashId(paramProduct)
     const next = new URLSearchParams(searchParams)
     next.delete('product')
@@ -216,15 +232,16 @@ export default function Shop() {
     if (scrolledRef.current === flashId) return
     const idx = filtered.findIndex((p) => p.id === flashId)
     if (idx === -1) return
-    const targetPage = Math.floor(idx / PAGE_SIZE) + 1
-    if (targetPage !== page) { setPage(targetPage); return } // re-runs once it renders
+    // The target may sit past what's rendered — reveal up to it, then let the
+    // effect re-run once those rows exist to scroll to.
+    if (idx >= shown) { setShown(Math.ceil((idx + 1) / PAGE_SIZE) * PAGE_SIZE); return }
     scrolledRef.current = flashId
     document.getElementById(`product-${flashId}`)
       ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     // Long enough for the three pulses in .cc-product-card.is-flash to finish.
     const t = setTimeout(() => setFlashId(null), 2600)
     return () => clearTimeout(t)
-  }, [flashId, filtered, page])
+  }, [flashId, filtered, shown])
 
   const clearFilters = () => {
     setCategory('All Products')
@@ -256,13 +273,11 @@ export default function Shop() {
   const selectCategory = (c) => { setCategory(c); scrollToProducts() }
   const selectPriceRange = (id) => { setPriceRange(id); scrollToProducts() }
 
-  // Paging happens from BELOW the grid, so it needs the scroll on every screen
-  // size, not just mobile: without it the next twelve products render above the
-  // fold and the page looks like it did nothing.
-  const goToPage = (n) => {
-    setPage(n)
-    scrollToProducts({ everyScreen: true })
-  }
+  // Appending needs NO scroll, which is the point of it: the numbered pager had
+  // to yank the viewport back to the top of the grid on every click, because the
+  // next twelve products replaced the last twelve off-screen. These land
+  // directly under the button the customer just pressed.
+  const showMore = () => setShown((n) => n + PAGE_SIZE)
 
   return (
     <>
@@ -363,7 +378,7 @@ export default function Shop() {
             <div className="col-lg-6 col-xl-7" ref={gridRef}>
               <div className="cc-shop-toolbar">
                 <span className="cc-shop-toolbar__count">
-                  Showing {rangeStart}–{rangeEnd} of {filtered.length} results
+                  Showing {visible.length} of {filtered.length} results
                 </span>
                 <label className="cc-shop-toolbar__sort">
                   <span>Sort by:</span>
@@ -381,9 +396,34 @@ export default function Shop() {
                 <FiClock size={12} /> Freshly baked to order — please order at least 1 day in advance.
               </p>
 
+              {/* These notes are load-bearing, not decoration: a per-piece
+                  product's CARD quotes its box price, so this line is the only
+                  place a customer learns single pieces exist at all. Any new
+                  per-piece category needs one — see CLAUDE.md. */}
               {category === 'Cupcakes' && (
                 <p className="cc-shop-note">
                   <FiHeart size={12} /> Cupcakes come as a box of 6, or buy them by the piece (minimum 2) — tap any cupcake to choose how many. Add ₹20 for floral or additional decoration.
+                </p>
+              )}
+
+              {category === 'Cake Pops' && (
+                <p className="cc-shop-note">
+                  <FiHeart size={12} /> Cake pops come as a box of 6, or by the piece (minimum 2) — tap any flavour to choose how many. A box of 12 is simply two sixes.
+                </p>
+              )}
+
+              {/* Sizes sold at the counter that the site can't take an order for
+                  (a product holds two prices). Figures come from EXTRA_TIERS so
+                  the wording can't drift from the real price list. */}
+              {category === 'Cookies' && (
+                <p className="cc-shop-note">
+                  <FiHeart size={12} /> Boxes of 6 and 12, or single cookies from {inr(EXTRA_TIERS.Cookies[0].from)} — tap any cookie to pick a size. Singles are baked into the day's batch, so a box is still the better value.
+                </p>
+              )}
+
+              {category === 'Bakes' && (
+                <p className="cc-shop-note">
+                  <FiHeart size={12} /> Brownies and blondies also come in {EXTRA_TIERS.Brownies.map((t) => t.label).join(' and ')} — from {inr(EXTRA_TIERS.Brownies[0].from)} and {inr(EXTRA_TIERS.Brownies[1].from)}. Ask on WhatsApp for those.
                 </p>
               )}
 
@@ -409,13 +449,29 @@ export default function Shop() {
                         src={u(p.img, 500, 500)}
                         srcSet={srcSet(p.img)}
                         /* 2 across on a phone, 3 in the middle column on desktop */
-                        sizes="(min-width: 992px) 230px, 48vw"
+                        // Measured against the real card: ~220px from 768px up
+                        // (the grid is 2-across at lg, 3 elsewhere), ~46vw
+                        // below. The old "48vw" claimed 369px for a 221px slot
+                        // at 768px. With only 400w and 800w variants this
+                        // rarely changes which file is picked — accuracy for
+                        // when a third width is added, not a win today.
+                        sizes="(min-width: 768px) 240px, 46vw"
                         alt={p.name}
                         loading="lazy"
                       />
                     </button>
                     <div className="cc-product-card__body">
-                      <div className="cc-product-card__cat">{p.category}</div>
+                      <div className="cc-product-card__cat">
+                        {p.category}
+                        {/* Nut warnings and genuine free-from facts, at a
+                            glance. 19 of the 120 products contain nuts, and
+                            until now the ONLY place that was visible was
+                            inside the quick view — so an allergy sufferer had
+                            to open every card one by one to find out.
+                            AllergenTags' compact mode was written for exactly
+                            this and had never been wired up. */}
+                        <AllergenTags allergens={p.allergens} />
+                      </div>
                       {/* A real <button> inside the heading, not a clickable
                           <h6>: the title opens the quick view, so it has to be
                           reachable by keyboard and announced as a control. */}
@@ -429,16 +485,18 @@ export default function Shop() {
                           {p.name}
                         </button>
                       </h6>
+                      {/* The wording comes from priceLabel() — the per-piece
+                          card keeps its own JSX only to append the size caption.
+                          Don't re-derive the figure here: doing exactly that is
+                          how a ₹340 cookie box once advertised "From ₹700". */}
                       <div className="cc-product-card__price">
                         {isPerPiece(p) ? (
                           <>
                             {inr(p.slice)}
                             <span className="cc-product-card__price-sub">{p.sliceLabel}</span>
                           </>
-                        ) : p.slice != null ? (
-                          `From ${inr(lowestPrice(p))}`
                         ) : (
-                          inr(p.price)
+                          priceLabel(p)
                         )}
                       </div>
                       <button
@@ -461,55 +519,29 @@ export default function Shop() {
                 ))}
                 </Fragment>
                 ))}
+                {/* The recovery has to live HERE, not only in the sidebar. On a
+                    phone the filter panel is a collapsed accordion above the
+                    grid, so the existing "Clear Filters" button could be
+                    off-screen exactly when it is the only thing that helps.
+                    (Comment sits OUTSIDE the `&&` — a JSX comment cannot be the
+                    first child of a conditional expression.) */}
                 {filtered.length === 0 && (
                   <div className="cc-shop-empty">
-                    No products match your filters.
+                    <p className="mb-2">No products match your filters.</p>
+                    <button type="button" className="cc-shop-empty__clear" onClick={clearFilters}>
+                      Clear filters
+                    </button>
                   </div>
                 )}
               </div>
 
-              {totalPages > 1 && (
-                <nav className="cc-shop-pagination" aria-label="Product pages">
-                  <button
-                    type="button"
-                    className="cc-shop-pagination__btn"
-                    onClick={() => goToPage(Math.max(1, page - 1))}
-                    disabled={page === 1}
-                    aria-label="Previous page"
-                  >
-                    <FiChevronLeft size={14} />
+              {remaining > 0 && (
+                <div className="cc-shop-more">
+                  <button type="button" className="cc-shop-more__btn" onClick={showMore}>
+                    Show {Math.min(remaining, PAGE_SIZE)} more
+                    <span className="cc-shop-more__n">{remaining} left</span>
                   </button>
-                  {pageWindow(page, totalPages).map((n, i) =>
-                    n === '…' ? (
-                      <span key={`gap-${i}`} className="cc-shop-pagination__gap" aria-hidden>
-                        …
-                      </span>
-                    ) : (
-                      <button
-                        key={n}
-                        type="button"
-                        className={
-                          'cc-shop-pagination__btn cc-shop-pagination__num' +
-                          (n === page ? ' is-active' : '')
-                        }
-                        onClick={() => goToPage(n)}
-                        aria-label={`Page ${n}`}
-                        aria-current={n === page ? 'page' : undefined}
-                      >
-                        {n}
-                      </button>
-                    )
-                  )}
-                  <button
-                    type="button"
-                    className="cc-shop-pagination__btn"
-                    onClick={() => goToPage(Math.min(totalPages, page + 1))}
-                    disabled={page === totalPages}
-                    aria-label="Next page"
-                  >
-                    <FiChevronRight size={14} />
-                  </button>
-                </nav>
+                </div>
               )}
             </div>
 

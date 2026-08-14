@@ -1,26 +1,17 @@
 import { Link } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import {
-  FiHeart, FiShoppingBag, FiGift, FiCoffee, FiInstagram,
+  FiHeart, FiShoppingBag, FiGift, FiCoffee,
+  FiSearch, FiMessageCircle, FiClock, FiStar, FiArrowRight,
 } from 'react-icons/fi'
-import { TbLeaf } from 'react-icons/tb'
+import { TbLeaf, TbCake } from 'react-icons/tb'
 import { featured } from '../data/products.js'
 import { img, u } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { useCart } from '../context/CartContext.jsx'
 import HeartDivider from '../components/HeartDivider.jsx'
 import CertBadges from '../components/CertBadges.jsx'
-
-// Instagram-style tile grid for the bottom of the home page.
-const IG_TILES = [
-  img.cupcakesRose,
-  img.cupcakesPink,
-  img.truffleBox,
-  img.cakeChocolateBirthday,
-  img.cookies,
-  img.cheesecakeStrawberry,
-  img.cupcakesQuartet,
-]
+import InstagramFeed from '../components/InstagramFeed.jsx'
 
 export default function Home() {
   const { add } = useCart()
@@ -65,10 +56,17 @@ export default function Home() {
       <section className="cc-home-features">
         <div className="container py-4">
           <div className="feature-row">
+            {/* Home's own three, not a third copy of everyone else's.
+                These used to be "Premium Ingredients / Made With Love / Perfect
+                for Any Occasion" — near-identical to the About strip AND the
+                Reviews strip, so browsing Home → About → Reviews read the same
+                reassurance three times in slightly different words.
+                These say things only Home needs to: how much there is, that
+                nothing is pre-made, and that custom work is welcome. */}
             {[
-              { Icon: TbLeaf, title: 'Premium Ingredients', text: 'We use only the finest chocolate and berries.' },
-              { Icon: FiHeart, title: 'Made With Love', text: 'Handcrafted with care and attention to detail.' },
-              { Icon: FiGift, title: 'Perfect for Any Occasion', text: 'From birthdays to weddings, we make every moment extra special.' },
+              { Icon: TbCake, title: '120+ Treats', text: 'Cheesecakes, milk cakes, cookies, cupcakes, bakes and drinks.' },
+              { Icon: TbLeaf, title: 'Nothing Pre-Made', text: 'Your order is baked after you place it — never off a shelf.' },
+              { Icon: FiGift, title: 'Made to Your Brief', text: 'Send a photo and an occasion; we quote custom work on WhatsApp.' },
             ].map(({ Icon, title, text }) => (
               <div className="feature-cell" key={title}>
                 <span className="feature-icon"><Icon size={22} /></span>
@@ -109,6 +107,71 @@ export default function Home() {
                 </article>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ───── HOW TO ORDER ─────
+          The home page had exactly one link to /shop and never explained how
+          ordering works, so a first-time visitor had to infer it. Three steps,
+          then the two things people actually hesitate over: when it's ready and
+          how they pay.
+
+          NOTE: no distance is quoted here. The delivery km is bakery-side only
+          — the customer sees a fee, never a radius (see CLAUDE.md, Delivery). */}
+      <section className="cc-home-how">
+        <div className="container py-5">
+          <div className="text-center mb-4">
+            <span className="eyebrow mb-3 d-inline-flex">How It Works</span>
+            <h2 className="cc-home-how__title">Ordering Is Simple</h2>
+            <HeartDivider width={50} />
+          </div>
+
+          <div className="cc-home-how__steps">
+            {[
+              {
+                Icon: FiSearch,
+                step: '01',
+                title: 'Choose your treats',
+                text: 'Browse the shop and pick your flavours and sizes — by the piece or by the box.',
+              },
+              {
+                Icon: FiMessageCircle,
+                step: '02',
+                title: 'Send the order',
+                text: 'Checkout opens WhatsApp with your basket ready. We reply to confirm the date and the total.',
+              },
+              {
+                Icon: FiGift,
+                step: '03',
+                title: 'Baked fresh for you',
+                text: 'Everything is made to order, then packed for pickup or delivery to your door.',
+              },
+            ].map(({ Icon, step, title, text }) => (
+              <div key={step} className="cc-home-how__step">
+                <span className="cc-home-how__num">{step}</span>
+                <span className="cc-features-card__icon cc-features-card__icon--lg">
+                  <Icon size={22} />
+                </span>
+                <h3 className="cc-home-how__step-title">{title}</h3>
+                <p className="cc-home-how__step-text">{text}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="cc-home-how__facts">
+            <span><FiClock size={14} /> Order a day ahead — order late and it's ready the next day</span>
+            <span><FiShoppingBag size={14} /> UPI or Cash on Delivery</span>
+            <span><FiHeart size={14} /> Delivery charge shown at checkout</span>
+          </div>
+
+          <div className="cc-home-how__cta">
+            <Link to="/shop" className="btn-rose">
+              <FiShoppingBag size={15} /> Start your order
+            </Link>
+            <Link to="/reviews" className="cc-home-how__link">
+              <FiStar size={14} /> Read customer reviews <FiArrowRight size={14} />
+            </Link>
           </div>
         </div>
       </section>
@@ -164,41 +227,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ───── INSTAGRAM — 7 thumbs in a row + VIEW MORE ───── */}
-      <section className="cc-home-ig">
-        <div className="container py-5">
-          <div className="text-center mb-4">
-            <span className="eyebrow">Follow Us on Instagram</span>
-          </div>
-          <div className="cc-ig-grid">
-            {IG_TILES.map((src, i) => (
-              <a
-                key={i}
-                href="https://www.instagram.com/cake_and_crumb_1/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Cake & Crumb on Instagram"
-                className="ig-tile"
-              >
-                <img src={u(src, 400, 400)} alt="" loading="lazy" />
-                <span className="ig-tile__hover">
-                  <FiInstagram size={22} />
-                </span>
-              </a>
-            ))}
-          </div>
-          <div className="text-center mt-4">
-            <a
-              href="https://www.instagram.com/cake_and_crumb_1/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-rose"
-            >
-              <FiInstagram /> View More
-            </a>
-          </div>
-        </div>
-      </section>
+      {/* ───── INSTAGRAM ─────
+          Was a hand-rolled grid of seven library photos under a "Follow Us on
+          Instagram" heading — i.e. not Instagram. InstagramFeed already existed
+          for exactly this, fully written and imported nowhere: it renders the
+          real SnapWidget feed when VITE_SNAPWIDGET_ID is set and an honest
+          fallback when it isn't. */}
+      <InstagramFeed />
     </>
   )
 }

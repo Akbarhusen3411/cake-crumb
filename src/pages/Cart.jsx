@@ -167,8 +167,13 @@ export default function Cart() {
                 <span>Delivery</span>
                 <span style={{ color: 'var(--cc-cocoa-soft)' }}>Calculated at checkout</span>
               </div>
+              {/* The lead time is on the home page, the shop grid and the
+                  footer, but not here — and the cart is where someone commits
+                  and where "can I get this today?" is the live question.
+                  Answering it before checkout, not after, saves a message. */}
               <p style={{ fontSize: '0.75rem', color: 'var(--cc-cocoa-soft)', marginBottom: '0.5rem' }}>
-                Self-pickup is always free.
+                Self-pickup is always free. Everything is baked to order — please
+                allow a day; you choose the date at checkout.
               </p>
               <hr style={{ borderColor: 'var(--cc-border)' }} />
               <div className="d-flex justify-content-between mb-3" style={{ fontSize: '1.05rem' }}>

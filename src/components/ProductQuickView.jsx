@@ -1,10 +1,40 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiX, FiShoppingBag, FiMinus, FiPlus } from 'react-icons/fi'
+import { FiX, FiShoppingBag, FiMinus, FiPlus, FiInfo } from 'react-icons/fi'
 import { u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
-import { describe } from '../data/products.js'
+import { describe, hasUnit } from '../data/products.js'
 import { useCart } from '../context/CartContext.jsx'
 import AllergenTags from './AllergenTags.jsx'
+
+/** Show the batch-bake note at or below this many loose pieces. */
+const BATCH_NOTE_UPTO = 3
+
+/**
+ * Why a small order is still welcome.
+ *
+ * The kitchen bakes in trays: it will not fire one for a single cookie or
+ * brownie, so a one-or-two order rides along with that flavour's batch.
+ *
+ * This started as a four-line paragraph inside the options list, which dwarfed
+ * the prices it sat between. It is now split in two: a quiet one-liner while
+ * the customer is choosing, and the full sentence in the add-to-cart toast,
+ * where there is room for it and it lands at the moment it matters.
+ */
+const BATCH_HINT = 'Small orders bake with the day’s batch'
+
+const batchToastNote = (qty) =>
+  qty === 1
+    ? 'We don’t bake a tray for one — yours joins the day’s batch of this flavour.'
+    : 'Small orders join the day’s batch of this flavour.'
+
+function BatchHint() {
+  return (
+    <p className="qv-batch-hint">
+      <FiInfo size={12} />
+      {BATCH_HINT}
+    </p>
+  )
+}
 
 /**
  * Modal dialog showing one product with bigger image, full info, allergens, and
@@ -14,6 +44,9 @@ import AllergenTags from './AllergenTags.jsx'
  * quantity stepper with a live total, because the Shop card deliberately shows
  * the BOX price: this modal is the only place the customer sees the per-piece
  * rate, so it has to be where they choose how many pieces they want.
+ *
+ * A `unit` product (cookies) is the same idea with a third row: both its listed
+ * prices are boxes, and the loose single is the tier the card can't show.
  */
 export default function ProductQuickView({ product, onClose }) {
   const { add } = useCart()
@@ -22,6 +55,9 @@ export default function ProductQuickView({ product, onClose }) {
   // Shop keys this component by product id, so opening a different product
   // remounts it and qty re-initialises to that product's minimum.
   const [qty, setQty] = useState(minQty)
+  // The loose-piece row keeps its own count — it is a separate cart line
+  // (`<id>-unit`) from the boxes, so sharing one stepper would be wrong.
+  const [unitQty, setUnitQty] = useState(1)
   const modalRef = useRef(null)
 
   useEffect(() => {
@@ -52,7 +88,13 @@ export default function ProductQuickView({ product, onClose }) {
 
   if (!product) return null
   const p = product
-  const perPiece = minQty > 1
+  // The base (`price`) tier is one loose piece. Cupcakes say so with a minimum
+  // of 2; brownies and blondies sell singly and carry `piece: true`. Either way
+  // it earns a counter instead of a bare Add button.
+  const perPiece = minQty > 1 || p?.piece === true
+  // …but only the no-minimum ones get the batch note: a cupcake order already
+  // starts at 2, and the note is about orders too small to bake for.
+  const showBatchNote = p?.piece === true
 
   function addAndClose(item, addQty) {
     add(item, addQty)
@@ -154,7 +196,14 @@ export default function ProductQuickView({ product, onClose }) {
                         <button
                           className="qv-btn qv-btn--filled qv-qty__add"
                           onClick={() =>
-                            addAndClose({ ...p, name: `${p.name} (${p.sizeLabel || 'Whole'})` }, qty)
+                            addAndClose(
+                              {
+                                ...p,
+                                name: `${p.name} (${p.sizeLabel || 'Whole'})`,
+                                note: showBatchNote && qty <= BATCH_NOTE_UPTO ? batchToastNote(qty) : undefined,
+                              },
+                              qty,
+                            )
                           }
                         >
                           <FiShoppingBag size={13} /> Add {qty} — {inr(p.price * qty)}
@@ -172,6 +221,11 @@ export default function ProductQuickView({ product, onClose }) {
                     </button>
                   )}
                 </div>
+
+                {/* Brownies and blondies: the note belongs under the BASE tier,
+                    because that is where their single piece is chosen. */}
+                {showBatchNote && qty <= BATCH_NOTE_UPTO && <BatchHint />}
+
                 <div className="qv-option">
                   <div className="qv-option__info">
                     <div className="qv-option__label">{p.sliceLabel || 'Slice'}</div>
@@ -191,6 +245,62 @@ export default function ProductQuickView({ product, onClose }) {
                     <FiShoppingBag size={13} /> Add
                   </button>
                 </div>
+
+                {/* Third tier — a single loose piece (cookies). Its own stepper,
+                    because this is the tier people buy in ones and twos, and the
+                    only one that needs the batch-bake note below. */}
+                {hasUnit(p) && (
+                  <div className="qv-option qv-option--qty">
+                    <div className="qv-option__info">
+                      <div className="qv-option__label">{p.unitLabel || 'Per piece'}</div>
+                      <div className="qv-option__price">
+                        {inr(p.unit)}
+                        <span className="qv-option__sub">each</span>
+                      </div>
+                    </div>
+
+                    <div className="qv-qty">
+                      <span className="qv-qty__ask">How many?</span>
+                      <div className="qv-qty__row">
+                        <div className="qv-qty__stepper">
+                          <button
+                            type="button"
+                            onClick={() => setUnitQty((q) => Math.max(1, q - 1))}
+                            disabled={unitQty <= 1}
+                            aria-label="One fewer"
+                          >
+                            <FiMinus size={13} />
+                          </button>
+                          <span className="qv-qty__val" aria-live="polite">{unitQty}</span>
+                          <button type="button" onClick={() => setUnitQty((q) => q + 1)} aria-label="One more">
+                            <FiPlus size={13} />
+                          </button>
+                        </div>
+                        <button
+                          className="qv-btn qv-btn--filled qv-qty__add"
+                          onClick={() =>
+                            addAndClose(
+                              {
+                                id: p.id + '-unit',
+                                name: `${p.name} (${p.unitLabel || 'Per piece'})`,
+                                price: p.unit,
+                                img: p.img,
+                                note: unitQty <= BATCH_NOTE_UPTO ? batchToastNote(unitQty) : undefined,
+                              },
+                              unitQty,
+                            )
+                          }
+                        >
+                          <FiShoppingBag size={13} /> Add {unitQty} — {inr(p.unit * unitQty)}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Cookies: the note belongs under the UNIT tier — its boxes
+                    are ordinary orders, only the loose single is a small one. */}
+                {hasUnit(p) && unitQty <= BATCH_NOTE_UPTO && <BatchHint />}
               </div>
             ) : (
               <div className="qv-actions">
@@ -338,97 +448,134 @@ export default function ProductQuickView({ product, onClose }) {
           line-height: 1.5;
         }
 
-        /* Stacked size options — replaces the side-by-side price pair */
+        /* ONE bordered price table with divided rows.
+           Each size used to be its own card — own border, own shadow, own gap,
+           label stacked above the price. Three sizes then filled the modal and
+           pushed the Add buttons below the fold on a phone. As a table the same
+           three sizes read at a glance and take about half the height: name and
+           price share one baseline, the action sits on the right, and the rule
+           between rows does the separating that the gaps used to. */
         .qv-options {
-          display: flex;
-          flex-direction: column;
-          gap: 0.6rem;
-          margin-top: 1rem;
-          padding-top: 0.4rem;
+          margin-top: 0.9rem;
+          border: 1px solid var(--cc-border);
+          border-radius: 12px;
+          overflow: hidden;
+          background: #fff;
         }
         .qv-option {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 0.8rem;
-          padding: 0.7rem 0.95rem;
-          background: var(--cc-cream);
-          border: 1px solid var(--cc-border);
-          border-radius: 12px;
+          gap: 0.7rem;
+          padding: 0.5rem 0.75rem;
         }
-        .qv-option + .qv-option { background: #fff; }
-        .qv-option__info { min-width: 0; }
+        .qv-option + .qv-option,
+        .qv-batch-hint { border-top: 1px solid var(--cc-border); }
+
+        /* Label and price on ONE line, sharing a baseline. */
+        .qv-option__info {
+          min-width: 0;
+          display: flex;
+          align-items: baseline;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
         .qv-option__label {
-          font-size: 0.62rem;
-          color: var(--cc-cocoa-soft);
-          text-transform: uppercase;
-          letter-spacing: 0.12em;
-          font-weight: 700;
+          font-size: 0.8rem;
+          color: var(--cc-cocoa);
+          font-weight: 600;
           display: flex;
           align-items: center;
-          gap: 0.4rem;
+          gap: 0.35rem;
         }
         .qv-option__min {
           background: var(--cc-blush-soft);
           color: var(--cc-rose-deep);
           border-radius: 999px;
-          padding: 1px 7px;
-          letter-spacing: 0.08em;
-          font-size: 0.58rem;
+          padding: 1px 6px;
+          font-size: 0.6rem;
+          font-weight: 700;
         }
         .qv-option__price {
-          font-size: 1.25rem;
+          font-size: 1rem;
           color: var(--cc-rose);
           font-weight: 700;
-          line-height: 1.1;
-          margin-top: 2px;
+          line-height: 1.2;
           display: flex;
           align-items: baseline;
-          gap: 0.45rem;
+          gap: 0.3rem;
+          font-variant-numeric: lining-nums tabular-nums;
         }
         .qv-option__sub {
-          font-size: 0.7rem;
+          font-size: 0.66rem;
           font-weight: 600;
           color: var(--cc-cocoa-soft);
-          letter-spacing: 0.02em;
         }
-        .qv-option .qv-btn { flex: 0 0 auto; min-width: 96px; padding: 0.6rem 1rem; }
+        .qv-option .qv-btn {
+          flex: 0 0 auto;
+          min-width: 0;
+          padding: 0.4rem 0.9rem;
+          font-size: 0.8rem;
+        }
+
+        /* One quiet line under the loose-piece row. The paragraph this replaced
+           was four lines tall and out-shouted the prices it sat between; the
+           full sentence now rides on the add-to-cart toast instead. */
+        .qv-batch-hint {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          margin: 0;
+          padding: 0.45rem 0.85rem;
+          background: var(--cc-cream);
+          border-top: 1px dashed var(--cc-blush-soft);
+          color: var(--cc-cocoa-soft);
+          font-size: 0.73rem;
+          line-height: 1.3;
+        }
+        .qv-batch-hint svg {
+          flex: 0 0 auto;
+          color: var(--cc-rose);
+        }
 
         /* Per-piece tier: label/price on top, then "How many?" + stepper + a
            live-total Add button. Stacks so the row never gets cramped. */
+        /* The counted row stays on ONE line too: label + price on the left,
+           stepper and Add on the right. It only wraps when there genuinely
+           isn't room, rather than always stacking as it did before. */
         .qv-option--qty {
-          flex-direction: column;
-          align-items: stretch;
-          gap: 0.6rem;
+          flex-wrap: wrap;
+          row-gap: 0.5rem;
         }
+        .qv-qty { margin-left: auto; }
+        /* "How many?" is dropped visually — a − 1 + control says it — but kept
+           for screen readers, which otherwise meet three unlabelled buttons. */
         .qv-qty__ask {
-          display: block;
-          font-size: 0.62rem;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: var(--cc-cocoa-soft);
-          margin-bottom: 0.35rem;
+          position: absolute;
+          width: 1px; height: 1px;
+          padding: 0; margin: -1px;
+          overflow: hidden;
+          clip: rect(0 0 0 0);
+          white-space: nowrap;
         }
         .qv-qty__row {
           display: flex;
           align-items: center;
-          gap: 0.6rem;
+          gap: 0.45rem;
           flex-wrap: wrap;
         }
         .qv-qty__stepper {
           display: inline-flex;
           align-items: center;
-          gap: 0.15rem;
           background: #fff;
-          border: 1.5px solid var(--cc-rose-soft);
+          border: 1px solid var(--cc-rose-soft);
           border-radius: 999px;
-          padding: 0.2rem;
+          padding: 0.12rem;
           flex: 0 0 auto;
         }
         .qv-qty__stepper button {
-          width: 30px;
-          height: 30px;
+          width: 26px;
+          height: 26px;
           border-radius: 50%;
           border: none;
           background: transparent;
@@ -442,7 +589,7 @@ export default function ProductQuickView({ product, onClose }) {
         .qv-qty__stepper button:hover:not(:disabled) { background: var(--cc-blush); }
         .qv-qty__stepper button:disabled { opacity: 0.35; cursor: not-allowed; }
         .qv-qty__val {
-          min-width: 26px;
+          min-width: 22px;
           text-align: center;
           font-weight: 800;
           font-size: 0.95rem;

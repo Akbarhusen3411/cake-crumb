@@ -27,7 +27,12 @@ function writeLocal(list) {
 export async function addReview(input) {
   const review = {
     name: String(input.name || '').trim(),
-    email: String(input.email || '').trim(),
+    // NO EMAIL. The `reviews` collection is world-readable (`allow read: if
+    // true` — it has to be, the page lists reviews without auth), so every
+    // address written here was harvestable by anyone with the project ID. It
+    // was never displayed and nothing ever read it back, so it was pure
+    // exposure for no feature. Don't reintroduce it: if the bakery ever needs
+    // to contact a reviewer, that belongs in an admin-only collection.
     rating: Math.max(1, Math.min(5, Number(input.rating) || 5)),
     title: String(input.title || '').trim(),
     text: String(input.text || '').trim(),

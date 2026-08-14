@@ -70,9 +70,33 @@ for (const [kind, name, file] of allEntries) {
 for (const name of productNames) {
   if (!PRODUCT_IMAGES[name]) errors.push(`NOT MAPPED     product "${name}" has no photo in productImages.js`)
 }
+/**
+ * Closest real product name, so a mistyped KEY says what it should have been.
+ * The key has to match products.js character for character, and "Mango
+ * Cheescake" or "mango cheesecake" fails silently — the product just falls back
+ * to the neutral photo. Scored on shared lower-cased words as a fraction of the
+ * candidate, so a long name can't win on one common word ("cake", "chocolate").
+ */
+const nearestName = (typo) => {
+  const words = new Set(typo.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean))
+  let best = null
+  let bestScore = 0
+  for (const real of productNames) {
+    const parts = real.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)
+    const hits = parts.filter((w) => words.has(w)).length
+    const score = hits / parts.length
+    if (hits >= 1 && score > bestScore) { bestScore = score; best = real }
+  }
+  return bestScore >= 0.5 ? best : null
+}
+
 for (const name of Object.keys(PRODUCT_IMAGES)) {
   if (!productNames.includes(name)) {
-    warnings.push(`STALE KEY      "${name}" is in productImages.js but no product has that name`)
+    const guess = nearestName(name)
+    warnings.push(
+      `STALE KEY      "${name}" is in productImages.js but no product has that name` +
+      (guess ? `\n                 → did you mean "${guess}"?` : '')
+    )
   }
 }
 

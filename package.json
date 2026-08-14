@@ -9,10 +9,13 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "photos": "node scripts/update-photos.js",
     "optimize-images": "node scripts/convert-to-webp.js",
+    "convert-videos": "node scripts/convert-videos.js",
     "check-images": "node scripts/check-product-images.js",
     "predeploy": "npm run build && node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\"",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "check-prices": "node scripts/check-prices.js"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

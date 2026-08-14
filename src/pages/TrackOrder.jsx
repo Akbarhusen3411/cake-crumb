@@ -43,6 +43,19 @@ function orderFromParams(params) {
 }
 
 // Map raw status → label + icon + colour
+/**
+ * WhatsApp link for the two failure states. Carries whatever the customer
+ * typed, so the bakery can look it up rather than asking them to repeat it —
+ * a wrong ID is still the most useful thing they can send.
+ */
+function helpLink(typedId) {
+  const id = (typedId || '').trim().toUpperCase()
+  const msg = id
+    ? `Hi, I can't find my order. The ID I have is ${id}.`
+    : "Hi, I'd like to check on my order but I can't find my Order ID."
+  return `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`
+}
+
 function statusMeta(status) {
   switch (status) {
     case 'confirmed':
@@ -74,7 +87,12 @@ export default function TrackOrder() {
   const [error, setError] = useState('')
 
   async function lookup(rawId) {
-    const id = (rawId || '').trim()
+    // UPPERCASE here, not just in the input's onChange. Order IDs are uppercase
+    // Crockford base32 and the tracking doc is keyed by that exact string — but
+    // the ?id= path never touches the input, so a link that got lowercased in
+    // transit (mail clients and chat apps do this, and people retype them by
+    // hand) reported a perfectly real order as missing.
+    const id = (rawId || '').trim().toUpperCase()
     if (!id) {
       setPhase('idle')
       setOrder(null)
@@ -156,11 +174,22 @@ export default function TrackOrder() {
       {phase !== 'idle' && (
       <section className="py-4 py-md-5">
         <div className="container" style={{ maxWidth: 720 }}>
+          {/* The number used to sit in here as plain bold text. This is the one
+              screen where someone is stuck and wants help, and it was the one
+              screen with nothing to tap — the WhatsApp button only rendered on
+              a FOUND order. Comment stays OUTSIDE the `&&`: a JSX comment can't
+              be the first child of a conditional expression. */}
           {phase === 'not_found' && (
             <div className="cc-notice" role="note">
               <span className="cc-notice__icon"><FiAlertCircle size={16} /></span>
               <div>
-                We couldn't find that order. Double-check the ID, or message us on WhatsApp at <strong>+91 91731 83440</strong> for help.
+                <p className="mb-2">
+                  We couldn't find that order. Check the ID against your WhatsApp
+                  receipt — it looks like <strong>CC-AB-200526-K9GEV</strong>.
+                </p>
+                <a href={helpLink(inputId)} target="_blank" rel="noopener noreferrer" className="cc-track-help">
+                  <FaWhatsapp size={14} /> Ask us to find it
+                </a>
               </div>
             </div>
           )}
@@ -168,7 +197,12 @@ export default function TrackOrder() {
           {phase === 'error' && (
             <div className="cc-notice" role="alert">
               <span className="cc-notice__icon"><FiAlertCircle size={16} /></span>
-              <div>{error}</div>
+              <div>
+                <p className="mb-2">{error}</p>
+                <a href={helpLink(inputId)} target="_blank" rel="noopener noreferrer" className="cc-track-help">
+                  <FaWhatsapp size={14} /> Ask us about your order
+                </a>
+              </div>
             </div>
           )}
 

@@ -123,6 +123,22 @@ export const img = {
   // These are actual bakery shots — prefer them over the reused placeholders.
   // ═════════════════════════════════════════════════════════════════════
 
+  // ───── The bakery's own shots, Aug 2026 (Gallery) ─────
+  // Everything above this block is library artwork; these are photos of real
+  // orders that went out, which is why the Gallery leads with them.
+  rcOwnMilkcakeTubs:       p('milkcake-assorted-tubs.jpeg'),
+  rcOwnMilkcakeBlueberry:  p('milkcake-blueberry-bento.jpeg'),
+  rcOwnBiscoffDripTop:     p('cake-biscoff-drip-top.jpeg'),
+  rcOwnCupcakesOpenBox:    p('cupcakes-assorted-open-box.jpeg'),
+  rcOwnCupcakesSix:        p('cupcakes-assorted-six.jpeg'),
+  rcOwnCupcakeMango:       p('cupcakes-mango.jpeg'),
+  rcOwnCheesecakeMarble:   p('cheesecake-strawberry-marble.jpeg'),
+  rcOwnCakeMum:            p('cake-mum-rose-petals.jpeg'),
+  rcOwnCakeBirthdayBlack:  p('cake-birthday-black-choc.jpeg'),
+  rcOwnCakeBirthdayRosettes: p('cake-birthday-choc-rosettes.jpeg'),
+  rcOwnCakePops:           p('cakepops-chocolate-rocks.jpeg'),
+  rcOwnChocDiscsBox:       p('bakes-choc-discs-box.jpeg'),
+
   // Cheesecakes
   rcCheesecakePistachio:   p('cheesecake-pistachio-slices-board.jpeg'),
   rcCheesecakePomegranate: p('cheesecake-pomegranate-berry.jpeg'),

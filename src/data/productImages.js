@@ -1,16 +1,28 @@
 /**
  * PRODUCT PHOTOS — the single place where a product NAME is paired with its PHOTO.
  *
- * To change a product's photo:
- *   1. Drop the new picture into  public/products/  (.jpeg / .jpg / .png).
+ * ─────────────────────────────────────────────────────────────────────────────
+ * THE EASY WAY — you never have to open this file:
+ *
+ *   1. Save the photo into  public/products/  named after the product, in
+ *      lower case with dashes:
+ *          Mango Sponge Cake   →  mango-sponge-cake.jpeg
+ *          Rose Milk Cake      →  rose-milk-cake.jpeg
+ *   2. Run   npm run photos
+ *
+ *   That links it here for you, makes the .webp (plus the -400 and -800 sizes
+ *   phones use), and tells you if anything is still missing. See PHOTOS.md.
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * THE MANUAL WAY — when you want a file name that isn't the product name
+ * (shared artwork, a photo used for two products, a themed shot):
+ *   1. Drop the picture into  public/products/  (.jpeg / .jpg / .png).
  *   2. Find the product's name in the list below and put the new file name on
  *      the right-hand side. Nothing else to edit — the whole site (Shop, Home,
  *      quick-view, search, cart, chat bot, invoices) reads from here.
- *   3. Run  npm run optimize-images  so the .webp version is generated.
- *      (The site always requests the .webp; without this step the photo will
- *      not appear.)
- *   4. Check your work with  npm run check-images  — it lists any name whose
- *      file is missing and any photo sitting in the folder unused.
+ *   3. Run  npm run photos  (or just  npm run optimize-images) so the .webp is
+ *      generated. The site always requests the .webp; without this step the
+ *      photo will not appear.
  *
  * Rules of the road:
  *   • The KEY must match the product name in products.js EXACTLY (same spelling,
@@ -38,11 +50,11 @@ export const PRODUCT_IMAGES = {
   'Triple Choc Cookies (Box of 6)':       'cookies-double-chocolate.jpeg',
 
   // ───── MILK CAKES ─────
-  'Pistachio Milk Cake (Bento)':          'milkcake-rose-pistachio-domes.jpeg',
+  'Pistachio Milk Cake (Bento)':          'milkcake-pistachio-bento.jpeg',
 
 
   // ───── CHEESECAKES — CLASSIC ─────
-  'Strawberry Cheesecake':                'cheesecake-strawberry-rose.jpeg',
+  'Strawberry Cheesecake':                'cheesecake-strawberry-berry-top.jpeg',
   // 'Blueberry Cheesecake' — already listed under Featured above.
   'Raspberry Cheesecake':                 'cheesecake-pomegranate-berry.jpeg',
   'Orange Creamsicle Cheesecake':         'cheesecake-choc-mango.jpeg',
@@ -73,13 +85,15 @@ export const PRODUCT_IMAGES = {
   'Dubai Cheesecake':                     'cheesecake-pistachio-cup.jpeg',
 
   // ───── MILK CAKES ─────
-  'Trés Léches Milk Cake':                'milkcake-tres-leche-dish.jpeg',
-  'Rose Milk Cake':                       'milkcake-rose-purple.jpeg',
-  'Mango Milk Cake':                      'cake-yellow-flowers.jpeg',
-  'Biscoff Milk Cake':                    'cake-naked-yellow.jpeg',
-  'Nutella Milk Cake':                    'dessertcup-nutella.jpeg',
+  // The bakery's own bento-tub photos, shot Aug 2026. One flavour per tub, so
+  // these are the real thing rather than a stand-in from another category.
+  'Trés Léches Milk Cake':                'milkcake-tres-leches-bento.jpeg',
+  'Rose Milk Cake':                       'milkcake-rose-bento.jpeg',
+  'Mango Milk Cake':                      'milkcake-mango-bento.jpeg',
+  'Biscoff Milk Cake':                    'milkcake-biscoff-bento.jpeg',
+  'Nutella Milk Cake':                    'milkcake-chocolate-bento.jpeg',
   'Turkish (Caramel) Milk Cake':          'cake-coffee-caramel-birthday.jpeg',
-  'Pistachio Milk Cake':                  'milkcake-rose-pistachio.jpeg',
+  'Pistachio Milk Cake':                  'milkcake-pistachio-bento.jpeg',
 
   // ───── SPONGE CAKES ─────
   'Vanilla Sponge Cake':                  'cake-yellow-rose-buttercream.jpeg',
@@ -88,7 +102,7 @@ export const PRODUCT_IMAGES = {
   'Red Velvet Sponge Cake':               'cake-red-velvet-hearts.jpeg',
   'Mango Sponge Cake':                    'dessertcup-chocolate-mango-duo.jpeg',
   'Blueberry Sponge Cake':                'cake-blueberry-lavender-slice.jpeg',
-  'Biscoff Sponge Cake':                  'cake-naked-yellow.jpeg',
+  'Biscoff Sponge Cake':                  'cake-biscoff-drip.jpeg',
   'Nutella Sponge Cake':                  'cake-chocolate-birthday.jpeg',
   'Pistachio Sponge Cake':                'dessertcup-pistachio-cream.jpeg',
   'Chocolate Chunk Sponge Cake':          'dessertcup-chocolate-ganache.jpeg',
@@ -103,13 +117,20 @@ export const PRODUCT_IMAGES = {
   'Pistachio & Rose Cookies':             'cookies-pistachio-rose.jpeg',
 
   // ───── CUPCAKES ─────
+  // Five of these are the bakery's OWN cupcakes, cropped one per flavour out of
+  // a single box photo (IMG_8134, 2160×3840 — the crop coordinates are in the
+  // commit that added them). Shot in kitchen light, so they are softer than the
+  // library artwork they replaced; that was the trade for showing the actual
+  // cupcake a customer receives instead of a stock one.
   'Vanilla Cupcakes':                     'cupcakes-funfetti-box.jpeg',
-  'Red Velvet Cupcakes':                  'cupcakes-red-velvet.jpeg',
-  'Chocolate Cupcakes':                   'cupcakes-chocolate-box.jpeg',
-  'Pistachio Cupcakes':                   'cupcakes-mint-gold-leaf.jpeg',
-  'Biscoff Cupcakes':                     'cupcakes-box-pink-purple.jpeg',
-  'Nutella Cupcakes':                     'cupcakes-box-large.jpeg',
-  'Strawberry Cupcakes':                  'cupcakes-floral-rose-box.jpeg',
+  'Red Velvet Cupcakes':                  'cupcake-redvelvet-single.jpeg',
+  'Chocolate Cupcakes':                   'cupcake-chocolate-single.jpeg',
+  'Pistachio Cupcakes':                   'cupcake-pistachio-single.jpeg',
+  'Biscoff Cupcakes':                     'cupcake-biscoff-single.jpeg',
+  'Nutella Cupcakes':                     'cupcake-nutella-single.jpeg',
+  'Strawberry Cupcakes':                  'cupcakes-pink-rose-box.jpeg',
+  'Sprinkle Cupcakes':                    'cupcakes-rainbow-sprinkle.jpeg',
+  'Variety Cupcakes (Box of 6)':          'cupcakes-assorted-open-box.jpeg',
 
   // ───── BAKES — BROWNIES ─────
   'Classic Brownie':                      'brownie-fudgy-slab.jpeg',
@@ -127,13 +148,29 @@ export const PRODUCT_IMAGES = {
   'Blueberry Blondie':                    'bakes-blueberry.jpeg',
 
   // ───── BAKES — CAKESICLES & MORE ─────
-  'Cakesicle (Heart)':                    'cake-pink-letter.jpeg',
-  'Cakesicle (Circle)':                   'cake-pink-number-rosette.jpeg',
-  'Cakesicle (Square)':                   'cake-pink-letter.jpeg',
-  'Cakesicle (Ice Cream)':                'cake-pink-number-rosette.jpeg',
+  // TODO — all eight share two letter/number-cake photos that aren't cakesicles
+  // at all. `npm run photos` lists them under "still sharing one photo" and
+  // names the file to save for each, e.g. chocolate-cakesicle-heart.jpeg.
+  'Chocolate Cakesicle (Heart)':          'cake-pink-letter.jpeg',
+  'Chocolate Cakesicle (Square)':         'cake-pink-letter.jpeg',
+  'Chocolate Cakesicle (Circle)':         'cake-pink-number-rosette.jpeg',
+  'Chocolate Cakesicle (Ice Cream)':      'cake-pink-number-rosette.jpeg',
+  'Vanilla Cakesicle (Heart)':            'cake-pink-letter.jpeg',
+  'Vanilla Cakesicle (Square)':           'cake-pink-letter.jpeg',
+  'Vanilla Cakesicle (Circle)':           'cake-pink-number-rosette.jpeg',
+  'Vanilla Cakesicle (Ice Cream)':        'cake-pink-number-rosette.jpeg',
 
   // ───── BAKES — CAKE POPS ─────
-  'Cake Pops':                            'cake-pink-letter.jpeg',
+  // Chocolate and Pistachio are the bakery's own (the pistachio shot was
+  // recovered out of an Instagram screenshot, cropped free of the phone UI).
+  // TODO — Vanilla and Red Velvet have NO photo of their own and borrow the
+  // chocolate one, so both currently show the wrong colour. `npm run
+  // check-images` lists them under "ONE PHOTO, SEVERAL PRODUCTS" until real
+  // shots replace them.
+  'Chocolate Cake Pops':                  'cakepops-chocolate-rocks.jpeg',
+  'Pistachio Cake Pops':                  'cakepops-pistachio.jpeg',
+  'Vanilla Cake Pops':                    'cakepops-chocolate-rocks.jpeg',
+  'Red Velvet Cake Pops':                 'cakepops-chocolate-rocks.jpeg',
 
   // ───── BAKES — CAKESICLES & MORE ─────
   'Choc Covered Strawberry':              'cheesecake-strawberry-cups.jpeg',
@@ -206,6 +243,9 @@ export const MENU_CARD_IMAGES = {
   'Cookies':         'cookies-double-chocolate.jpeg',
   'Dessert Cups':    'dessertcup-assorted-flatlay.jpeg',
   'Bakes':           'brownie-chocolate-boxes.jpeg',
+  // Added with the Platters card on /menu — without an entry here the card
+  // silently falls back to the generic bakery shot.
+  'Platters':        'platter-pancake-strawberry.jpeg',
   'Drinks':          'drink-virgin-mojito.jpeg',
 }
 

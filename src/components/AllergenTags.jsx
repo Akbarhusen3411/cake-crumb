@@ -31,8 +31,15 @@ const COLORS = {
 export default function AllergenTags({ allergens, verbose = false, size = 'sm' }) {
   if (!Array.isArray(allergens) || allergens.length === 0) return null
 
-  // What customers care about most at-a-glance: dietary positives + nut warnings.
-  const important = ['eggless', 'eggless-option', 'vegan', 'gluten-free', 'contains-nuts']
+  // What customers care about most at-a-glance: nut warnings and genuine
+  // free-from facts.
+  //
+  // `eggless-option` is deliberately NOT here. Every baked product carries it,
+  // so in compact mode it would put "Eggless on request" on all 120 cards —
+  // a badge that appears everywhere tells you nothing, and it would drown the
+  // nut warning that actually matters. It still shows in the quick view, where
+  // `verbose` lists everything.
+  const important = ['eggless', 'vegan', 'gluten-free', 'contains-nuts']
   const visible = verbose ? allergens : allergens.filter((a) => important.includes(a))
   if (visible.length === 0) return null
 

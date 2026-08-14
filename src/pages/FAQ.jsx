@@ -46,15 +46,24 @@ const SECTIONS = [
       },
       {
         q: 'Is there a delivery fee?',
-        a: 'The delivery charge depends on your location and is confirmed by Cake & Crumb on WhatsApp once you share your address. Self-pickup is always free. Your checkout total shows the item subtotal only.',
+        // The last sentence used to read "Your checkout total shows the item
+        // subtotal only." That stopped being true when checkout started pricing
+        // delivery from the pincode — the fee is added to the total there, and
+        // it is only the CART page that still shows the subtotal alone.
+        a: 'The delivery charge depends on your area. Enter your pincode at checkout and it is added to your total; until then the cart shows the items only. Self-pickup is always free, and we confirm the final charge on WhatsApp.',
       },
       {
         q: 'Can I pick up the order myself?',
         a: 'Yes. Self-pickup is free from our home boutique in Vaso, Kheda. We will share the exact location and pickup time on WhatsApp.',
       },
       {
-        q: 'How long does delivery take?',
-        a: 'Same-day for ready items if ordered before 11 AM. All cakes and custom orders need at least 1 day notice — please pre-order.',
+        // WAS: "Same-day for ready items if ordered before 11 AM." That promised
+        // stock on a shelf and a fixed cutoff, and contradicted the other five
+        // places that say everything is baked to order — the About page even
+        // says "nothing sits on a shelf". It also reintroduced a fixed time on a
+        // site where the hours were removed precisely because they aren't fixed.
+        q: 'How soon can I get my order?',
+        a: 'Everything is baked to order, so please allow at least a day. Order late in the day and it will be ready the next day. You choose your date at checkout and we confirm it on WhatsApp.',
       },
     ],
   },
@@ -89,6 +98,7 @@ const SECTIONS = [
     id: 'payment',
     Icon: FiCreditCard,
     title: 'Payment',
+    more: { to: '/refund-policy', label: 'Refund terms in full' },
     questions: [
       {
         q: 'What payment methods do you accept?',
@@ -108,6 +118,7 @@ const SECTIONS = [
     id: 'cancellation',
     Icon: FiClock,
     title: 'Cancellation',
+    more: { to: '/refund-policy', label: 'Read the full cancellation & refund policy' },
     questions: [
       {
         q: 'Can I cancel my order?',
@@ -214,6 +225,14 @@ function AccordionSection({ section, expanded, onToggle }) {
                 </p>
               </details>
             ))}
+            {/* Payment and Cancellation restate the same terms as
+                /refund-policy. Whichever a customer lands on should point at
+                the other, or the two quietly drift apart. */}
+            {section.more && (
+              <Link to={section.more.to} className="faq-section__more">
+                {section.more.label} <FiChevronDown size={14} style={{ transform: 'rotate(-90deg)' }} />
+              </Link>
+            )}
           </div>
         </div>
       )}

@@ -1,21 +1,44 @@
-import { FiHeart, FiGift, FiTruck } from 'react-icons/fi'
+import { Link } from 'react-router-dom'
+import {
+  FiHeart, FiGift, FiTruck, FiShield, FiMessageCircle,
+  FiShoppingBag, FiArrowRight,
+} from 'react-icons/fi'
 import { TbLeaf, TbCake } from 'react-icons/tb'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import HeartDivider from '../components/HeartDivider.jsx'
 import CertBadges from '../components/CertBadges.jsx'
 import { img, u } from '../data/images.js'
 
+/**
+ * STORY_FEATURES sat beside the story text; WHY_FEATURES ran underneath it.
+ * Seven tiles, four claims: "Made with Love" and "Crafted with Care" were the
+ * same thing, "Finest Ingredients" and "Fresh & Quality" were the same thing,
+ * and both also appear on the Reviews promise strip. Three beside the story,
+ * four below, all saying you care — it read as filler.
+ *
+ * Now: three next to the story (how it's made), four below (what you get from
+ * ordering), no overlap between them or with Reviews.
+ *
+ * TWO PROMISES WERE REMOVED, deliberately:
+ *   • "On-Time Delivery — fresh and on time, every time" is an absolute
+ *     guarantee one kitchen cannot make, and it contradicts a site that asks
+ *     for a day's notice.
+ *   • "Happiness Guaranteed" implies far more than the refund policy actually
+ *     offers (a 30-minute cancellation window, or a confirmed quality issue).
+ *     A guarantee written here and not honoured there is worse than no
+ *     guarantee at all.
+ */
 const STORY_FEATURES = [
-  { Icon: FiHeart, title: 'Made with Love',     text: 'Every treat is handmade with care and attention to detail.' },
-  { Icon: TbLeaf,  title: 'Finest Ingredients', text: 'We use only premium chocolate, fresh berries, and quality ingredients.' },
-  { Icon: TbCake,  title: 'Crafted with Care',  text: 'Each order is crafted to perfection, just for you.' },
+  { Icon: FiHeart, title: 'Made by hand',       text: 'Piped, layered and finished by hand — never machine-made.' },
+  { Icon: TbLeaf,  title: 'Real ingredients',   text: 'Premium chocolate, fresh berries, real cream. No shortcuts.' },
+  { Icon: TbCake,  title: 'Baked to order',     text: 'Nothing sits on a shelf. Your cake is made after you order it.' },
 ]
 
 const WHY_FEATURES = [
-  { Icon: TbLeaf,  title: 'Fresh & Quality',       text: 'We source the freshest ingredients for the best taste and quality.' },
-  { Icon: FiGift,  title: 'Custom Orders',         text: 'From birthdays to weddings, we create custom treats just for your special moments.' },
-  { Icon: FiHeart, title: 'Happiness Guaranteed',  text: 'Your smile is our reward. We ensure every bite brings joy and delight.' },
-  { Icon: FiTruck, title: 'On-Time Delivery',      text: 'We deliver your treats fresh and on time, every time.' },
+  { Icon: FiGift,      title: 'Custom orders',    text: 'Birthdays, weddings, anniversaries — send us the idea and we will quote it.' },
+  { Icon: FiTruck,     title: 'Delivery or pickup', text: 'Delivered to your door, or collect from us in Vaso.' },
+  { Icon: FiShield,    title: 'Registered kitchen', text: 'FSSAI-registered and Udyam-registered — the numbers are below.' },
+  { Icon: FiMessageCircle, title: 'One place to ask', text: 'Every order and question runs through one WhatsApp chat.' },
 ]
 
 const KITCHEN_THUMBS = [
@@ -49,9 +72,12 @@ export default function About() {
                 to sweet berries, our creations are made with love, the finest ingredients,
                 and a passion for perfection.
               </p>
-              <button className="btn-rose mt-3">
+              {/* Was a <button> with no onClick and no link — the hero's main
+                  call to action did nothing at all when tapped. It now takes
+                  you to the story it is named after. */}
+              <a href="#our-story" className="btn-rose mt-3">
                 <FiHeart /> Our Journey
-              </button>
+              </a>
             </div>
             <div className="col-lg-6">
               <img
@@ -65,8 +91,10 @@ export default function About() {
         </div>
       </section>
 
-      {/* ───── OUR STORY — 3 cols: baker image / text / bordered features card ───── */}
-      <section className="cc-about-story">
+      {/* ───── OUR STORY — 3 cols: baker image / text / bordered features card ─────
+          `id` is the target of the hero's "Our Journey" button. `scroll-margin-top`
+          in the CSS keeps the sticky header off the heading when it lands. */}
+      <section className="cc-about-story" id="our-story">
         <div className="container py-5">
           <div className="row g-4 g-lg-5 align-items-center">
             <div className="col-lg-5">
@@ -173,6 +201,29 @@ export default function About() {
                 className="cc-kitchen-grid__img"
               />
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ───── CLOSING CTA ─────
+          This page had NO links at all — not one. Someone read the story,
+          decided they liked the place, and hit a wall: no shop, no contact, no
+          way to act on it. About is often the last page before a decision, so
+          it now ends with the two things they might want to do next. */}
+      <section className="cc-about-cta">
+        <div className="container py-5 text-center">
+          <h2 className="section-title">Shall We Bake for You?</h2>
+          <HeartDivider width={50} />
+          <p className="cc-about-cta__lede">
+            Browse what we make, or tell us about the occasion and we'll quote it on WhatsApp.
+          </p>
+          <div className="cc-about-cta__actions">
+            <Link to="/shop" className="btn-rose">
+              <FiShoppingBag size={15} /> Browse the shop
+            </Link>
+            <Link to="/contact" className="cc-about-cta__link">
+              Plan a custom cake <FiArrowRight size={15} />
+            </Link>
           </div>
         </div>
       </section>

@@ -25,6 +25,8 @@ const Cart = lazy(() => import('./pages/Cart.jsx'))
 const Checkout = lazy(() => import('./pages/Checkout.jsx'))
 const ReviewSubmit = lazy(() => import('./pages/ReviewSubmit.jsx'))
 const FAQ = lazy(() => import('./pages/FAQ.jsx'))
+const RefundPolicy = lazy(() => import('./pages/RefundPolicy.jsx'))
+const Privacy = lazy(() => import('./pages/Privacy.jsx'))
 const ConfirmOrder = lazy(() => import('./pages/ConfirmOrder.jsx'))
 const TrackOrder = lazy(() => import('./pages/TrackOrder.jsx'))
 const AdminOrders = lazy(() => import('./pages/AdminOrders.jsx'))
@@ -81,6 +83,8 @@ function App() {
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/review" element={<ReviewSubmit />} />
                 <Route path="/faq" element={<FAQ />} />
+                <Route path="/refund-policy" element={<RefundPolicy />} />
+                <Route path="/privacy" element={<Privacy />} />
                 <Route path="/confirm-order" element={<ConfirmOrder />} />
                 <Route path="/track-order" element={<TrackOrder />} />
                 <Route path="/admin/orders" element={<AdminOrders />} />

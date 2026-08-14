@@ -111,6 +111,12 @@ function buildOrderItems(cfg) {
           // sell. Undefined ⇒ 1 for every other product.
           { name: `${p.name} — ${sizeOf(p)}`,  label: headerLabel(sizeOf(p)),  price: p.price, min: p.minQty },
           { name: `${p.name} — ${sliceOf(p)}`, label: headerLabel(sliceOf(p)), price: p.slice },
+          // Third tier, cookies only: a single loose piece. Listed last so the
+          // boxes still lead — and it must be here, or the bot would quote a
+          // box to someone asking for one cookie.
+          ...(p.unit != null
+            ? [{ name: `${p.name} — ${p.unitLabel || 'Per piece'}`, label: headerLabel(p.unitLabel || 'Per piece'), price: p.unit }]
+            : []),
         ],
       }
     })

@@ -21,13 +21,22 @@ export default function InstagramFeed() {
   return (
     <section className="py-5">
       <div className="container">
+        {/* The heading tells the truth in BOTH states. Without a widget ID
+            these are hand-picked photos from the site, not posts — heading them
+            "Follow us on Instagram" (as the old Home markup did) implied a live
+            feed that wasn't there. With the ID set, it genuinely is one. */}
         <div className="text-center mb-4">
           <span className="eyebrow">
-            <FiInstagram /> Follow Us on Instagram
+            <FiInstagram /> {WIDGET_ID ? 'Follow Us on Instagram' : 'A Few of Our Favourites'}
           </span>
           <h3 style={{ fontSize: 'clamp(1.4rem, 2.5vw, 1.8rem)', margin: '0.6rem 0 0' }}>
             @cake_and_crumb_1
           </h3>
+          {!WIDGET_ID && (
+            <p style={{ fontSize: '0.85rem', color: 'var(--cc-cocoa-soft)', margin: '0.5rem 0 0' }}>
+              See the latest on Instagram
+            </p>
+          )}
         </div>
 
         {WIDGET_ID ? (

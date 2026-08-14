@@ -31,7 +31,13 @@ const CUSTOMER_DRAFT_KEY = 'cc_customer_draft_v1'
 // on submit (for the disabled button check).
 const VALIDATORS = {
   name: (v) => (v.trim() ? '' : 'Name is required'),
-  email: (v) => (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? '' : 'Enter a valid email'),
+  // OPTIONAL. The bakery works over WhatsApp — the phone number is the channel
+  // that matters, and the customer confirmation email is itself optional (it
+  // only sends when VITE_EMAILJS_CUSTOMER_TEMPLATE_ID is set). Demanding an
+  // address for a mail that may never be sent cost orders for nothing. Still
+  // validated when something IS typed, so a typo is caught rather than sent to
+  // a dead address.
+  email: (v) => (!v.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? '' : 'Enter a valid email'),
   address: (v) => (v.trim() ? '' : 'Address is required'),
   city: (v) => (v.trim() ? '' : 'City is required'),
   pincode: (v) => (/^\d{6}$/.test(v.trim()) ? '' : 'Pincode must be 6 digits'),
@@ -197,7 +203,8 @@ export default function Checkout() {
       // accept 7–15 digits as a generic fallback for countries with
       // variable lengths
       (selectedCountry.len === 0 && form.phone.length >= 7 && form.phone.length <= 15)
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())
+    // Blank is fine; a malformed address is not (see VALIDATORS.email).
+    const emailOk = !form.email.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())
     return (
       form.name.trim() &&
       phoneOk &&
@@ -550,7 +557,7 @@ export default function Checkout() {
 
                   <div className="col-12">
                     <input
-                      className="cc-input" placeholder="Email *" type="email"
+                      className="cc-input" placeholder="Email (optional)" type="email"
                       value={form.email}
                       onChange={(e) => update('email', e.target.value)}
                       onBlur={() => onFieldBlur('email')}
@@ -995,12 +1002,24 @@ export default function Checkout() {
                     <span>Subtotal</span>
                     <span>{inr(subtotal)}</span>
                   </div>
+                  {/* Every state says something TRUE.
+                      This used to fall through to a bold "FREE" the moment
+                      Home Delivery was picked — before any pincode existed, so
+                      before anything could possibly have been calculated. A
+                      customer 30 km away read "FREE" and then got charged ₹150,
+                      which also contradicted the Home Delivery card right above
+                      it ("charges depend on distance"). Free is now only
+                      claimed once a pincode has actually been looked up. */}
                   <div className="cc-summary-row">
                     <span>Delivery</span>
                     {form.deliveryMethod === 'pickup' ? (
                       <span className="cc-summary-delivery--free">FREE · pickup</span>
                     ) : deliveryCalc === 'loading' ? (
                       <span>…</span>
+                    ) : deliveryCalc === 'idle' ? (
+                      <span style={{ color: 'var(--cc-cocoa-soft)' }}>Add pincode</span>
+                    ) : deliveryCalc === 'unknown' ? (
+                      <span style={{ color: 'var(--cc-cocoa-soft)' }}>Confirmed on WhatsApp</span>
                     ) : delivery > 0 ? (
                       <span>{inr(delivery)}</span>
                     ) : (
@@ -1035,8 +1054,15 @@ export default function Checkout() {
                     never renders here — repeat it at the point of payment. */}
                 <CertBadges variant="line" className="cc-summary-certs" />
 
+                {/* Was plain text pointing at "terms & conditions" that had no
+                    page behind them. Now it links to the two that exist — on a
+                    page that takes a UPI advance, the cancellation terms should
+                    be one tap from the pay button, not buried in the footer. */}
                 <p className="cc-summary-terms">
-                  By placing your order you agree to our terms &amp; conditions.
+                  By placing your order you agree to our{' '}
+                  <Link to="/refund-policy">cancellation &amp; refund policy</Link>
+                  {' '}and{' '}
+                  <Link to="/privacy">privacy policy</Link>.
                 </p>
               </div>
             </div>
