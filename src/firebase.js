@@ -76,10 +76,19 @@ async function initAppCheck(app) {
   if (!RECAPTCHA_SITE_KEY) return
   try {
     const { initializeAppCheck, ReCaptchaEnterpriseProvider } = await import('firebase/app-check')
-    // localhost cannot be attested by reCAPTCHA. This flag makes the SDK print
-    // a debug token to the console on first run; register it once under
-    // App Check -> Manage debug tokens and dev keeps working under enforcement.
-    if (import.meta.env.DEV) self.FIREBASE_APPCHECK_DEBUG_TOKEN = true
+    // localhost cannot be attested by reCAPTCHA, so dev uses a debug token.
+    //
+    // Prefer an EXPLICIT token from .env over `true`. With `true` the SDK
+    // invents a random token and prints it, and you then retype/paste it into
+    // the Firebase console — where it is immediately masked, so a mismatched
+    // character can never be read back and the only symptom is a permanent 403
+    // that looks identical to a misconfigured project. Generating the token in
+    // the console and pasting it into .env makes both sides provably the same
+    // string. This is also how Firebase documents it for CI.
+    if (import.meta.env.DEV) {
+      self.FIREBASE_APPCHECK_DEBUG_TOKEN =
+        import.meta.env.VITE_APPCHECK_DEBUG_TOKEN || true
+    }
     initializeAppCheck(app, {
       provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_SITE_KEY),
       isTokenAutoRefreshEnabled: true,
