@@ -18,8 +18,8 @@ import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
 import CertBadges from '../components/CertBadges.jsx'
 import { sendOrderEmail, sendCustomerConfirmation } from '../services/emailNotify.js'
 
-const UPI_ID = '9081668490@kotakbank'
-const PAYEE_NAME = 'Momin Akbarhusen Gulamali'
+const UPI_ID = '9081668490@okbizaxis'
+const PAYEE_NAME = 'Cake And Crumb'
 // Legacy localStorage keys — used to pre-fill the form from the last order
 // and from auto-saved drafts. Pre-fill was removed (customers reported old
 // data appearing on a fresh checkout); the keys are still cleared on mount
@@ -773,10 +773,12 @@ export default function Checkout() {
                     `&am=${payNow}` +
                     `&cu=INR` +
                     `&tn=${encodeURIComponent(noteText)}`
-                  const qrUrl =
-                    `https://api.qrserver.com/v1/create-qr-code/` +
-                    `?size=320x320&margin=8&color=1a1a1a&bgcolor=ffffff` +
-                    `&data=${encodeURIComponent(upiPayString)}`
+                  // The bakery's own Google Pay merchant QR (public/upi-qr.jpeg), not a
+                  // generated one — a merchant QR carries the payee's merchant fields, which
+                  // a plain `upi://pay` string can't reproduce. It carries no amount, so the
+                  // figure to enter is stated above and under the code; the "Open in UPI App"
+                  // button below still uses upiPayString, which does pre-fill amount + note.
+                  const qrUrl = u('/upi-qr.jpeg')
 
                   return (
                     <div
@@ -844,7 +846,8 @@ export default function Checkout() {
                           >
                             <img
                               src={qrUrl}
-                              alt="UPI payment QR code"
+                              alt={`UPI payment QR code for ${PAYEE_NAME}`}
+                              loading="lazy"
                               style={{
                                 width: '100%',
                                 maxWidth: 200,
@@ -854,7 +857,8 @@ export default function Checkout() {
                             />
                           </div>
                           <p style={{ fontSize: '0.75rem', color: 'var(--cc-cocoa-soft)', marginTop: '0.6rem', marginBottom: 0 }}>
-                            Scan with any UPI app
+                            Scan with any UPI app and enter{' '}
+                            <strong style={{ color: 'var(--cc-cocoa)' }}>{inr(payNow)}</strong>
                           </p>
                         </div>
 
