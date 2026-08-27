@@ -83,9 +83,12 @@
       }
     </script>
 
-    <!-- Plausible analytics — cookieless, no personal data, no consent banner
-         needed. `defer` keeps it off the critical path, and a blocked or
-         failed load costs the page nothing.
+    <!-- Plausible analytics — cookieless and collects no personal data, so it
+         needs no consent banner OF ITS OWN. Note that is no longer a statement
+         about the whole site: Firebase App Check runs reCAPTCHA on every page
+         and does set a `_GRECAPTCHA` cookie (disclosed on /privacy). `defer`
+         keeps this off the critical path, and a blocked or failed load costs
+         the page nothing.
 
          ⚠ REQUIRES AN ACCOUNT TO COLLECT ANYTHING. Sign up at
          https://plausible.io and add the site "akbarhusen3411.github.io".

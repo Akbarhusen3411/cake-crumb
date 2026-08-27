@@ -22,6 +22,12 @@ import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
  *     public the addresses were harvestable. Do not re-add a contact field to
  *     `reviews` without moving it to an admin-only collection first.
  *   • Plausible analytics is cookieless and collects no personal data.
+ *   • Google reCAPTCHA Enterprise runs on EVERY page (Firebase App Check). It
+ *     sends Google the visitor's IP, browser/device details and interaction
+ *     signals, and sets a `_GRECAPTCHA` cookie. That is the site's one real
+ *     third-party data flow beyond fonts, so it is stated plainly rather than
+ *     buried — and it is why "we set no cookies" is no longer true site-wide.
+ *     If App Check is ever removed, remove this section with it.
  *
  * If any of those change, change this page in the same commit. A privacy page
  * that describes something the site no longer does is the one kind of error
@@ -84,6 +90,29 @@ export default function Privacy() {
               We use Plausible to count page visits. It is <strong>cookieless</strong>, stores
               no personal data and cannot follow you to other websites. It tells us which
               cakes people look at — not who looked at them.
+            </p>
+
+            <h2 className="cc-policy__h2"><FiShield size={18} /> Checking you are not a robot</h2>
+            <p>
+              Every page runs <strong>Google reCAPTCHA</strong>. It does the job of a
+              tick-box that asks you to prove you are human, without asking you to tick
+              anything. We need it because you can order and leave a review here without
+              creating an account, so something has to tell real customers apart from
+              automated scripts placing fake orders.
+            </p>
+            <p>
+              To make that judgement it sends Google your IP address, details about your
+              browser and device, and how you move and click on the page. It also stores a
+              cookie called <code>_GRECAPTCHA</code> in your browser. We would rather say
+              that plainly than leave it out: the information goes to Google, not to us,
+              and is used to score whether traffic looks automated — not to work out who
+              you are. Google's use of it is covered by their own{' '}
+              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">privacy policy</a>{' '}
+              and <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">terms</a>.
+            </p>
+            <p>
+              The page fonts are also served by Google, which means Google sees the request
+              for them. Nothing else on this site is shared with an advertising company.
             </p>
 
             <h2 className="cc-policy__h2">How long we keep it</h2>
