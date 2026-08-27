@@ -33,7 +33,13 @@ const CSP = [
   // is what makes a CSP worth having, since it is what stops an injected
   // <script> from running. The JSON-LD blocks are type="application/ld+json",
   // which the browser never executes, so they are unaffected.
-  "script-src 'self' https://plausible.io",
+  // www.google.com + www.gstatic.com are for Firebase App Check: its reCAPTCHA
+  // v3 attestation loads https://www.google.com/recaptcha/api.js, which pulls
+  // from gstatic and opens an iframe on www.google.com. Without all three
+  // App Check silently fails to get a token and, once enforcement is on in the
+  // console, every Firestore write is rejected. Note this is a real widening —
+  // www.google.com is a broad host — and it is the price of reCAPTCHA.
+  "script-src 'self' https://plausible.io https://www.google.com https://www.gstatic.com",
 
   // 'unsafe-inline' IS required for styles: several components ship a real
   // <style> block (ProductQuickView and friends) and Google Fonts serves a
@@ -70,10 +76,12 @@ const CSP = [
     'https://api.emailjs.com',
     'https://nominatim.openstreetmap.org',
     'https://plausible.io',
+    'https://www.google.com',
   ].join(' '),
 
-  // The Instagram feed embed, when VITE_SNAPWIDGET_ID is set.
-  'frame-src https://snapwidget.com',
+  // snapwidget: the Instagram feed embed, when VITE_SNAPWIDGET_ID is set.
+  // www.google.com: the invisible reCAPTCHA v3 frame App Check relies on.
+  'frame-src https://snapwidget.com https://www.google.com',
 
   // jspdf can hand work to a blob worker.
   "worker-src 'self' blob:",
