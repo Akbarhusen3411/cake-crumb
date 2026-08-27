@@ -322,8 +322,44 @@ export default function ProductQuickView({ product, onClose }) {
       </div>
 
       <style>{`
+        /* ── Opening motion ────────────────────────────────────────────────
+           The sheet RISES and settles rather than popping: a short overshoot
+           on the way up, none on the way back, which reads as something being
+           lifted onto the counter. The photo lands a beat later on a slow
+           settling zoom (food looks best still moving), and the text plates
+           itself in order — category, name, tags, description, prices.
+
+           Timings are deliberately short. This fires on every Add to Cart tap
+           on a 120-product grid, so anything that makes a returning customer
+           wait for the price rows is a tax, not a flourish. Everything the
+           customer needs has settled by ~0.6s.
+
+           All of it collapses to a plain fade under prefers-reduced-motion,
+           at the end of this block. */
         @keyframes qv-fade { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes qv-up { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes qv-veil {
+          from { opacity: 0; backdrop-filter: blur(0px); }
+          to   { opacity: 1; backdrop-filter: blur(4px); }
+        }
+        @keyframes qv-rise {
+          from { opacity: 0; transform: translateY(30px) scale(0.93); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        /* Slow settle — starts wide and eases down, so the photo is never
+           static on arrival. 1.06 is enough to read; more looks like a glitch. */
+        @keyframes qv-settle {
+          from { transform: scale(1.06); }
+          to   { transform: scale(1); }
+        }
+        @keyframes qv-plate {
+          from { opacity: 0; transform: translateY(9px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes qv-pop {
+          0%   { opacity: 0; transform: scale(0.7); }
+          60%  { opacity: 1; transform: scale(1.06); }
+          100% { opacity: 1; transform: scale(1); }
+        }
 
         .qv-backdrop {
           position: fixed; inset: 0; z-index: 1000;
@@ -331,7 +367,7 @@ export default function ProductQuickView({ product, onClose }) {
           backdrop-filter: blur(4px);
           display: flex; align-items: center; justify-content: center;
           padding: 1rem;
-          animation: qv-fade 0.2s ease-out;
+          animation: qv-veil 0.28s ease-out;
         }
         .qv-modal {
           background: #fff;
@@ -342,7 +378,8 @@ export default function ProductQuickView({ product, onClose }) {
           overflow-y: auto;
           position: relative;
           box-shadow: 0 24px 60px rgba(0,0,0,0.25);
-          animation: qv-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+          /* Overshoot only on the rise (the 1.2 in the curve). */
+          animation: qv-rise 0.42s cubic-bezier(0.22, 1.2, 0.36, 1);
         }
         .qv-close {
           position: absolute; top: 12px; right: 12px; z-index: 2;
@@ -363,6 +400,11 @@ export default function ProductQuickView({ product, onClose }) {
         .qv-image-col {
           position: relative;
           background: var(--cc-cream);
+          /* The settling zoom starts at 1.06, so the column has to clip it —
+             and it needs the image's own radius, or the rounded corners scale
+             out past the square column and the corners flash sharp. */
+          overflow: hidden;
+          border-radius: 16px 16px 0 0;
         }
         .qv-image {
           width: 100%;
@@ -370,6 +412,7 @@ export default function ProductQuickView({ product, onClose }) {
           object-fit: cover;
           display: block;
           border-radius: 16px 16px 0 0;
+          animation: qv-settle 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
         /* On a phone the modal scrolls internally, and a 4:3 photo pushed the
            price and the Add button below the fold — the customer opened a
@@ -382,6 +425,7 @@ export default function ProductQuickView({ product, onClose }) {
           .qv-options { margin-top: 0.75rem; gap: 0.5rem; }
         }
         .qv-badge {
+          animation: qv-pop 0.4s cubic-bezier(0.34, 1.4, 0.5, 1) 0.24s backwards;
           position: absolute; top: 12px; left: 12px;
           background: var(--cc-rose); color: #fff;
           font-size: 0.65rem; font-weight: 700;
@@ -393,10 +437,42 @@ export default function ProductQuickView({ product, onClose }) {
           padding: 1.2rem 1.4rem 1.4rem;
           display: flex; flex-direction: column;
         }
+        /* Plated in reading order. Driven off nth-child rather than a class per
+           block, so the optional allergen row can come and go without the
+           delays needing to be renumbered. backwards holds each child hidden
+           through its delay — without it they all flash in at once first.
+           The step is capped so a long product never trails on. */
+        .qv-info-col > * {
+          animation: qv-plate 0.34s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+        }
+        .qv-info-col > *:nth-child(1) { animation-delay: 0.10s; }
+        .qv-info-col > *:nth-child(2) { animation-delay: 0.14s; }
+        .qv-info-col > *:nth-child(3) { animation-delay: 0.18s; }
+        .qv-info-col > *:nth-child(4) { animation-delay: 0.22s; }
+        .qv-info-col > *:nth-child(n+5) { animation-delay: 0.26s; }
 
+        /* On desktop the photo must NOT decide how tall the modal is. It used to:
+           height: 100% on an <img> inside a grid row of indefinite height
+           resolves to auto, so the image fell back to its own aspect ratio and
+           a portrait photo stretched the row far past what the text needed —
+           leaving a tall white gap under the price rows, while a landscape
+           photo left none. Same product type, two different modal heights.
+
+           Taking the image out of flow (absolute + inset) makes the INFO column
+           the only thing that sets the height, so every product of the same
+           shape opens at the same size and the photo crops to fit. */
         @media (min-width: 720px) {
           .qv-grid { grid-template-columns: 5fr 7fr; }
-          .qv-image { aspect-ratio: auto; height: 100%; min-height: 360px; border-radius: 16px 0 0 16px; }
+          .qv-image-col { min-height: 380px; border-radius: 16px 0 0 16px; }
+          .qv-image {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            aspect-ratio: auto;
+            object-fit: cover;
+            border-radius: 16px 0 0 16px;
+          }
           .qv-info-col { padding: 1.4rem 1.6rem 1.6rem; }
         }
 
@@ -584,9 +660,11 @@ export default function ProductQuickView({ product, onClose }) {
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: background 0.15s;
+          transition: background var(--cc-dur) var(--cc-ease),
+                      transform var(--cc-dur) var(--cc-ease);
         }
-        .qv-qty__stepper button:hover:not(:disabled) { background: var(--cc-blush); }
+        .qv-qty__stepper button:hover:not(:disabled) { background: var(--cc-blush); transform: scale(1.1); }
+        .qv-qty__stepper button:active:not(:disabled) { transform: scale(0.9); transition-duration: var(--cc-dur-fast); }
         .qv-qty__stepper button:disabled { opacity: 0.35; cursor: not-allowed; }
         .qv-qty__val {
           min-width: 22px;
@@ -623,7 +701,20 @@ export default function ProductQuickView({ product, onClose }) {
           gap: 0.35rem;
           white-space: nowrap;
           line-height: 1;
-          transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+          transition: background var(--cc-dur) var(--cc-ease),
+                      color var(--cc-dur) var(--cc-ease),
+                      transform var(--cc-dur) var(--cc-ease),
+                      box-shadow var(--cc-dur) var(--cc-ease);
+        }
+        /* These are the buttons the whole modal exists to get tapped, so they
+           carry the same press as every other button on the site. */
+        .qv-btn:active {
+          transform: translateY(0) scale(0.97);
+          transition-duration: var(--cc-dur-fast);
+        }
+        .qv-btn:focus-visible {
+          outline: 2px solid var(--cc-rose-deep);
+          outline-offset: 2px;
         }
         .qv-btn--outline {
           background: #fff;
@@ -632,7 +723,9 @@ export default function ProductQuickView({ product, onClose }) {
         }
         .qv-btn--outline:hover {
           background: var(--cc-blush);
+          transform: translateY(-1px);
         }
+        .qv-btn--filled:active { box-shadow: 0 2px 6px rgba(207, 62, 99, 0.3); }
         .qv-btn--filled {
           background: var(--cc-rose);
           color: #fff;
@@ -644,6 +737,23 @@ export default function ProductQuickView({ product, onClose }) {
           box-shadow: 0 6px 16px rgba(207, 62, 99, 0.4);
         }
 
+
+        /* Vestibular disorders: a rising, zooming, staggering sheet is exactly
+           the pattern that triggers them. Everything above collapses to one
+           quiet fade — the modal still announces itself, nothing travels. */
+        @media (prefers-reduced-motion: reduce) {
+          .qv-backdrop { animation: qv-fade 0.2s ease-out; }
+          .qv-modal { animation: qv-fade 0.2s ease-out; }
+          .qv-image,
+          .qv-badge,
+          .qv-info-col > * { animation: none; }
+          .qv-btn:hover,
+          .qv-btn:active,
+          .qv-btn--outline:hover,
+          .qv-btn--filled:hover,
+          .qv-qty__stepper button:hover:not(:disabled),
+          .qv-qty__stepper button:active:not(:disabled) { transform: none; }
+        }
       `}</style>
     </div>
   )
