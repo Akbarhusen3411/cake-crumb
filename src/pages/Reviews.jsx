@@ -515,10 +515,16 @@ export default function Reviews() {
                           {(r.name || '?').charAt(0).toUpperCase()}
                         </span>
                         <strong className="cc-review-card__name">{r.name || 'Anonymous'}</strong>
-                        <span className="cc-review-card__pill">
-                          <FiCheckCircle size={10} /> Verified Buyer
-                        </span>
-                        {/* No "Helpful" heart here: it had no handler and no
+                        {/* No "Verified Buyer" pill: it rendered on EVERY review
+                            unconditionally, and nothing here can verify a purchase —
+                            the review form is public and its "Your Order" field is a
+                            free choice from the product list, not a real order. It was
+                            a claim about a named person that the site could not stand
+                            behind, alongside the invented rating, review count and
+                            per-aspect scores already removed from this page. Only
+                            re-add it if orders and reviews are ever genuinely linked.
+
+                            No "Helpful" heart either: it had no handler and no
                             counter behind it, so tapping it did nothing at all.
                             Add it back with real storage, or not at all. */}
                       </div>

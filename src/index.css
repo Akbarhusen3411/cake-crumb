@@ -5304,19 +5304,10 @@ header[style*="sticky"] {
   color: var(--cc-cocoa);
   font-size: 0.95rem;
 }
-.cc-review-card__pill {
-  background: var(--cc-blush-soft);
-  color: var(--cc-rose);
-  font-size: 0.68rem;
-  padding: 0.18rem 0.55rem;
-  border-radius: 999px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-/* (No .cc-review-card__heart — the "Helpful" button it styled did nothing when
-   tapped and was removed. See Reviews.jsx.) */
+/* (No .cc-review-card__pill — it styled a "Verified Buyer" badge that rendered
+   on every review with nothing verifying a purchase. Removed as a false claim.
+   No .cc-review-card__heart either — the "Helpful" button it styled did nothing
+   when tapped. See Reviews.jsx.) */
 .cc-review-card__stars {
   display: flex;
   align-items: center;
