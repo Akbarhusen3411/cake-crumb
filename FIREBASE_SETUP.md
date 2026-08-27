@@ -30,6 +30,12 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /reviews/{review} {
       allow read: if true;
+      // NOTE: there is deliberately no `email` clause here. The field was
+      // removed from addReview() because this collection is world-readable, so
+      // every address written to it was harvestable. Two leftover `email is
+      // string` lines survived that removal and contradicted the hasOnly list
+      // above — a create with an email failed hasOnly, one without failed the
+      // `is string` check, so NO review could ever be written. Don't re-add it.
       allow create: if
         request.resource.data.keys().hasOnly(
           ['name','rating','title','text','orderItem','photo','createdAt']
@@ -43,8 +49,6 @@ service cloud.firestore {
         request.resource.data.rating is number &&
         request.resource.data.rating >= 1 &&
         request.resource.data.rating <= 5 &&
-        request.resource.data.email is string &&
-        request.resource.data.email.size() < 150 &&
         request.resource.data.title is string &&
         request.resource.data.title.size() < 150 &&
         request.resource.data.orderItem is string &&
