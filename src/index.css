@@ -95,6 +95,16 @@
   --cc-text: #6b5650;
   --cc-border: #f1d9d4;
   --cc-header-h: 82px;
+
+  /* Interaction motion — one place to retune every button on the site.
+     Short on purpose: past about 200ms a press stops feeling like a response
+     to the tap and starts feeling like the page thinking. The press state runs
+     faster still, so the button meets the finger and eases back at leisure.
+     The curve decelerates hard, which is what reads as "smooth" rather than
+     "slow" — the distance is covered early. */
+  --cc-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --cc-dur: 180ms;
+  --cc-dur-fast: 110ms;
   color-scheme: light;
 }
 
@@ -158,6 +168,9 @@ a:hover { color: var(--cc-rose-deep); }
 
 /* Visible keyboard focus for primary interactive elements (a11y) */
 .btn-rose:focus-visible,
+.btn-outline-rose:focus-visible,
+.cc-product-card__add:focus-visible,
+.qty-btn:focus-visible,
 .payment-tab:focus-visible,
 .cc-delivery-method:focus-visible,
 .cc-product-card a:focus-visible,
@@ -180,12 +193,52 @@ a:hover { color: var(--cc-rose-deep); }
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: background 0.2s, transform 0.2s;
+  /* Named properties, never `all` — `all` also animates whatever a future edit
+     adds, which is how a transition ends up on a layout property by accident. */
+  transition: background var(--cc-dur) var(--cc-ease),
+              transform var(--cc-dur) var(--cc-ease),
+              box-shadow var(--cc-dur) var(--cc-ease);
+  box-shadow: 0 4px 12px -5px rgba(207, 62, 99, 0.45);
+  position: relative;
+  overflow: hidden;
 }
 .btn-rose:hover {
   background: var(--cc-rose-deep);
   color: #fff;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 11px 22px -8px rgba(207, 62, 99, 0.6);
+}
+/* The press is the whole trick. A button that visibly gives under the finger
+   feels instant even when the work behind it isn't; without it, every button
+   on the site felt one beat late. It settles BELOW the resting shadow, so the
+   thing looks pushed into the page rather than just shrunk. */
+.btn-rose:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 6px -4px rgba(207, 62, 99, 0.5);
+  transition-duration: var(--cc-dur-fast);
+}
+
+/* A single soft highlight crosses the primary CTA on hover — the one piece of
+   pure decoration in here, and it is on the primary action only. Put it on
+   every button and it stops reading as emphasis. It runs once per hover (an
+   animation, not a loop) and is pointer-events: none so it can never eat a
+   click. */
+.btn-rose::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 45%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+  transform: skewX(-18deg);
+  pointer-events: none;
+  opacity: 0;
+}
+.btn-rose:hover::after { animation: cc-sheen 0.7s var(--cc-ease); }
+@keyframes cc-sheen {
+  from { left: -60%; opacity: 1; }
+  to   { left: 125%; opacity: 1; }
 }
 
 .btn-outline-rose {
@@ -201,11 +254,97 @@ a:hover { color: var(--cc-rose-deep); }
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s;
+  transition: background var(--cc-dur) var(--cc-ease),
+              color var(--cc-dur) var(--cc-ease),
+              border-color var(--cc-dur) var(--cc-ease),
+              transform var(--cc-dur) var(--cc-ease),
+              box-shadow var(--cc-dur) var(--cc-ease);
 }
 .btn-outline-rose:hover {
   background: var(--cc-rose);
   color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -9px rgba(207, 62, 99, 0.55);
+}
+.btn-outline-rose:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: none;
+  transition-duration: var(--cc-dur-fast);
+}
+
+/* Clear cart — the quiet, destructive twin of the pill beside it on /cart.
+   It was a bare `border-0 bg-transparent` button: the icon and the label sat on
+   the text baseline rather than centred, and with nothing stopping it shrinking
+   as a flex item the label wrapped UNDER the trash icon on a narrow row, which
+   is what it looked like in the wild. inline-flex centres the pair, nowrap +
+   flex-shrink keep them on one line, and the pill shape matches
+   .btn-outline-rose so the two read as one row of controls.
+
+   Deliberately quieter than its neighbour — no uppercase, no border until
+   hover. Continue Shopping is where we want the thumb to go; this one only
+   colours up (rose-deep on blush) once you're actually on it. */
+.cc-clear-cart {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  padding: 0.55rem 1.1rem;
+  color: var(--cc-cocoa-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--cc-dur) var(--cc-ease),
+              background var(--cc-dur) var(--cc-ease),
+              border-color var(--cc-dur) var(--cc-ease),
+              transform var(--cc-dur) var(--cc-ease);
+}
+.cc-clear-cart:hover {
+  color: var(--cc-rose-deep);
+  background: var(--cc-blush-soft);
+  border-color: var(--cc-rose-soft);
+}
+.cc-clear-cart:active {
+  transform: scale(0.97);
+  transition-duration: var(--cc-dur-fast);
+}
+.cc-clear-cart:focus-visible {
+  outline: 2px solid var(--cc-rose-deep);
+  outline-offset: 2px;
+}
+
+/* Every button above moves by TRANSFORM, which is exactly the class of motion
+   that triggers vestibular symptoms — so this one block disarms the whole
+   system. Colour and shadow changes stay: they carry the same hover/press
+   information without anything travelling, so the buttons still respond, they
+   just stop moving. The sheen goes entirely; it is decoration, not feedback. */
+@media (prefers-reduced-motion: reduce) {
+  .btn-rose,
+  .btn-outline-rose,
+  .cc-product-card__add,
+  .cc-place-order-btn,
+  .cc-clear-cart,
+  .qty-btn {
+    transition-duration: 0.01ms;
+  }
+  .btn-rose:hover,
+  .btn-rose:active,
+  .btn-outline-rose:hover,
+  .btn-outline-rose:active,
+  .cc-product-card__add:hover,
+  .cc-product-card__add:active,
+  .cc-place-order-btn:hover:not(:disabled),
+  .cc-place-order-btn:active:not(:disabled),
+  .cc-clear-cart:active,
+  .qty-btn:hover,
+  .qty-btn:active {
+    transform: none;
+  }
+  .btn-rose:hover::after { animation: none; }
 }
 
 .eyebrow {
@@ -964,9 +1103,15 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--cc-dur) var(--cc-ease),
+              color var(--cc-dur) var(--cc-ease),
+              transform var(--cc-dur) var(--cc-ease);
 }
-.qty-btn:hover { background: var(--cc-rose); color: #fff; }
+.qty-btn:hover { background: var(--cc-rose); color: #fff; transform: scale(1.1); }
+/* Steppers get tapped repeatedly, so the press has to be crisp and cheap —
+   scale only, no shadow to repaint on every one of six taps. */
+.qty-btn:active { transform: scale(0.9); transition-duration: var(--cc-dur-fast); }
+.qty-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 /* On a touch screen 26px is a miss-tap waiting to happen — the guidance is a
    44px target. The circle grows to 36px and padding carries the rest of the hit
    area, so the +/− still look small but are actually reachable with a thumb.
@@ -1381,13 +1526,19 @@ html, body { overflow-x: hidden; }
   gap: 0.5rem;
   box-shadow: 0 9px 22px -7px rgba(207, 62, 99, 0.55);
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  transition: transform var(--cc-dur) var(--cc-ease),
+              box-shadow var(--cc-dur) var(--cc-ease),
+              opacity var(--cc-dur) var(--cc-ease);
 }
 .cc-place-order-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 13px 28px -7px rgba(207, 62, 99, 0.6);
 }
-.cc-place-order-btn:active:not(:disabled) { transform: translateY(0); }
+.cc-place-order-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.99);
+  box-shadow: 0 4px 10px -6px rgba(207, 62, 99, 0.55);
+  transition-duration: var(--cc-dur-fast);
+}
 .cc-place-order-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -4681,11 +4832,19 @@ header[style*="sticky"] {
   justify-content: center;
   gap: 0.4rem;
   cursor: pointer;
-  transition: background 0.15s, transform 0.15s;
+  transition: background var(--cc-dur) var(--cc-ease),
+              transform var(--cc-dur) var(--cc-ease),
+              box-shadow var(--cc-dur) var(--cc-ease);
 }
 .cc-product-card__add:hover {
   background: var(--cc-rose-deep);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 9px 18px -8px rgba(207, 62, 99, 0.6);
+}
+.cc-product-card__add:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: none;
+  transition-duration: var(--cc-dur-fast);
 }
 
 /* Cart sidebar */

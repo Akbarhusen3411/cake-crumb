@@ -146,8 +146,8 @@ export default function Cart() {
                 <Link to="/shop" className="btn-outline-rose">
                   <FiShoppingBag size={14} /> Continue Shopping
                 </Link>
-                <button className="border-0 bg-transparent" style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.85rem' }} onClick={clear}>
-                  <FiTrash2 size={13} /> Clear cart
+                <button type="button" className="cc-clear-cart" onClick={clear}>
+                  <FiTrash2 size={14} /> Clear cart
                 </button>
               </div>
             </div>
