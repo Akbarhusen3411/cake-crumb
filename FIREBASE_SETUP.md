@@ -164,6 +164,50 @@ Notes:
 - The login is real auth — there's no hardcoded password in the code.
 - To revoke access, delete or disable the user in Authentication → Users.
 
+## 7. Turning on App Check enforcement — the order matters
+
+Setting up App Check is covered in `.env.example` (`VITE_RECAPTCHA_SITE_KEY`,
+plus `VITE_APPCHECK_DEBUG_TOKEN` for localhost). This section is only about the
+last step: pressing **Enforce** in the console, and when it is safe to.
+
+**Why it is last.** Every function in `src/services/*.js` catches, never throws,
+and falls back to `localStorage`. So a Firestore request rejected for a missing
+App Check token looks *identical to a healthy one*: the site keeps taking orders,
+WhatsApp messages keep arriving, `/admin/orders` keeps listing rows from its local
+mirror — and nothing reaches the cloud. There is no error banner, because from the
+app's point of view nothing failed. Enforce before the client is attesting and you
+lose orders quietly, for as long as it takes someone to notice. This is the same
+trap CLAUDE.md describes as "a broken Firestore looks exactly like a healthy one".
+
+1. **Put the site key in `.env`** and restart `npm run dev` — Vite reads `.env`
+   only at startup. Blank key means App Check never runs, which is safe but
+   attests nothing.
+2. **Register a debug token** so your own machine attests. Generate it in
+   App Check → your app → ⋮ → **Manage debug tokens**, paste it into `.env` as
+   `VITE_APPCHECK_DEBUG_TOKEN`. It is per browser profile: a different browser, or
+   a cleared profile, needs its own. Never set it in production.
+3. **Deploy.** `npm run deploy`. Until the built site carries the key, nothing in
+   the metrics reflects real customers.
+4. **Wait for the metrics.** App Check → APIs → Cloud Firestore → request metrics,
+   until **verified is at or near 100%** and invalid has fallen away. Days, not
+   minutes: the window is 7 days, and browsers holding an old cached bundle keep
+   arriving unattested until they reload. A high verified percentage *before* a
+   deploy is not evidence of anything — it is not your storefront.
+5. **Press Enforce, then immediately check a SECOND device.** Open
+   `/admin/accounting` somewhere that has never been used for admin before and
+   confirm the figures are still there. This is the only check that catches a
+   silent break — the machine you enforced from has a `localStorage` mirror and
+   will look correct either way.
+
+**To undo:** the same screen has **Unenforce**. Press it first and diagnose
+afterwards; every minute of enforced-but-broken is orders written to nothing but
+the customer's own browser.
+
+`initializeAppCheck()` lives inside the memoised `getFirebaseApp()` in
+`src/firebase.js`, after `initializeApp()` and before any Firestore or Auth
+service is handed out. Keep it there — called from a page instead, the first
+request leaves without a token. It deliberately never throws.
+
 ## The shareable customer link
 
 The `/reviews` page shows a copyable link customers can use:
