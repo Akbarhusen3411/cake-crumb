@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>All Offers — Cake &amp; Crumb</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,800;1,400;1,700&family=Lato:wght@300;400;700;800;900&family=Allura&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="poster.css" />
+  <style>
+    /* Sheet-only styles. The eight offers on one A4 page — for the counter,
+       the delivery bag, and the pinned-up copy in the kitchen. */
+    .sheet-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 20px;
+      margin-top: 24px;
+    }
+    .offer {
+      border: 1px solid var(--cc-border);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.66);
+      padding: 18px 22px 16px;
+      display: flex;
+      flex-direction: column;
+    }
+    .offer__no {
+      font-family: var(--font-heading);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--cc-rose);
+      margin-bottom: 7px;
+    }
+    .offer__name {
+      font-family: var(--font-heading);
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--cc-cocoa);
+    }
+    .offer__body {
+      margin-top: 8px;
+      font-size: 18px;
+      line-height: 1.45;
+      color: var(--cc-cocoa-soft);
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    .offer__body b { color: var(--cc-rose-deep); font-weight: 800; }
+    .offer__win {
+      margin-top: auto;
+      padding-top: 10px;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: var(--cc-rose-deep);
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    /* margin-top: auto pins the small print above the footer whatever the
+       cards end up measuring, so the sheet never leaves a gap mid-page. */
+    .sheet-foot {
+      margin-top: auto;
+      border-top: 1px solid var(--cc-border);
+      padding-top: 18px;
+      font-size: 17px;
+      line-height: 1.6;
+      color: var(--cc-cocoa-soft);
+    }
+    .sheet-foot b { color: var(--cc-cocoa); font-weight: 800; }
+  </style>
+</head>
+<body>
+  <div class="poster poster--sheet">
+
+    <header class="ph">
+      <img class="ph__mark" src="../public/logo-icon.webp" alt="" />
+      <div>
+        <div class="ph__name">Cake &amp; Crumb</div>
+        <div class="ph__place">Vaso, Kheda</div>
+      </div>
+      <div class="ph__spacer"></div>
+      <div class="ph__tag">All eight offers</div>
+    </header>
+
+    <main class="pb">
+      <p class="eyebrow">What we can do for you</p>
+      <h1 class="title title--sm">Eight ways to<br />make it sweeter</h1>
+      <div class="divider"><span>&#10084;</span></div>
+
+      <div class="sheet-grid">
+
+        <section class="offer">
+          <div class="offer__no">One</div>
+          <div class="offer__name">Slice &amp; Sip</div>
+          <div class="offer__body">
+            A cheesecake slice and a Virgin Mojito for <b>₹249</b> instead of ₹300.
+            Any other slice or drink — pay the difference.
+          </div>
+          <div class="offer__win">Save ₹51 · every day</div>
+        </section>
+
+        <section class="offer">
+          <div class="offer__no">Two</div>
+          <div class="offer__name">Cupcake Tuesday</div>
+          <div class="offer__body">
+            Order a box of six cupcakes for a Tuesday and we bake <b>eight</b>.
+            One box per order, same flavour.
+          </div>
+          <div class="offer__win">Two free · worth up to ₹70</div>
+        </section>
+
+        <section class="offer">
+          <div class="offer__no">Three</div>
+          <div class="offer__name">Six on us</div>
+          <div class="offer__body">
+            Spend <b>₹599</b> and a box of six cake pops comes with it —
+            chocolate or vanilla.
+          </div>
+          <div class="offer__win">Free · worth ₹90</div>
+        </section>
+
+        <section class="offer">
+          <div class="offer__no">Four</div>
+          <div class="offer__name">The ₹999 Table</div>
+          <div class="offer__body">
+            Spend <b>₹999</b> and two boxes come free — six cupcakes and six cake pops.
+          </div>
+          <div class="offer__win">Free · worth ₹240</div>
+        </section>
+
+        <section class="offer">
+          <div class="offer__no">Five</div>
+          <div class="offer__name">Celebration Pack</div>
+          <div class="offer__body">
+            Bento sponge cake, six cupcakes, six cake pops, six chocolate-covered
+            strawberries — <b>₹849</b> instead of ₹930.
+          </div>
+          <div class="offer__win">Save ₹81 · two days' notice</div>
+        </section>
+
+        <section class="offer">
+          <div class="offer__no">Six</div>
+          <div class="offer__name">Grand Party Board</div>
+          <div class="offer__body">
+            Cake, cheesecake, 12 cupcakes, 12 cake pops, cookies, brownies and cups —
+            <b>₹1,999</b> instead of ₹2,350. Serves 20–25.
+          </div>
+          <div class="offer__win">Save ₹351 · three days' notice</div>
+        </section>
+
+        <section class="offer">
+          <div class="offer__no">Seven</div>
+          <div class="offer__name">Bring a Friend</div>
+          <div class="offer__body">
+            They name your number on their first order of ₹500+.
+            <b>₹100 off</b> for them, ₹100 waiting for you.
+          </div>
+          <div class="offer__win">₹100 each · no codes</div>
+        </section>
+
+        <section class="offer">
+          <div class="offer__no">Eight</div>
+          <div class="offer__name">The Sixth Is Ours</div>
+          <div class="offer__body">
+            Your sixth order comes with a <b>free cheesecake slice</b>.
+            Counted against your phone number — nothing to carry.
+          </div>
+          <div class="offer__win">Worth up to ₹170</div>
+        </section>
+
+      </div>
+
+      <p class="sheet-foot">
+        <b>Everything is baked to order.</b> Tell us a day ahead; message late and it's ready the
+        next day. Home delivery and self-pickup both available — delivery is worked out from your
+        pincode when you order. Offers don't stack; ask us and we'll apply whichever is kinder to
+        your bill.
+      </p>
+    </main>
+
+    <footer class="pf">
+      <div class="pf__wa"><small>WhatsApp us</small>+91 91731 83440</div>
+      <div class="pf__rule"></div>
+      <div class="pf__meta">
+        <b>Vaso, Kheda, Gujarat 387380</b><br />
+        cakeandcrumb.in@gmail.com &nbsp;·&nbsp; FSSAI 20726012000837 &nbsp;·&nbsp; Udyam UDYAM-GJ-12-0059372
+      </div>
+    </footer>
+
+  </div>
+</body>
+</html>

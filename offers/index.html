@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Offer Posters — Cake &amp; Crumb</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,800;1,400;1,700&family=Lato:wght@300;400;700;800;900&family=Allura&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="poster.css" />
+  <style>
+    /* Contact sheet. Each thumbnail is the real poster in an iframe, scaled —
+       so what you see here is exactly what exports. */
+    body { display: block; padding: 0; background: var(--cc-cream); }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 56px 28px 80px; }
+
+    .masthead { display: flex; align-items: center; gap: 18px; }
+    .masthead img { width: 84px; height: 58px; object-fit: contain; }
+    .masthead h1 {
+      font-family: var(--font-heading);
+      font-size: 44px; font-weight: 700; color: var(--cc-cocoa); margin: 0; line-height: 1.1;
+    }
+    .masthead p { font-family: var(--font-script); font-size: 30px; color: var(--cc-rose); margin: 2px 0 0; }
+
+    .lede {
+      margin: 26px 0 0; max-width: 74ch;
+      font-size: 18px; line-height: 1.7; color: var(--cc-cocoa-soft);
+    }
+    .lede b { color: var(--cc-cocoa); }
+    .lede a { color: var(--cc-rose-deep); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 34px 28px;
+      margin-top: 44px;
+    }
+    .card { text-decoration: none; display: block; }
+    .card__frame {
+      width: 100%;
+      aspect-ratio: 1080 / 1350;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--cc-border);
+      background: var(--cc-blush);
+      box-shadow: 0 12px 32px rgba(91, 62, 54, 0.13);
+      position: relative;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .card--sheet .card__frame { aspect-ratio: 1080 / 1528; }
+    .card:hover .card__frame {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 44px rgba(91, 62, 54, 0.2);
+    }
+    /* The iframe renders at true poster width, then shrinks to the card. */
+    .card__frame iframe {
+      width: 1080px; height: 1350px; border: 0;
+      transform-origin: top left;
+      position: absolute; top: 0; left: 0;
+      pointer-events: none;
+    }
+    .card--sheet .card__frame iframe { height: 1528px; }
+    .card__name {
+      margin-top: 14px;
+      font-family: var(--font-heading);
+      font-size: 21px; font-weight: 700; color: var(--cc-cocoa);
+    }
+    .card__win { margin-top: 3px; font-size: 15px; color: var(--cc-rose-deep); font-weight: 700; }
+
+    .how {
+      margin-top: 56px; border-top: 1px solid var(--cc-border); padding-top: 30px;
+      font-size: 17px; line-height: 1.75; color: var(--cc-cocoa-soft);
+      max-width: 80ch;
+    }
+    .how h2 {
+      font-family: var(--font-heading); font-size: 27px; color: var(--cc-cocoa);
+      margin: 0 0 12px; font-weight: 700;
+    }
+    .how ol { padding-left: 22px; margin: 0; }
+    .how li { margin-bottom: 9px; }
+    .how code {
+      background: var(--cc-blush); border-radius: 5px; padding: 2px 7px;
+      font-size: 15px; color: var(--cc-cocoa);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <header class="masthead">
+      <img src="../public/logo-icon.webp" alt="" />
+      <div>
+        <h1>Offer posters</h1>
+        <p>eight of them, ready to post</p>
+      </div>
+    </header>
+
+    <p class="lede">
+      Eight offers built from the live counter prices in <b>Menu &amp; Prices</b> and
+      <code>src/data/products.js</code>. Every poster is 1080 × 1350 — the shape Instagram
+      shows uncropped and WhatsApp Status uses — and prints onto A4. The reasoning behind each
+      one, and what it costs the kitchen, is in <b>README.md</b> beside this file.
+    </p>
+
+    <div class="grid">
+
+      <a class="card" href="01-slice-and-sip.html">
+        <div class="card__frame"><iframe src="01-slice-and-sip.html" scrolling="no" loading="lazy" title="Slice and Sip"></iframe></div>
+        <div class="card__name">1 · Slice &amp; Sip</div>
+        <div class="card__win">₹249 · saves ₹51</div>
+      </a>
+
+      <a class="card" href="02-cupcake-tuesday.html">
+        <div class="card__frame"><iframe src="02-cupcake-tuesday.html" scrolling="no" loading="lazy" title="Cupcake Tuesday"></iframe></div>
+        <div class="card__name">2 · Cupcake Tuesday</div>
+        <div class="card__win">8 for the price of 6</div>
+      </a>
+
+      <a class="card" href="03-cake-pops-at-599.html">
+        <div class="card__frame"><iframe src="03-cake-pops-at-599.html" scrolling="no" loading="lazy" title="Cake pops at 599"></iframe></div>
+        <div class="card__name">3 · Six on us</div>
+        <div class="card__win">₹599+ · free ₹90 box</div>
+      </a>
+
+      <a class="card" href="04-the-999-table.html">
+        <div class="card__frame"><iframe src="04-the-999-table.html" scrolling="no" loading="lazy" title="The 999 table"></iframe></div>
+        <div class="card__name">4 · The ₹999 Table</div>
+        <div class="card__win">₹999+ · free ₹240</div>
+      </a>
+
+      <a class="card" href="05-celebration-pack.html">
+        <div class="card__frame"><iframe src="05-celebration-pack.html" scrolling="no" loading="lazy" title="Celebration Pack"></iframe></div>
+        <div class="card__name">5 · Celebration Pack</div>
+        <div class="card__win">₹849 · saves ₹81</div>
+      </a>
+
+      <a class="card" href="06-grand-party-board.html">
+        <div class="card__frame"><iframe src="06-grand-party-board.html" scrolling="no" loading="lazy" title="Grand Party Board"></iframe></div>
+        <div class="card__name">6 · Grand Party Board</div>
+        <div class="card__win">₹1,999 · saves ₹351</div>
+      </a>
+
+      <a class="card" href="07-bring-a-friend.html">
+        <div class="card__frame"><iframe src="07-bring-a-friend.html" scrolling="no" loading="lazy" title="Bring a Friend"></iframe></div>
+        <div class="card__name">7 · Bring a Friend</div>
+        <div class="card__win">₹100 each way</div>
+      </a>
+
+      <a class="card" href="08-the-sixth-is-ours.html">
+        <div class="card__frame"><iframe src="08-the-sixth-is-ours.html" scrolling="no" loading="lazy" title="The Sixth Is Ours"></iframe></div>
+        <div class="card__name">8 · The Sixth Is Ours</div>
+        <div class="card__win">6th order · free slice</div>
+      </a>
+
+      <a class="card card--sheet" href="09-counter-card.html">
+        <div class="card__frame"><iframe src="09-counter-card.html" scrolling="no" loading="lazy" title="Counter card"></iframe></div>
+        <div class="card__name">9 · Counter card (A4)</div>
+        <div class="card__win">all eight, one sheet</div>
+      </a>
+
+    </div>
+
+    <div class="how">
+      <h2>Getting these out of the browser</h2>
+      <ol>
+        <li><b>For Instagram or WhatsApp Status.</b> Open a poster, right-click it →
+          <em>Inspect</em>, right-click the <code>&lt;div class="poster"&gt;</code> node →
+          <em>Capture node screenshot</em>. You get an exact 1080 × 1350 PNG.</li>
+        <li><b>For printing.</b> Open the poster and press <code>Ctrl+P</code>. The page is already
+          set to A4 portrait with no margins — leave Headers and footers <em>off</em>, and turn
+          <em>Background graphics</em> <b>on</b>, or the cream paper and the cocoa footer print white.</li>
+        <li><b>Changing a price or a date.</b> Every figure is plain text in the HTML — open the
+          file in any editor and type over it. Colours and type live once in
+          <code>poster.css</code>; change them there and all nine follow.</li>
+      </ol>
+    </div>
+
+  </div>
+
+  <script>
+    // Scale each poster iframe down to whatever width the card ended up.
+    // Done in script rather than CSS because the scale factor depends on the
+    // rendered card width, which the responsive grid decides.
+    function fit() {
+      document.querySelectorAll('.card__frame').forEach(function (frame) {
+        var f = frame.querySelector('iframe')
+        if (!f) return
+        f.style.transform = 'scale(' + (frame.clientWidth / 1080) + ')'
+      })
+    }
+    window.addEventListener('load', fit)
+    window.addEventListener('resize', fit)
+    fit()
+  </script>
+</body>
+</html>
