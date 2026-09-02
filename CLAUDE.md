@@ -44,6 +44,8 @@ It works for `data/*` and `utils/*` — but **anything that reaches `src/firebas
 
 Single-page React storefront for **Cake & Crumb**, a bakery in Vaso (Kheda, Gujarat 387380). Vite + React 19 + React Router v7 + Bootstrap 5 (layout) + Tailwind 4 (utilities), deployed to GitHub Pages. **No backend** — Firebase and EmailJS are optional; everything falls back to `localStorage`.
 
+`README.md` is the human-facing counterpart to this file: pinned dependency versions, the setup walk-through, and the live URL (**https://akbarhusen3411.github.io/cake-crumb/**). It does not repeat anything below.
+
 Find the subsystem your task touches and read that section first:
 
 | Working on… | Read | Why |
@@ -56,6 +58,7 @@ Find the subsystem your task touches and read that section first:
 | Swapping a product photo | **Photos** | `npm run photos` links + resizes + checks; a slug-named file needs no code edit |
 | Anything with video | **Video** | Phone `.MOV` is HEVC and plays in Safari only; sources must stay out of `/public` |
 | Reviews, ratings, testimonials | **Reviews** | Three separate fabrications were removed; reviewer emails were publicly readable |
+| A promotion or an offer poster | **Offers**, **No discount system** | The posters are print, not code, and no offer moves a total — the two sections only look like they disagree |
 | Anything claiming a fact to a customer | **Customer-facing copy**, **Timing**, **Reviews**, **Policy pages** | No opening hours, no invented ratings, no absolute guarantees, nothing advertised that isn't sold — and the FAQ, policy pages and checkout must agree |
 
 Two cross-cutting rules: **all money goes through `inr()`** (`src/data/format.js`, always two decimals), and **a change to any total must move all five places at once** — see *No discount system*.
@@ -73,6 +76,7 @@ Two cross-cutting rules: **all money goes through `inr()`** (`src/data/format.js
 ### Firebase + EmailJS (both optional)
 
 - `src/firebase.js`: `isFirebaseEnabled` is a cheap sync env check, safe to import anywhere. The SDK is **lazy-loaded** — `getDb()` / `getFirebaseAuth()` `await import(...)` and memoise. **Never statically `import 'firebase/firestore'`** from a module in the eager bundle (the footer Newsletter is eager; the ChatBot isn't — see `DeferredChatBot`); it pulls ~100KB-gz onto every page.
+- **App Check is attached inside `getFirebaseApp()`, and the order is load-bearing** — after `initializeApp()` and before any Firestore or Auth call, or the first request goes out unattested. It is gated on `VITE_RECAPTCHA_SITE_KEY` and **returns early when that is unset**, which is what keeps `npm run dev` working for anyone without the key. It never throws: while the Firestore enforcement toggle is on "Monitoring" an unattested request is merely counted, and throwing here would break Firestore for everyone to guard something that isn't enforced yet. **`/privacy` states that reCAPTCHA runs on every page**, so unsetting that var makes a published claim false — see *Policy pages*.
 - `src/services/*.js` all share one shape: `await getDb()` → dynamic-import + write → **always** mirror to `localStorage` → **never throw**. UI must not block on them.
 - Firestore rules live in `FIREBASE_SETUP.md`, not in code. `orders` are admin-only reads; the public `tracking` mirror and `reviews` are world-readable; all validated-create. **`reviews` create uses `hasOnly([...])` + size caps**, so adding a review field means updating the console rule or creates silently fail. Changing a collection's shape **or adding one** needs a rules update or production breaks.
 - `emailNotify.js`: `sendOrderEmail()` (Template #1), `sendCustomerConfirmation()` (Template #2, gated on `VITE_EMAILJS_CUSTOMER_TEMPLATE_ID`), `sendNewsletterNotification()` and `sendEnquiryNotification()` (both reuse #1 — the free tier caps at two templates, so they overload the order fields and leave `to_email` blank so the template's fixed bakery address is used). Fire-and-forget. The customer template's Bcc **must stay empty** or the bakery gets a duplicate of every email. EmailJS keys are public by design.
@@ -254,6 +258,38 @@ No coupon field, no promo code, no percentage off. Discounts were scoped and **e
 
 - **A per-customer offer cannot be enforced** — no auth, no server; a `localStorage` flag dies with an incognito tab. The workable pattern is the UPI one: let the customer *claim* it and have the bakery verify the phone against past `orders`. Cart-value tiers need no identity and are safe.
 - **A discount changes `total`, computed in five places** that must move together: `shopConfig.js`, `CartContext.jsx`, `Checkout.jsx` and **`ChatBot.jsx`** (an independent path — it would otherwise quote a different price). Then `orders.js` `totals`, the `tracking` mirror, `emailNotify.js` (a new placeholder means **editing the live EmailJS template**), and the **Firestore validated-create rules**. `AdminOrders.jsx` is load-bearing: the bakery verifies UPI **by matching the amount**.
+
+### Offers — posters, not a discount system
+
+`offers/` is a standalone folder of **print artwork**: eight offer posters, a counter card, a
+shared `poster.css` and an `index.html` contact sheet with the export instructions. It is not
+imported by the app, is not part of the Vite build, and ships nothing to a customer's browser.
+
+**It only looks like it contradicts the section above.** The rule the posters follow, stated in
+`offers/README.md`, is what keeps both true at once:
+
+> **No menu price is discounted.** The offer is a **free item added to the order**, never a
+> reduction. A box of six cupcakes still costs ₹150 for Vanilla and ₹180 for Red Velvet.
+
+So seven of the eight leave every total exactly as the site already computes it, and the deferred
+discount system stays deferred — **no total moves, so the five-places rule is never engaged.**
+Exactly one offer moves a figure at all (Slice & Sip, ₹20 off a slice with a drink) and its own
+poster says it is the only one.
+
+Three things to know before editing a poster:
+
+- **Every price on them is quoted from the live catalogue**, which was itself reconciled against
+  Menu & Prices in `/admin/accounting`. Change a price in `products.js` and the posters are stale
+  — nothing recomputes them, and `npm run check-prices` does not look at this folder.
+- **The gifts are cupcakes and cake pops, in twos.** They are the cheapest things on the menu to
+  make, and `products.js` sets `minQty: 2` on both because the bakery won't bake a single one —
+  a poster giving *one* free would contradict the site's own minimum.
+- **A free item is booked at ₹0 in accounting**, not at menu value: `computeSummary` counts money
+  *received*, so booking the gift at its menu price would invent revenue. `offers/README.md`
+  records what each gift costs at menu value.
+
+An offer that needs the site to charge less is not this — it is the discount system above, with
+everything that entails.
 
 ### Checkout form starts empty
 
@@ -448,6 +484,7 @@ One wording, used on Home, the footer, the cart, the FAQ and `/contact`: **order
 | `VITE_FIREBASE_*` | Reviews/orders/newsletter are localStorage-only. See `FIREBASE_SETUP.md`. |
 | `VITE_EMAILJS_SERVICE_ID` + `_TEMPLATE_ID` + `_PUBLIC_KEY` | No admin notification email. See `EMAILJS_SETUP.md`. |
 | `VITE_EMAILJS_CUSTOMER_TEMPLATE_ID` | No customer confirmation; admin email still works. Checkout's email field is optional partly because of this. |
+| `VITE_RECAPTCHA_SITE_KEY` | No App Check — Firestore requests go out unattested and show as "invalid" in the App Check metrics. The site works exactly as before, **but `/privacy` says reCAPTCHA runs on every page**, so leaving it blank in a deployed build makes that page untrue. Public by design (it ships in the bundle). See `FIREBASE_SETUP.md`. |
 | `VITE_SNAPWIDGET_ID` | `InstagramFeed` shows a hand-picked static grid instead of the live feed — and **retitles itself** ("A Few of Our Favourites" rather than "Follow Us on Instagram"), because the old Home markup headed static photos as a feed. |
 
 **Analytics.** `index.html` loads Plausible (cookieless, no consent banner needed, `defer`). It collects **nothing** until the site is registered at plausible.io — the tag loads and reports nowhere, which is harmless but means no data. It does send pageviews to a third party; remove the tag if that isn't wanted.
