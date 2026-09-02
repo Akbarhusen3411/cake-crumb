@@ -46,18 +46,22 @@ export default function Home() {
               </Link>
             </div>
             <div className="col-lg-6">
-              {/* The bakery's own work, not a stock bouquet. The hero of a
-                  bakery — the LCP image, above the fold — was a photograph of
-                  roses, while 47 real photos sat unused on /gallery. srcSet
-                  keeps the swap weight-neutral: at these sizes nearly every
-                  viewport takes the 800w variant (39 KB, against the 40 KB the
-                  roses cost). The frame is 5/4 and the source is 16/9, so cover
-                  trims the dark glass at each edge and leaves the tubs. */}
+              {/* The roses stay, at the owner's call, and the reason is the
+                  frame: .cc-home-hero__img is aspect-ratio: 5/4, and the only
+                  landscape photo among the bakery's own is 16/9 — cover trimmed
+                  about 15% off each side of it. This one was shot for a slot
+                  this shape and fills it. The bakery's own work leads the
+                  section below instead, which also ends this file using the
+                  same image twice.
+
+                  srcSet is new and worth keeping: the hero used to load the
+                  full 40 KB file on every device, where the 800w variant is
+                  22 KB and is what nearly every viewport picks. */}
               <img
-                src={u(img.rcOwnMilkcakeTubs)}
-                srcSet={srcSet(img.rcOwnMilkcakeTubs)}
+                src={u(img.pinkRoses)}
+                srcSet={srcSet(img.pinkRoses)}
                 sizes="(min-width: 992px) 50vw, 100vw"
-                alt="Eight bento tubs of milk cake — chocolate, blueberry, vanilla, Biscoff, strawberry, pistachio and mango"
+                alt="Soft pink rose bouquet"
                 className="cc-home-hero__img"
                 fetchPriority="high"
               />
