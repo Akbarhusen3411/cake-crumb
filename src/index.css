@@ -3867,6 +3867,9 @@ header[style*="sticky"] {
   margin: 0.5rem 0 1.4rem;
   color: var(--cc-cocoa-soft);
 }
+/* UNUSED — the About section on Home lost its third column of icons (it
+   restated the feature strip at the top of the same page). Kept, not scripted
+   out, for the reason given above .cc-shop-trust. */
 .cc-home-about__features {
   padding: 2rem 1.5rem;
   width: 100%;
@@ -5020,6 +5023,10 @@ header[style*="sticky"] {
 .cc-shop-special__btn:hover { background: var(--cc-rose-deep); color: #fff; }
 
 /* Trust strip in cart sidebar */
+/* UNUSED — the Shop's sidebar trust strip was removed (it duplicated the
+   promise strip closing the page). The rules are kept rather than scripted out:
+   nothing else claims these names, and this stylesheet has been broken before
+   by block deletion. Delete them by hand if the column stays empty. */
 .cc-shop-trust {
   list-style: none;
   padding: 0;
@@ -5101,7 +5108,10 @@ header[style*="sticky"] {
   background: var(--cc-cream);
 }
 
-/* Stats card — 3 horizontal sections: overall | breakdown bars | sub-ratings */
+/* Stats card — 2 sections: overall | breakdown bars.
+   It was three, the third a second copy of the promise strip that already
+   closes the page. That markup is gone, so this MUST stay at two columns:
+   at three the bars stop two-thirds across and leave an empty third. */
 .cc-reviews-stats {
   background: #fff;
   border-radius: 16px;
@@ -5113,7 +5123,7 @@ header[style*="sticky"] {
 }
 @media (min-width: 768px) {
   .cc-reviews-stats {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.6fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
     align-items: center;
   }
 }
@@ -5175,6 +5185,9 @@ header[style*="sticky"] {
   color: var(--cc-cocoa);
 }
 
+/* UNUSED — the stats card no longer renders a second copy of PROMISE_STRIP;
+   the closing band at the foot of Reviews is the only one. Kept, not scripted
+   out, for the reason given above .cc-shop-trust. */
 .cc-reviews-stats__subs {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

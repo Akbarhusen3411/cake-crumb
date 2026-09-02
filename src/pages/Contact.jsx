@@ -10,6 +10,8 @@ import { img, u } from '../data/images.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
 import { DELIVERY } from '../data/shopConfig.js'
+import { localIso } from '../utils/adminDate.js'
+import { sendEnquiryNotification } from '../services/emailNotify.js'
 
 const OCCASIONS = [
   'Birthday', 'Wedding', 'Anniversary', 'Engagement',
@@ -24,10 +26,12 @@ const BUDGET_RANGES = [
   '₹2,000 – ₹5,000', '₹5,000+', 'Open / discuss',
 ]
 
+// localIso, not toISOString — see the note in utils/adminDate.js. Before
+// 05:30 IST the UTC form returned today, so "Need by" accepted a same-day date.
 function tomorrowISO() {
   const d = new Date()
   d.setDate(d.getDate() + 1)
-  return d.toISOString().split('T')[0]
+  return localIso(d)
 }
 
 export default function Contact() {
@@ -94,6 +98,11 @@ export default function Contact() {
     const win = window.open(link, '_blank', 'noopener,noreferrer')
     setBlocked(!win || win.closed || typeof win.closed === 'undefined')
     setCopied(false)
+    // AFTER window.open, never before — see the note above: an await ahead of
+    // it and mobile browsers refuse the window. Fire-and-forget, so a failed
+    // send can't break the form. This is what stops an enquiry disappearing
+    // when the customer never presses Send in WhatsApp.
+    sendEnquiryNotification(form)
   }
 
   async function copyMessage() {
@@ -118,8 +127,8 @@ export default function Contact() {
               </h1>
               <HeartDivider width={50} />
               <p className="cc-contact-hero__lede">
-                Tell us about your celebration and we'll send a quote on WhatsApp
-                within a few hours.
+                Tell us about your celebration and we'll send a quote on WhatsApp —
+                usually within a few hours.
               </p>
             </div>
             <div className="col-lg-6">
@@ -420,7 +429,7 @@ export default function Contact() {
                 >
                   <FiCheckCircle color="var(--cc-rose)" style={{ marginTop: 2, flexShrink: 0 }} />
                   <span>
-                    Opens WhatsApp with your details prefilled. Attach photos there — we reply with a quote within a few hours.
+                    Opens WhatsApp with your details prefilled. Attach photos there — we usually reply with a quote within a few hours. A copy reaches us by email too, so your enquiry is not lost if WhatsApp fails to open.
                   </span>
                 </div>
 

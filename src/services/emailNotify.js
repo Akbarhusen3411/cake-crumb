@@ -122,6 +122,73 @@ export async function sendNewsletterNotification(email, source = 'footer') {
 }
 
 /**
+ * Notify the bakery inbox of a custom-order enquiry from /contact.
+ *
+ * That form's only output was a WhatsApp window. If the customer never pressed
+ * Send — or closed the tab, or the pop-up was blocked and they ignored the
+ * fallback — the enquiry was gone: nothing was written anywhere, and the bakery
+ * never knew it existed. Checkout has fired this belt-and-braces email since it
+ * was built; an enquiry is worth no less than an order.
+ *
+ * Reuses the admin order template (Template #1) exactly as
+ * sendNewsletterNotification does, overloading the order fields rather than
+ * spending the free tier's third template slot. Fires-and-forgets, never throws.
+ */
+export async function sendEnquiryNotification(enquiry) {
+  if (!isEmailNotifyEnabled) {
+    if (import.meta.env.DEV) {
+      console.warn('[email] enquiry notification disabled — set VITE_EMAILJS_* in .env.')
+    }
+    return { ok: false, reason: 'disabled' }
+  }
+  ensureInit()
+  try {
+    // Everything optional goes in the items block, so a blank field simply
+    // doesn't appear rather than printing a row of dashes.
+    const detail = [
+      ['Occasion', enquiry.occasion],
+      ['Cake type', enquiry.category],
+      ['Servings', enquiry.servings],
+      ['Flavour', enquiry.flavor],
+      ['Message on cake', enquiry.message],
+      ['Budget', enquiry.budget],
+    ]
+      .filter(([, v]) => v)
+      .map(([k, v]) => `• ${k}: ${v}`)
+      .join('\n')
+
+    const params = {
+      order_id: 'Custom order enquiry',
+      customer_name: enquiry.name || '—',
+      // The contact form is India-only (a 10-digit [6-9] number), so unlike
+      // Checkout's stored phone this one carries no country code of its own.
+      customer_phone: enquiry.phone ? `+91 ${enquiry.phone}` : '—',
+      customer_email: enquiry.email || '—',
+      customer_address: '—',
+      items: detail || 'Custom order enquiry — no extra detail given',
+      subtotal: '—',
+      delivery: '—',
+      total: '—',
+      payment_method: '—',
+      utr: '—',
+      delivery_date: enquiry.needBy || '—',
+      notes: enquiry.notes || '—',
+      source: 'contact-enquiry',
+      order_time: new Date().toLocaleString('en-IN', { hour12: true }),
+      // Blank, so the template's fixed bakery recipient is used — this must
+      // never be sent to the customer.
+      to_email: '',
+      to_name: 'Cake & Crumb',
+    }
+    const res = await emailjs.send(SERVICE_ID, TEMPLATE_ID, params)
+    return { ok: true, status: res.status }
+  } catch (err) {
+    console.error('[email] enquiry notification failed:', err)
+    return { ok: false, reason: err.message || 'send failed' }
+  }
+}
+
+/**
  * Send a confirmation email to the customer (only if they provided one).
  * Requires a separate EmailJS template configured with {{to_email}} as the
  * recipient. Set VITE_EMAILJS_CUSTOMER_TEMPLATE_ID to enable.

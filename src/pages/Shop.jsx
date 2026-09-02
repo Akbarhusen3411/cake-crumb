@@ -2,9 +2,9 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   FiHeart, FiShoppingBag, FiX, FiPlus, FiMinus, FiCheckCircle, FiClock,
-  FiShield, FiTruck, FiChevronDown, FiSliders,
+  FiShield, FiChevronDown, FiSliders,
 } from 'react-icons/fi'
-import { TbLeaf, TbToolsKitchen2 } from 'react-icons/tb'
+import { TbToolsKitchen2 } from 'react-icons/tb'
 import HeartDivider from '../components/HeartDivider.jsx'
 import { shopProducts, lowestPrice, isPerPiece, cardPrice, priceLabel, describe, EXTRA_TIERS } from '../data/products.js'
 import { img, u, srcSet } from '../data/images.js'
@@ -72,11 +72,15 @@ const PRICE_RANGES = [
 // No product count beside the label — it was tried and taken off: a bare
 // number floating at the end of a filter row read as a price or a quantity,
 // not as "how many products".
-function Radio({ checked, onChange, label }) {
+// `name` is not decoration: without it each input is its own one-button
+// group, so arrow keys don't move between the options and a screen reader
+// announces twelve unrelated radios instead of one Category choice.
+function Radio({ checked, onChange, label, name }) {
   return (
     <label className="cc-shop-radio">
       <input
         type="radio"
+        name={name}
         checked={checked}
         onChange={onChange}
         className="cc-shop-radio__input"
@@ -291,9 +295,16 @@ export default function Shop() {
                 Handcrafted<br />Just for You
               </h1>
               <HeartDivider width={50} />
+              {/* "chocolates" was in this lede, in Menu's and in Gallery's.
+                  There is no Chocolates category in products.js and no truffle
+                  or bonbon among the 207 rows of the counter menu, so on a page
+                  you order from it advertised something you cannot buy. It also
+                  named four things out of nine. (Gallery keeps the word: it is
+                  a portfolio, it really does show chocolate work, and those
+                  photos link to an enquiry.) */}
               <p className="cc-shop-hero__lede">
-                Discover our handmade cakes, cupcakes, cookies, and chocolates —
-                made with the finest ingredients and a whole lot of love.
+                Cheesecakes, milk cakes, sponge cakes, cookies, cupcakes, bakes,
+                dessert cups and drinks — every one of them baked after you order it.
               </p>
             </div>
             <div className="col-lg-6">
@@ -339,11 +350,12 @@ export default function Shop() {
                 </button>
 
                 <div className={'cc-shop-filter__body' + (filtersOpen ? ' is-open' : '')}>
-                <div className="cc-shop-filter__group">
+                <div className="cc-shop-filter__group" role="radiogroup" aria-label="Category">
                   <div className="cc-shop-filter__label">Category</div>
                   {CATEGORIES.map((c) => (
                     <Radio
                       key={c}
+                      name="shop-category"
                       label={c}
                       checked={category === c}
                       onChange={() => selectCategory(c)}
@@ -351,11 +363,12 @@ export default function Shop() {
                   ))}
                 </div>
 
-                <div className="cc-shop-filter__group">
+                <div className="cc-shop-filter__group" role="radiogroup" aria-label="Price range">
                   <div className="cc-shop-filter__label">Price Range</div>
                   {PRICE_RANGES.map((r) => (
                     <Radio
                       key={r.id}
+                      name="shop-price"
                       label={r.label}
                       checked={priceRange === r.id}
                       onChange={() => selectPriceRange(r.id)}
@@ -651,36 +664,32 @@ export default function Shop() {
                   </Link>
                 </div>
 
-                {/* Trust strip */}
-                <ul className="cc-shop-trust">
-                  {[
-                    { Icon: FiHeart, title: 'Handcrafted with Love', text: 'Made in small batches with care.' },
-                    { Icon: TbLeaf,  title: 'Premium Ingredients',   text: 'We use only the finest ingredients.' },
-                    { Icon: FiShield,title: 'Secure Packaging',      text: 'Your treats arrive fresh and beautiful.' },
-                  ].map((it, i) => (
-                    <li key={i} className="cc-shop-trust__row">
-                      <span className="cc-shop-trust__icon"><it.Icon size={14} /></span>
-                      <div>
-                        <div className="cc-shop-trust__title">{it.title}</div>
-                        <p className="cc-shop-trust__text">{it.text}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                {/* The trust strip that used to close this column — Handcrafted
+                    with Love / Premium Ingredients / Secure Packaging — is gone.
+                    With the promise strip at the foot of the page it made seven
+                    tiles saying three things: ingredients twice, packaging twice.
+                    And on a phone this whole column lands directly above that
+                    strip, so the two were read back to back. "Handcrafted with
+                    Love" was the best line of the seven and now opens the closing
+                    strip instead. The .cc-shop-trust rules are still in
+                    index.css, unused. */}
               </div>
             </aside>
           </div>
         </div>
       </section>
 
-      {/* ───── BOTTOM PROMISE STRIP — 4 across ───── */}
+      {/* ───── BOTTOM PROMISE STRIP ─────
+          "On-Time Delivery — fresh and on time, every time" used to be the
+          third tile. It is the same absolute guarantee already removed from
+          About and Reviews: one kitchen cannot promise it, and it contradicts a
+          site that asks for a day's notice. Don't re-add it as a fourth. */}
       <section className="cc-shop-promise">
         <div className="container py-4 py-md-5">
           <div className="feature-row">
             {[
-              { Icon: TbLeaf,           title: 'Fresh & Quality',  text: 'We source the freshest ingredients for the best taste and quality.' },
+              { Icon: FiHeart,          title: 'Handcrafted with Love', text: 'Made in small batches with care.' },
               { Icon: TbToolsKitchen2,  title: 'Made to Order',    text: 'Every treat is made to order just for you.' },
-              { Icon: FiTruck,          title: 'On-Time Delivery', text: 'We deliver your treats fresh and on time, every time.' },
               { Icon: FiShield,         title: 'Safe & Secure',    text: 'Secure checkout and careful packaging always.' },
             ].map((it, i) => (
               <div key={i} className="feature-cell text-center cc-shop-promise__cell">

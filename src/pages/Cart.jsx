@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import RelatedProducts from '../components/RelatedProducts.jsx'
 import { inr } from '../data/format.js'
+import { isBulkOrder, BULK_ORDER_MIN, DEPOSIT_PCT } from '../data/shopConfig.js'
 import { u } from '../data/images.js'
 
 export default function Cart() {
@@ -188,7 +189,17 @@ export default function Cart() {
 
               <div className="mt-4 p-3" style={{ background: 'var(--cc-cream)', borderRadius: 10, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <FiHeart color="var(--cc-rose)" />
-                <span>Pay by UPI now, or Cash on Delivery</span>
+                {/* This line promised Cash on Delivery on every cart, including
+                    ones large enough that Checkout removes the COD tab
+                    outright. The bulk rule is enforced in shopConfig, Checkout,
+                    AdminOrders and ChatBot; the cart is where the subtotal
+                    first becomes visible, so it has to agree with them.
+                    isBulkOrder reads the SUBTOTAL, exactly as Checkout does. */}
+                <span>
+                  {isBulkOrder(subtotal)
+                    ? `Orders from ${inr(BULK_ORDER_MIN)} take a ${Math.round(DEPOSIT_PCT * 100)}% advance by UPI — or pay in full`
+                    : 'Pay by UPI now, or Cash on Delivery'}
+                </span>
               </div>
             </div>
           </div>

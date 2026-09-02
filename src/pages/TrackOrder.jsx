@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   FiSearch, FiCheckCircle, FiClock, FiTruck, FiAlertCircle,
-  FiCalendar, FiUser, FiPhone, FiHome, FiShoppingBag, FiLoader,
+  FiCalendar, FiUser, FiPhone, FiHome, FiShoppingBag, FiLoader, FiCheck,
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import { getOrderTracking } from '../services/orders.js'
@@ -54,6 +54,70 @@ function helpLink(typedId) {
     ? `Hi, I can't find my order. The ID I have is ${id}.`
     : "Hi, I'd like to check on my order but I can't find my Order ID."
   return `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`
+}
+
+/**
+ * Where the order stands, as four steps.
+ *
+ * The page showed a single status banner and nothing else, so "Confirmed" gave
+ * no hint that ready / out-for-delivery and completed were still to come —
+ * which is the actual question someone opens this page to ask. These are the
+ * statuses AdminOrders steps an order through, no more: adding one here means
+ * adding it there and in statusMeta() below.
+ *
+ * Step 3 takes its wording from the fulfilment method, because "Ready" is
+ * method-aware in the dashboard too — an order for collection is never out for
+ * delivery. Cancelled gets no progress line at all (the caller skips it): a
+ * cancelled order has not progressed, and drawing it part-way along a track
+ * suggests it is still coming.
+ *
+ * Reuses the .cc-progress classes the checkout stepper already defines — same
+ * furniture, same page, no new CSS.
+ */
+function stepIndex(status) {
+  switch (status) {
+    case 'confirmed': return 1
+    case 'ready_for_pickup':
+    case 'out_for_delivery': return 2
+    case 'completed':
+    case 'delivered': return 3
+    // 'placed' and anything statusMeta() doesn't recognise start at the top.
+    default: return 0
+  }
+}
+
+function TrackProgress({ status, deliveryMethod }) {
+  const current = stepIndex(status)
+  const labels = [
+    'Placed',
+    'Confirmed',
+    deliveryMethod === 'pickup' ? 'Ready' : 'On its way',
+    'Completed',
+  ]
+  // On the last step nothing is still in progress, so every step reads done —
+  // otherwise a finished order shows its final step as the one being worked on.
+  const finished = current === labels.length - 1
+
+  return (
+    <div className="cc-progress" role="list" aria-label="Order progress">
+      {labels.map((label, i) => {
+        const done = i < current || finished
+        return (
+          <Fragment key={label}>
+            {i > 0 && <span className={'cc-progress__line' + (i <= current ? ' is-done' : '')} />}
+            <div
+              className={'cc-progress__step' + (done ? ' is-done' : '') + (i === current && !finished ? ' is-active' : '')}
+              role="listitem"
+              aria-current={i === current ? 'step' : undefined}
+            >
+              <span className="cc-progress__num">{done ? <FiCheck size={14} /> : i + 1}</span>
+              <span className="cc-progress__label">{label}</span>
+            </div>
+          </Fragment>
+        )
+      })}
+    </div>
+  )
 }
 
 function statusMeta(status) {
@@ -208,6 +272,12 @@ export default function TrackOrder() {
 
           {phase === 'found' && order && (
             <>
+              {/* Comment sits OUTSIDE the `&&` — a JSX comment cannot be the
+                  first child of a conditional expression. */}
+              {order.status !== 'cancelled' && (
+                <TrackProgress status={order.status} deliveryMethod={order.deliveryMethod} />
+              )}
+
               {/* Status banner */}
               <div
                 className="p-3 p-md-4 mb-3"

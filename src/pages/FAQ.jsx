@@ -10,6 +10,14 @@ import { img, u } from '../data/images.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { useJsonLd } from '../hooks/useJsonLd.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
+import { BULK_ORDER_MIN, DEPOSIT_PCT } from '../data/shopConfig.js'
+import { inr } from '../data/format.js'
+
+// Read from shopConfig, never typed: these two figures are what Checkout
+// actually enforces, and /refund-policy quotes them the same way. An FAQ that
+// says one thing while the pay button does another is the drift the `more`
+// links below exist to prevent.
+const DEPOSIT_PCT_LABEL = Math.round(DEPOSIT_PCT * 100)
 
 const SECTIONS = [
   {
@@ -74,7 +82,7 @@ const SECTIONS = [
     questions: [
       {
         q: 'Can I get a custom-designed cake?',
-        a: 'Absolutely! Send us inspiration photos on WhatsApp with your occasion, theme, servings, and date. We will send a quote within a few hours.',
+        a: 'Absolutely! Send us inspiration photos on WhatsApp with your occasion, theme, servings, and date. We usually send a quote within a few hours.',
       },
       {
         q: 'How far in advance should I place a custom order?',
@@ -90,7 +98,12 @@ const SECTIONS = [
       },
       {
         q: 'Do you do corporate / bulk orders?',
-        a: 'Yes — for offices, weddings, and large events. Discounts apply on bulk. Contact us at least a week in advance.',
+        // WAS: "Discounts apply on bulk." There is no discount system on this
+        // site, by decision — and what a large order actually meets at checkout
+        // is the opposite of a discount: COD is withdrawn and an advance is
+        // required. Promising money off and then asking for money up front is
+        // the worst possible order to learn those two facts in.
+        a: `Yes — for offices, weddings, and large events. Contact us at least a week in advance so we can plan the bake. Orders at or above ${inr(BULK_ORDER_MIN)} take a ${DEPOSIT_PCT_LABEL}% advance to reserve the date; the balance is paid on delivery or pickup.`,
       },
     ],
   },
@@ -102,11 +115,22 @@ const SECTIONS = [
     questions: [
       {
         q: 'What payment methods do you accept?',
-        a: 'UPI (GPay, PhonePe, Paytm, BHIM), bank transfer, Cash on Delivery, and direct cash for self-pickup. UPI is preferred — it is fastest.',
+        // Bank transfer was listed here and is not one of the three options
+        // checkout offers (UPI in full / advance / COD), so it promised a
+        // method the order form has no way to record.
+        a: 'UPI (GPay, PhonePe, Paytm, BHIM), Cash on Delivery, and cash on self-pickup. UPI is preferred — it is fastest.',
       },
       {
         q: 'Do I pay in advance or on delivery?',
-        a: 'For Cash on Delivery: pay when our delivery partner arrives. For UPI: pay during checkout, we confirm the order on WhatsApp once we receive payment.',
+        // "when our delivery partner arrives" was shown to self-pickup
+        // customers too, who collect the order themselves.
+        a: 'For Cash on Delivery: pay when your order is handed over — at your door, or when you collect it. For UPI: pay during checkout, and we confirm on WhatsApp once we have matched the payment in our account.',
+      },
+      {
+        // The most surprising thing a customer meets at checkout, and this
+        // section did not mention it at all.
+        q: 'Do larger orders need an advance?',
+        a: `Yes. Orders at or above ${inr(BULK_ORDER_MIN)} take a ${DEPOSIT_PCT_LABEL}% advance by UPI to reserve your date, or you can pay in full — the balance is settled on delivery or pickup. Full cash-on-delivery is not available on orders that size.`,
       },
       {
         q: 'Can I get a refund?',

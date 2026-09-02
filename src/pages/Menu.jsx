@@ -211,9 +211,13 @@ export default function Menu() {
                 Made with Love,<br />Baked for You
               </h1>
               <HeartDivider width={50} />
+              {/* Was all but word-for-word the Shop hero's lede, chocolates and
+                  all — see the note there. This one says what the page is FOR:
+                  Shop is where you order, Menu is where you look up a price. */}
               <p className="cc-menu-hero__lede">
-                Indulge in our handcrafted cakes, cupcakes, cookies, and chocolates —
-                made with the finest ingredients and a touch of love.
+                Everything we bake, with its price — cheesecakes and milk cakes whole
+                or by the slice, cookies and cupcakes by the box, plus bakes, dessert
+                cups and drinks.
               </p>
             </div>
             <div className="col-lg-6">

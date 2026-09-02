@@ -7,7 +7,7 @@ import { TbLeaf, TbCake } from 'react-icons/tb'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import HeartDivider from '../components/HeartDivider.jsx'
 import CertBadges from '../components/CertBadges.jsx'
-import { img, u } from '../data/images.js'
+import { img, u, srcSet } from '../data/images.js'
 
 /**
  * STORY_FEATURES sat beside the story text; WHY_FEATURES ran underneath it.
@@ -41,12 +41,23 @@ const WHY_FEATURES = [
   { Icon: FiMessageCircle, title: 'One place to ask', text: 'Every order and question runs through one WhatsApp chat.' },
 ]
 
+/**
+ * The bakery's own August 2026 photographs, one per category.
+ *
+ * These were five pieces of library artwork. A section headed "A Peek Into Our
+ * Kitchen" showing stock photography is the one place on this site where a
+ * borrowed picture actually contradicts the words above it — and the real
+ * photos were already in the registry, leading the Gallery.
+ *
+ * They carry alt text now rather than alt="": they depict specific work, so
+ * they are content, not decoration.
+ */
 const KITCHEN_THUMBS = [
-  img.milkcakeRose,
-  img.cupcakesRose,
-  img.flourSplash,
-  img.cakeStand,
-  img.truffleBox,
+  { id: img.rcOwnCheesecakeMarble,    alt: 'Strawberry cheesecake finished with piped cream' },
+  { id: img.rcOwnCupcakesOpenBox,     alt: 'An open box of six assorted cupcakes' },
+  { id: img.rcOwnMilkcakeBlueberry,   alt: 'Blueberry milk cake in a bento tub, finished with gold leaf' },
+  { id: img.rcOwnCakePops,            alt: 'Chocolate cake pops with gold and silver leaf' },
+  { id: img.rcOwnCakeBirthdayRosettes, alt: 'Chocolate birthday cake piped with rosettes' },
 ]
 
 export default function About() {
@@ -98,9 +109,14 @@ export default function About() {
         <div className="container py-5">
           <div className="row g-4 g-lg-5 align-items-center">
             <div className="col-lg-5">
+              {/* The alt read "Our baker piping a fresh cake". The photograph
+                  is a flat-lay of two piping bags — there is no baker in it and
+                  no cake, so a screen reader was given a scene that isn't
+                  there, and one claiming to show our kitchen. It describes what
+                  is actually in frame now, caption included. */}
               <img
                 src={u(img.pipingBags, 800, 900)}
-                alt="Our baker piping a fresh cake"
+                alt='Piping bags of pink and lilac buttercream on marble, captioned "Baking is love made edible"'
                 className="cc-about-story__img"
               />
             </div>
@@ -117,9 +133,15 @@ export default function About() {
                 and add a personal touch to every creation. Whether it's a celebration or a
                 quiet treat, we're here to make it sweeter.
               </p>
-              <button className="btn-rose mt-2">
-                <FiHeart /> Meet Our Baker
-              </button>
+              {/* Was a <button> with no onClick and no link — the second dead
+                  control on this page, the same fault as the hero's "Our
+                  Journey" before it was pointed at #our-story. There is no
+                  baker page to open, so it goes where the baker actually
+                  answers: /contact carries the phone, WhatsApp, Instagram and
+                  the custom-order form. */}
+              <Link to="/contact" className="btn-rose mt-2">
+                <FiHeart /> Talk to Our Baker
+              </Link>
             </div>
             <div className="col-lg-3">
               <div className="cc-features-card">
@@ -192,15 +214,24 @@ export default function About() {
             <HeartDivider width={50} />
           </div>
           <div className="cc-kitchen-grid">
-            {KITCHEN_THUMBS.map((id, i) => (
+            {KITCHEN_THUMBS.map(({ id, alt }) => (
               <img
-                key={i}
-                src={u(id, 500, 500)}
-                alt=""
+                key={id}
+                src={u(id)}
+                srcSet={srcSet(id)}
+                sizes="(min-width: 992px) 200px, (min-width: 768px) 30vw, 45vw"
+                alt={alt}
                 loading="lazy"
                 className="cc-kitchen-grid__img"
               />
             ))}
+          </div>
+          {/* Five photos and no way through to the other 47 — or to the ten
+              kitchen clips. A section called "a peek" has to lead somewhere. */}
+          <div className="text-center mt-4">
+            <Link to="/gallery" className="btn-outline-rose">
+              See the full gallery <FiArrowRight size={15} />
+            </Link>
           </div>
         </div>
       </section>

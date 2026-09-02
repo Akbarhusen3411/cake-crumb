@@ -11,6 +11,7 @@ import { u } from '../data/images.js'
 import { COUNTRY_CODES, DEFAULT_COUNTRY } from '../data/countries.js'
 import { deliveryFee, isBulkOrder, depositAmount, DEPOSIT_PCT } from '../data/shopConfig.js'
 import { kmFromBakeryByPincode } from '../services/delivery.js'
+import { localIso } from '../utils/adminDate.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { saveOrder } from '../services/orders.js'
 import { generateOrderId } from '../services/orderId.js'
@@ -44,10 +45,13 @@ const VALIDATORS = {
   deliveryDate: (v, minDate) => (v && v >= minDate ? '' : 'Please pick a future date'),
 }
 
+// localIso, not toISOString: the latter is UTC, so between midnight and
+// 05:30 IST "tomorrow" came back as today's date — the picker accepted a
+// same-day order under a banner asking for at least a day's notice.
 function getMinDeliveryDate() {
   const d = new Date()
   d.setDate(d.getDate() + 1)
-  return d.toISOString().slice(0, 10)
+  return localIso(d)
 }
 
 function formatDateForDisplay(iso) {
@@ -556,6 +560,16 @@ export default function Checkout() {
                   </div>
 
                   <div className="col-12">
+                    {/* NOT `required`, deliberately. It was — and since Place
+                        Order is a type="submit" inside this form, the browser's
+                        own constraint check ran first and refused every
+                        checkout with an empty email. On a field labelled
+                        "(optional)", whose validator treats blank as valid and
+                        which isDetailsValid does not require. Phone is the real
+                        channel and the confirmation mail only sends when
+                        VITE_EMAILJS_CUSTOMER_TEMPLATE_ID is set. Don't re-add
+                        it; a typed address is still checked by
+                        VALIDATORS.email. */}
                     <input
                       className="cc-input" placeholder="Email (optional)" type="email"
                       value={form.email}
@@ -563,7 +577,6 @@ export default function Checkout() {
                       onBlur={() => onFieldBlur('email')}
                       aria-invalid={Boolean(touched.email && errors.email)}
                       style={{ borderColor: touched.email && errors.email ? '#cf3e63' : undefined }}
-                      required
                     />
                     {touched.email && errors.email && (
                       <div className="cc-field-error">{errors.email}</div>
@@ -757,7 +770,9 @@ export default function Checkout() {
                       <span>
                         <div>Cash on Delivery</div>
                         <div style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--cc-cocoa-soft)' }}>
-                          Pay in cash when it arrives
+                          {form.deliveryMethod === 'pickup'
+                            ? 'Pay in cash when you collect'
+                            : 'Pay in cash when it arrives'}
                         </div>
                       </span>
                     </button>
@@ -940,7 +955,12 @@ export default function Checkout() {
                       <div>
                         <strong style={{ color: 'var(--cc-cocoa)' }}>Cash on Delivery</strong>
                         <p className="mb-0 mt-1">
-                          Pay <strong>{inr(total)}</strong> in cash when our delivery partner hands over your order. Please keep the exact amount ready.
+                          {/* This tab also shows for self-pickup, where there
+                              is no delivery partner and nothing arrives at a
+                              door. */}
+                          Pay <strong>{inr(total)}</strong> in cash when you{' '}
+                          {form.deliveryMethod === 'pickup' ? 'collect your order' : 'receive your order'}.
+                          Please keep the exact amount ready.
                         </p>
                       </div>
                     </div>

@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import {
-  FiHeart, FiShoppingBag, FiGift, FiCoffee,
+  FiHeart, FiShoppingBag, FiGift,
   FiSearch, FiMessageCircle, FiClock, FiStar, FiArrowRight,
 } from 'react-icons/fi'
 import { TbLeaf, TbCake } from 'react-icons/tb'
 import { featured } from '../data/products.js'
-import { img, u } from '../data/images.js'
+import { img, u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { useCart } from '../context/CartContext.jsx'
 import HeartDivider from '../components/HeartDivider.jsx'
@@ -32,18 +32,32 @@ export default function Home() {
                 Indulge in<br />Every Bite
               </h1>
               <HeartDivider width={50} />
+              {/* "chocolate and berry delights" named a line the shop does not
+                  sell (there is no chocolate category, and none of the 207 rows
+                  on the counter menu is a truffle) while leaving out most of
+                  what it does. It also said "the finest ingredients" for the
+                  first of what used to be three times on this page. */}
               <p className="cc-home-hero__lede">
-                Handcrafted chocolate and berry delights made with the finest ingredients
-                and a passion for perfection.
+                Cheesecakes, milk cakes, cupcakes and cookies — handmade to order
+                for birthdays, festivals and ordinary Tuesdays.
               </p>
               <Link to="/shop" className="btn-rose mt-3">
                 <FiShoppingBag /> Shop Now
               </Link>
             </div>
             <div className="col-lg-6">
+              {/* The bakery's own work, not a stock bouquet. The hero of a
+                  bakery — the LCP image, above the fold — was a photograph of
+                  roses, while 47 real photos sat unused on /gallery. srcSet
+                  keeps the swap weight-neutral: at these sizes nearly every
+                  viewport takes the 800w variant (39 KB, against the 40 KB the
+                  roses cost). The frame is 5/4 and the source is 16/9, so cover
+                  trims the dark glass at each edge and leaves the tubs. */}
               <img
-                src={u(img.pinkRoses, 1100, 900)}
-                alt="Soft pink rose bouquet"
+                src={u(img.rcOwnMilkcakeTubs)}
+                srcSet={srcSet(img.rcOwnMilkcakeTubs)}
+                sizes="(min-width: 992px) 50vw, 100vw"
+                alt="Eight bento tubs of milk cake — chocolate, blueberry, vanilla, Biscoff, strawberry, pistachio and mango"
                 className="cc-home-hero__img"
                 fetchPriority="high"
               />
@@ -176,51 +190,50 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ───── ABOUT — full-bleed split: image / text / icon stack ───── */}
+      {/* ───── ABOUT — full-bleed split: image / text ─────
+          There was a third column of icons here: Freshly Made / Quality First /
+          Custom Orders. It restated the feature strip at the top of this same
+          page almost line for line — "Freshly Made" against "Nothing Pre-Made",
+          "Custom Orders" against "Made to Your Brief" — so Home told you twice
+          in one scroll. The top strip is the more specific of the two and it
+          carries the registration badges, so it stayed. The two remaining
+          columns are 6/6 where they were 4/5/3. */}
       <section className="cc-home-about">
         <div className="container-fluid p-0">
           <div className="row g-0 align-items-stretch">
-            <div className="col-lg-4">
+            <div className="col-lg-6">
+              {/* Also the roses, so the same file appeared twice on one page.
+                  A tall shot suits this slot: the column stretches to the height
+                  of the text beside it, and cover keeps the drip and the biscuit
+                  crown. */}
               <img
-                src={u(img.pinkRoses, 800, 700)}
-                alt="Soft pink roses bouquet"
+                src={u(img.rcOwnBiscoffDripTop)}
+                srcSet={srcSet(img.rcOwnBiscoffDripTop)}
+                sizes="(min-width: 992px) 50vw, 100vw"
+                alt="Biscoff drip cake topped with Lotus biscuits"
                 className="cc-home-about__img"
               />
             </div>
-            <div className="col-lg-5 d-flex align-items-center">
+            <div className="col-lg-6 d-flex align-items-center">
               <div className="cc-home-about__text">
                 <span className="eyebrow">About Us</span>
                 <h2 className="cc-home-about__title">
                   A little sweetness<br />for every moment
                 </h2>
                 <HeartDivider width={50} />
+                {/* Was the About page's hero lede word for word — and it said
+                    "the finest ingredients and a passion for perfection" for the
+                    second time on this page, the hero above having said it
+                    already. Someone reading Home then About met the same
+                    paragraph twice. This says something neither of them does. */}
                 <p className="cc-home-about__lede">
-                  At Cake &amp; Crumb, we believe every treat tells a story. From rich chocolate
-                  to sweet berries, our creations are made with love, the finest ingredients,
-                  and a passion for perfection.
+                  Cake &amp; Crumb began in a home kitchen in Vaso and still bakes like
+                  one — small batches, piped and finished by hand, and nothing made
+                  until you have ordered it.
                 </p>
                 <Link to="/about" className="btn-rose">
                   <FiHeart /> Learn More
                 </Link>
-              </div>
-            </div>
-            <div className="col-lg-3 d-flex align-items-center">
-              <div className="cc-home-about__features">
-                {[
-                  { Icon: FiCoffee, title: 'Freshly Made', text: 'Every order is made fresh with love.' },
-                  { Icon: TbLeaf, title: 'Quality First', text: 'We source the finest ingredients.' },
-                  { Icon: FiHeart, title: 'Custom Orders', text: 'We create your dream treats.' },
-                ].map(({ Icon, title, text }) => (
-                  <div key={title} className="cc-home-about__feature">
-                    <span className="feature-icon" style={{ width: 46, height: 46 }}>
-                      <Icon size={16} />
-                    </span>
-                    <div>
-                      <div className="tag-badge mb-1">{title}</div>
-                      <p style={{ fontSize: '0.85rem', margin: 0 }}>{text}</p>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           </div>

@@ -66,7 +66,14 @@ function buyLink(photo) {
   const shopCat = CAT_TO_SHOP[photo.cat]
   if (shopCat) return { to: `/shop?category=${encodeURIComponent(shopCat)}`, label: `Browse ${shopCat}` }
 
-  return { to: '/contact', label: 'Ask about a custom cake', custom: true }
+  // Nothing in the catalogue matches and no Shop filter fits. Chocolates is the
+  // live case (see CAT_TO_SHOP) — and "Ask about a custom cake" under a box of
+  // truffles reads like the wrong button, so name what is in the photo.
+  return {
+    to: '/contact',
+    label: photo.cat ? `Ask about ${photo.cat.toLowerCase()}` : 'Ask about a custom cake',
+    custom: true,
+  }
 }
 
 /**

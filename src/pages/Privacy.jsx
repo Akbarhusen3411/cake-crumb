@@ -33,6 +33,10 @@ import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
  * that describes something the site no longer does is the one kind of error
  * here that actually matters.
  */
+// Bumped BY HAND, and only when what this page describes actually changes —
+// see the note above about it having to match what the site really does.
+const LAST_UPDATED = '2 September 2026'
+
 export default function Privacy() {
   usePageMeta({
     title: 'Privacy',
@@ -63,6 +67,7 @@ export default function Privacy() {
             <h2 className="cc-policy__h2"><FiDatabase size={18} /> What we collect</h2>
             <ul className="cc-policy__list">
               <li><strong>When you order</strong> — your name, phone number, delivery address and pincode, the delivery date you choose, and any notes you add. Email is optional.</li>
+              <li><strong>When you send a custom-order enquiry</strong> — your name and phone number, the occasion and the date you need it, and whatever else you choose to fill in (servings, flavour, budget, notes). Email is optional here too.</li>
               <li><strong>When you leave a review</strong> — the name you type, your rating and comment, and a photo if you attach one. <strong>No email address</strong> — the review form does not ask for one.</li>
               <li><strong>When you join the newsletter</strong> — your email address, nothing more.</li>
               <li><strong>We never see your payment details.</strong> UPI happens in your own banking app; no card or bank credentials ever reach this website.</li>
@@ -76,7 +81,7 @@ export default function Privacy() {
                 check progress at <Link to="/track-order">Track Order</Link>. It holds the
                 order ID and status only — <strong>no name, phone or address</strong>.
               </li>
-              <li>Your order summary is sent to us over WhatsApp, and by email so we have a backup. That is between you and us.</li>
+              <li>Your order summary — and any custom-order enquiry you send from the contact form — reaches us over WhatsApp and by email, so nothing is lost if the WhatsApp window fails to open. That is between you and us.</li>
               <li>
                 To work out a delivery charge we look up <strong>your pincode only</strong> —
                 an area, not your street — using the OpenStreetMap service. Your address is
@@ -138,6 +143,7 @@ export default function Privacy() {
             </div>
 
             <p className="cc-policy__note">
+              <strong>Last updated {LAST_UPDATED}.</strong><br />
               Cake &amp; Crumb, Vaso, Kheda, Gujarat 387380, India ·{' '}
               <a href="mailto:cakeandcrumb.in@gmail.com">cakeandcrumb.in@gmail.com</a>
             </p>

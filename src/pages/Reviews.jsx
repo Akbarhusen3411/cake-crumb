@@ -64,6 +64,12 @@ const MIN_REVIEWS_FOR_SCHEMA = 5
  *   • No absolute guarantees. "Always delivered on time" and "on time, every
  *     time" are promises one kitchen cannot make; the wording now says what is
  *     actually done instead.
+ *
+ * RENDERED ONCE, in the closing band at the foot of the page. It was also
+ * rendered inside the stats card near the top — the same four tiles, the same
+ * words, one screen apart, which is the very duplication this constant was
+ * written to end. If you need these tiles higher up, MOVE the closing band;
+ * don't map over it twice.
  */
 const PROMISE_STRIP = [
   { Icon: TbCake,          title: 'Baked to order',    text: 'Nothing sits on a shelf — your order is made for you.' },
@@ -79,7 +85,10 @@ const PAGE_SIZE = 6
 export default function Reviews() {
   usePageMeta({
     title: 'Reviews',
-    description: 'See what our customers say about Cake & Crumb — verified reviews on cheesecakes, milk cakes, cookies and custom cakes.',
+    // NOT "verified reviews" — the Verified Buyer pill was removed from this
+    // page because nothing here can verify a purchase, and this string is what
+    // a search result shows.
+    description: 'See what our customers say about Cake & Crumb — real customer reviews on cheesecakes, milk cakes, cookies and custom cakes.',
   })
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
@@ -374,18 +383,10 @@ export default function Reviews() {
               })}
             </div>
 
-            {/* The one promise strip — see PROMISE_STRIP. */}
-            <div className="cc-reviews-stats__subs">
-              {PROMISE_STRIP.map(({ Icon, title, text }) => (
-                <div key={title} className="cc-reviews-stats__sub">
-                  <span className="cc-features-card__icon cc-features-card__icon--lg">
-                    <Icon size={22} />
-                  </span>
-                  <div className="cc-reviews-stats__sub-title">{title}</div>
-                  <div className="cc-reviews-stats__sub-text">{text}</div>
-                </div>
-              ))}
-            </div>
+            {/* PROMISE_STRIP used to be mapped again here, duplicating the
+                closing band at the foot of the page. This card is now what its
+                name says: the score and the breakdown. Its grid dropped from
+                three columns to two to match — see .cc-reviews-stats. */}
           </div>
         </div>
       </section>

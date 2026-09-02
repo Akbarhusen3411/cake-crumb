@@ -22,6 +22,11 @@ import { inr } from '../data/format.js'
  * The deposit figures are read from shopConfig so they can never fall out of
  * step with what checkout actually charges.
  */
+// Bumped BY HAND, and only when a term on this page actually changes. A date
+// computed from the clock would claim a revision that never happened, which on
+// a policy page is worse than no date at all.
+const LAST_UPDATED = '2 September 2026'
+
 export default function RefundPolicy() {
   usePageMeta({
     title: 'Cancellation & Refunds',
@@ -115,7 +120,8 @@ export default function RefundPolicy() {
             </div>
 
             <p className="cc-policy__note">
-              These terms sit alongside the answers on our <Link to="/faq">FAQ page</Link>.
+              <strong>Last updated {LAST_UPDATED}.</strong> These terms sit alongside the
+              answers on our <Link to="/faq">FAQ page</Link>.
               Cake &amp; Crumb, Vaso, Kheda, Gujarat 387380. FSSAI-registered — the number
               is in the footer of every page.
             </p>
