@@ -30,11 +30,11 @@
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
-  <url>
-    <loc>https://akbarhusen3411.github.io/cake-crumb/review</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
+  <!-- /review is deliberately NOT listed, like /cart and /checkout. It is the
+       same review form already on /reviews, and it is reachable only from the
+       "leave us a review" WhatsApp message the bakery sends after an order — a
+       real link, but a transactional one. Listed here it had search engines
+       indexing a bare duplicate of the reviews page and splitting its signal. -->
   <url>
     <loc>https://akbarhusen3411.github.io/cake-crumb/contact</loc>
     <changefreq>monthly</changefreq>
