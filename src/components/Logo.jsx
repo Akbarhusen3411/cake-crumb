@@ -31,6 +31,10 @@ export default function Logo({ size = 'md' }) {
     <span className="d-inline-flex align-items-center" style={{ gap: '0.65rem' }}>
       <img
         src={LOGO_SRC}
+        srcSet={`${LOGO_BASE}/logo_final-400.webp 400w, ${LOGO_BASE}/logo_final-800.webp 800w`}
+        sizes="120px"
+        width={400}
+        height={267}
         alt=""
         aria-hidden="true"
         fetchPriority="high"

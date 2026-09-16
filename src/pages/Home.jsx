@@ -111,7 +111,13 @@ export default function Home() {
             {featured.map((p) => (
               <div className="col-6 col-lg-3" key={p.id}>
                 <article className="product-card cc-treat-card">
-                  <img src={u(p.img, 600, 600)} alt={p.name} loading="lazy" />
+                  <img
+                    src={u(p.img, 600, 600)}
+                    srcSet={srcSet(p.img)}
+                    sizes="(min-width: 992px) 270px, 48vw"
+                    alt={p.name}
+                    loading="lazy"
+                  />
                   <div className="p-3 text-center">
                     <h3 className="cc-treat-card__name">{p.name}</h3>
                     <div className="cc-treat-card__price">{inr(p.price)}</div>

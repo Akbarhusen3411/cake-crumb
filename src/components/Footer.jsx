@@ -66,7 +66,11 @@ export default function Footer() {
         {/* Brand block — icon + wordmark + tagline + heart divider + quote + socials */}
         <div className="cc-footer-m__brand">
           <img
-            src={asset('logo_final.webp')}
+            src={asset('logo_final-400.webp')}
+            srcSet={`${asset('logo_final-400.webp')} 400w, ${asset('logo_final-800.webp')} 800w`}
+            sizes="120px"
+            width={400}
+            height={267}
             alt=""
             aria-hidden="true"
             className="cc-footer-m__icon"

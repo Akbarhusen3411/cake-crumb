@@ -1338,7 +1338,9 @@ export default function ChatBot() {
             <div className="pointer-events-none absolute -top-10 -right-10 w-28 h-28 rounded-full" style={{ background: 'rgba(224, 97, 122, 0.10)', filter: 'blur(28px)' }} />
 
             <img
-              src={asset('logo_final.webp')}
+              src={asset('logo_final-400.webp')}
+              width={400}
+              height={267}
               alt="Cake & Crumb"
               className="shrink-0"
               style={{ height: 42, width: 'auto', display: 'block' }}
@@ -1402,7 +1404,7 @@ export default function ChatBot() {
                         marginBottom: 2,
                       }}
                     >
-                      <img src={asset('logo_final.webp')} alt="" className="w-full h-full object-cover" />
+                      <img src={asset('logo_final-400.webp')} width={400} height={267} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
                   {msg.cartPreview ? (
@@ -1483,7 +1485,7 @@ export default function ChatBot() {
                     marginBottom: 2,
                   }}
                 >
-                  <img src={asset('logo-icon.png')} alt="" className="w-full h-full object-cover" />
+                  <img src={asset('logo-icon-400.png')} width={400} height={279} alt="" className="w-full h-full object-cover" />
                 </div>
                 <div
                   className="flex items-center gap-1.5 px-4 py-3"
