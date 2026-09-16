@@ -100,7 +100,7 @@
   --cc-cocoa-soft: #7a584d;
   --cc-text: #6b5650;
   --cc-border: #f1d9d4;
-  --cc-header-h: 129px; /* .logo-icon 96 + .container py-3 (32) + 1px border */
+  --cc-header-h: 129px; /* .logo-icon 112 + .container py-2 (16) + 1px border */
 
   /* Interaction motion — one place to retune every button on the site.
      Short on purpose: past about 200ms a press stops feeling like a response
@@ -135,10 +135,10 @@
   outline-offset: 2px;
 }
 @media (max-width: 991.98px) {
-  :root { --cc-header-h: 113px; } /* 80 + 32 + 1 */
+  :root { --cc-header-h: 113px; } /* 96 + 16 + 1 */
 }
 @media (max-width: 575.98px) {
-  :root { --cc-header-h: 97px; }  /* 64 + 32 + 1 */
+  :root { --cc-header-h: 97px; }  /* 80 + 16 + 1 */
 }
 
 * { box-sizing: border-box; }
@@ -1138,16 +1138,16 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
    It used to carry a 1536x1024 canvas with 339px of empty space below the
    drawing, which both pushed the mark visibly high and wasted 39% of every box
    it was given. Re-trim the master if it is ever replaced. */
-.logo-icon { height: 96px; flex-shrink: 0; }
+.logo-icon { height: 112px; flex-shrink: 0; }
 .logo-text { font-size: 1.7rem; }
 .logo-tagline { font-size: 0.85rem; }
 @media (max-width: 991.98px) {
-  .logo-icon { height: 80px; }
+  .logo-icon { height: 96px; }
   .logo-text { font-size: 1.45rem; }
   .logo-tagline { font-size: 0.78rem; }
 }
 @media (max-width: 575.98px) {
-  .logo-icon { height: 64px; }
+  .logo-icon { height: 80px; }
   .logo-text { font-size: 1.25rem; }
   .logo-tagline { font-size: 0.68rem; }
 }
@@ -1155,7 +1155,7 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
   /* No --cc-header-h of its own: below 380 the mark is smaller than the icon
      group beside it, so the icons set the height and it stays at the 97px the
      575 breakpoint declares. Measured, not assumed. */
-  .logo-icon { height: 56px; }
+  .logo-icon { height: 72px; }
   .logo-text { font-size: 1.1rem; }
   .logo-tagline { font-size: 0.6rem; }
 }
@@ -2955,7 +2955,7 @@ html, body { overflow-x: hidden; }
 }
 .cc-footer-m__icon {
   width: auto;
-  height: 92px;
+  height: 110px;
   filter: drop-shadow(0 8px 22px rgba(207, 62, 99, 0.16));
 }
 .cc-footer-m__wordmark {

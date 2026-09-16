@@ -106,7 +106,9 @@ export default function Navbar() {
   // stays brand, navigation, search and cart.
   return (
     <header className={`cc-header${scrolled ? ' is-scrolled' : ''}`}>
-      <div className="container py-3">
+      {/* py-2, not py-3: the 16px freed goes to .logo-icon, so the mark grows
+          without the header moving. Change one and change the other. */}
+      <div className="container py-2">
         <div className="d-flex align-items-center justify-content-between">
           {/* LEFT — brand */}
           <Link to="/" style={{ display: 'inline-flex' }}>

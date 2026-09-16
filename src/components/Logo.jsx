@@ -34,7 +34,7 @@ export default function Logo({ size = 'md' }) {
       <img
         src={LOGO_SRC}
         srcSet={`${LOGO_BASE}/logo_final-400.webp 400w, ${LOGO_BASE}/logo_final-800.webp 800w`}
-        sizes="150px"
+        sizes="170px"
         width={400}
         height={278}
         alt=""
