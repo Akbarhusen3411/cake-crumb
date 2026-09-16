@@ -100,7 +100,10 @@
   --cc-cocoa-soft: #7a584d;
   --cc-text: #6b5650;
   --cc-border: #f1d9d4;
-  --cc-header-h: 129px; /* .logo-icon 112 + .container py-2 (16) + 1px border */
+  /* = .logo-icon + .container py-2 (16px) + 1px border. The mark is stepped,
+     not fluid, precisely so this stays knowable: sticky offsets across the
+     site measure from it. Change a .logo-icon height and change this. */
+  --cc-header-h: 81px; /* 64 + 16 + 1 */
 
   /* Interaction motion — one place to retune every button on the site.
      Short on purpose: past about 200ms a press stops feeling like a response
@@ -134,12 +137,12 @@
   outline: 2px solid #fff;
   outline-offset: 2px;
 }
-@media (max-width: 991.98px) {
-  :root { --cc-header-h: 113px; } /* 96 + 16 + 1 */
-}
 @media (max-width: 575.98px) {
-  :root { --cc-header-h: 97px; }  /* 80 + 16 + 1 */
+  :root { --cc-header-h: 73px; }  /* 56 + 16 + 1 */
 }
+/* No --cc-header-h below 380: the mark is smaller than the icon group beside
+   it there, so the icons set the height and it stays at the 73px the 575
+   breakpoint declares. Measured — the formula stops applying. */
 
 * { box-sizing: border-box; }
 
@@ -1138,26 +1141,33 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
    It used to carry a 1536x1024 canvas with 339px of empty space below the
    drawing, which both pushed the mark visibly high and wasted 39% of every box
    it was given. Re-trim the master if it is ever replaced. */
-.logo-icon { height: 112px; flex-shrink: 0; }
-.logo-text { font-size: 2.2rem; }
-.logo-tagline { font-size: 1rem; }
-@media (max-width: 991.98px) {
-  .logo-icon { height: 96px; }
-  .logo-text { font-size: 1.85rem; }
-  .logo-tagline { font-size: 0.9rem; }
-}
+/* Brand and nav as flex siblings: the brand may shrink and clips if it must,
+   the nav never gives ground. Without min-width: 0 the nowrap wordmark simply
+   overflowed its box and drew on top of the links. */
+.cc-brand { display: inline-flex; min-width: 0; overflow: hidden; }
+.cc-header__right { flex-shrink: 0; }
+/* 64px, deliberately compact. The artwork is trimmed, so the whole box is
+   drawing — a 64px box here shows more mark than the old 78px box did, and
+   leaves the seven nav links the room they need at every width. */
+.logo-icon { height: 64px; flex-shrink: 0; }
+/* The wordmark is white-space: nowrap inside a flex item that may shrink, so at
+   a fixed size it overflowed and painted straight over the nav links. clamp()
+   lets it give way smoothly between breakpoints instead — and it does not
+   affect the header's height, since the mark is always the taller of the two. */
+.logo-text { font-size: clamp(1.02rem, 1.5vw, 1.6rem); }
+.logo-tagline { font-size: clamp(0.56rem, 0.8vw, 0.8rem); }
 @media (max-width: 575.98px) {
-  .logo-icon { height: 80px; }
-  .logo-text { font-size: 1.5rem; }
-  .logo-tagline { font-size: 0.78rem; }
+  .logo-icon { height: 56px; }
+}
+/* The tagline is 41 characters of script and is WIDER than the wordmark above
+   it, so it — not the mark — is what decides how much room the brand takes on a
+   phone. At 400px it left 2px of clearance before the icons. It is decoration;
+   below 480 it goes, and the lockup breathes again. */
+@media (max-width: 480px) {
+  .logo-tagline { display: none; }
 }
 @media (max-width: 380px) {
-  /* No --cc-header-h of its own: below 380 the mark is smaller than the icon
-     group beside it, so the icons set the height and it stays at the 97px the
-     575 breakpoint declares. Measured, not assumed. */
-  .logo-icon { height: 72px; }
-  .logo-text { font-size: 1.1rem; }
-  .logo-tagline { font-size: 0.6rem; }
+  .logo-icon { height: 48px; }
 }
 
 /* Tighter section padding on small screens */
@@ -2955,7 +2965,7 @@ html, body { overflow-x: hidden; }
 }
 .cc-footer-m__icon {
   width: auto;
-  height: 110px;
+  height: 74px;
   filter: drop-shadow(0 8px 22px rgba(207, 62, 99, 0.16));
 }
 .cc-footer-m__wordmark {

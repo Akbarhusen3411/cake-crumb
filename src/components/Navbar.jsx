@@ -111,12 +111,12 @@ export default function Navbar() {
       <div className="container py-2">
         <div className="d-flex align-items-center justify-content-between">
           {/* LEFT — brand */}
-          <Link to="/" style={{ display: 'inline-flex' }}>
+          <Link to="/" className="cc-brand">
             <Logo size="md" />
           </Link>
 
           {/* RIGHT — nav + icons grouped together */}
-          <div className="d-flex align-items-center" style={{ gap: '1.4rem' }}>
+          <div className="d-flex align-items-center cc-header__right" style={{ gap: '1.4rem' }}>
             <nav className="d-none d-lg-flex align-items-center" style={{ gap: '0.35rem' }}>
               {links.map((l) => (
                 <NavLink

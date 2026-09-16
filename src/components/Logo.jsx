@@ -17,7 +17,7 @@ export default function Logo({ size = 'md' }) {
   const iconStyle = isLarge
     ? { height: 110 }
     : isFooter
-      ? { height: 76 }
+      ? { height: 62 }
       : isSmall
       ? { height: 56 }
       : undefined // md → CSS .logo-icon decides
@@ -25,7 +25,7 @@ export default function Logo({ size = 'md' }) {
   const titleStyle = isLarge
     ? { fontSize: '2.4rem' }
     : isFooter
-      ? { fontSize: '1.35rem' }
+      ? { fontSize: '1.2rem' }
       : isSmall
       ? { fontSize: '1.05rem' }
       : undefined // md → CSS .logo-text
@@ -33,7 +33,7 @@ export default function Logo({ size = 'md' }) {
   const taglineStyle = isLarge
     ? { fontSize: '1.05rem' }
     : isFooter
-      ? { fontSize: '0.72rem' }
+      ? { fontSize: '0.66rem' }
       : isSmall
       ? { fontSize: '0.62rem' }
       : undefined // md → CSS .logo-tagline
@@ -43,7 +43,7 @@ export default function Logo({ size = 'md' }) {
       <img
         src={LOGO_SRC}
         srcSet={`${LOGO_BASE}/logo_final-400.webp 400w, ${LOGO_BASE}/logo_final-800.webp 800w`}
-        sizes="170px"
+        sizes="110px"
         width={400}
         height={278}
         alt=""
