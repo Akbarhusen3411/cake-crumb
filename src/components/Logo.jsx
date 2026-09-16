@@ -39,7 +39,7 @@ export default function Logo({ size = 'md' }) {
         aria-hidden="true"
         fetchPriority="high"
         decoding="async"
-        className={size === 'md' ? 'logo-icon' : ''}
+        className={`logo-mark${size === 'md' ? ' logo-icon' : ''}`}
         style={{
           width: 'auto',
           display: 'block',

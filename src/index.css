@@ -1133,6 +1133,15 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
 }
 
 /* Responsive logo — shrink on small screens */
+/* The wordmark sat visibly lower than the cupcake, and the cause is the artwork,
+   not the alignment: logo_final's canvas is 400x267 while the drawing inside it
+   is 232x161, with 17px of empty space above it and 89px below. Flexbox centres
+   the BOX correctly and the picture inside that box is painted 13.5% high.
+   A percentage translate resolves against the element's own height, so this one
+   value stays right at every breakpoint — no per-size nudging. Fix it in the
+   file instead (trim the canvas) and this rule goes, along with the width/height
+   attributes in Logo.jsx, which describe the untrimmed shape. */
+.logo-mark { transform: translateY(13.5%); }
 .logo-icon { height: 96px; flex-shrink: 0; }
 .logo-text { font-size: 1.7rem; }
 .logo-tagline { font-size: 0.85rem; }
