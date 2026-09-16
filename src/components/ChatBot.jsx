@@ -7,6 +7,8 @@ import { asset } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { generateOrderId } from '../services/orderId.js'
 import { saveOrder } from '../services/orders.js'
+// Cheap sync env check — safe to import anywhere, pulls no SDK.
+import { isFirebaseEnabled } from '../firebase.js'
 import { sendOrderEmail, sendCustomerConfirmation } from '../services/emailNotify.js'
 import { deliveryFee, isBulkOrder, depositAmount, DEPOSIT_PCT } from '../data/shopConfig.js'
 import { kmFromBakeryByPincode } from '../services/delivery.js'
@@ -775,7 +777,21 @@ export default function ChatBot() {
     // Persist to Firestore (fire-and-forget, never blocks WhatsApp open).
     // deliveryKm is geocoded from the address pincode (same as website checkout);
     // stored so the admin dashboard shows "~N km away" for bot orders too.
-    saveOrder(orderData)
+    //
+    // The result is read, as on the checkout: `firebaseId` is the only proof the
+    // order reached the bakery, and under App Check enforcement a rejected write
+    // would otherwise leave the bot cheerfully confirming an order nobody has.
+    // `isFirebaseEnabled` separates that from a build with no cloud configured.
+    saveOrder(orderData).then((res) => {
+      if (isFirebaseEnabled && !res?.firebaseId) {
+        addBotMessage(
+          "⚠️ One thing — I couldn't save this order to our system just now, so " +
+          "the WhatsApp message is how we'll receive it. Please make sure it's sent. " +
+          `Your order number is ${orderId}.`,
+          600
+        )
+      }
+    })
 
     // Until now the bot notified nobody: the order landed in Firestore, WhatsApp
     // opened, and that was the whole chain. A blocked pop-up or a customer who

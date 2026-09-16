@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import { FiX } from 'react-icons/fi'
 
 /** Simple brand-styled centered modal used across the accounting admin forms.
@@ -13,12 +13,30 @@ import { FiX } from 'react-icons/fi'
  *  reads as frozen, which is what it did on shorter laptop screens. One
  *  scroller per pane, never one inside another. */
 export default function Modal({ title, subtitle, icon, onClose, children, footer, wide = false, xl = false, full = false, flush = false }) {
+  const titleId = useId()
+  const sheetRef = useRef(null)
+
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = '' }
   }, [onClose])
+
+  // Move focus into the sheet on open and hand it back to whatever opened it on
+  // close — without this, Escape drops a keyboard user back at the top of the
+  // document and a screen reader keeps reading the page behind.
+  //
+  // Deliberately NOT a focus trap: SearchableSelect portals its list onto
+  // <body>, outside this subtree, so a trap would refuse focus to the one
+  // control the order sheet is mostly made of.
+  useEffect(() => {
+    const opener = document.activeElement
+    sheetRef.current?.focus()
+    return () => {
+      if (opener instanceof HTMLElement && document.contains(opener)) opener.focus()
+    }
+  }, [])
 
   return (
     <div
@@ -35,12 +53,20 @@ export default function Modal({ title, subtitle, icon, onClose, children, footer
     >
       <div
         className="cc-modal"
+        ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
         onMouseDown={(e) => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: full ? 1180 : xl ? 900 : wide ? 640 : 480, background: '#fff',
           // A full sheet takes all the height it's offered, so its item list has
           // a stable place to scroll instead of growing the dialog off-screen.
           maxHeight: '100%', height: full ? '100%' : undefined,
+          // Programmatic focus on the container shouldn't draw a ring — it is
+          // not a control, it is just where focus lands when the sheet opens.
+          outline: 'none',
           display: 'flex', flexDirection: 'column',
           borderRadius: 16, boxShadow: '0 24px 60px rgba(120,40,70,0.3)',
         }}
@@ -53,7 +79,7 @@ export default function Modal({ title, subtitle, icon, onClose, children, footer
             }}>{icon}</span>
           ) : null}
           <div style={{ flex: 1 }}>
-            <h5 style={{ margin: 0, fontFamily: 'var(--font-heading, serif)', color: '#cf3e63' }}>{title}</h5>
+            <h5 id={titleId} style={{ margin: 0, fontFamily: 'var(--font-heading, serif)', color: '#cf3e63' }}>{title}</h5>
             {subtitle ? <div style={{ fontSize: 13, color: '#977' }}>{subtitle}</div> : null}
           </div>
           <button type="button" aria-label="Close" onClick={onClose}

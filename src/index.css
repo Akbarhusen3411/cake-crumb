@@ -6592,7 +6592,7 @@ header[style*="sticky"] {
   border: 1px solid #f0dde1;
   border-radius: 9px;
   background: #fff;
-  color: #a8887f;
+  color: #8a6a60;
   cursor: pointer;
   transition: background-color var(--cc-dur-fast, 110ms) var(--cc-ease, ease), color var(--cc-dur-fast, 110ms) var(--cc-ease, ease);
 }
@@ -6745,7 +6745,7 @@ header[style*="sticky"] {
   flex: 1 1 auto;
   min-width: 0;
   font-size: 0.68rem;
-  color: #a8887f;
+  color: #8a6a60;
 }
 
 /* A captioned control in the details column. */
@@ -6759,7 +6759,7 @@ header[style*="sticky"] {
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #a8887f;
+  color: #8a6a60;
 }
 /* The quiet half of a caption — "optional", "shop / venue", a bare ₹. */
 .cc-field__label i {
@@ -6768,7 +6768,7 @@ header[style*="sticky"] {
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
-  color: #c3aeb2;
+  color: #877076;
 }
 .cc-field .form-control,
 .cc-field .form-select {
@@ -6910,7 +6910,7 @@ header[style*="sticky"] {
 .cc-sline__n {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #b59a94;
+  color: #8a6f68;
   font-variant-numeric: lining-nums tabular-nums;
 }
 .cc-sline__fixed,
@@ -6922,7 +6922,7 @@ header[style*="sticky"] {
 }
 /* The menu's rate, shown not typed — see the comment in OrderForm. */
 .cc-sline__fixed { color: #6d5049; font-weight: 600; }
-.cc-sline__fixed--none { color: #c3aeb2; }
+.cc-sline__fixed--none { color: #877076; }
 .cc-sline__money { color: #1b7f5e; }
 .cc-sline__money--spend { color: #b23b3b; }
 /* Captions repeat per row only once the row has folded into a block. */
@@ -6989,7 +6989,7 @@ header[style*="sticky"] {
   background: linear-gradient(180deg, #fff6f2 0%, #fdeef2 100%);
   border-top: 1px solid #f6dde3;
 }
-.cc-stotal span { font-size: 0.78rem; font-weight: 700; color: #8a6a62; }
+.cc-stotal span { font-size: 0.78rem; font-weight: 700; color: #7a584d; }
 /* Playfair's old-style digits sit at uneven heights — figures take the body
    face with lining, tabular numerals, here as everywhere else in the admin. */
 .cc-stotal b {
@@ -7032,7 +7032,7 @@ header[style*="sticky"] {
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #a8887f;
+  color: #8a6a60;
 }
 .cc-ssum__grand b {
   font-family: var(--font-body, sans-serif);
@@ -7051,7 +7051,7 @@ header[style*="sticky"] {
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #a8887f;
+  color: #8a6a60;
 }
 .cc-sheet__foottotal b {
   font-family: var(--font-body, sans-serif);
@@ -7105,7 +7105,7 @@ header[style*="sticky"] {
     font-weight: 800;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: #b59a94;
+    color: #8a6f68;
     text-align: center;
   }
   .cc-sline__amt .cc-sline__cap { text-align: right; }

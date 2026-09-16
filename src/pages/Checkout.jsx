@@ -14,6 +14,8 @@ import { kmFromBakeryByPincode } from '../services/delivery.js'
 import { localIso } from '../utils/adminDate.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { saveOrder } from '../services/orders.js'
+// Cheap sync env check — safe to import anywhere, pulls no SDK.
+import { isFirebaseEnabled } from '../firebase.js'
 import { generateOrderId } from '../services/orderId.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
 import CertBadges from '../components/CertBadges.jsx'
@@ -306,6 +308,13 @@ export default function Checkout() {
     return lines.join('\n')
   }
 
+  // Did the order actually reach the bakery's system? `saveOrder()` has always
+  // returned the answer and both order paths threw it away, which was harmless
+  // while App Check sat on Monitoring — an unattested write was still written.
+  // Under enforcement it is rejected, and the customer would otherwise see a
+  // clean "Order Placed!" over an order nobody received. null = not known yet.
+  const [cloudSaved, setCloudSaved] = useState(null)
+
   function placeOrder(e) {
     e.preventDefault()
     if (!isFormValid) return
@@ -360,7 +369,13 @@ export default function Checkout() {
       notes: form.notes,
       source: 'checkout',
     }
-    saveOrder(orderData)
+    // Fire-and-forget as before — the success screen must not wait on a network
+    // round trip — but the result is now read. `isFirebaseEnabled` separates a
+    // failed write from a build with no cloud configured at all, which is a dev
+    // setup and not something to alarm a customer about.
+    saveOrder(orderData).then((res) => {
+      if (isFirebaseEnabled) setCloudSaved(!!res?.firebaseId)
+    })
     sendOrderEmail(orderData)
     sendCustomerConfirmation(orderData)
     clearStoredCustomer()
@@ -422,22 +437,37 @@ export default function Checkout() {
             )}
           </div>
 
+          {/* The same band, but it stops being reassurance and becomes an
+              instruction when the order didn't reach our system: the WhatsApp
+              message is then the ONLY copy the bakery will ever get. */}
           <div
             className="p-3 p-md-4 mb-4 mx-auto"
             style={{
-              background: 'rgba(37, 211, 102, 0.08)',
-              border: '1.5px solid rgba(37, 211, 102, 0.35)',
+              background: cloudSaved === false ? 'rgba(227, 154, 74, 0.10)' : 'rgba(37, 211, 102, 0.08)',
+              border: `1.5px solid ${cloudSaved === false ? 'rgba(227, 154, 74, 0.55)' : 'rgba(37, 211, 102, 0.35)'}`,
               borderRadius: 14,
               maxWidth: 520,
             }}
           >
             <div className="d-flex align-items-center mb-2" style={{ gap: '0.5rem' }}>
-              <FaWhatsapp size={20} color="#25D366" />
-              <strong style={{ color: 'var(--cc-cocoa)' }}>WhatsApp opened</strong>
+              <FaWhatsapp size={20} color={cloudSaved === false ? '#b06a15' : '#25D366'} />
+              <strong style={{ color: 'var(--cc-cocoa)' }}>
+                {cloudSaved === false ? 'Please send the WhatsApp message' : 'WhatsApp opened'}
+              </strong>
             </div>
             <p style={{ fontSize: '0.88rem', marginBottom: '0.8rem' }}>
-              Your order details are pre-filled in WhatsApp — <strong>just press Send</strong>.
-              If WhatsApp didn't open or got blocked, tap below.
+              {cloudSaved === false ? (
+                <>
+                  We couldn't record this order on our system just now, so the
+                  WhatsApp message is how we'll receive it — <strong>please make sure it's sent</strong>.
+                  Keep your Order ID above; quote it if you need to reach us.
+                </>
+              ) : (
+                <>
+                  Your order details are pre-filled in WhatsApp — <strong>just press Send</strong>.
+                  If WhatsApp didn't open or got blocked, tap below.
+                </>
+              )}
             </p>
             <button
               type="button"
@@ -460,9 +490,15 @@ export default function Checkout() {
             <Link to="/" className="btn-outline-rose">
               <FiHome /> Back to Home
             </Link>
-            <Link to={`/track-order?id=${orderId}`} className="btn-outline-rose">
-              <FiCalendar /> Track Order
-            </Link>
+            {/* Tracking reads the public `tracking` doc written by that same
+                save. If the save didn't land there is nothing to look up, and
+                the page would answer "order not found" — which reads as a lost
+                order rather than a link that was never going to work. */}
+            {cloudSaved === false ? null : (
+              <Link to={`/track-order?id=${orderId}`} className="btn-outline-rose">
+                <FiCalendar /> Track Order
+              </Link>
+            )}
             <Link to="/shop" className="btn-rose">
               <FiShoppingBag /> Continue Shopping
             </Link>
@@ -512,16 +548,17 @@ export default function Checkout() {
                 <div className="row g-3">
                   <div className="col-12">
                     <input
-                      className="cc-input" placeholder="Full Name *"
+                      className="cc-input" aria-label="Full name" placeholder="Full Name *"
                       value={form.name}
                       onChange={(e) => update('name', e.target.value)}
                       onBlur={() => onFieldBlur('name')}
                       aria-invalid={Boolean(touched.name && errors.name)}
+                      aria-describedby={touched.name && errors.name ? 'err-name' : undefined}
                       style={{ borderColor: touched.name && errors.name ? '#cf3e63' : undefined }}
                       required
                     />
                     {touched.name && errors.name && (
-                      <div className="cc-field-error">{errors.name}</div>
+                      <div id="err-name" role="alert" className="cc-field-error">{errors.name}</div>
                     )}
                   </div>
 
@@ -549,13 +586,14 @@ export default function Checkout() {
                         onChange={(e) => update('phone', e.target.value.replace(/\D/g, '').slice(0, 15))}
                         onBlur={onPhoneBlur}
                         aria-invalid={Boolean(touched.phone && errors.phone)}
+                        aria-describedby={touched.phone && errors.phone ? 'err-phone' : undefined}
                         style={{ borderColor: touched.phone && errors.phone ? '#cf3e63' : undefined }}
                         inputMode="numeric"
                         required
                       />
                     </div>
                     {touched.phone && errors.phone && (
-                      <div className="cc-field-error">{errors.phone}</div>
+                      <div id="err-phone" role="alert" className="cc-field-error">{errors.phone}</div>
                     )}
                   </div>
 
@@ -571,15 +609,16 @@ export default function Checkout() {
                         it; a typed address is still checked by
                         VALIDATORS.email. */}
                     <input
-                      className="cc-input" placeholder="Email (optional)" type="email"
+                      className="cc-input" aria-label="Email (optional)" placeholder="Email (optional)" type="email"
                       value={form.email}
                       onChange={(e) => update('email', e.target.value)}
                       onBlur={() => onFieldBlur('email')}
                       aria-invalid={Boolean(touched.email && errors.email)}
+                      aria-describedby={touched.email && errors.email ? 'err-email' : undefined}
                       style={{ borderColor: touched.email && errors.email ? '#cf3e63' : undefined }}
                     />
                     {touched.email && errors.email && (
-                      <div className="cc-field-error">{errors.email}</div>
+                      <div id="err-email" role="alert" className="cc-field-error">{errors.email}</div>
                     )}
                   </div>
                   {/* Delivery method — radio toggle + notice */}
@@ -621,42 +660,48 @@ export default function Checkout() {
                     <textarea
                       className="cc-input"
                       rows={2}
+                      aria-label="Delivery address"
                       placeholder={form.deliveryMethod === 'pickup' ? 'Address (optional for pickup)' : 'Address (House, Street, Area) *'}
                       value={form.address}
                       onChange={(e) => update('address', e.target.value)}
                       onBlur={() => onFieldBlur('address')}
                       aria-invalid={Boolean(form.deliveryMethod === 'delivery' && touched.address && errors.address)}
+                      aria-describedby={form.deliveryMethod === 'delivery' && touched.address && errors.address ? 'err-address' : undefined}
                       style={{ borderColor: form.deliveryMethod === 'delivery' && touched.address && errors.address ? '#cf3e63' : undefined }}
                       required={form.deliveryMethod === 'delivery'}
                     />
                     {form.deliveryMethod === 'delivery' && touched.address && errors.address && (
-                      <div className="cc-field-error">{errors.address}</div>
+                      <div id="err-address" role="alert" className="cc-field-error">{errors.address}</div>
                     )}
                   </div>
                   <div className="col-12 col-md-7">
                     <input
                       className="cc-input"
+                      aria-label="City"
                       placeholder={form.deliveryMethod === 'pickup' ? 'City (optional)' : 'City *'}
                       value={form.city}
                       onChange={(e) => update('city', e.target.value)}
                       onBlur={() => onFieldBlur('city')}
                       aria-invalid={Boolean(form.deliveryMethod === 'delivery' && touched.city && errors.city)}
+                      aria-describedby={form.deliveryMethod === 'delivery' && touched.city && errors.city ? 'err-city' : undefined}
                       style={{ borderColor: form.deliveryMethod === 'delivery' && touched.city && errors.city ? '#cf3e63' : undefined }}
                       required={form.deliveryMethod === 'delivery'}
                     />
                     {form.deliveryMethod === 'delivery' && touched.city && errors.city && (
-                      <div className="cc-field-error">{errors.city}</div>
+                      <div id="err-city" role="alert" className="cc-field-error">{errors.city}</div>
                     )}
                   </div>
                   <div className="col-12 col-md-5">
                     <input
                       className="cc-input"
+                      aria-label="Pincode"
                       placeholder={form.deliveryMethod === 'pickup' ? 'Pincode (optional)' : 'Pincode (6-digit) *'}
                       value={form.pincode}
                       onChange={(e) => update('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
                       inputMode="numeric"
                       onBlur={() => onFieldBlur('pincode')}
                       aria-invalid={Boolean(touched.pincode && errors.pincode && form.deliveryMethod === 'delivery')}
+                      aria-describedby={touched.pincode && errors.pincode && form.deliveryMethod === 'delivery' ? 'err-pincode' : undefined}
                       style={{
                         borderColor:
                           form.deliveryMethod === 'delivery' && touched.pincode && errors.pincode ? '#cf3e63' : undefined,
@@ -664,7 +709,7 @@ export default function Checkout() {
                       required={form.deliveryMethod === 'delivery'}
                     />
                     {form.deliveryMethod === 'delivery' && touched.pincode && errors.pincode && (
-                      <div className="cc-field-error">{errors.pincode}</div>
+                      <div id="err-pincode" role="alert" className="cc-field-error">{errors.pincode}</div>
                     )}
                   </div>
                   <div className="col-12">
@@ -680,11 +725,12 @@ export default function Checkout() {
                       onChange={(e) => update('deliveryDate', e.target.value)}
                       onBlur={() => onFieldBlur('deliveryDate')}
                       aria-invalid={Boolean(touched.deliveryDate && errors.deliveryDate)}
+                      aria-describedby={touched.deliveryDate && errors.deliveryDate ? 'err-deliveryDate' : undefined}
                       style={{ borderColor: touched.deliveryDate && errors.deliveryDate ? '#cf3e63' : undefined }}
                       required
                     />
                     {touched.deliveryDate && errors.deliveryDate ? (
-                      <div className="cc-field-error">{errors.deliveryDate}</div>
+                      <div id="err-deliveryDate" role="alert" className="cc-field-error">{errors.deliveryDate}</div>
                     ) : (
                       <p style={{ fontSize: '0.72rem', color: 'var(--cc-cocoa-soft)', margin: '0.35rem 0 0' }}>
                         Earliest: {formatDateForDisplay(minDeliveryDate)}
@@ -693,7 +739,7 @@ export default function Checkout() {
                   </div>
                   <div className="col-12">
                     <textarea
-                      className="cc-input" rows={2} placeholder="Order notes (e.g. eggless, message on cake) — optional"
+                      className="cc-input" rows={2} aria-label="Order notes (optional)" placeholder="Order notes (e.g. eggless, message on cake) — optional"
                       value={form.notes} onChange={(e) => update('notes', e.target.value)}
                     />
                   </div>
