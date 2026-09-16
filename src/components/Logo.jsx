@@ -9,23 +9,32 @@ const LOGO_SRC = `${LOGO_BASE}/logo_final.webp`
 export default function Logo({ size = 'md' }) {
   const isLarge = size === 'lg'
   const isSmall = size === 'sm'
+  // 'footer' is its own size because 'sm' is shared with InvoiceModal, whose
+  // sheet is pinned to 190mm for print — enlarging sm would resize a bill.
+  const isFooter = size === 'footer'
 
   // Defaults applied via inline (md size). Mobile overrides via CSS classes (.logo-icon etc.).
   const iconStyle = isLarge
     ? { height: 110 }
-    : isSmall
+    : isFooter
+      ? { height: 76 }
+      : isSmall
       ? { height: 56 }
       : undefined // md → CSS .logo-icon decides
 
   const titleStyle = isLarge
     ? { fontSize: '2.4rem' }
-    : isSmall
+    : isFooter
+      ? { fontSize: '1.35rem' }
+      : isSmall
       ? { fontSize: '1.05rem' }
       : undefined // md → CSS .logo-text
 
   const taglineStyle = isLarge
     ? { fontSize: '1.05rem' }
-    : isSmall
+    : isFooter
+      ? { fontSize: '0.72rem' }
+      : isSmall
       ? { fontSize: '0.62rem' }
       : undefined // md → CSS .logo-tagline
 

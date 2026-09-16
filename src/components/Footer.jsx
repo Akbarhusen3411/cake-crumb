@@ -169,7 +169,7 @@ export default function Footer() {
 
             {/* 1. Brand + socials */}
             <div className="col-lg-3 cc-footer-d__col">
-              <Logo size="sm" />
+              <Logo size="footer" />
               <p className="cc-footer-d__tagline">
                 The gourmet chocolate and<br />berry boutique!
               </p>

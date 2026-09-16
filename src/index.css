@@ -1139,17 +1139,17 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
    drawing, which both pushed the mark visibly high and wasted 39% of every box
    it was given. Re-trim the master if it is ever replaced. */
 .logo-icon { height: 112px; flex-shrink: 0; }
-.logo-text { font-size: 1.7rem; }
-.logo-tagline { font-size: 0.85rem; }
+.logo-text { font-size: 2.2rem; }
+.logo-tagline { font-size: 1rem; }
 @media (max-width: 991.98px) {
   .logo-icon { height: 96px; }
-  .logo-text { font-size: 1.45rem; }
-  .logo-tagline { font-size: 0.78rem; }
+  .logo-text { font-size: 1.85rem; }
+  .logo-tagline { font-size: 0.9rem; }
 }
 @media (max-width: 575.98px) {
   .logo-icon { height: 80px; }
-  .logo-text { font-size: 1.25rem; }
-  .logo-tagline { font-size: 0.68rem; }
+  .logo-text { font-size: 1.5rem; }
+  .logo-tagline { font-size: 0.78rem; }
 }
 @media (max-width: 380px) {
   /* No --cc-header-h of its own: below 380 the mark is smaller than the icon
