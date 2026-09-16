@@ -6516,10 +6516,123 @@ header[style*="sticky"] {
 .cc-row-action:hover { background: rgba(207, 62, 99, 0.09); }
 .cc-row-action:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 1px; }
 
+/* The row's actions as one group: evenly spaced, centred under their column,
+   and the destructive one set apart from Edit by a hairline. */
+.cc-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  white-space: nowrap;
+}
+.cc-row-actions .cc-row-action--last {
+  margin-left: 0.25rem;
+  padding-left: 0.42rem;
+  border-left: 1px solid #f2e2e6;
+  border-radius: 0 8px 8px 0;
+}
+
+/* Where an online payment currently sits. One line, always — "✓ Taken to cash"
+   wrapped to two and made that one row half again as tall as the rest. */
+.cc-bankchip {
+  display: inline-block;
+  margin-top: 3px;
+  padding: 1px 9px;
+  border: 1px solid #f0d3a8;
+  border-radius: 999px;
+  background: #fff6e9;
+  color: #c67c17;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--cc-dur-fast, 110ms) var(--cc-ease, ease);
+}
+.cc-bankchip--on { border-color: #bfe3cd; background: #eafaf0; color: #1b7f5e; }
+.cc-bankchip:hover { filter: brightness(0.98); }
+.cc-bankchip:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 1px; }
+/* On a stacked card there's room for the longer wording. */
+.cc-bankchip--card { margin-top: 0.5rem; padding: 2px 12px; font-size: 12px; white-space: normal; }
+
+/* A standing note above a list — said once, quietly, and never again. */
+.cc-acc-note {
+  margin: -0.25rem 0 0.75rem;
+  font-size: 0.8rem;
+  color: #8a7a76;
+}
+
 /* ─────────── admin accounting: tabs, toolbar, filters on small screens ───────────
    Six tab pills wrapped into three ragged rows on a phone, which pushed the
    actual work below the fold and made the row you wanted hard to hit. */
 .cc-admin-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+/* ── the accounting page's own chrome ──
+   Title + page switcher + locks on one line, then the tab bar, then the work.
+   It used to be four stacked bands (nav pills, title, tabs, today strip) before
+   a single figure, which on a laptop is a third of the screen spent on chrome. */
+.cc-acc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  margin-bottom: 0.7rem;
+}
+.cc-acc-head__title {
+  margin: 0;
+  font-family: var(--font-heading, serif);
+  font-size: 1.5rem;
+  color: var(--cc-rose-deep, #cf3e63);
+}
+.cc-acc-head__refresh {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 1px solid #f0dde1;
+  border-radius: 9px;
+  background: #fff;
+  color: #a8887f;
+  cursor: pointer;
+  transition: background-color var(--cc-dur-fast, 110ms) var(--cc-ease, ease), color var(--cc-dur-fast, 110ms) var(--cc-ease, ease);
+}
+.cc-acc-head__refresh:hover { background: #fdeef2; color: var(--cc-rose-deep, #cf3e63); }
+/* Pushes the switcher and the two locks to the right as one group. */
+.cc-acc-head__nav { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-left: auto; }
+
+/* The tab bar reads as a bar — the pills sat on nothing and the eye had to
+   guess where the page's controls ended and its contents began. */
+.cc-acc-tabs {
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid #f4e3e7;
+}
+.cc-acc-tab {
+  padding: 5px 14px;
+  border: 1px solid var(--cc-rose-soft, #d7a7ae);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cc-cocoa, #5b3e36);
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--cc-dur-fast, 110ms) var(--cc-ease, ease), color var(--cc-dur-fast, 110ms) var(--cc-ease, ease);
+}
+.cc-acc-tab:hover { background: #fdeef2; }
+.cc-acc-tab--on {
+  background: var(--cc-rose, #e0617a);
+  border-color: var(--cc-rose, #e0617a);
+  color: #fff;
+}
+.cc-acc-tab:focus-visible { outline: 2px solid var(--cc-rose-deep, #cf3e63); outline-offset: 2px; }
+
+@media (max-width: 575.98px) {
+  .cc-acc-head__title { font-size: 1.25rem; }
+  /* The switcher takes its own line rather than squeezing beside the locks. */
+  .cc-acc-head__nav { flex: 1 1 100%; margin-left: 0; }
+}
 
 @media (max-width: 767.98px) {
   /* One swipeable row instead. Bleeds to the container edges so the cut-off
@@ -6558,192 +6671,451 @@ header[style*="sticky"] {
   }
 }
 
-/* ─────────── admin accounting: the New / Edit Order sheet ───────────
-   One item is one row of a small rose-headed table: #, the three pickers, qty,
-   the menu's rate, the line's total, remove. The fields carry their own borders
-   and the columns are separated by nothing else, so the sheet stays light —
-   ruled cells around bordered inputs drew every line twice. */
-.cc-oitems__head {
+/* ═══════ admin accounting: the New Order / New Expense entry sheets ═══════
+   Both sheets are one layout: the item list takes the width and the height, and
+   everything asked once per order — date, customer, how it was paid — sits in a
+   column beside it. Written for a long bill: thirty items scroll one list while
+   the total, the details and the Save button all stay where they were.
+
+   ONE SCROLLER PER PANE, NEVER ONE INSIDE ANOTHER. The old sheet scrolled the
+   dialog body AND the item grid inside it, both with `overscroll-behavior:
+   contain` — on a shorter laptop screen the wheel stopped dead at the end of the
+   inner list and the sheet read as frozen. Above 992px the list and the details
+   column each scroll on their own inside a dialog body that doesn't; below it
+   they stack and the body is the only scroller (see Modal's `flush`). */
+.cc-sheet {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.cc-sheet__side {
+  flex: 0 0 auto;
+  padding: 0.95rem 1rem 1.1rem;
+  background: linear-gradient(180deg, #fffaf8 0%, #fdf1f4 100%);
+  border-bottom: 1px solid #f4dfe4;
+}
+.cc-sheet__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0.95rem 1rem 1.1rem;
+}
+@media (min-width: 992px) {
+  .cc-sheet { flex-direction: row; height: 100%; min-height: 0; }
+  /* Details are written first in the DOM — on a phone they're the first thing
+     asked — and sent to the right-hand column here, where the list leads. */
+  .cc-sheet__side {
+    order: 2;
+    flex: 0 0 19rem;
+    border-bottom: 0;
+    border-left: 1px solid #f4dfe4;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .cc-sheet__main { min-height: 0; }
+}
+
+.cc-sheet__sidetitle {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.4rem;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cc-rose-deep, #cf3e63);
 }
-.cc-oitems__title {
+.cc-sheet__sidetitle::after { content: ''; flex: 1 1 auto; height: 1px; background: #f2d9de; }
+
+.cc-sheet__panehead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+.cc-sheet__title {
   font-family: var(--font-heading, serif);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--cc-cocoa, #5b3e36);
 }
-.cc-oitems__hint {
+.cc-sheet__hint {
   flex: 1 1 auto;
-  text-align: right;
-  font-size: 0.7rem;
+  min-width: 0;
+  font-size: 0.68rem;
   color: #a8887f;
 }
-/* Add item: a labelled pill, because it's the one control the owner reaches for
-   over and over while writing a bill. */
-.cc-additem {
-  flex: 0 0 auto;
+
+/* A captioned control in the details column. */
+.cc-field { margin-bottom: 0.7rem; }
+.cc-field__label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #a8887f;
+}
+/* The quiet half of a caption — "optional", "shop / venue", a bare ₹. */
+.cc-field__label i {
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #c3aeb2;
+}
+.cc-field .form-control,
+.cc-field .form-select {
+  border-color: #eddbe0;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+.cc-field .form-control:focus,
+.cc-field .form-select:focus {
+  border-color: var(--cc-rose, #e0617a);
+  box-shadow: 0 0 0 3px rgba(224, 97, 122, 0.14);
+}
+.cc-field textarea.form-control { resize: vertical; }
+
+/* An answer pressed, not a list opened and picked from. Paid / Cash / Status
+   were three identical grey selects — three taps each on a touchscreen, and
+   nothing on the sheet said which answer was the usual one. */
+.cc-seg { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.cc-seg__btn {
+  flex: 1 1 5.5rem;
+  min-width: 5rem;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
-  padding: 0.4rem 0.85rem;
-  border: 1px solid #f3ccd8;
+  padding: 0.42rem 0.6rem;
+  border: 1px solid #eddbe0;
   border-radius: 10px;
   background: #fff;
-  color: var(--cc-rose-deep, #cf3e63);
-  font-size: 0.85rem;
+  color: #7a584d;
+  font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.12s ease, box-shadow 0.12s ease;
+  transition:
+    background-color var(--cc-dur-fast, 110ms) var(--cc-ease, ease),
+    border-color var(--cc-dur-fast, 110ms) var(--cc-ease, ease),
+    color var(--cc-dur-fast, 110ms) var(--cc-ease, ease);
 }
-.cc-additem:hover { background: #fdeef2; box-shadow: 0 2px 10px rgba(207, 62, 99, 0.14); }
-.cc-additem:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 2px; }
+.cc-seg__ico { display: flex; }
+.cc-seg__btn:hover { background: #fdf4f6; border-color: #f0ccd6; }
+.cc-seg__btn:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 2px; }
+.cc-seg__btn[aria-pressed='true'] {
+  background: var(--cc-rose-deep, #cf3e63);
+  border-color: var(--cc-rose-deep, #cf3e63);
+  color: #fff;
+}
+.cc-seg__btn--ok[aria-pressed='true'] { background: #1b7f5e; border-color: #1b7f5e; }
+.cc-seg__btn--danger[aria-pressed='true'] { background: #b23b3b; border-color: #b23b3b; }
+/* Money still owed is amber everywhere else in the admin (.cc-row-unpaid), and
+   amber deep enough to carry white text stops looking like the same colour. */
+.cc-seg__btn--warn[aria-pressed='true'] {
+  background: #fff4e6;
+  border-color: #e39a4a;
+  color: #8a5a10;
+  box-shadow: inset 0 0 0 1px #e39a4a;
+}
 
-.cc-otable {
-  border: 1px solid #f4dfe4;
+/* The item list. Column widths are declared once on the frame and inherited by
+   the header row and every item row, so the two can't drift apart. */
+.cc-stable {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid #f1dde2;
   border-radius: 14px;
   background: #fff;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(120, 60, 80, 0.05);
 }
-/* Past six items the grid scrolls on its own, so the total and the Save button
-   stay where they were. The dropdowns are portalled onto <body>, so this can't
-   clip them. */
-.cc-otable--scroll {
-  max-height: 17.5rem;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+.cc-stable--order {
+  --cc-cols: 1.8rem minmax(4.5rem, 1.05fr) minmax(6rem, 1.75fr) minmax(4.5rem, 1.1fr) 4rem 5rem 5.6rem 2.2rem;
 }
-.cc-otable--scroll .cc-oline--head { position: sticky; top: 0; z-index: 2; }
+.cc-stable--expense {
+  --cc-cols: 1.8rem minmax(7rem, 1fr) 4.4rem 5.6rem 6rem 2.2rem;
+}
+/* A wide screen can afford the roomier details column. */
+@media (min-width: 1280px) {
+  .cc-sheet__side { flex: 0 0 21rem; }
+}
+.cc-stable__scroll { min-height: 0; }
+@media (min-width: 992px) {
+  /* Hugs its rows (0 1 auto), so three items don't leave a white void between
+     the last row and the total band — and shrinks, scrolling inside, the moment
+     the list outgrows the pane. */
+  .cc-sheet__main .cc-stable { flex: 0 1 auto; }
+  .cc-stable__scroll { flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; }
+}
 
-.cc-oline { display: flex; flex-wrap: wrap; align-items: center; }
-.cc-oline + .cc-oline { border-top: 1px solid #f9edf0; }
-.cc-oline__cell {
+.cc-sline {
+  display: grid;
+  grid-template-columns: var(--cc-cols);
+  align-items: center;
+  column-gap: 0.4rem;
+  padding: 0.25rem 0.55rem;
+}
+.cc-sline + .cc-sline { border-top: 1px solid #f9edf0; }
+.cc-sline:not(.cc-sline--head):hover { background: #fffafb; }
+/* The row being written is marked, so a twenty-line bill says where you are. */
+.cc-sline:not(.cc-sline--head):focus-within {
+  background: #fff6f8;
+  box-shadow: inset 3px 0 0 0 var(--cc-rose, #e0617a);
+}
+.cc-sline--head {
+  padding-block: 0.5rem;
+  background: #fdeef2;
+  border-bottom: 1px solid #f6dde3;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cc-rose-deep, #cf3e63);
+}
+.cc-sline__cell {
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: 0;
-  min-height: 2.9rem;
-  padding: 0.2rem 0.3rem;
+  min-height: 2.75rem;
 }
-.cc-oline .form-control {
+/* SearchableSelect's own wrapper, which has to fill the cell. */
+.cc-sline__cell > div { width: 100%; }
+.cc-sline .form-control {
   width: 100%;
+  min-width: 0;
   border: 1px solid #eddbe0;
   border-radius: 9px;
   background: #fff;
   font-size: 0.85rem;
   font-variant-numeric: lining-nums tabular-nums;
 }
-.cc-oline .form-control:focus {
+.cc-sline .form-control:focus {
   border-color: var(--cc-rose, #e0617a);
   box-shadow: 0 0 0 3px rgba(224, 97, 122, 0.14);
 }
-.cc-oline__cell > div { width: 100%; }
-
-.cc-oline__n {
-  flex: 0 0 1.8rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #9a7c74;
-  font-variant-numeric: lining-nums tabular-nums;
-}
-.cc-oline__cat { flex: 1 1 8rem; }
-.cc-oline__item { flex: 2 1 10rem; }
-.cc-oline__size { flex: 1 1 7.5rem; }
-.cc-oline__qty { flex: 0 0 4rem; }
-.cc-oline__price { flex: 0 0 5.4rem; }
-.cc-oline__total { flex: 0 0 5.6rem; }
-.cc-oline__del { flex: 0 0 3rem; }
 /* Figures centre under the caption that names them — a right-aligned value
    under a centred caption read as two different columns. */
-.cc-oline__qty .form-control,
-.cc-oline__price .form-control { text-align: center; }
-.cc-oline__fixed,
-.cc-oline__total {
+.cc-sline__qty .form-control,
+.cc-sline__rate .form-control { text-align: center; }
+.cc-sline__n {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #b59a94;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-sline__fixed,
+.cc-sline__money {
   font-size: 0.86rem;
   font-weight: 700;
   white-space: nowrap;
   font-variant-numeric: lining-nums tabular-nums;
 }
 /* The menu's rate, shown not typed — see the comment in OrderForm. */
-.cc-oline__fixed { color: #6d5049; font-weight: 600; }
-.cc-oline__fixed--none { color: #c3aeb2; }
-.cc-oline__total { color: #1b7f5e; }
+.cc-sline__fixed { color: #6d5049; font-weight: 600; }
+.cc-sline__fixed--none { color: #c3aeb2; }
+.cc-sline__money { color: #1b7f5e; }
+.cc-sline__money--spend { color: #b23b3b; }
+/* Captions repeat per row only once the row has folded into a block. */
+.cc-sline__cap { display: none; }
 /* Per-piece item still on 1 — the save will refuse it, so say so on the row. */
-.cc-oline--short .cc-oline__qty .form-control {
+.cc-sline--short .cc-sline__qty .form-control {
   border-color: var(--cc-rose-deep, #cf3e63);
   background: #fdeef2;
 }
+/* A named item with no rate is the one mistake that books an order worth ₹0.
+   Flagged where it happens rather than only in the alert at save. */
+.cc-sline--noprice { background: #fffaf2; box-shadow: inset 3px 0 0 0 #e39a4a; }
 
-.cc-oline--head {
-  background: #fdeef2;
-  border-radius: 13px 13px 0 0;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--cc-rose-deep, #cf3e63);
+.cc-srow-del {
+  width: 1.9rem;
+  height: 1.9rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #c98f9c;
+  cursor: pointer;
+  transition:
+    background-color var(--cc-dur-fast, 110ms) var(--cc-ease, ease),
+    color var(--cc-dur-fast, 110ms) var(--cc-ease, ease),
+    border-color var(--cc-dur-fast, 110ms) var(--cc-ease, ease);
 }
-.cc-oline--head .cc-oline__cell {
-  min-height: 2.3rem;
-  color: inherit;
-  font: inherit;
-}
+.cc-srow-del svg { width: 16px; height: 16px; }
+.cc-srow-del:hover { background: #fdeef2; border-color: #f3ccd8; color: #b23b3b; }
+.cc-srow-del:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 1px; }
 
-/* The order's total closes the table on its own band, so it reads as the sum of
-   the column above it rather than as one more field in the form. */
-.cc-ototal {
+/* The one add control on the sheet — a labelled pill in the pane header said the
+   same thing a second time on the same screen. Outside the scroller, so it sits
+   under the last visible row however long the list gets, and right where the
+   hand already is after filling one in. */
+.cc-saddrow {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding: 0.55rem 0.9rem;
-  background: #fdeef2;
-  border-top: 1px solid #f6dde3;
-  border-radius: 0 0 13px 13px;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.55rem;
+  border: 0;
+  border-top: 1px dashed #f3d9df;
+  background: #fffdfd;
+  color: var(--cc-rose-deep, #cf3e63);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--cc-dur-fast, 110ms) var(--cc-ease, ease);
 }
-.cc-ototal span { font-size: 0.85rem; font-weight: 600; color: #7a584d; }
-.cc-ototal b {
-  font-size: 1.35rem;
+.cc-saddrow:hover { background: #fdeef2; }
+.cc-saddrow:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: -2px; }
+
+/* The total closes the table on its own band, so it reads as the sum of the
+   column above it rather than as one more field in the form. */
+.cc-stotal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.9rem;
+  background: linear-gradient(180deg, #fff6f2 0%, #fdeef2 100%);
+  border-top: 1px solid #f6dde3;
+}
+.cc-stotal span { font-size: 0.78rem; font-weight: 700; color: #8a6a62; }
+/* Playfair's old-style digits sit at uneven heights — figures take the body
+   face with lining, tabular numerals, here as everywhere else in the admin. */
+.cc-stotal b {
+  font-family: var(--font-body, sans-serif);
+  font-size: 1.3rem;
+  font-weight: 800;
   color: var(--cc-rose-deep, #cf3e63);
   font-variant-numeric: lining-nums tabular-nums;
 }
+.cc-stotal--spend b { color: #b23b3b; }
 
-/* A select with a glyph in its gutter — the three closing choices read as one
-   set that way, instead of three identical grey boxes. */
-.cc-isel { position: relative; }
-.cc-isel > svg {
-  position: absolute;
-  left: 0.7rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--cc-rose, #e0617a);
-  pointer-events: none;
+/* What the sheet adds up to, in the details column. */
+.cc-ssum {
+  margin-top: 0.9rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #f3d3d8;
+  border-radius: 14px;
+  background: #fff;
 }
-.cc-isel .form-select { padding-left: 2.2rem; }
+.cc-ssum__row,
+.cc-ssum__grand {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.cc-ssum__row { padding: 0.12rem 0; font-size: 0.8rem; color: #7a584d; }
+.cc-ssum__row b {
+  font-weight: 700;
+  color: var(--cc-cocoa, #5b3e36);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-ssum__grand {
+  margin-top: 0.4rem;
+  padding-top: 0.45rem;
+  border-top: 1px dashed #f0d0d8;
+}
+.cc-ssum__grand span {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #a8887f;
+}
+.cc-ssum__grand b {
+  font-family: var(--font-body, sans-serif);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--cc-rose-deep, #cf3e63);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-ssum__grand--spend b { color: #b23b3b; }
+
+/* The total rides with the buttons too, so it's still in front of you on a
+   phone once the details column has scrolled away. */
+.cc-sheet__foottotal { display: flex; align-items: baseline; gap: 0.5rem; }
+.cc-sheet__foottotal span {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #a8887f;
+}
+.cc-sheet__foottotal b {
+  font-family: var(--font-body, sans-serif);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--cc-rose-deep, #cf3e63);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-sheet__foottotal--spend b { color: #b23b3b; }
 
 @media (max-width: 767.98px) {
-  /* Folded: the captions no longer sit over what they name, so they go, and
-     each item becomes its own boxed block instead of a table row. */
-  .cc-oline--head { display: none; }
-  .cc-oitems__hint { display: none; }
-  .cc-otable { border: 0; background: none; }
-  /* Folded rows are blocks, not lines — six of them don't fit a phone window
-     worth scrolling inside. The sheet's own scroll does the job here. */
-  .cc-otable--scroll { max-height: none; overflow: visible; }
-  .cc-oline {
-    border: 1px solid #f4dfe4;
-    border-radius: 12px;
-    background: #fdf9fa;
-    padding: 0.3rem;
+  /* Folded: the captions no longer sit over what they name, so each row becomes
+     its own boxed block and carries its own little captions instead. */
+  .cc-sheet__side, .cc-sheet__main { padding: 0.8rem 0.8rem 1rem; }
+  .cc-sheet__hint { display: none; }
+  .cc-stable {
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    overflow: visible;
   }
-  .cc-oline + .cc-oline { margin-top: 0.45rem; border-top: 1px solid #f4dfe4; }
-  .cc-oline__cell { min-height: 2.6rem; }
-  .cc-oline__n { flex: 0 0 1.4rem; }
-  .cc-oline__cat, .cc-oline__item { flex: 1 1 9rem; }
-  .cc-oline__size { flex: 1 1 100%; }
-  .cc-oline__qty, .cc-oline__price { flex: 1 1 4rem; }
-  .cc-oline__total { flex: 1 1 auto; }
-  .cc-ototal { margin-top: 0.5rem; border-radius: 12px; border: 1px solid #f6dde3; }
+  .cc-sline--head { display: none; }
+  .cc-sline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.45rem 0.5rem;
+    border: 1px solid #f1dde2;
+    border-radius: 12px;
+    background: #fff;
+  }
+  .cc-sline + .cc-sline { margin-top: 0.5rem; border-top: 1px solid #f1dde2; }
+  .cc-sline__cell {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    min-height: 2.5rem;
+  }
+  .cc-sline__n { flex: 0 0 1.5rem; align-items: center; }
+  .cc-sline__cat { flex: 1 1 7rem; }
+  .cc-sline__del { flex: 0 0 2rem; margin-left: auto; align-items: center; }
+  .cc-sline__item, .cc-sline__size { flex: 1 1 100%; }
+  .cc-sline__qty { flex: 0 0 4.4rem; }
+  .cc-sline__rate { flex: 0 0 5.4rem; align-items: center; }
+  .cc-sline__amt { flex: 1 1 auto; align-items: flex-end; }
+  .cc-sline__cap {
+    display: block;
+    margin-bottom: 0.1rem;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #b59a94;
+    text-align: center;
+  }
+  .cc-sline__amt .cc-sline__cap { text-align: right; }
+  .cc-saddrow { margin-top: 0.5rem; border: 1px dashed #f0ccd6; border-radius: 12px; background: #fff; }
+  .cc-stotal { margin-top: 0.6rem; border: 1px solid #f6dde3; border-radius: 12px; }
+}
+@media (max-width: 575.98px) {
+  /* Three things on one footer row won't fit — the figure stays, its caption
+     goes; "Total spent" is written on the band above it anyway. */
+  .cc-sheet__foottotal span { display: none; }
 }
 
 /* The round action on a "You might also like" card — a + that adds, or a chevron
@@ -6772,8 +7144,8 @@ header[style*="sticky"] {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem 1rem;
-  margin-bottom: 0.85rem;
-  padding: 0.5rem 0.85rem;
+  margin-bottom: 0.6rem;
+  padding: 0.4rem 0.8rem;
   border: 1px solid #f4dfe4;
   border-radius: 12px;
   background: linear-gradient(160deg, #fff6f2 0%, #fdeef2 100%);
@@ -6851,66 +7223,6 @@ header[style*="sticky"] {
 .cc-card-action svg { width: 18px; height: 18px; }
 .cc-card-action:active { background: #fdeef2; }
 
-/* Icon-only add button — the expense sheet's version of .cc-additem. */
-.cc-oadd {
-  flex: 0 0 auto;
-  width: 1.9rem;
-  height: 1.9rem;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--cc-rose-soft, #d7a7ae);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--cc-rose-deep, #cf3e63);
-  cursor: pointer;
-  transition: background-color 0.12s ease, transform 0.12s ease;
-}
-.cc-oadd svg { width: 17px; height: 17px; }
-.cc-oadd:hover { background: #fdeef2; transform: scale(1.06); }
-.cc-oadd:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 2px; }
-
-/* Expense items: Item · Qty · ₹ each · line total · remove. */
-.cc-exp-row { display: flex; align-items: center; gap: 0.5rem; }
-.cc-exp-row--head {
-  font-size: 0.68rem;
-  color: #a8887f;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 0.25rem;
-}
-/* Captions borrow the cells' widths, not the Total cell's red bold. */
-.cc-exp-row--head > * { color: inherit; font: inherit; letter-spacing: inherit; }
-.cc-exp-row .cc-exp-name { flex: 1 1 8rem; min-width: 0; }
-.cc-exp-row .cc-exp-qty { flex: 0 0 3.6rem; text-align: center; }
-.cc-exp-row .cc-exp-rate { flex: 0 0 5rem; text-align: center; }
-.cc-exp-row .cc-exp-total {
-  flex: 0 0 5.2rem;
-  text-align: center;
-  font-weight: 700;
-  font-size: 0.86rem;
-  color: #b23b3b;
-  white-space: nowrap;
-  font-variant-numeric: lining-nums tabular-nums;
-}
-.cc-exp-row .cc-exp-del { flex: 0 0 2.6rem; padding: 0.35rem; }
-@media (max-width: 575.98px) {
-  /* Five cells won't sit on a phone line: the name takes its own, the figures
-     share the next. The captions stop lining up, so they go. */
-  .cc-exp-row { flex-wrap: wrap; }
-  .cc-exp-row--head { display: none; }
-  .cc-exp-row .cc-exp-name { flex: 1 1 100%; }
-  .cc-exp-row .cc-exp-qty, .cc-exp-row .cc-exp-rate { flex: 1 1 4rem; }
-  .cc-exp-row .cc-exp-total { flex: 1 1 auto; }
-}
-
-/* Expense items: same six-then-scroll rule as the order grid. */
-.cc-explist--scroll {
-  max-height: 17.5rem;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-right: 0.25rem;
-}
-
 /* Ruled admin table. Bootstrap draws only horizontal lines, which left ten
    columns of text with nothing to hold a value to its own column. */
 .cc-grid-table > :not(caption) > * > * {
@@ -6937,15 +7249,15 @@ header[style*="sticky"] {
    second coloured rail right down the middle of the admin. Each of these has a
    visibly cut-off row at its edge, which is the cue to scroll. */
 .cc-table-scroll,
-.cc-otable--scroll,
-.cc-explist--scroll,
+.cc-stable__scroll,
+.cc-sheet__side,
 .cc-modal-body {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 .cc-table-scroll::-webkit-scrollbar,
-.cc-otable--scroll::-webkit-scrollbar,
-.cc-explist--scroll::-webkit-scrollbar,
+.cc-stable__scroll::-webkit-scrollbar,
+.cc-sheet__side::-webkit-scrollbar,
 .cc-modal-body::-webkit-scrollbar { width: 0; height: 0; display: none; }
 /* The header has to stay put and paint its own background — a background on
    <thead> doesn't travel with a sticky <th>. */
@@ -7032,6 +7344,18 @@ header[style*="sticky"] {
    sizes the sheet to the viewport and lets taller content spill out past its
    own white background, which is how the page behind showed through. */
 .cc-modal-body { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+
+/* The entry sheets lay out their own panes and scroll them themselves — the
+   body must add no padding and must not be a second scroller around them. Below
+   992px the panes stack and this becomes the one scroller again. */
+.cc-modal-body.cc-modal-body--flush { padding: 0 !important; overflow-y: auto; }
+@media (min-width: 992px) {
+  /* A flex parent, so the sheet inherits the body's height by stretching rather
+     than by resolving a percentage against a flex item — the percentage path is
+     the one that quietly gives up and lets the panes collapse. */
+  .cc-modal-body.cc-modal-body--flush { overflow: hidden; display: flex; }
+  .cc-modal-body.cc-modal-body--flush > .cc-sheet { flex: 1 1 auto; min-width: 0; }
+}
 
 @media (max-width: 575.98px) {
   .cc-modal-backdrop { padding: 0 !important; }

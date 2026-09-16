@@ -8,10 +8,13 @@ const LINKS = [
   { to: '/admin/accounting', label: 'Daily Accounting', Icon: FiDollarSign },
 ]
 
-export default function AdminNav() {
+/** `className` lets a page drop the standalone row and sit the pills inside its
+ *  own header line — a full row of its own for two pills was a band of empty
+ *  space above every accounting screen. */
+export default function AdminNav({ className = 'd-flex flex-wrap gap-2 mb-3' }) {
   const { pathname } = useLocation()
   return (
-    <div className="d-flex flex-wrap gap-2 mb-3">
+    <div className={className}>
       {LINKS.map(({ to, label, Icon }) => {
         const on = pathname === to || pathname.endsWith(to)
         return (

@@ -320,7 +320,7 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
         </button>
       </div>
 
-      <div className="cc-admin-toolbar d-flex flex-wrap gap-2 align-items-center mb-3">
+      <div className="cc-admin-toolbar d-flex flex-wrap gap-2 align-items-center mb-2">
         <button className="cc-admin-toolbar-btn btn text-white d-inline-flex align-items-center gap-2" style={{ background: 'var(--cc-rose,#e0617a)', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => setEditing({})}>
           <FiPlus /> New Order
         </button>
@@ -339,7 +339,7 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
         </span>
       </div>
 
-      <div className="cc-admin-filters d-flex flex-wrap align-items-center gap-3 mb-3">
+      <div className="cc-admin-filters d-flex flex-wrap align-items-center gap-3 mb-2">
         <FilterChips
           label="Payment" options={PAY_FILTERS} value={payFilter}
           onChange={(v) => { setPayFilter(v); setPage(1) }}
@@ -366,10 +366,11 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
         )}
       </div>
 
-      <p className="small text-muted mb-3" style={{ marginTop: -6 }}>
-        💡 For <strong>Online</strong> orders, tap <span style={{ color: '#c67c17', fontWeight: 700 }}>In bank</span> once
-        you’ve taken that money out — it flips to <span style={{ color: '#1b7f5e', fontWeight: 700 }}>Taken to cash</span>,
-        so you always know which online payments are still sitting in the bank.
+      {/* Three lines of standing explanation sat above the table on every
+          visit. The rest of it is on the chip's own tooltip. */}
+      <p className="cc-acc-note">
+        💡 On an Online order, tap <span style={{ color: '#c67c17', fontWeight: 700 }}>In bank</span> once
+        you’ve taken that money out — it flips to <span style={{ color: '#1b7f5e', fontWeight: 700 }}>Taken to cash</span>.
       </p>
 
       {rows.length === 0 ? (
@@ -414,11 +415,8 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
               <div className="mt-2" style={{ color: '#7a584d' }}><ItemLines order={o} /></div>
               {isBankable(o) && (
                 <button
-                  className="btn btn-sm mt-2" onClick={() => toggleWithdrawn(o)}
-                  style={{ border: '1px solid', borderRadius: 999, fontSize: 12, padding: '2px 12px',
-                    borderColor: o.withdrawn ? '#bfe3cd' : '#f0d3a8',
-                    background: o.withdrawn ? '#eafaf0' : '#fff6e9',
-                    color: o.withdrawn ? '#1b7f5e' : '#c67c17' }}
+                  type="button" onClick={() => toggleWithdrawn(o)}
+                  className={`cc-bankchip cc-bankchip--card${o.withdrawn ? ' cc-bankchip--on' : ''}`}
                 >
                   {o.withdrawn ? '✓ Taken to cash' : 'In bank — tap when withdrawn'}
                 </button>
@@ -492,22 +490,27 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
                   <td className="text-center">
                     <div>{o.method}</div>
                     {isBankable(o) && (
-                      <button onClick={() => toggleWithdrawn(o)} title="Money withdrawn from bank?"
-                        style={{ marginTop: 3, border: '1px solid', borderRadius: 999, fontSize: 11, padding: '1px 8px', cursor: 'pointer',
-                          borderColor: o.withdrawn ? '#bfe3cd' : '#f0d3a8',
-                          background: o.withdrawn ? '#eafaf0' : '#fff6e9',
-                          color: o.withdrawn ? '#1b7f5e' : '#c67c17' }}>
+                      // Kept on one line: wrapped to two it made that row half
+                      // again as tall as its neighbours, for one small chip.
+                      <button type="button" onClick={() => toggleWithdrawn(o)}
+                        title={o.withdrawn ? 'Taken out of the bank — tap to undo' : 'Money withdrawn from bank?'}
+                        className={`cc-bankchip${o.withdrawn ? ' cc-bankchip--on' : ''}`}>
                         {o.withdrawn ? '✓ Taken to cash' : 'In bank'}
                       </button>
                     )}
                   </td>
                   <td style={{ color: statusInk(o.status), fontWeight: 600, whiteSpace: 'nowrap' }}>{o.status}</td>
-                  <td className="text-nowrap">
-                    <button className="cc-row-action text-secondary" title="Mark paid/unpaid" onClick={() => togglePaid(o)}><FiRepeat /></button>
-                    <button className="cc-row-action text-secondary" title="Invoice" onClick={() => setInvoiceOf(o)}><FiFileText /></button>
-                    <button className="cc-row-action text-secondary" title="Duplicate — same items, today" onClick={() => duplicate(o)}><FiCopy /></button>
-                    <button className="cc-row-action" style={{ color: '#cf3e63' }} title="Edit" onClick={() => setEditing(o)}><FiEdit2 /></button>
-                    <button className="cc-row-action text-danger" title="Delete" onClick={() => remove(o)}><FiTrash2 /></button>
+                  {/* One group, evenly spaced, with the delete set apart — five
+                      inline buttons ran together and the destructive one sat
+                      flush against Edit. */}
+                  <td>
+                    <div className="cc-row-actions">
+                      <button className="cc-row-action text-secondary" title={o.paid ? 'Mark unpaid' : 'Mark paid'} aria-label={o.paid ? 'Mark unpaid' : 'Mark paid'} onClick={() => togglePaid(o)}><FiRepeat /></button>
+                      <button className="cc-row-action text-secondary" title="Invoice" aria-label="Invoice" onClick={() => setInvoiceOf(o)}><FiFileText /></button>
+                      <button className="cc-row-action text-secondary" title="Duplicate — same items, today" aria-label="Duplicate" onClick={() => duplicate(o)}><FiCopy /></button>
+                      <button className="cc-row-action" style={{ color: '#cf3e63' }} title="Edit" aria-label="Edit" onClick={() => setEditing(o)}><FiEdit2 /></button>
+                      <button className="cc-row-action text-danger cc-row-action--last" title="Delete" aria-label="Delete" onClick={() => remove(o)}><FiTrash2 /></button>
+                    </div>
                   </td>
                 </tr>
               ))}

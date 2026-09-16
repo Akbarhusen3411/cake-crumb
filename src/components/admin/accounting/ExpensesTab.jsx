@@ -1,5 +1,8 @@
 import { useMemo, useRef, useState } from 'react'
-import { FiPlus, FiEdit2, FiTrash2, FiX, FiDownload } from 'react-icons/fi'
+import {
+  FiPlus, FiEdit2, FiTrash2, FiX, FiDownload,
+  FiXCircle, FiArrowRight, FiDollarSign, FiSmartphone,
+} from 'react-icons/fi'
 import Modal from '../Modal.jsx'
 import FilterChips from './FilterChips.jsx'
 import PeriodSelect from './PeriodSelect.jsx'
@@ -54,6 +57,18 @@ const itemsSummary = (e) => {
 const searchText = (e) =>
   [e.vendor, ...(e.items || []).map((it) => it.name), e.notes].filter(Boolean).join(' ').toLowerCase()
 
+/** Names typed before, deduped on case and sorted — what the sheet suggests. */
+const uniqueNames = (all) => {
+  const seen = new Map()
+  for (const raw of all) {
+    const name = String(raw || '').trim()
+    if (!name) continue
+    const key = name.toLowerCase()
+    if (!seen.has(key)) seen.set(key, name)
+  }
+  return [...seen.values()].sort((a, b) => a.localeCompare(b))
+}
+
 export default function ExpensesTab({ expenses, reload }) {
   const [q, setQ] = useState('')
   const [editing, setEditing] = useState(null)
@@ -64,6 +79,13 @@ export default function ExpensesTab({ expenses, reload }) {
   const mobile = useIsMobile()
 
   const months = useMemo(() => monthsFrom(expenses), [expenses])
+  // Deduped on case, the way the orders tab dedupes customers — "blinkit" and
+  // "Blinkit" are one shop, and two entries in the list splits the history.
+  const vendorNames = useMemo(() => uniqueNames(expenses.map((e) => e.vendor)), [expenses])
+  const pastItemNames = useMemo(
+    () => uniqueNames(expenses.flatMap((e) => (e.items || []).map((it) => it.name))),
+    [expenses]
+  )
   const rows = useMemo(() => {
     const s = q.trim().toLowerCase()
     let list = [...expenses].sort((a, b) => String(b.date).localeCompare(String(a.date)))
@@ -129,7 +151,7 @@ export default function ExpensesTab({ expenses, reload }) {
 
   return (
     <div>
-      <div className="cc-admin-toolbar d-flex flex-wrap gap-2 align-items-center mb-3">
+      <div className="cc-admin-toolbar d-flex flex-wrap gap-2 align-items-center mb-2">
         <button className="cc-admin-toolbar-btn btn text-white d-inline-flex align-items-center gap-2" style={{ background: 'var(--cc-rose,#e0617a)', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => setEditing({})}>
           <FiPlus /> New Expense
         </button>
@@ -149,7 +171,7 @@ export default function ExpensesTab({ expenses, reload }) {
         </div>
       </div>
 
-      <div className="cc-admin-filters d-flex flex-wrap align-items-center gap-3 mb-3">
+      <div className="cc-admin-filters d-flex flex-wrap align-items-center gap-3 mb-2">
         <FilterChips
           label="Paid from" options={METHOD_FILTERS} value={methodFilter}
           onChange={(v) => { setMethodFilter(v); setPage(1) }}
@@ -234,13 +256,25 @@ export default function ExpensesTab({ expenses, reload }) {
       {busy ? <div className="text-muted small mt-2">Saving…</div> : null}
 
       {editing !== null && (
-        <ExpenseForm initial={editing.id ? editing : null} onSave={save} onClose={() => setEditing(null)} />
+        <ExpenseForm
+          initial={editing.id ? editing : null}
+          // Shops and things bought repeat week after week — the sheet offers
+          // what has been typed before instead of asking for it again.
+          vendors={vendorNames} itemNames={pastItemNames}
+          onSave={save} onClose={() => setEditing(null)}
+        />
       )}
     </div>
   )
 }
 
-function ExpenseForm({ initial, onSave, onClose }) {
+/**
+ * Add / edit an expense — the same workbench as the order sheet: the shopping
+ * list takes the width and the height, and what is asked once (date, shop, how
+ * it was paid, delivery) sits in a column beside it. A twenty-line grocery run
+ * scrolls one list; the total and the Save button never move.
+ */
+function ExpenseForm({ initial, vendors = [], itemNames = [], onSave, onClose }) {
   const [date, setDate] = useState(initial?.date || todayIso())
   const [vendor, setVendor] = useState(initial?.vendor || '')
   const [method, setMethod] = useState(initial?.method || 'Cash')
@@ -255,6 +289,7 @@ function ExpenseForm({ initial, onSave, onClose }) {
   const setItem = (i, key, val) => setItems((p) => p.map((it, idx) => (idx === i ? { ...it, [key]: val } : it)))
   const addItem = () => {
     setItems((p) => [...p, { name: '', qty: 1, price: '' }])
+    // The new line is below the fold once the list is scrolling — go to it.
     requestAnimationFrame(() => {
       const el = listRef.current
       if (el) el.scrollTop = el.scrollHeight
@@ -264,6 +299,7 @@ function ExpenseForm({ initial, onSave, onClose }) {
 
   const itemsTotal = items.reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.price) || 0), 0)
   const total = itemsTotal + (Number(delivery) || 0)
+  const named = items.filter((it) => it.name.trim() || Number(it.price) > 0)
 
   function submit() {
     if (!date) return alert('Please pick a date.')
@@ -284,76 +320,154 @@ function ExpenseForm({ initial, onSave, onClose }) {
 
   return (
     <Modal
-      wide
+      full
+      flush
+      icon="🧾"
       title={initial ? 'Edit Expense' : 'New Expense'}
-      subtitle="Add each thing you bought with its price, plus delivery — the total adds up for you."
+      subtitle="Every thing bought on its own line — the total adds up for you."
       onClose={onClose}
       footer={<>
-        <button className="btn btn-light" onClick={onClose}>Cancel</button>
-        <button className="btn text-white" style={{ background: 'var(--cc-rose,#e0617a)' }} onClick={submit}>Save</button>
+        <div className="cc-sheet__foottotal cc-sheet__foottotal--spend me-auto">
+          <span>Total spent</span>
+          <b>{inr(total)}</b>
+        </div>
+        <button className="btn btn-light d-inline-flex align-items-center gap-2" onClick={onClose}>
+          Cancel <FiXCircle />
+        </button>
+        <button className="btn text-white d-inline-flex align-items-center gap-2"
+          style={{ background: 'var(--cc-rose,#e0617a)', fontWeight: 600 }} onClick={submit}>
+          {initial ? 'Save changes' : 'Add Expense'} <FiArrowRight />
+        </button>
       </>}
     >
-      <div className="row g-3">
-        <div className="col-12 col-sm-4"><label className="form-label small fw-semibold">Date</label>
-          <input type="date" className="form-control" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-        <div className="col-12 col-sm-5"><label className="form-label small fw-semibold">Bought from (shop / venue)</label>
-          <input className="form-control" placeholder="e.g. Blinkit, D-Mart…" value={vendor} onChange={(e) => setVendor(e.target.value)} /></div>
-        <div className="col-12 col-sm-3"><label className="form-label small fw-semibold">Paid from</label>
-          <select className="form-select" value={method} onChange={(e) => setMethod(e.target.value)}>
-            <option value="Cash">Cash</option><option value="Online">Online</option>
-          </select></div>
+      {/* Typed once, offered on every row — a browser datalist, so it costs one
+          element for the whole list however many rows are open. */}
+      <datalist id="cc-exp-items">
+        {itemNames.map((n) => <option key={n} value={n} />)}
+      </datalist>
+      <datalist id="cc-exp-vendors">
+        {vendors.map((n) => <option key={n} value={n} />)}
+      </datalist>
 
-        <div className="col-12">
-          <div className="cc-oitems__head">
-            <label className="form-label small fw-semibold mb-0">Items</label>
-            <button type="button" className="cc-oadd" onClick={addItem}
-              aria-label="Add item" title="Add item"><FiPlus /></button>
+      <div className="cc-sheet">
+        <aside className="cc-sheet__side">
+          <div className="cc-sheet__sidetitle">Expense details</div>
+
+          <div className="cc-field">
+            <span className="cc-field__label">Date</span>
+            <input type="date" className="form-control" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
-          <div className="cc-exp-row cc-exp-row--head">
-            <span className="cc-exp-name">Item</span>
-            <span className="cc-exp-qty">Qty</span>
-            <span className="cc-exp-rate">₹ each</span>
-            <span className="cc-exp-total">Total</span>
-            <span className="cc-exp-del" />
+          <div className="cc-field">
+            <span className="cc-field__label">Bought from<i>shop / venue</i></span>
+            <input className="form-control" list="cc-exp-vendors" placeholder="e.g. Blinkit, D-Mart…"
+              value={vendor} onChange={(e) => setVendor(e.target.value)} spellCheck={false} />
           </div>
-          {/* Past six, the list scrolls inside the sheet — a long shopping trip
-              used to push the delivery charge and the total off the bottom. */}
-          <div ref={listRef} className={`d-flex flex-column gap-2${items.length > 6 ? ' cc-explist--scroll' : ''}`}>
-            {items.map((it, i) => (
-              <div className="cc-exp-row" key={i}>
-                <input
-                  className="form-control cc-exp-name" placeholder="e.g. Tropolite whipping cream"
-                  value={it.name} onChange={(e) => setItem(i, 'name', e.target.value)} spellCheck={false}
-                />
-                <input
-                  type="number" min="1" className="form-control text-center cc-exp-qty" placeholder="Qty"
-                  value={it.qty} onChange={(e) => setItem(i, 'qty', e.target.value)}
-                />
-                <input
-                  type="number" min="0" className="form-control text-center cc-exp-rate" placeholder="₹"
-                  value={it.price} onChange={(e) => setItem(i, 'price', e.target.value)}
-                />
-                {/* What this one line came to. Five items at two figures each and
-                    no line total meant checking the bill in your head. */}
-                <span className="cc-exp-total">
-                  {inr(Math.round((Number(it.qty) || 0) * (Number(it.price) || 0)))}
-                </span>
-                <button type="button" className="btn btn-light cc-exp-del" title="Remove item"
-                  onClick={() => removeItem(i)} disabled={items.length === 1}>
-                  <FiX />
+          <div className="cc-field">
+            <span className="cc-field__label">Paid from</span>
+            <div className="cc-seg">
+              {['Cash', 'Online'].map((m) => (
+                <button key={m} type="button" className="cc-seg__btn" aria-pressed={method === m}
+                  onClick={() => setMethod(m)}>
+                  <span className="cc-seg__ico">{m === 'Cash' ? <FiDollarSign /> : <FiSmartphone />}</span>
+                  {m}
                 </button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+          <div className="cc-field">
+            <span className="cc-field__label">Delivery charge<i>₹</i></span>
+            <input type="number" min="0" className="form-control" placeholder="0"
+              value={delivery} onChange={(e) => setDelivery(e.target.value)} />
+          </div>
+          <div className="cc-field">
+            <span className="cc-field__label">Notes<i>optional</i></span>
+            <input className="form-control" value={notes} onChange={(e) => setNotes(e.target.value)}
+              placeholder="Anything to remember…" />
+          </div>
 
-        <div className="col-6"><label className="form-label small fw-semibold">Delivery charge (₹)</label>
-          <input type="number" min="0" className="form-control" placeholder="0" value={delivery} onChange={(e) => setDelivery(e.target.value)} /></div>
-        <div className="col-6"><label className="form-label small fw-semibold">Total</label>
-          <div className="form-control" style={{ background: '#fff4f7', fontWeight: 700, color: '#b23b3b', fontSize: 18 }}>{inr(total)}</div></div>
+          {/* Items and delivery separately, because the delivery charge is part
+              of the total but isn't one of the things bought. */}
+          <div className="cc-ssum">
+            <div className="cc-ssum__row"><span>Things bought</span><b>{named.length}</b></div>
+            <div className="cc-ssum__row"><span>Items</span><b>{inr(itemsTotal)}</b></div>
+            <div className="cc-ssum__row"><span>Delivery</span><b>{inr(Number(delivery) || 0)}</b></div>
+            <div className="cc-ssum__grand cc-ssum__grand--spend">
+              <span>Total spent</span><b>{inr(total)}</b>
+            </div>
+          </div>
+        </aside>
 
-        <div className="col-12"><label className="form-label small fw-semibold">Notes</label>
-          <input className="form-control" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="optional" /></div>
+        <section className="cc-sheet__main">
+          <div className="cc-sheet__panehead">
+            <span className="cc-sheet__title">Shopping list</span>
+            <span className="cc-sheet__hint">Press Enter on ₹ each for the next line</span>
+          </div>
+
+          <div className="cc-stable cc-stable--expense">
+            <div className="cc-sline cc-sline--head">
+              <span className="cc-sline__cell cc-sline__n">#</span>
+              <span className="cc-sline__cell cc-sline__item">Item</span>
+              <span className="cc-sline__cell cc-sline__qty">Qty</span>
+              <span className="cc-sline__cell cc-sline__rate">₹ each</span>
+              <span className="cc-sline__cell cc-sline__amt">Total</span>
+              <span className="cc-sline__cell cc-sline__del" />
+            </div>
+            <div ref={listRef} className="cc-stable__scroll">
+              {items.map((it, i) => (
+                <div className="cc-sline" key={i}>
+                  <div className="cc-sline__cell cc-sline__n">{i + 1}</div>
+                  <div className="cc-sline__cell cc-sline__item">
+                    <input
+                      className="form-control form-control-sm" list="cc-exp-items"
+                      placeholder="e.g. Tropolite whipping cream"
+                      value={it.name} onChange={(e) => setItem(i, 'name', e.target.value)} spellCheck={false}
+                    />
+                  </div>
+                  <div className="cc-sline__cell cc-sline__qty">
+                    <span className="cc-sline__cap">Qty</span>
+                    <input type="number" min="1" className="form-control form-control-sm" aria-label="Quantity"
+                      value={it.qty} onChange={(e) => setItem(i, 'qty', e.target.value)} />
+                  </div>
+                  <div className="cc-sline__cell cc-sline__rate">
+                    <span className="cc-sline__cap">₹ each</span>
+                    <input type="number" min="0" className="form-control form-control-sm" aria-label="Price each"
+                      placeholder="0" value={it.price} onChange={(e) => setItem(i, 'price', e.target.value)}
+                      // Enter finishes the line and opens the next one, so a long
+                      // shopping trip is typed without reaching for the mouse.
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addItem() } }} />
+                  </div>
+                  {/* What this one line came to. Five items at two figures each and
+                      no line total meant checking the bill in your head. */}
+                  <div className="cc-sline__cell cc-sline__amt">
+                    <span className="cc-sline__cap">Total</span>
+                    <span className="cc-sline__money cc-sline__money--spend">
+                      {inr(Math.round((Number(it.qty) || 0) * (Number(it.price) || 0)))}
+                    </span>
+                  </div>
+                  <div className="cc-sline__cell cc-sline__del">
+                    {items.length > 1 ? (
+                      <button type="button" className="cc-srow-del" title="Remove item"
+                        aria-label={`Remove item ${i + 1}`} onClick={() => removeItem(i)}>
+                        <FiX />
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Outside the scroller, so it stays under the last visible row. */}
+            <button type="button" className="cc-saddrow" onClick={addItem}>
+              <FiPlus /> Add item
+            </button>
+            <div className="cc-stotal cc-stotal--spend">
+              <span>
+                {named.length} item{named.length === 1 ? '' : 's'}
+                {Number(delivery) > 0 ? ` · ${inr(Number(delivery))} delivery` : ''}
+              </span>
+              <b>{inr(total)}</b>
+            </div>
+          </div>
+        </section>
       </div>
     </Modal>
   )

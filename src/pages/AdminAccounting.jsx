@@ -213,14 +213,19 @@ export default function AdminAccounting() {
   }
 
   return (
-    <section className="container py-4 py-md-5">
-      <AdminNav />
-      <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
-        <h1 className="h4 m-0" style={{ fontFamily: 'var(--font-heading,serif)', color: '#cf3e63' }}>Daily Accounting</h1>
-        <button className="btn btn-sm btn-light ms-2" onClick={reload} title="Refresh"><FiRefreshCw /></button>
+    <section className="container py-3 py-md-4">
+      {/* Title, the two-page switcher and the locks share one line. They were
+          three stacked bands, which pushed the first real figure a third of the
+          way down the screen. */}
+      <div className="cc-acc-head">
+        <h1 className="cc-acc-head__title">Daily Accounting</h1>
+        <button className="cc-acc-head__refresh" onClick={reload} title="Refresh" aria-label="Refresh">
+          <FiRefreshCw />
+        </button>
         {loading ? <span className="text-muted small">Loading…</span> : null}
+        <AdminNav className="cc-acc-head__nav" />
         <button
-          className="btn btn-sm btn-outline-secondary ms-auto"
+          className="btn btn-sm btn-outline-secondary"
           onClick={lock}
           title="Lock without signing out — leaving this page locks it too"
         >
@@ -242,20 +247,15 @@ export default function AdminAccounting() {
         </div>
       ) : null}
 
-      <div className="cc-admin-tabs mb-4">
+      <div className="cc-admin-tabs cc-acc-tabs">
         {TABS.map((t) => {
           const on = tab === t.key
           return (
             <button
               key={t.key}
               onClick={() => goTab(t.key)}
-              style={{
-                border: '1px solid var(--cc-rose-soft, #d7a7ae)', borderRadius: 999,
-                padding: '6px 16px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                background: on ? 'var(--cc-rose, #e0617a)' : '#fff',
-                color: on ? '#fff' : 'var(--cc-cocoa, #5b3e36)',
-              }}
+              className={`cc-acc-tab${on ? ' cc-acc-tab--on' : ''}`}
+              aria-current={on ? 'page' : undefined}
             >
               {t.label}
             </button>
