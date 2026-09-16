@@ -85,6 +85,12 @@
 :root {
   --cc-rose: #e0617a;
   --cc-rose-deep: #cf3e63;
+  /* Rose for SMALL TEXT, and only that. --cc-rose is 3.2:1 on the cream
+     background and --cc-rose-deep is 4.36 — both under the 4.5 that 11px text
+     needs, and the eyebrows, tag badges and certification pills are all 11px on
+     cream. Use --cc-rose for fills, borders and icons, where contrast does not
+     apply; use this the moment the rose is a word someone has to read. */
+  --cc-rose-ink: #ad2f4e;
   --cc-rose-soft: #d7a7ae;     /* dusty rose — for muted accents, heart bullets, subtle dividers */
   --cc-blush-soft: #f3d7d9;    /* brand-kit light pink — pairs with --cc-rose-soft */
   --cc-cream: #fff6f2;
@@ -352,7 +358,7 @@ a:hover { color: var(--cc-rose-deep); }
   font-size: 0.75rem;
   letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: var(--cc-rose);
+  color: var(--cc-rose-ink);
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -905,7 +911,7 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
   font-size: 0.7rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--cc-rose);
+  color: var(--cc-rose-ink);
   font-weight: 700;
 }
 
@@ -970,7 +976,7 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--cc-rose);
+  color: var(--cc-rose-ink);
 }
 .cc-cert-pill__num {
   font-size: 0.78rem;
@@ -3124,7 +3130,7 @@ html, body { overflow-x: hidden; }
 /* Copyright bar — full bleed */
 .cc-footer-m__copyright {
   margin: 0 -1.25rem;  /* break out of the page padding */
-  background: var(--cc-rose);
+  background: var(--cc-rose-deep);
   color: #ffffff;
   text-align: center;
   padding: 0.85rem 1rem;
@@ -3817,7 +3823,7 @@ header[style*="sticky"] {
   color: var(--cc-cocoa);
 }
 .cc-treat-card__price {
-  color: var(--cc-rose);
+  color: var(--cc-rose-ink);
   font-weight: 700;
   margin-bottom: 0.8rem;
   font-size: 0.95rem;
@@ -7402,7 +7408,7 @@ header[style*="sticky"] {
   font-family: var(--font-heading);
   font-size: 2rem;
   line-height: 1;
-  color: var(--cc-blush-soft);
+  color: #b07e86;
   font-variant-numeric: lining-nums;
   pointer-events: none;
 }
@@ -7447,7 +7453,7 @@ header[style*="sticky"] {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  color: var(--cc-rose-deep);
+  color: var(--cc-rose-ink);
   font-size: 0.9rem;
   text-decoration: none;
 }

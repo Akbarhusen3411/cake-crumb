@@ -113,7 +113,7 @@ export default function Home() {
                 <article className="product-card cc-treat-card">
                   <img src={u(p.img, 600, 600)} alt={p.name} loading="lazy" />
                   <div className="p-3 text-center">
-                    <h5 className="cc-treat-card__name">{p.name}</h5>
+                    <h3 className="cc-treat-card__name">{p.name}</h3>
                     <div className="cc-treat-card__price">{inr(p.price)}</div>
                     <button
                       className="btn-rose justify-content-center w-100 cc-treat-card__btn"
@@ -236,7 +236,7 @@ export default function Home() {
                   until you have ordered it.
                 </p>
                 <Link to="/about" className="btn-rose">
-                  <FiHeart /> Learn More
+                  <FiHeart /> Read Our Story
                 </Link>
               </div>
             </div>

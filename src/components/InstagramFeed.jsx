@@ -71,6 +71,7 @@ export default function InstagramFeed() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="ig-tile"
+                  aria-label="Cake & Crumb on Instagram"
                 >
                   <img src={u(id, 400, 400)} alt="" loading="lazy" />
                   <span className="ig-tile__hover">

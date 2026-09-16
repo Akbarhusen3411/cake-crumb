@@ -134,7 +134,7 @@ export default function Footer() {
         {/* Newsletter card */}
         <div className="cc-footer-m__newsletter">
           <span className="tag-badge">Stay Sweet</span>
-          <h5 className="cc-footer-m__news-head">Sweet news in your inbox</h5>
+          <h3 className="cc-footer-m__news-head">Sweet news in your inbox</h3>
           <p className="cc-footer-m__news-sub">
             Festival specials &amp; treat-of-the-week — never spam.
           </p>

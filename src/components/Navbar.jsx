@@ -109,7 +109,7 @@ export default function Navbar() {
       <div className="container py-3">
         <div className="d-flex align-items-center justify-content-between">
           {/* LEFT — brand */}
-          <Link to="/" aria-label="Cake & Crumb home" style={{ display: 'inline-flex' }}>
+          <Link to="/" style={{ display: 'inline-flex' }}>
             <Logo size="md" />
           </Link>
 
@@ -135,7 +135,13 @@ export default function Navbar() {
                 aria-expanded={searchOpen}
                 onClick={() => setSearchOpen(true)}
                 className="border-0 p-0 cc-cart-link"
-                style={{ background: 'transparent', color: 'var(--cc-cocoa)' }}
+                // A 20px glyph gave a 20x20 target, under the 24x24 minimum and
+                // close to the cart beside it. The box grows, the glyph doesn't.
+                style={{
+                  background: 'transparent', color: 'var(--cc-cocoa)',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  minWidth: 24, minHeight: 24,
+                }}
               >
                 <FiSearch size={20} strokeWidth={1.8} />
               </button>

@@ -72,6 +72,7 @@ export default function Newsletter({ compact = false }) {
           type="submit"
           disabled={status === 'loading' || !email.trim()}
           className="newsletter-form__btn"
+          aria-label="Subscribe"
         >
           {status === 'loading' ? '…' : (
             <>
