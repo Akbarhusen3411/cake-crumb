@@ -1340,7 +1340,7 @@ export default function ChatBot() {
             <img
               src={asset('logo_final-400.webp')}
               width={400}
-              height={267}
+              height={278}
               alt="Cake & Crumb"
               className="shrink-0"
               style={{ height: 42, width: 'auto', display: 'block' }}
@@ -1404,7 +1404,7 @@ export default function ChatBot() {
                         marginBottom: 2,
                       }}
                     >
-                      <img src={asset('logo_final-400.webp')} width={400} height={267} alt="" className="w-full h-full object-cover" />
+                      <img src={asset('logo_final-400.webp')} width={400} height={278} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
                   {msg.cartPreview ? (

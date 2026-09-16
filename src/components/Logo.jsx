@@ -1,6 +1,8 @@
-// Watercolor cupcake+cookie+roses illustration (logo_final.png in /public).
-// We serve the optimized WebP sibling — Sharp trims transparent edges and
-// downsizes to ~700px wide, bringing 2.4 MB down to ~168 KB.
+// Watercolour cupcake+cookie+roses illustration (logo_final.png in /public).
+// The master is TRIMMED to the drawing (892x621) — it used to sit on a
+// 1536x1024 canvas with 339px of empty space below it, so every box it was
+// given showed 39% nothing and the mark looked small and high. Keep it trimmed
+// if it is replaced. We serve the optimized WebP siblings via srcset.
 const LOGO_BASE = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
 const LOGO_SRC = `${LOGO_BASE}/logo_final.webp`
 
@@ -34,12 +36,12 @@ export default function Logo({ size = 'md' }) {
         srcSet={`${LOGO_BASE}/logo_final-400.webp 400w, ${LOGO_BASE}/logo_final-800.webp 800w`}
         sizes="150px"
         width={400}
-        height={267}
+        height={278}
         alt=""
         aria-hidden="true"
         fetchPriority="high"
         decoding="async"
-        className={`logo-mark${size === 'md' ? ' logo-icon' : ''}`}
+        className={size === 'md' ? 'logo-icon' : ''}
         style={{
           width: 'auto',
           display: 'block',
