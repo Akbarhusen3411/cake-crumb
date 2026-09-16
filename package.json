@@ -13,7 +13,7 @@
     "optimize-images": "node scripts/convert-to-webp.js",
     "convert-videos": "node scripts/convert-videos.js",
     "check-images": "node scripts/check-product-images.js",
-    "predeploy": "npm run build && node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\"",
+    "predeploy": "npm run build && node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\" && node scripts/stamp-sitemap.js",
     "deploy": "gh-pages -d dist",
     "check-prices": "node scripts/check-prices.js"
   },
