@@ -272,7 +272,7 @@ export default function Checkout() {
     } else if (form.payment === 'upi') {
       paymentLine = '*💳 Payment:* UPI — Paid in full (bakery will verify)'
     } else {
-      paymentLine = '*💳 Payment:* Cash on Delivery'
+      paymentLine = `*💳 Payment:* Cash on ${isPickup ? 'pickup' : 'delivery'}`
     }
 
     const methodLine = isPickup
@@ -314,6 +314,9 @@ export default function Checkout() {
   // Under enforcement it is rejected, and the customer would otherwise see a
   // clean "Order Placed!" over an order nobody received. null = not known yet.
   const [cloudSaved, setCloudSaved] = useState(null)
+  // The public tracking doc is a second write to a second collection and can
+  // fail on its own. Default true: an unknown answer shouldn't hide the link.
+  const [canTrack, setCanTrack] = useState(true)
 
   function placeOrder(e) {
     e.preventDefault()
@@ -374,7 +377,9 @@ export default function Checkout() {
     // failed write from a build with no cloud configured at all, which is a dev
     // setup and not something to alarm a customer about.
     saveOrder(orderData).then((res) => {
-      if (isFirebaseEnabled) setCloudSaved(!!res?.firebaseId)
+      if (!isFirebaseEnabled) return
+      setCloudSaved(!!res?.firebaseId)
+      setCanTrack(res?.tracked !== false)
     })
     sendOrderEmail(orderData)
     sendCustomerConfirmation(orderData)
@@ -484,7 +489,9 @@ export default function Checkout() {
               ? "We'll verify your UPI payment in our account and confirm on WhatsApp. Tip: reply with a screenshot of your payment to help us match it faster."
               : form.payment === 'deposit'
                 ? "We'll verify your advance payment and confirm on WhatsApp. The balance is paid on delivery/pickup. Tip: reply with a screenshot to help us match it faster."
-                : 'Cash on Delivery — please keep the exact amount ready.'}
+                : form.deliveryMethod === 'pickup'
+                  ? 'Pay in cash when you collect — please bring the exact amount.'
+                  : 'Cash on Delivery — please keep the exact amount ready.'}
           </p>
           <div className="d-flex gap-2 justify-content-center mt-3 flex-wrap">
             <Link to="/" className="btn-outline-rose">
@@ -494,7 +501,7 @@ export default function Checkout() {
                 save. If the save didn't land there is nothing to look up, and
                 the page would answer "order not found" — which reads as a lost
                 order rather than a link that was never going to work. */}
-            {cloudSaved === false ? null : (
+            {cloudSaved === false || !canTrack ? null : (
               <Link to={`/track-order?id=${orderId}`} className="btn-outline-rose">
                 <FiCalendar /> Track Order
               </Link>
@@ -814,7 +821,7 @@ export default function Checkout() {
                     >
                       <span className="icon-wrap"><FiTruck size={18} /></span>
                       <span>
-                        <div>Cash on Delivery</div>
+                        <div>{form.deliveryMethod === 'pickup' ? 'Cash on Pickup' : 'Cash on Delivery'}</div>
                         <div style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--cc-cocoa-soft)' }}>
                           {form.deliveryMethod === 'pickup'
                             ? 'Pay in cash when you collect'
@@ -999,7 +1006,9 @@ export default function Checkout() {
                         <FiTruck size={16} />
                       </span>
                       <div>
-                        <strong style={{ color: 'var(--cc-cocoa)' }}>Cash on Delivery</strong>
+                        <strong style={{ color: 'var(--cc-cocoa)' }}>
+                          {form.deliveryMethod === 'pickup' ? 'Cash on Pickup' : 'Cash on Delivery'}
+                        </strong>
                         <p className="mb-0 mt-1">
                           {/* This tab also shows for self-pickup, where there
                               is no delivery partner and nothing arrives at a

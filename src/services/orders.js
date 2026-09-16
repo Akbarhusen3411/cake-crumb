@@ -85,7 +85,7 @@ export async function saveOrder(input) {
 
   const db = await getDb()
   if (!db) {
-    return { ...local, firebaseId: null }
+    return { ...local, firebaseId: null, tracked: false }
   }
 
   try {
@@ -95,6 +95,14 @@ export async function saveOrder(input) {
       createdAt: serverTimestamp(),
     })
     // Public, PII-free tracking mirror (keyed by orderId for direct lookup).
+    //
+    // This is a SECOND write, to a second collection, and it can fail on its own
+    // — a rule change or an App Check rejection that the `orders` write survived.
+    // It used to fail silently and still report success, so /track-order offered
+    // itself and then answered "order not found", which reads to a customer as a
+    // lost order rather than a link that was never going to work. Reported back
+    // so the caller can simply not offer tracking.
+    let tracked = true
     try {
       await setDoc(doc(db, TRACKING, order.orderId), {
         orderId: order.orderId,
@@ -106,12 +114,13 @@ export async function saveOrder(input) {
         createdAt: serverTimestamp(),
       })
     } catch (e) {
+      tracked = false
       console.error('[orders] tracking mirror write failed:', e)
     }
-    return { ...local, firebaseId: docRef.id }
+    return { ...local, firebaseId: docRef.id, tracked }
   } catch (err) {
     console.error('[orders] Firestore save failed:', err)
-    return { ...local, firebaseId: null, error: err.message }
+    return { ...local, firebaseId: null, tracked: false, error: err.message }
   }
 }
 

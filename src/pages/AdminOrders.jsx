@@ -20,6 +20,9 @@ import { buildWebsiteInvoice, pendingQuote } from '../utils/invoice.js'
 // Human-readable payment summary for an order card.
 function paymentLabel(o) {
   const p = o.payment || {}
+  // Nothing is delivered on a self-pickup order, so "cash on delivery" describes
+  // a van that isn't coming. The stored method stays 'cod' — this is wording.
+  const when = o.deliveryMethod === 'pickup' ? 'pickup' : 'delivery'
   if (p.method === 'upi') return 'UPI — paid in full (verify in your bank)'
   if (p.method === 'deposit') {
     // A deposit order can arrive two ways. From Checkout the customer has already
@@ -28,10 +31,10 @@ function paymentLabel(o) {
     // the advance is still to be collected. Saying "paid" for the second would
     // report money that was never received.
     return p.paid
-      ? `Advance ${inr(p.depositAmount || 0)} paid (verify in bank) + ${inr(p.balanceDue || 0)} cash on delivery`
-      : `Advance ${inr(p.depositAmount || 0)} REQUIRED — not received yet · ${inr(p.balanceDue || 0)} on delivery`
+      ? `Advance ${inr(p.depositAmount || 0)} paid (verify in bank) + ${inr(p.balanceDue || 0)} cash on ${when}`
+      : `Advance ${inr(p.depositAmount || 0)} REQUIRED — not received yet · ${inr(p.balanceDue || 0)} on ${when}`
   }
-  return 'Cash on Delivery'
+  return when === 'pickup' ? 'Cash on Pickup' : 'Cash on Delivery'
 }
 
 // The amount the bakery should look for as a bank credit before confirming:

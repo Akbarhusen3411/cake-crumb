@@ -37,12 +37,14 @@ function buildParams(order) {
     subtotal: inr(t.subtotal || 0),
     delivery: t.delivery === 0 ? 'FREE' : inr(t.delivery || 0),
     total: inr(t.total || 0),
+    // Same wording rule as the admin dashboard: a self-pickup order has no
+    // delivery, so it must not say money is collected on one.
     payment_method:
       order.payment?.method === 'upi'
         ? 'UPI / QR — paid in full (verify in bank)'
         : order.payment?.method === 'deposit'
-          ? `Advance ${inr(order.payment?.depositAmount || 0)} paid (verify in bank) + ${inr(order.payment?.balanceDue || 0)} cash on delivery`
-          : 'Cash on Delivery',
+          ? `Advance ${inr(order.payment?.depositAmount || 0)} paid (verify in bank) + ${inr(order.payment?.balanceDue || 0)} cash on ${order.deliveryMethod === 'pickup' ? 'pickup' : 'delivery'}`
+          : order.deliveryMethod === 'pickup' ? 'Cash on Pickup' : 'Cash on Delivery',
     utr: '—', // UTR system removed; bakery verifies the credit in its bank
     delivery_date: order.deliveryDate || '—',
     notes: order.notes || '—',
