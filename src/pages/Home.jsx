@@ -211,11 +211,13 @@ export default function Home() {
       <section className="cc-home-about">
         <div className="container-fluid p-0">
           <div className="row g-0 align-items-stretch">
-            <div className="col-lg-6">
-              {/* Also the roses, so the same file appeared twice on one page.
-                  A tall shot suits this slot: the column stretches to the height
-                  of the text beside it, and cover keeps the drip and the biscuit
-                  crown. */}
+            <div className="col-lg-6 cc-home-about__media">
+              {/* A tall shot in a slot that takes its height from the TEXT
+                  beside it — never from the photo. `height: 100%` on an <img>
+                  whose column has no definite height resolves to `auto`, so
+                  this 1200x1600 portrait rendered 1280px tall at 50vw and the
+                  whole band stretched to match. Out of flow, cover keeps the
+                  drip and the biscuit crown. Same trap as ProductQuickView. */}
               <img
                 src={u(img.rcOwnBiscoffDripTop)}
                 srcSet={srcSet(img.rcOwnBiscoffDripTop)}
