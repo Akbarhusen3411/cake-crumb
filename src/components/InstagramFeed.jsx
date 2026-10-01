@@ -15,6 +15,10 @@ const FALLBACK_TILES = [
   img.cookies,
   img.cheesecakePistachio,
   img.cakeChocolateBirthday,
+  // Nine, not seven: three rows of three on a phone and a tablet. Seven left
+  // one photo alone on the last row. Both are the bakery's own shots.
+  img.rcOwnMilkcakeTubs,
+  img.rcOwnCupcakeMango,
 ]
 
 export default function InstagramFeed() {
@@ -65,7 +69,7 @@ export default function InstagramFeed() {
         ) : (
           <div className="row g-2 g-md-3" style={{ maxWidth: 1100, margin: '0 auto' }}>
             {FALLBACK_TILES.map((id, i) => (
-              <div className="col-4 col-md-3 col-lg" key={i}>
+              <div className="col-4 col-lg" key={i}>
                 <a
                   href="https://www.instagram.com/cake_and_crumb_1/"
                   target="_blank"

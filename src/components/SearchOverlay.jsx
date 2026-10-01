@@ -74,6 +74,8 @@ const mentionsEggless = (q) => /\begg/i.test(q)
 export default function SearchOverlay({ open, onClose }) {
   const [query, setQuery] = useState('')
   const panelRef = useRef(null)
+  // The results scroller — read by the scroll lock and the arrow keys.
+  const listRef = useRef(null)
 
   // Clear the query on open + close on Escape.
   // setQuery is deferred to a microtask so the effect body itself doesn't
@@ -92,10 +94,24 @@ export default function SearchOverlay({ open, onClose }) {
   // into a scroll container, which un-stuck the sticky header for as long as
   // the overlay was open. Cancelling touchmove/wheel outside the panel locks
   // the page for real and leaves the header alone.
+  //
+  // "Outside the panel" was not enough: a wheel over the panel's header, or
+  // past either end of the results list, chained on to the page and scrolled
+  // it behind the dialog. Now only the results list may scroll, and only while
+  // it has room in that direction. Touch chaining at the ends is stopped by
+  // `overscroll-behavior: contain` on the list.
   useEffect(() => {
     if (!open) return
     const blockOutside = (e) => {
-      if (!panelRef.current?.contains(e.target)) e.preventDefault()
+      const list = listRef.current
+      if (!list || !list.contains(e.target)) {
+        e.preventDefault()
+        return
+      }
+      if (e.type !== 'wheel') return
+      const atTop = list.scrollTop <= 0
+      const atBottom = list.scrollTop + list.clientHeight >= list.scrollHeight - 1
+      if ((e.deltaY > 0 && atBottom) || (e.deltaY < 0 && atTop)) e.preventDefault()
     }
     document.addEventListener('touchmove', blockOutside, { passive: false })
     document.addEventListener('wheel', blockOutside, { passive: false })
@@ -115,7 +131,6 @@ export default function SearchOverlay({ open, onClose }) {
   // traversed — no way to reach a result without a mouse or a tap.
   const [active, setActive] = useState(-1)
 
-  const listRef = useRef(null)
   useEffect(() => {
     if (!open) return
     const onKey = (e) => {

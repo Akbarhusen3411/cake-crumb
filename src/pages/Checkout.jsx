@@ -1131,10 +1131,10 @@ export default function Checkout() {
                   <FiCheckCircle size={18} /> Place Order
                 </button>
 
-                <div className="cc-summary-trust">
-                  <span><FiShield size={12} /> Secure</span>
-                  <span><FiCheckCircle size={12} /> Freshly baked</span>
-                  <span><FaWhatsapp size={12} /> Order updates</span>
+                <div className="cc-infochips cc-infochips--sm cc-summary-trust">
+                  <span className="cc-infochip"><FiShield aria-hidden /> Secure</span>
+                  <span className="cc-infochip"><FiCheckCircle aria-hidden /> Freshly baked</span>
+                  <span className="cc-infochip"><FaWhatsapp aria-hidden /> Order updates</span>
                 </div>
 
                 {/* Checkout uses MiniFooter, so the footer's registration line

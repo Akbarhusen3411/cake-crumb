@@ -774,6 +774,117 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
   .feature-row > .feature-cell:last-child { border-bottom: none; }
 }
 
+/* ─── Highlighted information — one look, site-wide ────────────────────────
+   Short facts a customer should not miss (lead time, how to pay, delivery
+   charge) used to be grey 13px text with a small icon, and read as filler.
+   .cc-infochip  — a pill: rose icon in a blush disc + cocoa text. Put several
+                   in a .cc-infochips row.
+   .cc-infonote  — the same idea for one full sentence: a tinted box with a
+                   rose edge.
+   Text is --cc-cocoa on white/blush, well above 4.5:1 at every size. */
+.cc-infochips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+.cc-infochip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  max-width: 100%;
+  padding: 0.4rem 0.95rem 0.4rem 0.4rem;
+  background: #fff;
+  border: 1px solid var(--cc-rose-soft);
+  border-radius: 999px;
+  box-shadow: 0 2px 10px rgba(176, 46, 82, 0.07);
+  color: var(--cc-cocoa);
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: left;
+}
+.cc-infochip > svg,
+.cc-infonote > svg {
+  flex: 0 0 auto;
+  box-sizing: content-box;
+  width: 14px;
+  height: 14px;
+  padding: 6px;
+  border-radius: 50%;
+  background: var(--cc-blush-soft);
+  color: var(--cc-rose-ink);
+}
+.cc-infochips--sm .cc-infochip {
+  gap: 0.4rem;
+  padding: 0.25rem 0.7rem 0.25rem 0.25rem;
+  font-size: 0.72rem;
+}
+.cc-infochips--sm .cc-infochip > svg { width: 11px; height: 11px; padding: 5px; }
+.cc-infonote {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--cc-blush-soft);
+  border: 1px solid var(--cc-rose-soft);
+  border-left: 4px solid var(--cc-rose);
+  border-radius: 10px;
+  color: var(--cc-cocoa);
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.cc-infonote > svg { background: #fff; }
+@media (max-width: 575.98px) {
+  /* A long chip wraps inside itself rather than overflowing; a rounded
+     rectangle reads better than a stretched pill once it is two lines. */
+  .cc-infochip { border-radius: 16px; font-size: 0.8rem; }
+  .cc-infonote { font-size: 0.82rem; }
+}
+
+/* .cc-infocard — several facts in ONE card: a row each (icon disc + text)
+   with hairlines between, stacked on a phone and side by side from 768px.
+   Separate pills wrapped raggedly and centred unevenly; one card reads as a
+   single block of "good to know". */
+.cc-infocard {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0.35rem 1.1rem;
+  max-width: 980px;
+  background: #fff;
+  border: 1px solid var(--cc-rose-soft);
+  border-radius: 16px;
+  box-shadow: 0 6px 22px rgba(176, 46, 82, 0.08);
+}
+.cc-infocard li {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.8rem 0;
+  color: var(--cc-cocoa);
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: left;
+}
+.cc-infocard li + li { border-top: 1px dashed var(--cc-rose-soft); }
+.cc-infocard li > svg {
+  flex: 0 0 auto;
+  box-sizing: content-box;
+  width: 17px;
+  height: 17px;
+  padding: 9px;
+  border-radius: 50%;
+  background: var(--cc-blush-soft);
+  color: var(--cc-rose-ink);
+}
+@media (min-width: 768px) {
+  .cc-infocard { display: flex; padding: 0.4rem 0.5rem; }
+  .cc-infocard li { flex: 1 1 0; min-width: 0; padding: 0.85rem 1.1rem; }
+  .cc-infocard li + li { border-top: 0; border-left: 1px dashed var(--cc-rose-soft); }
+}
+
 /* ─── Certification badges — FSSAI + Udyam (components/CertBadges.jsx) ────── */
 .cc-cert-pills {
   display: flex;
@@ -821,6 +932,23 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
      and compare against the certificate. */
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
+}
+/* Phone: both pills on one row instead of two stacked ones. The icon and the
+   word "Registered" go to make room; the scheme and the full number stay. */
+@media (max-width: 575.98px) {
+  .cc-cert-pills { flex-wrap: nowrap; gap: 0.5rem; }
+  .cc-cert-pill {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    padding: 0.45rem 0.6rem;
+    border-radius: 14px;
+  }
+  .cc-cert-pill__icon,
+  .cc-cert-pill__reg { display: none; }
+  .cc-cert-pill__body { text-align: center; min-width: 0; }
+  .cc-cert-pill__label { font-size: 0.62rem; letter-spacing: 0.1em; }
+  .cc-cert-pill__num { font-size: 0.7rem; letter-spacing: 0; }
 }
 
 /* Compact single line — footer + checkout summary. Deliberately at full body
@@ -1314,22 +1442,8 @@ html, body { overflow-x: hidden; }
   cursor: not-allowed;
   box-shadow: none;
 }
-.cc-summary-trust {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.9rem;
-  margin-top: 0.9rem;
-}
-.cc-summary-trust span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.7rem;
-  color: var(--cc-cocoa-soft);
-  font-weight: 600;
-}
-.cc-summary-trust svg { color: var(--cc-rose); }
+/* Chips are .cc-infochip in the small size (the shared highlight). */
+.cc-summary-trust { gap: 0.4rem; margin-top: 0.9rem; }
 /* Slightly smaller than the footer's line — the summary card is a narrow
    sidebar column and the full size wraps badly there. */
 .cc-summary-certs {
@@ -2226,11 +2340,18 @@ html, body { overflow-x: hidden; }
   color: var(--cc-rose);
   padding: 0.85rem 1.2rem 0.5rem;
 }
+/* Still scrolls (wheel, touch, arrow keys); the bar itself is hidden — a
+   thick rose track down the side of a 640px dialog read as clutter, and the
+   cut-off row at the bottom already says there is more. */
 .cc-search-overlay__results {
   max-height: 60vh;
   overflow-y: auto;
   padding-bottom: 0.5rem;
+  scrollbar-width: none;
+  /* Reaching the end of the list must not hand the scroll to the page. */
+  overscroll-behavior: contain;
 }
+.cc-search-overlay__results::-webkit-scrollbar { display: none; }
 .cc-search-overlay__result {
   display: flex;
   align-items: center;
@@ -3205,7 +3326,19 @@ header[style*="sticky"] {
   overflow: hidden;
   box-shadow: 0 4px 18px rgba(176, 46, 82, 0.06);
   transition: transform 0.25s, box-shadow 0.25s;
+  /* Fill the column, so a name that wraps to three lines ("Red Velvet
+     Cupcakes (Box of 6)") doesn't leave its neighbour short; the body
+     stretches and the button sits on the bottom edge of every card. */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
+.cc-treat-card > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.cc-treat-card__btn { margin-top: auto; }
 .cc-treat-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 24px rgba(176, 46, 82, 0.12);
@@ -3343,6 +3476,20 @@ header[style*="sticky"] {
   align-items: center;
   padding: 1rem 1.25rem;
 }
+/* The feature-row cell's 1rem flex gap stacked on top of the heading's mt-3
+   and the text's mt-1, so icon → heading → text sat ~2rem apart and the strip
+   ran ~480px tall on a desktop. The margins alone set the rhythm now. Same
+   strip on Shop and Reviews (.cc-shop-promise). */
+.cc-about-why .feature-row > .feature-cell,
+.cc-shop-promise .feature-row > .feature-cell { gap: 0; }
+@media (min-width: 576px) {
+  .cc-about-why .cc-features-card__icon--lg,
+  .cc-shop-promise .cc-features-card__icon--lg { width: 52px; height: 52px; }
+  .cc-about-why .cc-features-card__heading,
+  .cc-shop-promise .cc-features-card__heading { margin-top: 0.85rem !important; }
+  .cc-about-why .cc-features-card__text,
+  .cc-shop-promise .cc-features-card__text { margin-top: 0.35rem !important; margin-bottom: 0; }
+}
 
 /* Registered & Certified — cream so it separates the two #fdeae8 sections
    either side of it (Why Choose Us / Kitchen Peek). */
@@ -3370,8 +3517,9 @@ header[style*="sticky"] {
 @media (min-width: 576px) {
   .cc-kitchen-grid { grid-template-columns: repeat(3, 1fr); }
 }
-@media (min-width: 768px) {
-  .cc-kitchen-grid { grid-template-columns: repeat(5, 1fr); gap: 0.85rem; }
+/* Six photos: 2 × 3 on a phone, 3 × 2 on a tablet, one row of six from 992. */
+@media (min-width: 992px) {
+  .cc-kitchen-grid { grid-template-columns: repeat(6, 1fr); gap: 0.85rem; }
 }
 .cc-kitchen-grid__img {
   width: 100%;
@@ -3477,7 +3625,7 @@ header[style*="sticky"] {
 .cc-menu-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2rem 2.5rem;
+  gap: 1.5rem 2rem;
 }
 /* Two columns only where a card fits: photo (260px) + the unbreakable
    "View all … +N more" line need ~600px. From 768 they did not fit and the
@@ -3489,8 +3637,8 @@ header[style*="sticky"] {
 /* 1200–1399: a column is ~550px, so the full 260px photo left the price list
    too narrow — badges cut to "PR…". A slimmer photo until the container widens. */
 @media (min-width: 1200px) and (max-width: 1399.98px) {
-  /* Doubled: the 260px rule for 992px+ is declared further down. */
-  .cc-menu-card .cc-menu-card__img { width: 200px; }
+  /* Doubled: the base width is declared further down. */
+  .cc-menu-card .cc-menu-card__media { width: 190px; }
 }
 
 /* Boutique menu card — image left, text right on tablet/desktop; a white
@@ -3509,17 +3657,26 @@ header[style*="sticky"] {
   transform: translateY(-3px);
   box-shadow: 0 16px 40px rgba(203, 62, 99, 0.12);
 }
-.cc-menu-card__img {
+/* The photo is out of flow inside its frame: the frame stretches to the
+   card's height (set by the four rows), and the image covers it. Before, a
+   4:5 photo 260px wide set every card to ~325px of photo, and the cards with
+   more text grew past it unevenly. */
+.cc-menu-card__media {
+  position: relative;
   flex-shrink: 0;
   width: 190px;
-  aspect-ratio: 4/5;
-  object-fit: cover;
   border-radius: 14px;
+  overflow: hidden;
 }
-/* Desktop: give the photo more width so it reads properly and crops less on
-   the sides — there's plenty of room next to the price list at this size. */
+.cc-menu-card__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 @media (min-width: 992px) {
-  .cc-menu-card__img { width: 260px; }
+  .cc-menu-card__media { width: 230px; }
 }
 .cc-menu-card__body {
   flex: 1;
@@ -3543,10 +3700,9 @@ header[style*="sticky"] {
     padding: 0;
     overflow: hidden;
   }
-  .cc-menu-card__img {
+  .cc-menu-card__media {
     width: 100%;
     aspect-ratio: 21 / 9;
-    object-position: center;
     border-radius: 0;
   }
   .cc-menu-card__body {
@@ -3556,11 +3712,13 @@ header[style*="sticky"] {
   .cc-menu-card__rule { margin: 0.35rem 0 0.6rem; }
   /* Tighter rows — five of them per card, eight cards deep. */
   .cc-menu-row { padding: 0.45rem 0; font-size: 0.88rem; }
+  /* A phone has the width for the full note; no clamp, no reserved lines. */
   .cc-menu-card__note { margin-top: 0.55rem; }
+  .cc-menu-card__note > span { -webkit-line-clamp: unset; line-clamp: unset; }
 }
 .cc-menu-card__title {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+  font-size: clamp(1.3rem, 2.2vw, 1.55rem);
   color: var(--cc-cocoa);
   margin: 0;
 }
@@ -3569,7 +3727,7 @@ header[style*="sticky"] {
   width: 56px;
   height: 2px;
   background: var(--cc-rose-soft);
-  margin: 0.45rem 0 0.85rem;
+  margin: 0.4rem 0 0.6rem;
   border-radius: 2px;
 }
 .cc-menu-card__items {
@@ -3582,7 +3740,7 @@ header[style*="sticky"] {
   align-items: baseline;
   justify-content: space-between;
   gap: 0.7rem;
-  padding: 0.55rem 0;
+  padding: 0.48rem 0;
   border-bottom: 1px solid rgba(224, 97, 122, 0.10);
   font-size: 0.92rem;
   min-width: 0;
@@ -3658,7 +3816,7 @@ header[style*="sticky"] {
   font-size: 0.78rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  margin-top: 1rem;
+  margin-top: 0.75rem;
   transition: color 0.15s, gap 0.15s;
   flex-wrap: wrap;
 }
@@ -3666,11 +3824,38 @@ header[style*="sticky"] {
   color: var(--cc-rose-deep);
   gap: 0.7rem;
 }
+/* The note is information a customer needs ("also as single-serve tubs"),
+   so it is a highlighted box, not grey italic small print — same look as
+   .cc-infonote. The box hugs its text (a reserved second line left one-line
+   notes top-heavy, with the icon and words out of line); a long note is
+   clamped at two lines so it can't stretch one card past its neighbours. */
 .cc-menu-card__note {
-  margin: 0.7rem 0 0;
-  font-size: 0.72rem;
-  font-style: italic;
-  color: var(--cc-cocoa-soft);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.6rem 0 0;
+  padding: 0.35rem 0.65rem;
+  background: var(--cc-blush-soft);
+  border: 1px solid var(--cc-rose-soft);
+  border-left: 3px solid var(--cc-rose);
+  border-radius: 8px;
+  color: var(--cc-cocoa);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.cc-menu-card__note > svg {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  color: var(--cc-rose-ink);
+}
+.cc-menu-card__note > span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 /* Custom Orders pink-bordered banner */
@@ -4363,6 +4548,38 @@ header[style*="sticky"] {
 .cc-shop-promise__cell {
   flex-direction: column !important;
   align-items: center !important;
+}
+/* Phone: four full-width stacked cells, each a 62px circle over a heading
+   over one line, ran to a full screen and a half. Two by two, with a smaller
+   icon, it is about a third of that. Shared by Shop, Reviews and About ("More Than Just Desserts"). */
+@media (max-width: 575.98px) {
+  .cc-shop-promise .feature-row,
+  .cc-about-why .feature-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cc-shop-promise .feature-row > .feature-cell,
+  .cc-about-why .feature-row > .feature-cell {
+    min-width: 0;
+    gap: 0;
+    padding: 0.9rem 0.6rem;
+    border: 0;
+  }
+  .cc-shop-promise .feature-row > .feature-cell:nth-child(odd),
+  .cc-about-why .feature-row > .feature-cell:nth-child(odd) { border-right: 1px solid var(--cc-border); }
+  .cc-shop-promise .feature-row > .feature-cell:nth-child(-n + 2),
+  .cc-about-why .feature-row > .feature-cell:nth-child(-n + 2) { border-bottom: 1px solid var(--cc-border); }
+  /* Shop has three cells: the odd one out takes the full row, not half of it. */
+  .cc-shop-promise .feature-row > .feature-cell:last-child:nth-child(odd),
+  .cc-about-why .feature-row > .feature-cell:last-child:nth-child(odd) { grid-column: 1 / -1; border-right: 0; }
+  .cc-shop-promise .cc-features-card__icon--lg,
+  .cc-about-why .cc-features-card__icon--lg { width: 42px; height: 42px; }
+  .cc-shop-promise .cc-features-card__icon--lg svg,
+  .cc-about-why .cc-features-card__icon--lg svg { width: 18px; height: 18px; }
+  .cc-shop-promise .cc-features-card__heading,
+  .cc-about-why .cc-features-card__heading { margin-top: 0.55rem !important; font-size: 0.7rem; }
+  .cc-shop-promise .cc-features-card__text,
+  .cc-about-why .cc-features-card__text { margin-top: 0.2rem !important; margin-bottom: 0; font-size: 0.78rem; line-height: 1.4; }
 }
 
 /* ─── Reviews page ────────────────────────────────────────────────────────── */
@@ -6606,22 +6823,32 @@ header[style*="sticky"] {
   color: var(--cc-cocoa-soft);
   margin: 0;
 }
+/* Phone: the steps stack one under another, so the centred icon-over-text
+   card spent a whole row on a 62px circle. Icon beside the words instead,
+   left-aligned, with the step number shrunk to a corner mark. */
+@media (max-width: 767.98px) {
+  .cc-home-how__steps { gap: 0.75rem; }
+  .cc-home-how__step {
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr);
+    column-gap: 0.9rem;
+    align-items: start;
+    padding: 0.95rem 2.6rem 0.95rem 1rem;
+    text-align: left;
+  }
+  .cc-home-how__step .cc-features-card__icon--lg {
+    grid-row: 1 / span 2;
+    width: 46px;
+    height: 46px;
+  }
+  .cc-home-how__step .cc-features-card__icon--lg svg { width: 19px; height: 19px; }
+  .cc-home-how__step-title { margin: 0.1rem 0 0.2rem; font-size: 1rem; }
+  .cc-home-how__step-text { font-size: 0.84rem; line-height: 1.5; }
+  .cc-home-how__num { top: 0.6rem; right: 0.75rem; font-size: 1.35rem; }
+}
 
-.cc-home-how__facts {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem 1.5rem;
-  margin-top: 1.5rem;
-  font-size: 0.83rem;
-  color: var(--cc-cocoa-soft);
-}
-.cc-home-how__facts span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-.cc-home-how__facts svg { color: var(--cc-rose); flex: 0 0 auto; }
+/* The chips themselves are .cc-infochip (the shared highlight). */
+.cc-home-how__facts { margin-top: 1.5rem; }
 
 .cc-home-how__cta {
   display: flex;
@@ -7124,10 +7351,12 @@ header[style*="sticky"] {
   pointer-events: none;
 }
 .cc-offer-card:hover::after { transition: transform 0.9s ease; transform: translateX(130%); }
+/* 16:9, not 4:3: three across on a desktop, a 4:3 photo stood ~310px tall
+   and outweighed the deal under it. The phone list overrides this anyway. */
 .cc-offer-card__media {
   position: relative;
   display: block;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
 }
 .cc-offer-card__media::after {
@@ -7150,7 +7379,7 @@ header[style*="sticky"] {
   bottom: 8px;
   z-index: 1;
   font-family: var(--font-heading);
-  font-size: 2.2rem;
+  font-size: 1.8rem;
   line-height: 1;
   color: #fff;
 }
@@ -7175,7 +7404,7 @@ header[style*="sticky"] {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 1.1rem 1.25rem 1.25rem;
+  padding: 0.9rem 1.2rem 1.05rem;
 }
 .cc-offer-card__tag {
   font-size: 0.68rem;
@@ -7188,7 +7417,7 @@ header[style*="sticky"] {
   font-family: var(--font-heading);
   font-size: 1.3rem;
   color: var(--cc-cocoa);
-  margin: 0.25rem 0 0.35rem;
+  margin: 0.15rem 0 0.25rem;
 }
 /* The deal: two labelled lines, BUY then FREE. A condition sentence with the
    gift tacked on below read as one paragraph on a phone — customers could not

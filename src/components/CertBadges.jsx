@@ -45,7 +45,11 @@ export default function CertBadges({ variant = 'pills', className = '' }) {
         <div className="cc-cert-pill" key={number}>
           <span className="cc-cert-pill__icon"><Icon size={16} /></span>
           <span className="cc-cert-pill__body">
-            <span className="cc-cert-pill__label">{label}</span>
+            {/* "Registered" drops on phones so both pills fit one row. */}
+            <span className="cc-cert-pill__label">
+              {label.replace(/ Registered$/, '')}
+              {/ Registered$/.test(label) && <span className="cc-cert-pill__reg"> Registered</span>}
+            </span>
             <span className="cc-cert-pill__num">{number}</span>
           </span>
         </div>

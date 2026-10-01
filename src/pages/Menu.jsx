@@ -9,7 +9,10 @@ import { inr } from '../data/format.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { useJsonLd } from '../hooks/useJsonLd.js'
 
-// Curated 5-item teasers per card — the page stays light, full lists live in /shop.
+// Curated teasers per card — the page stays light, full lists live in /shop.
+// Every card SHOWS the first SHOWN picks, so all nine cards carry the same
+// number of rows and come out the same height; the rest of each `picks` list
+// is a reserve, used if a product is renamed or removed.
 //
 // ONLY THE PICKS ARE HAND-WRITTEN. The name, price and badge of every row are
 // read out of products.js by product id, so this page can no longer quote a
@@ -45,7 +48,8 @@ const inCategory = (c) => shopProducts.filter((p) => p.category === c)
  * `picks` rather than a hand-typed number so it can't drift when a product is
  * added — the whole reason this page stopped keeping its own price copies.
  */
-const moreCount = (card) => inCategory(card.category).length - card.picks.length
+const SHOWN = 4
+const moreCount = (card) => inCategory(card.category).length - card.rows.length
 const inGroup = (g) => shopProducts.filter((p) => p.group === g)
 
 const CARDS = [
@@ -53,7 +57,14 @@ const CARDS = [
     title: 'Cheesecakes',
     category: 'Cheesecakes',
     strip: /\s*Cheesecake$/,
+    // The size, as the sponge and milk cake cards name theirs — a bare
+    // "Strawberry ₹350" read as a price per slice or per tub. Banto, not Bento:
+    // it is the owner's name for the 4" cheesecake (see CLAUDE.md).
+    suffix: '(Banto 4")',
     picks: ['cc-strawberry', 'cc-mango', 'cc-blueberry', 'cc-nutella', 'cc-pistachio'],
+    // Every card carries a one-line note so the cards line up; this one is
+    // also simply true and useful — the tub is how most people try one.
+    note: () => `♥ Also as single-serve tubs from ${inr(cheapest(inCategory('Cheesecakes'), 'slice'))}.`,
   },
   {
     title: 'Sponge Cakes',
@@ -83,8 +94,9 @@ const CARDS = [
     // `cup-variety` is deliberately NOT a pick: this card quotes the `slice`
     // tier and a variety box has no per-piece tier to carry one, so rowsFor()
     // would drop it silently. It gets a sentence here and a card in the shop.
+    // Kept to two lines, like every note on this page, so the cards match.
     note: () =>
-      `♥ Also sold by the piece from ${inr(cheapest(inCategory('Cupcakes')))} (minimum 2), or a variety box of six flavours for ${inr(BY_ID['cup-variety'].price)}. Add ₹20 for floral or additional decoration.`,
+      `♥ By the piece from ${inr(cheapest(inCategory('Cupcakes')))} (min. 2), or a variety box for ${inr(BY_ID['cup-variety'].price)}. ₹20 extra for floral decoration.`,
   },
   {
     title: 'Cookies',
@@ -99,15 +111,7 @@ const CARDS = [
     title: 'Dessert Cups',
     category: 'Dessert Cups',
     picks: ['dc-grass', 'dc-jelly', 'dc-custard-vanilla', 'dc-custard-mango', 'dc-trifle'],
-  },
-  {
-    // Platters had no card at all, so Pancakes and Crêpe Rolls appeared
-    // nowhere on this page — the only category of the nine that was invisible
-    // here. Both picks are the whole category, so there is no "+N more".
-    title: 'Platters',
-    category: 'Platters',
-    picks: ['pl-pancakes', 'pl-crepes'],
-    note: () => '♥ Served warm — best ordered for pickup or a short delivery.',
+    note: () => '♥ Single-serve cups, each made to order.',
   },
   {
     // Bakes replaces the old hand-typed "Sweet Treats & More" block: same
@@ -117,7 +121,7 @@ const CARDS = [
     category: 'Bakes',
     picks: ['bk-brownie-classic', 'bk-brownie-nutella', 'bk-blondie-classic', 'bk-cakepop-chocolate', 'bk-cakesickle-choc-heart'],
     note: () =>
-      `♥ Brownies & blondies come by the box of 6, from ${inr(cheapest(inGroup('Brownies'), 'slice'))} — and in ${EXTRA_TIERS.Brownies.map((t) => t.label).join(' and ')} to order. Cake pops come in four flavours — by the piece (minimum 2) or a box of six from ${inr(cheapest(inGroup('Cake Pops'), 'slice'))}. Macarons, cookie fries & dipping boxes in the shop.`,
+      `♥ Brownies & blondies by the box of 6 from ${inr(cheapest(inGroup('Brownies'), 'slice'))}; cake pops by the piece (min. 2) or a box of six from ${inr(cheapest(inGroup('Cake Pops'), 'slice'))}.`,
   },
   {
     // Drinks were missing from this page entirely — 24 of them, and the
@@ -126,6 +130,18 @@ const CARDS = [
     category: 'Drinks',
     picks: ['dr-virginmojito', 'dr-strawberrydelight', 'dr-oreo-shake', 'dr-iced-classic', 'dr-hot-classic'],
     note: () => `♥ ${inCategory('Drinks').length} in all — mojitos, milkshakes, iced & hot coffee.`,
+  },
+  {
+    // Platters had no card at all, so Pancakes and Crêpe Rolls appeared
+    // nowhere on this page — the only category of the nine that was invisible
+    // here. Both picks are the whole category, so there is no "+N more".
+    // LAST on purpose: with two rows it is the one card shorter than the
+    // rest, so it sits alone on the final row rather than beside a card of
+    // four and leaving a gap in the middle of the page.
+    title: 'Platters',
+    category: 'Platters',
+    picks: ['pl-pancakes', 'pl-crepes'],
+    note: () => '♥ Served warm — best ordered for pickup or a short delivery.',
   },
 ]
 
@@ -182,7 +198,7 @@ export default function Menu() {
 
   // Resolved once — the structured data and the visible rows must be the same
   // numbers, or search engines flag the page as contradicting itself.
-  const cards = CARDS.map((c) => ({ ...c, rows: rowsFor(c) }))
+  const cards = CARDS.map((c) => ({ ...c, rows: rowsFor(c).slice(0, SHOWN) }))
 
   useJsonLd('menu', {
     '@context': 'https://schema.org',
@@ -245,16 +261,19 @@ export default function Menu() {
           <div className="cc-menu-grid">
             {cards.map((card) => (
               <article className="cc-menu-card" key={card.title}>
-                <img
-                  src={u(menuCardPhoto(card.title), 600, 700)}
-                  srcSet={srcSet(menuCardPhoto(card.title))}
-                  /* Image sits left of the text on tablet+, full width above it
-                     on a phone. */
-                  sizes="(min-width: 768px) 210px, 100vw"
-                  alt={card.title}
-                  className="cc-menu-card__img"
-                  loading="lazy"
-                />
+                {/* The photo fills a frame beside the text rather than setting
+                    the card's height — out of flow, so the four rows decide it
+                    and every card matches. Full-width band on a phone. */}
+                <span className="cc-menu-card__media">
+                  <img
+                    src={u(menuCardPhoto(card.title), 600, 700)}
+                    srcSet={srcSet(menuCardPhoto(card.title))}
+                    sizes="(min-width: 576px) 240px, 100vw"
+                    alt={card.title}
+                    className="cc-menu-card__img"
+                    loading="lazy"
+                  />
+                </span>
                 <div className="cc-menu-card__body">
                   <h3 className="cc-menu-card__title">{card.title}</h3>
                   <span className="cc-menu-card__rule" aria-hidden />
@@ -270,9 +289,13 @@ export default function Menu() {
                     ))}
                   </div>
                   {card.note && (
-                    <p className="cc-menu-card__note">{card.note()}</p>
+                    <p className="cc-menu-card__note">
+                      <FiHeart aria-hidden />
+                      {/* The ♥ in the copy becomes a real icon in the box. */}
+                      <span>{card.note().replace(/^♥\s*/, '')}</span>
+                    </p>
                   )}
-                  {/* The count matters: a card shows five rows of a category
+                  {/* The count matters: a card shows four rows of a category
                       that may hold thirty, so without it "View All" reads as
                       "see these five again". */}
                   <Link

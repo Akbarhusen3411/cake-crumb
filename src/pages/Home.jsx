@@ -204,11 +204,11 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="cc-home-how__facts">
-            <span><FiClock size={14} /> Order a day ahead — order late and it's ready the next day</span>
-            <span><FiShoppingBag size={14} /> UPI or Cash on Delivery</span>
-            <span><FiHeart size={14} /> Delivery charge shown at checkout</span>
-          </div>
+          <ul className="cc-infocard cc-home-how__facts">
+            <li><FiClock aria-hidden /> <span>Order a day ahead — order late and it's ready the next day</span></li>
+            <li><FiShoppingBag aria-hidden /> <span>UPI or Cash on Delivery</span></li>
+            <li><FiHeart aria-hidden /> <span>Delivery charge shown at checkout</span></li>
+          </ul>
 
           <div className="cc-home-how__cta">
             <Link to="/shop" className="btn-rose">

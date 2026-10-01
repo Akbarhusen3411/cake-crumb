@@ -189,8 +189,8 @@ export default function Cart() {
                 Proceed to Checkout <FiArrowRight />
               </Link>
 
-              <div className="mt-4 p-3" style={{ background: 'var(--cc-cream)', borderRadius: 10, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <FiHeart color="var(--cc-rose)" />
+              <div className="cc-infonote mt-4">
+                <FiHeart aria-hidden />
                 {/* This line promised Cash on Delivery on every cart, including
                     ones large enough that Checkout removes the COD tab
                     outright. The bulk rule is enforced in shopConfig, Checkout,

@@ -82,7 +82,12 @@ export default function ScrollReveal({ enabled = true, routeKey }) {
         const t = setTimeout(() => { timers.delete(t); finish(el) }, DURATION + delay + 80)
         timers.add(t)
       }
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0 })
+    // A small POSITIVE bottom margin, not a negative one. At -8% (plus the 32px
+    // the hidden pose is shifted down), a heading sitting at the foot of the
+    // first screen — Home's "Something Extra, On Us" on a laptop — stayed
+    // invisible after a refresh until the page was scrolled, and read as a
+    // blank band. Anything on screen, or within 60px of it, now shows at once.
+    }, { rootMargin: '0px 0px 60px 0px', threshold: 0 })
 
     const tag = () => {
       for (const el of root.querySelectorAll(REVEAL_SELECTOR)) {

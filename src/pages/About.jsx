@@ -58,6 +58,9 @@ const KITCHEN_THUMBS = [
   { id: img.rcOwnMilkcakeBlueberry,   alt: 'Blueberry milk cake in a bento tub, finished with gold leaf' },
   { id: img.rcOwnCakePops,            alt: 'Chocolate cake pops with gold and silver leaf' },
   { id: img.rcOwnCakeBirthdayRosettes, alt: 'Chocolate birthday cake piped with rosettes' },
+  // Six, not five: two, three or six across always comes out even — five
+  // left one photo alone on the last row of a phone.
+  { id: img.rcOwnCakeMum,             alt: 'A pink cake for Mum, finished with fresh rose petals' },
 ]
 
 export default function About() {
@@ -164,8 +167,8 @@ export default function About() {
 
       {/* ───── WHY CHOOSE US — 4 features with vertical dividers ───── */}
       <section className="cc-about-why">
-        <div className="container py-5">
-          <div className="text-center mb-5">
+        <div className="container py-4">
+          <div className="text-center mb-4">
             <span className="eyebrow">Why Choose Us</span>
             <h2 className="section-title mt-3">More Than Just Desserts</h2>
             <HeartDivider width={50} />
@@ -206,7 +209,7 @@ export default function About() {
         </div>
       </section>
 
-      {/* ───── KITCHEN PEEK — 5 thumbs in a row ───── */}
+      {/* ───── KITCHEN PEEK — 6 thumbs ───── */}
       <section className="cc-about-kitchen">
         <div className="container py-5">
           <div className="text-center mb-4">
@@ -219,7 +222,7 @@ export default function About() {
                 key={id}
                 src={u(id)}
                 srcSet={srcSet(id)}
-                sizes="(min-width: 992px) 200px, (min-width: 768px) 30vw, 45vw"
+                sizes="(min-width: 992px) 170px, (min-width: 576px) 30vw, 45vw"
                 alt={alt}
                 loading="lazy"
                 className="cc-kitchen-grid__img"
