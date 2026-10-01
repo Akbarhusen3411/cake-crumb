@@ -56,7 +56,7 @@
        /confirm-order stay out on purpose (transactional), as do /admin/*. -->
   <url>
     <loc>https://akbarhusen3411.github.io/cake-crumb/track-order</loc>
-    <lastmod>2026-09-02</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
