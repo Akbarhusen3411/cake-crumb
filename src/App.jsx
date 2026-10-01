@@ -9,6 +9,7 @@ import DeferredChatBot from './components/DeferredChatBot.jsx'
 import FestivalBanner from './components/FestivalBanner.jsx'
 import BackToTop from './components/BackToTop.jsx'
 import ScrollReveal from './components/ScrollReveal.jsx'
+import MidMonthPopup from './components/MidMonthPopup.jsx'
 import Home from './pages/Home.jsx'
 import PageFallback from './components/skeletons/PageFallback.jsx'
 import ErrorBoundary, { clearChunkReloadGuard } from './components/ErrorBoundary.jsx'
@@ -32,6 +33,7 @@ const ConfirmOrder = lazy(() => import('./pages/ConfirmOrder.jsx'))
 const TrackOrder = lazy(() => import('./pages/TrackOrder.jsx'))
 const AdminOrders = lazy(() => import('./pages/AdminOrders.jsx'))
 const AdminAccounting = lazy(() => import('./pages/AdminAccounting.jsx'))
+const Offers = lazy(() => import('./pages/Offers.jsx'))
 const NotFound = lazy(() => import('./pages/NotFound.jsx'))
 
 // Routes inside the buying / admin-confirm flow render without the footer
@@ -91,6 +93,7 @@ function App() {
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/confirm-order" element={<ConfirmOrder />} />
                 <Route path="/track-order" element={<TrackOrder />} />
+                <Route path="/offers" element={<Offers />} />
                 <Route path="/admin/orders" element={<AdminOrders />} />
                 <Route path="/admin/accounting" element={<AdminAccounting />} />
                 {/* A dead link showed the homepage under the wrong URL — the
@@ -107,6 +110,8 @@ function App() {
         {!isAdmin && <CartToast />}
         {!isAdmin && <DeferredChatBot />}
         {!isAdmin && <BackToTop />}
+        {/* 13th–20th only, once a month; skips cart/checkout itself. */}
+        {!isAdmin && <MidMonthPopup />}
       </div>
     </CartProvider>
   )

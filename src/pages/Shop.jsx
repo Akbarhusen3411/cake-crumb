@@ -9,6 +9,7 @@ import HeartDivider from '../components/HeartDivider.jsx'
 import { shopProducts, lowestPrice, isPerPiece, cardPrice, priceLabel, describe, EXTRA_TIERS } from '../data/products.js'
 import { img, u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
+import OfferGift from '../components/OfferGift.jsx'
 import { useCart } from '../context/CartContext.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { useJsonLd } from '../hooks/useJsonLd.js'
@@ -623,6 +624,7 @@ export default function Shop() {
                   <span>SUBTOTAL</span>
                   <strong>{inr(subtotal)}</strong>
                 </div>
+                <OfferGift items={items} subtotal={subtotal} compact />
                 {/* Must say the same thing as the Cart page's order summary —
                     delivery is worked out from the pincode at checkout now, not
                     agreed over WhatsApp. Two pages promising two different

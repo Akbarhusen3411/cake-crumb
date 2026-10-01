@@ -47,7 +47,7 @@ export default function FestivalBanner() {
       <span aria-hidden style={{ fontSize: '1.2em', flexShrink: 0 }}>{festival.icon}</span>
       <span className="festival-banner__msg">{festival.message}</span>
       <Link
-        to="/shop"
+        to={festival.to || '/shop'}
         className="festival-banner__cta"
         style={{ color: festival.fg, borderColor: festival.accent }}
       >

@@ -15,6 +15,7 @@ const QUICK_LINKS = [
   { to: '/about',   label: 'About Us' },
   { to: '/menu',    label: 'Menu' },
   { to: '/shop',    label: 'Shop' },
+  { to: '/offers',  label: 'Offers' },
   { to: '/gallery', label: 'Gallery' },
   { to: '/reviews', label: 'Reviews' },
   // Was reachable only by typing the URL or by hitting the 404 page, which is

@@ -40,6 +40,7 @@ const SOURCES = {
   '/contact': ['src/pages/Contact.jsx', 'src/data/certifications.js'],
   '/faq': ['src/pages/FAQ.jsx', 'src/data/shopConfig.js'],
   '/track-order': ['src/pages/TrackOrder.jsx'],
+  '/offers': ['src/pages/Offers.jsx', 'src/data/offers.js'],
   '/privacy': ['src/pages/Privacy.jsx'],
   '/refund-policy': ['src/pages/RefundPolicy.jsx', 'src/data/shopConfig.js'],
 }

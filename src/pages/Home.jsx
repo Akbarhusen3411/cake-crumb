@@ -12,6 +12,10 @@ import { useCart } from '../context/CartContext.jsx'
 import HeartDivider from '../components/HeartDivider.jsx'
 import CertBadges from '../components/CertBadges.jsx'
 import InstagramFeed from '../components/InstagramFeed.jsx'
+import OffersBand from '../components/OffersBand.jsx'
+import HeroOffers from '../components/HeroOffers.jsx'
+import OffersTicker from '../components/OffersTicker.jsx'
+import { OFFERS_ON } from '../data/offers.js'
 
 export default function Home() {
   const { add } = useCart()
@@ -41,9 +45,16 @@ export default function Home() {
                 Cheesecakes, milk cakes, cupcakes and cookies — handmade to order
                 for birthdays, festivals and ordinary Tuesdays.
               </p>
-              <Link to="/shop" className="btn-rose mt-3">
-                <FiShoppingBag /> Shop Now
-              </Link>
+              <div className="cc-home-hero__ctas">
+                <Link to="/shop" className="btn-rose">
+                  <FiShoppingBag /> Shop Now
+                </Link>
+                {OFFERS_ON && (
+                  <Link to="/offers" className="btn-outline-rose cc-home-hero__offers-btn">
+                    <FiGift /> See today’s offers
+                  </Link>
+                )}
+              </div>
             </div>
             <div className="col-lg-6">
               {/* The roses stay, at the owner's call, and the reason is the
@@ -57,18 +68,28 @@ export default function Home() {
                   srcSet is new and worth keeping: the hero used to load the
                   full 40 KB file on every device, where the 800w variant is
                   22 KB and is what nearly every viewport picks. */}
-              <img
-                src={u(img.pinkRoses)}
-                srcSet={srcSet(img.pinkRoses)}
-                sizes="(min-width: 992px) 50vw, 100vw"
-                alt="Soft pink rose bouquet"
-                className="cc-home-hero__img"
-                fetchPriority="high"
-              />
+              {/* The stage holds the photo and the offer stickers that fly in
+                  over it (HeroOffers), so they are seen before any scrolling. */}
+              <div className="cc-home-hero__stage">
+                <img
+                  src={u(img.pinkRoses)}
+                  srcSet={srcSet(img.pinkRoses)}
+                  sizes="(min-width: 992px) 50vw, 100vw"
+                  alt="Soft pink rose bouquet"
+                  className="cc-home-hero__img"
+                  fetchPriority="high"
+                />
+                <HeroOffers />
+              </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* ───── OFFERS ───── straight after the hero, so a visitor sees them
+          before scrolling; renders nothing while OFFERS_ON is false. */}
+      <OffersTicker />
+      <OffersBand />
 
       {/* ───── FEATURE STRIP — 3 cells with vertical dividers ───── */}
       <section className="cc-home-features">

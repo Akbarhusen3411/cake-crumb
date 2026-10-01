@@ -65,9 +65,13 @@ export const FESTIVALS = [
     bg: 'linear-gradient(90deg, #d97706 0%, #f59e0b 35%, #fbbf24 70%, #fcd34d 100%)',
     fg: '#1a1a1a',
     accent: '#7c2d12',
-    message: 'Light up Diwali! Festive gift boxes & assorted truffles available.',
-    cta: 'Shop Diwali',
-    range: { fromMonth: 10, fromDay: 25, toMonth: 11, toDay: 5 },
+    // No truffles here — the bakery doesn't sell them (CLAUDE.md, Customer-facing
+    // copy). Diwali moves between mid-October and mid-November; check the range
+    // each year (8 Nov in 2026).
+    message: 'Happy Diwali! Order festive gift boxes a day ahead — see our offers.',
+    cta: 'See offers',
+    to: '/offers',
+    range: { fromMonth: 10, fromDay: 25, toMonth: 11, toDay: 10 },
   },
   {
     id: 'christmas',

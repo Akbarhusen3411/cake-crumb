@@ -7,6 +7,8 @@ import {
 import { FaWhatsapp } from 'react-icons/fa'
 import { useCart } from '../context/CartContext.jsx'
 import { inr } from '../data/format.js'
+import OfferGift from '../components/OfferGift.jsx'
+import { OFFERS_ON, cartOfferStatus } from '../data/offers.js'
 import { u } from '../data/images.js'
 import { COUNTRY_CODES, DEFAULT_COUNTRY } from '../data/countries.js'
 import { deliveryFee, isBulkOrder, depositAmount, DEPOSIT_PCT } from '../data/shopConfig.js'
@@ -259,6 +261,7 @@ export default function Checkout() {
   const [placedDeliveryDate, setPlacedDeliveryDate] = useState('')
 
   function buildOrderMessage(id, snapshotItems, totals, deliveryDate) {
+    const gift = OFFERS_ON ? cartOfferStatus(snapshotItems, totals.subtotal).offer : null
     const isPickup = form.deliveryMethod === 'pickup'
     // Deposit figures derived from the passed totals so the success-page re-send
     // (which runs after the cart is cleared) still shows the right numbers.
@@ -299,6 +302,9 @@ export default function Checkout() {
           ? `*Delivery:* ${inr(totals.delivery)}`
           : '*Delivery:* FREE',
       `*💰 Total: ${inr(totals.total)}*`,
+      // The gift the cart promised, so the bakery packs the right one. Free —
+      // it is not in the total above and never will be (see data/offers.js).
+      ...(gift ? ['', `*🎁 Free gift:* ${gift.gift} — free (${gift.name})`] : []),
       '',
       paymentLine,
       ...(form.notes ? ['', `*📝 Notes:* ${form.notes}`] : []),
@@ -1111,6 +1117,8 @@ export default function Checkout() {
                   <span className="cc-summary-total__label">Total</span>
                   <span className="cc-summary-total__value">{inr(total)}</span>
                 </div>
+
+                <OfferGift items={items} subtotal={subtotal} />
 
                 {form.payment === 'deposit' && (
                   <div className="cc-summary-deposit">

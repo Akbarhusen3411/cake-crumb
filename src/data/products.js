@@ -27,34 +27,37 @@ export const featured = [
 // Flat list for /shop — full PDF menu, every item orderable.
 // `slice` field gives a second price option (rendered as a second add-to-cart button).
 export const shopProducts = [
-  // ───── CHEESECAKES — Banto 4" whole / per slice ─────
+  // ───── CHEESECAKES — Banto 4" whole / single-serve tub ─────
+  // The second tier is a TUB, and is called one everywhere a customer reads it:
+  // "slice" was read as a triangle cut from a cake, which is not what arrives.
+  // The accounting menu still says "Per slice" — that is the owner's own label.
   // Classic
-  { id: 'cc-strawberry', name: 'Strawberry Cheesecake', price: 350, slice: 120, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Classic' },
-  { id: 'cc-blueberry', name: 'Blueberry Cheesecake', price: 410, slice: 140, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Classic' },
-  { id: 'cc-raspberry', name: 'Raspberry Cheesecake', price: 410, slice: 140, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Classic' },
-  { id: 'cc-orange', name: 'Orange Creamsicle Cheesecake', price: 380, slice: 130, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Classic' },
-  { id: 'cc-lemon', name: 'Lemon Cheesecake', price: 350, slice: 120, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Classic' },
-  { id: 'cc-rose', name: 'Rose Cheesecake', price: 350, slice: 120, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Classic' },
+  { id: 'cc-strawberry', name: 'Strawberry Cheesecake', price: 350, slice: 120, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Classic' },
+  { id: 'cc-blueberry', name: 'Blueberry Cheesecake', price: 410, slice: 140, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Classic' },
+  { id: 'cc-raspberry', name: 'Raspberry Cheesecake', price: 410, slice: 140, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Classic' },
+  { id: 'cc-orange', name: 'Orange Creamsicle Cheesecake', price: 380, slice: 130, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Classic' },
+  { id: 'cc-lemon', name: 'Lemon Cheesecake', price: 350, slice: 120, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Classic' },
+  { id: 'cc-rose', name: 'Rose Cheesecake', price: 350, slice: 120, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Classic' },
   // Exotic
-  { id: 'cc-mango', name: 'Mango Cheesecake', price: 350, slice: 120, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Exotic' },
-  { id: 'cc-passion', name: 'Passion Fruit Cheesecake', price: 380, slice: 130, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Exotic' },
-  { id: 'cc-cherry', name: 'Cherry Cheesecake', price: 380, slice: 130, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Exotic' },
-  { id: 'cc-guava', name: 'Guava Cheesecake', price: 350, slice: 120, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Exotic' },
-  { id: 'cc-mango-passion', name: 'Mango & Passion Cheesecake', price: 410, slice: 140, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Exotic' },
-  { id: 'cc-coconut', name: 'Coconut Cheesecake', price: 410, slice: 140, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Exotic' },
+  { id: 'cc-mango', name: 'Mango Cheesecake', price: 350, slice: 120, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Exotic' },
+  { id: 'cc-passion', name: 'Passion Fruit Cheesecake', price: 380, slice: 130, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Exotic' },
+  { id: 'cc-cherry', name: 'Cherry Cheesecake', price: 380, slice: 130, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Exotic' },
+  { id: 'cc-guava', name: 'Guava Cheesecake', price: 350, slice: 120, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Exotic' },
+  { id: 'cc-mango-passion', name: 'Mango & Passion Cheesecake', price: 410, slice: 140, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Exotic' },
+  { id: 'cc-coconut', name: 'Coconut Cheesecake', price: 410, slice: 140, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Exotic' },
   // Chocolate
-  { id: 'cc-choc', name: 'Chocolate Cheesecake (Milk & Dark)', price: 380, slice: 130, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Chocolate' },
-  { id: 'cc-choc-orange', name: 'Chocolate Orange Cheesecake', price: 380, slice: 130, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Chocolate' },
-  { id: 'cc-blackforest', name: 'Black Forest Cheesecake', price: 380, slice: 130, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Chocolate' },
-  { id: 'cc-choc-chunk', name: 'Chocolate Chunk Cheesecake', price: 380, slice: 130, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Chocolate' },
-  { id: 'cc-nutella', name: 'Nutella Cheesecake', price: 440, slice: 150, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Chocolate' },
-  { id: 'cc-biscoff', name: 'Biscoff Cheesecake', price: 410, slice: 140, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Chocolate' },
+  { id: 'cc-choc', name: 'Chocolate Cheesecake (Milk & Dark)', price: 380, slice: 130, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Chocolate' },
+  { id: 'cc-choc-orange', name: 'Chocolate Orange Cheesecake', price: 380, slice: 130, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Chocolate' },
+  { id: 'cc-blackforest', name: 'Black Forest Cheesecake', price: 380, slice: 130, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Chocolate' },
+  { id: 'cc-choc-chunk', name: 'Chocolate Chunk Cheesecake', price: 380, slice: 130, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Chocolate' },
+  { id: 'cc-nutella', name: 'Nutella Cheesecake', price: 440, slice: 150, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Chocolate' },
+  { id: 'cc-biscoff', name: 'Biscoff Cheesecake', price: 410, slice: 140, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Chocolate' },
   // Premium
-  { id: 'cc-cookies-cream', name: 'Cookies & Cream Cheesecake', price: 430, slice: 150, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Premium' },
-  { id: 'cc-caramel', name: 'Caramel Cheesecake', price: 430, slice: 150, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Premium' },
-  { id: 'cc-coffee', name: 'Coffee Cheesecake', price: 430, slice: 150, category: 'Cheesecakes', sizeLabel: 'Banto 4"', group: 'Premium' },
-  { id: 'cc-pistachio', name: 'Pistachio Cheesecake', price: 470, slice: 160, category: 'Cheesecakes', sizeLabel: 'Banto 4"', badge: 'Premium', group: 'Premium' },
-  { id: 'cc-dubai', name: 'Dubai Cheesecake', price: 500, slice: 170, category: 'Cheesecakes', sizeLabel: 'Banto 4"', badge: 'Special', group: 'Premium' },
+  { id: 'cc-cookies-cream', name: 'Cookies & Cream Cheesecake', price: 430, slice: 150, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Premium' },
+  { id: 'cc-caramel', name: 'Caramel Cheesecake', price: 430, slice: 150, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Premium' },
+  { id: 'cc-coffee', name: 'Coffee Cheesecake', price: 430, slice: 150, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', group: 'Premium' },
+  { id: 'cc-pistachio', name: 'Pistachio Cheesecake', price: 470, slice: 160, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', badge: 'Premium', group: 'Premium' },
+  { id: 'cc-dubai', name: 'Dubai Cheesecake', price: 500, slice: 170, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', badge: 'Special', group: 'Premium' },
 
   // ───── MILK CAKES — Bento / Tub ─────
   { id: 'mc-tres', name: 'Trés Léches Milk Cake', price: 420, slice: 120, category: 'Milk Cakes', sizeLabel: 'Bento', sliceLabel: 'Tub' },
@@ -350,7 +353,7 @@ export function describe(p) {
 
   switch (p.category) {
     case 'Cheesecakes':
-      return `A baked ${f} cheesecake on a buttery biscuit base${two ? ', whole or by the slice' : ''}.`
+      return `A baked ${f} cheesecake on a buttery biscuit base${two ? ' — whole, or a single-serve tub' : ''}.`
     case 'Milk Cakes':
       return `Sponge soaked in sweetened milk and finished with ${f} cream${two ? ' — whole, or a single-serve tub' : ''}.`
     case 'Sponge Cakes':

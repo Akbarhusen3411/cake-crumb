@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import RelatedProducts from '../components/RelatedProducts.jsx'
 import { inr } from '../data/format.js'
+import OfferGift from '../components/OfferGift.jsx'
 import { isBulkOrder, BULK_ORDER_MIN, DEPOSIT_PCT } from '../data/shopConfig.js'
 import { u } from '../data/images.js'
 
@@ -176,6 +177,7 @@ export default function Cart() {
                 Self-pickup is always free. Everything is baked to order — please
                 allow a day; you choose the date at checkout.
               </p>
+              <OfferGift items={items} subtotal={subtotal} />
               <hr style={{ borderColor: 'var(--cc-border)' }} />
               <div className="d-flex justify-content-between mb-3" style={{ fontSize: '1.05rem' }}>
                 <span style={{ color: 'var(--cc-cocoa)' }}>Estimated total</span>

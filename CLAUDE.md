@@ -65,6 +65,7 @@ Find the subsystem your task touches and read that section first:
 | Swapping a product photo | **Photos** | `npm run photos` links + resizes + checks; a slug-named file needs no code edit |
 | Anything with video | **Video** | Phone `.MOV` is HEVC and plays in Safari only; sources must stay out of `/public` |
 | Reviews, ratings, testimonials | **Reviews** | Three separate fabrications were removed; reviewer emails were publicly readable |
+| Offers on the website (`/offers`, Home, the cart gift) | **Offers on the site** | Free gifts only, detected in the cart, and the Mid-Month one switches itself on and off by date |
 | A promotion or an offer poster | **Offers**, **No discount system** | The posters are print, not code, and no offer moves a total — the two sections only look like they disagree |
 | Anything claiming a fact to a customer | **Customer-facing copy**, **Timing**, **Reviews**, **Policy pages** | No opening hours, no invented ratings, no absolute guarantees, nothing advertised that isn't sold — and the FAQ, policy pages and checkout must agree |
 
@@ -167,7 +168,7 @@ The bakery's **manual daily bookkeeping** (walk-ins, expenses, owner's cash) —
 - **PIN gate (`PinGate.jsx`) — a second lock, not a second wall.** The real boundary is Auth + Firestore rules; anyone with the admin password can read every figure from the console. It protects **an unattended signed-in tab** — genuine, and the only risk it covers. Don't describe it as securing data. **Never hardcoded**: only `SHA-256(salt:pin)` in `acc_settings/main.accPinHash`. Forgotten *or* being changed → delete that field in the console and the gate reopens in "choose a PIN" mode. **There is no in-app change-PIN screen** — one was built and taken back out; changing the PIN is a rare console operation, not a button worth leaving on an unattended tab. A failed *read* of the hash **does not unlock** (treating a broken rule as "no PIN set" would be an open door). Subscriptions gate on `ready = isAdmin && unlocked`.
 - **Danger zone** — "Download backup" (`exportAccountingBackup()`) and "start a fresh book" (`clearAccountingBooks()`, wipes orders/expenses/withdrawals in 400-doc batches, **keeps `acc_menu`**), gated on typing `DELETE`. No undo, no server backup — keep the gate and the backup button together.
 - **Menu importers** — `ensurePerPieceMenu()` / `ensureCakePopPrices()` no-op after a `localStorage` flag (`cc_acc_perpiece_v1`, `cc_acc_cakepop_v2`); bump the suffix to re-run. Safe to stay device-gated because they only ever *add* a missing row.
-- **The Excel importer is retired — don't reinstate it.** It rewrote its `xl-`-prefixed rows with `set` on any device that hadn't run it, so a second PC opening the page silently reverted every cloud edit. `data/excelImport.js` remains only as an archive (unreferenced). **Any bulk importer must be gated on a cloud marker, not a per-device one.**
+- **The Excel importer is retired — don't reinstate it.** It rewrote its `xl-`-prefixed rows with `set` on any device that hadn't run it, so a second PC opening the page silently reverted every cloud edit. `data/excelImport.js` was deleted in Oct 2026; its Apr–Jul 2026 figures survive in git history. **Any bulk importer must be gated on a cloud marker, not a per-device one.**
 - **"Expense taken for use" is gone** — one hand-typed figure that double-counted what Expenses and My Money now record properly. Don't reintroduce a manual money field. `acc_settings` still needs its rule (it holds the PIN hash).
 - **UI** — the customer list dedupes **case-insensitively**, or "makbul varisali" and "Makbul Varisali" split one history. Shared date helpers in `utils/adminDate.js` — **`todayIso()` shifts by the local offset first**, since plain UTC dated a pre-05:30 IST entry to *yesterday*. It delegates to **`localIso(date)`**, which the storefront uses too (see *Conventions*).
 - **`SearchableSelect.jsx`** (type-to-filter; `allowCustom`, `compact`, `icon`, `autoOpen`) — the list is **portalled onto `document.body` and positioned `fixed`**, tracking its field on scroll/resize (capture) and flipping above when there's no room below. It has to be: the entry sheet's details column and its item list both scroll, and as a child of the field an `overflow: auto` ancestor clipped it. **One list open at a time** via a module-level registry — outside-click alone lost the race when the click landed on another select. Outside-click listens in the **capture** phase (+ `touchstart`), and **Escape `stopPropagation()`s** so it shuts the list without closing the Modal. `spellCheck` off; names aren't dictionary words.
@@ -331,6 +332,41 @@ Three things to know before editing a poster:
 An offer that needs the site to charge less is not this — it is the discount system above, with
 everything that entails.
 
+### Offers on the site — `/offers`, Home, and the cart
+
+Seven offers live in **`data/offers.js`**, the single place to edit them. Same rule as the posters:
+**every offer is a free item added to the order, never a lower price**, so no total moves and the
+five-places rule is never engaged. The bakery adds the gift by hand when it confirms on WhatsApp.
+
+- **`OFFERS_ON = false`** hides everything (Home band, ticker, hero stickers, pop-up, cart gift card,
+  receipt line) in one go. `OFFER_RULES` holds the Mid-Month window (13th–20th), its ₹499 minimum,
+  the ₹1,500 Big Basket line and Tub Lover's tiers (2 tubs → 3 cake pops, 5 → 5).
+- **The Mid-Month Treat is date-driven, by the visitor's clock** — on from 00:00 on the 13th to 23:59
+  on the 20th, every month, with no redeploy. Outside the window it is *hidden*, not greyed: not on
+  Home, not in the `/offers` list, not counted in the cart. Everything reads time through
+  **`offerNow()`** and re-renders via **`useOfferClock()`** (every minute + on tab focus), so an open
+  page flips at midnight. **`?testdate=YYYY-MM-DD[THH:MM]` works on the dev server only** — it is
+  gated on `import.meta.env.DEV` so a customer can't fake a date to unlock a gift; keep it that way.
+- **`cartOfferStatus(items, subtotal, now)`** decides the gift: one offer per order, the **biggest
+  gift by menu value** (`GIFT_VALUE`, tier values for Tub Lover), ties by `RANK`. It also returns a
+  `nudge` ("Add 1 more box of 6…") only when the next gift is close. It classifies cart lines by the
+  **"(tier)" bracket in the name, then the id suffix** — an *exact* id match wins first, because
+  `lo-dipped-slice` is a product whose id merely ends in `-slice`.
+- **Picker lines must be built exactly as Shop/QuickView build them** (`<id>-slice` + "(tier)" name +
+  tier price), or the same box added from `/offers` and from `/shop` becomes two cart lines.
+- The gift shows in Cart, Checkout and the Shop sidebar (`OfferGift`), and Checkout writes
+  **`🎁 Free gift: …`** into the WhatsApp receipt so the bakery knows what to pack. It is **not** stored
+  on the order (that would need a Firestore rules change). Book the gift at **₹0** in accounting.
+- **Home**: hero stickers fly in over the photo (`HeroOffers`), a light rotating pill under the hero
+  (`OffersTicker` — a dark full-width marquee was tried and rejected as off-brand), then the tiles
+  (`OffersBand`, straight after the hero). In the window the Mid-Month tile is a double-width
+  spotlight; outside it six tiles sit three across.
+- **`MidMonthPopup`** greets visitors in the window, **once per month per device**
+  (`cc_midmonth_popup_v1` = "YYYY-MM"), never on cart/checkout/confirm-order/`/offers`/admin.
+  Its quotes are **original lines, deliberately not attributed to famous people**.
+- Copy follows the site's rules: dates come from `OFFER_RULES` via `ordinal()` (a hand-typed "14th"
+  went stale once already), and the fine print says the **order time** is what counts.
+
 ### Checkout form starts empty
 
 Pre-fill from `cc_customer_v1` / `cc_customer_draft_v1` was removed — customers saw stale data from past visits. `clearStoredCustomer()` deletes both keys on mount and on submit. **Don't reintroduce pre-fill** without asking.
@@ -376,6 +412,8 @@ Pre-fill from `cc_customer_v1` / `cc_customer_draft_v1` was removed — customer
 **`piece: true`** marks a product whose `price` tier is one loose piece and that sells singly (brownies, blondies). It only gives the quick view a counter and the batch-bake note. It is **not** `minQty` (that's a minimum, and would flip `isPerPiece` so the card quoted the box) and **not** `unit` (that's for a third tier). Display-only.
 
 **`EXTRA_TIERS`** lists sizes sold at the counter that the site can't take an order for (cookie singles used to be here; brownie boxes of 4 and 12 still are). **Display-only** — nothing reaches the cart or the totals. Quoted in the category note so the site doesn't pretend they don't exist. If one becomes orderable it needs a real product entry, not a lookup here.
+
+**The cheesecake single serving is a "Tub", never a "Slice".** All 23 cheesecakes carry `sliceLabel: 'Tub'` — customers read "slice" as a triangle cut from a cake, which is not what arrives. `describe()`, the Menu copy, the ChatBot subtitle and the offers say "tub" too. The owner's accounting menu still says "Per slice" (their own label — leave it), and **Dipped Cheesecake Slice** is a different product that genuinely is a slice. Carts saved before the change may still show "(Slice)"; the key was deliberately not bumped (nothing was repriced).
 
 **Size labels must not contain brackets.** The cart wraps every tier in brackets, so `Banto 4" (inch)` rendered as `Strawberry Cheesecake (Banto 4" (inch))` — on 23 cheesecakes and 10 sponge cakes, and in the WhatsApp receipt, the stored order and the invoice, since all four read the same field. Now `Banto 4"` and `Whole Bento`. **"Banto" is not a typo for "Bento"** — they're different sizes in the owner's own accounting menu (Banto = cheesecake, 3 slices; Bento = whole milk/sponge cake). Don't "correct" it.
 
@@ -526,6 +564,8 @@ One wording, used on Home, the footer, the cart, the FAQ and `/contact`: **order
 | `cc_acc_perpiece_v1`, `cc_acc_cakepop_v2` | `accounting.js` | One-time menu migrations — bump the suffix to re-run |
 | `cc_acc_excel_v7`, `cc_acc_taken` | — | Dead; nothing reads them |
 | `cc_acc_unlocked` | `AdminAccounting.jsx` | **sessionStorage**; accounting PIN unlocked for this tab |
+| `cc_midmonth_popup_v1` | `MidMonthPopup.jsx` | Month key ("2026-10") the pop-up last showed in — once per month per device |
+| `cc_offer_testdate` | `data/offers.js` | **sessionStorage, dev server only**; the `?testdate=` override |
 
 ### Festival banner
 

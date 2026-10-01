@@ -14,7 +14,7 @@ import { inr } from './format.js'
 // `strip` trims the redundant category noun off row labels so rows stay narrow
 // ("Strawberry Cheesecake" → "Strawberry"); the order selector keeps full names.
 const CATEGORY_CONFIG = [
-  { key: 'cheesecakes',  category: 'Cheesecakes',  emoji: '🍰', subtitle: 'Banto 4" (inch) · whole or per slice', strip: / Cheesecake/ },
+  { key: 'cheesecakes',  category: 'Cheesecakes',  emoji: '🍰', subtitle: 'Banto 4" (inch) · whole or single-serve tub', strip: / Cheesecake/ },
   { key: 'milk-cakes',   category: 'Milk Cakes',   emoji: '🥛', subtitle: 'Bento or single-serve tub',            strip: / Milk Cake/ },
   { key: 'sponge-cakes', category: 'Sponge Cakes', emoji: '🎂', subtitle: 'Whole bento or single-serve tub',      strip: / Sponge Cake/ },
   { key: 'cupcakes',     category: 'Cupcakes',     emoji: '🧁', subtitle: 'Per piece (min 2) or box of 6 · +₹20 for decoration', strip: / Cupcakes/ },

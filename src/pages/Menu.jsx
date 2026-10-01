@@ -177,7 +177,7 @@ function PriceRow({ name, price, badge, to }) {
 export default function Menu() {
   usePageMeta({
     title: 'Menu',
-    description: 'Cheesecakes, milk cakes, cookies, cupcakes, bakes, dessert cups and drinks. Banto 4" cakes, 6" milk cakes — whole or per slice.',
+    description: 'Cheesecakes, milk cakes, cookies, cupcakes, bakes, dessert cups and drinks. Banto 4" cakes, 6" milk cakes — whole or as single-serve tubs.',
   })
 
   // Resolved once — the structured data and the visible rows must be the same
@@ -216,7 +216,7 @@ export default function Menu() {
                   Shop is where you order, Menu is where you look up a price. */}
               <p className="cc-menu-hero__lede">
                 Everything we bake, with its price — cheesecakes and milk cakes whole
-                or by the slice, cookies and cupcakes by the box, plus bakes, dessert
+                or in single-serve tubs, cookies and cupcakes by the box, plus bakes, dessert
                 cups and drinks.
               </p>
             </div>
