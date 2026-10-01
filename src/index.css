@@ -7489,6 +7489,18 @@ header[style*="sticky"] {
    it wins without doubled selectors. The image is out of flow in a stretched
    grid cell, so the text sets the row height, never the photo. */
 @media (max-width: 575.98px) {
+  /* Heading, lede and button stack and centre, like every other Home section
+     heading. Side by side, the button took a third of a 360px row and squeezed
+     the title and lede into a narrow column of short lines. */
+  .cc-home-offers__head {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+  .cc-home-offers__head .section-title { text-align: center; }
+  .cc-home-offers__lede { margin-left: auto; margin-right: auto; font-size: 0.92rem; }
   .cc-home-offers__grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 0.75rem;
