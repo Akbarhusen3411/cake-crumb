@@ -2054,7 +2054,7 @@ html, body { overflow-x: hidden; }
 }
 
 .cc-footer-d__tagline {
-  margin: 1rem 0 1.2rem;
+  margin: 0.7rem 0 0.9rem;
   font-size: 0.92rem;
   color: var(--cc-cocoa-soft);
   line-height: 1.5;
@@ -2089,16 +2089,21 @@ html, body { overflow-x: hidden; }
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--cc-rose);
-  margin: 0 0 1.1rem;
+  margin: 0 0 0.8rem;
 }
 
+/* Two columns: ten links in one list made Quick Links the tallest column by
+   far, and it alone set the footer's height. */
 .cc-footer-d__links {
   list-style: none;
   padding: 0;
   margin: 0;
   font-size: 0.92rem;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  column-gap: 1.75rem;
 }
-.cc-footer-d__links li { margin-bottom: 0.55rem; }
+.cc-footer-d__links li { margin-bottom: 0.45rem; white-space: nowrap; }
 .cc-footer-d__links a {
   color: var(--cc-cocoa-soft);
   transition: color 0.15s;
@@ -2115,8 +2120,8 @@ html, body { overflow-x: hidden; }
   display: flex;
   align-items: flex-start;
   gap: 0.7rem;
-  margin-bottom: 0.9rem;
-  line-height: 1.5;
+  margin-bottom: 0.6rem;
+  line-height: 1.45;
 }
 .cc-footer-d__info a {
   color: var(--cc-cocoa-soft);
@@ -2138,16 +2143,16 @@ html, body { overflow-x: hidden; }
 .cc-footer-d__script {
   font-family: 'Allura', cursive;
   color: var(--cc-rose);
-  font-size: 2rem;
+  font-size: 1.75rem;
   line-height: 1.2;
-  margin: 1rem 0 0;
+  margin: 0.6rem 0 0;
 }
 
 /* Registration line — shared by the mobile + desktop footers. Sits directly
    above the rose copyright ribbon in both. */
 .cc-footer__certs {
   text-align: center;
-  padding: 0.9rem 1rem;
+  padding: 0.65rem 1rem;
   border-top: 1px solid var(--cc-border);
 }
 
@@ -2660,19 +2665,19 @@ html, body { overflow-x: hidden; }
 .cc-footer-m {
   background: linear-gradient(180deg, #ffffff 0%, var(--cc-cream) 100%);
   text-align: center;
-  padding: 2rem 1.25rem 0;
+  padding: 1.5rem 1.25rem 0;
 }
 
 .cc-footer-m__brand {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  padding-bottom: 1.3rem;
+  gap: 0.25rem;
+  padding-bottom: 0.9rem;
 }
 .cc-footer-m__icon {
   width: auto;
-  height: 74px;
+  height: 58px;
   filter: drop-shadow(0 8px 22px rgba(207, 62, 99, 0.16));
 }
 .cc-footer-m__wordmark {
@@ -2702,7 +2707,7 @@ html, body { overflow-x: hidden; }
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  margin: 0.55rem 0 0.1rem;
+  margin: 0.35rem 0 0;
 }
 .cc-footer-m__heart-line {
   display: inline-block;
@@ -2724,7 +2729,7 @@ html, body { overflow-x: hidden; }
 .cc-footer-m__socials {
   display: flex;
   gap: 0.55rem;
-  margin-top: 0.85rem;
+  margin-top: 0.6rem;
 }
 .cc-footer-m__social {
   width: 34px;
@@ -2753,7 +2758,7 @@ html, body { overflow-x: hidden; }
   justify-content: center;
   align-items: center;
   gap: 0.35rem 0.6rem;
-  padding: 1.2rem 0;
+  padding: 0.85rem 0;
   border-top: 1px dashed rgba(207, 62, 99, 0.22);
   border-bottom: 1px dashed rgba(207, 62, 99, 0.22);
 }
@@ -2776,7 +2781,7 @@ html, body { overflow-x: hidden; }
 /* Info column */
 .cc-footer-m__info {
   list-style: none;
-  padding: 1.1rem 0 0;
+  padding: 0.85rem 0 0;
   /* Shrink the block to its content and center it, so all four rows are
      left-aligned to each other (icons stack in one neat vertical line). */
   width: fit-content;
@@ -2824,10 +2829,10 @@ html, body { overflow-x: hidden; }
 /* Cursive flourish */
 .cc-footer-m__script {
   font-family: 'Allura', cursive;
-  font-size: 2.1rem;
+  font-size: 1.75rem;
   color: var(--cc-rose);
   line-height: 1.15;
-  margin: 1.4rem 0 0.4rem;
+  margin: 0.9rem 0 0.2rem;
 }
 
 /* Newsletter card */
@@ -2835,14 +2840,14 @@ html, body { overflow-x: hidden; }
   background: #ffffff;
   border: 1px solid var(--cc-border);
   border-radius: 14px;
-  padding: 1.2rem 1rem 1.3rem;
-  margin: 1rem auto 1.2rem;
+  padding: 0.95rem 0.9rem 1rem;
+  margin: 0.75rem auto 0.9rem;
   max-width: 420px;
   box-shadow: 0 4px 16px rgba(207, 62, 99, 0.06);
 }
 .cc-footer-m__news-head {
   font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   font-weight: 600;
   margin: 0.4rem 0 0.3rem;
   color: var(--cc-cocoa);
@@ -2862,7 +2867,7 @@ html, body { overflow-x: hidden; }
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.45rem;
-  margin: 0.9rem 0 1.1rem;
+  margin: 0.7rem 0 0.9rem;
 }
 .cc-footer-m__help-link {
   display: inline-flex;
@@ -7106,6 +7111,9 @@ header[style*="sticky"] {
 }
 .cc-policy__h2-icon svg { width: 16px; height: 16px; color: var(--cc-rose-ink); }
 .cc-policy__card p { margin: 0; }
+/* A card with several paragraphs (Privacy's reCAPTCHA card) still needs air between them. */
+.cc-policy__card p + p { margin-top: 0.75rem; }
+.cc-policy--cards .cc-policy__body a:not(.btn-rose) { color: var(--cc-rose-ink); }
 /* Rose dots instead of browser bullets, each line its own little block. */
 .cc-policy--cards .cc-policy__list { list-style: none; padding: 0; }
 .cc-policy--cards .cc-policy__list li {
@@ -7174,7 +7182,7 @@ header[style*="sticky"] {
   gap: 0.35rem 1.25rem;
 }
 
-.cc-footer-d__newsletter { margin-top: 1.25rem; max-width: 20rem; }
+.cc-footer-d__newsletter { margin-top: 0.9rem; max-width: 20rem; }
 .cc-footer-d__news-head {
   font-size: 0.8rem;
   font-weight: 700;

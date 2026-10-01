@@ -176,7 +176,7 @@ export default function Footer() {
 
       {/* ───── DESKTOP FOOTER (lg+) — matches mockup: brand / quick links / contact / hours ───── */}
       <div className="cc-footer-d d-none d-lg-block">
-        <div className="container-fluid px-4 px-xl-5 py-5">
+        <div className="container-fluid px-4 px-xl-5 pt-4 pb-3">
           <div className="row g-4 align-items-start">
 
             {/* 1. Brand + socials */}
@@ -206,7 +206,7 @@ export default function Footer() {
             </div>
 
             {/* 2. Quick Links */}
-            <div className="col-lg-2 cc-footer-d__col">
+            <div className="col-lg-3 cc-footer-d__col">
               <h6 className="cc-footer-d__heading">Quick Links</h6>
               <ul className="cc-footer-d__links">
                 {QUICK_LINKS.map((l) => (
@@ -218,7 +218,7 @@ export default function Footer() {
             </div>
 
             {/* 3. Contact Us */}
-            <div className="col-lg-4 cc-footer-d__col">
+            <div className="col-lg-3 cc-footer-d__col">
               <h6 className="cc-footer-d__heading">Contact Us</h6>
               <ul className="cc-footer-d__info">
                 <li>

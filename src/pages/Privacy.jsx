@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
-import { FiShield, FiDatabase, FiEye, FiMessageCircle } from 'react-icons/fi'
+import {
+  FiShield, FiDatabase, FiEye, FiMessageCircle, FiSend, FiClock, FiTrash2, FiLock, FiHeart,
+} from 'react-icons/fi'
 import HeartDivider from '../components/HeartDivider.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
@@ -54,7 +56,9 @@ export default function Privacy() {
         </div>
       </header>
 
-      <section className="cc-policy">
+      {/* Same card layout as /refund-policy (cc-policy--cards). Layout only —
+          the wording must keep describing exactly what the site does. */}
+      <section className="cc-policy cc-policy--cards">
         <div className="container py-5">
           <div className="cc-policy__body">
 
@@ -64,7 +68,16 @@ export default function Privacy() {
               not sell your details to anyone, ever.
             </p>
 
-            <h2 className="cc-policy__h2"><FiDatabase size={18} /> What we collect</h2>
+            {/* The three answers people come here for. Each restates a line
+                below — nothing new is claimed here. */}
+            <ul className="cc-policy__glance">
+              <li><FiHeart aria-hidden /><strong>Never sold</strong><span>your details stay with us</span></li>
+              <li><FiLock aria-hidden /><strong>No card data</strong><span>UPI stays in your bank app</span></li>
+              <li><FiTrash2 aria-hidden /><strong>Delete anytime</strong><span>just ask us</span></li>
+            </ul>
+
+            <div className="cc-policy__card">
+            <h2 className="cc-policy__h2"><span className="cc-policy__h2-icon"><FiDatabase /></span> What we collect</h2>
             <ul className="cc-policy__list">
               <li><strong>When you order</strong> — your name, phone number, delivery address and pincode, the delivery date you choose, and any notes you add. Email is optional.</li>
               <li><strong>When you send a custom-order enquiry</strong> — your name and phone number, the occasion and the date you need it, and whatever else you choose to fill in (servings, flavour, budget, notes). Email is optional here too.</li>
@@ -72,8 +85,10 @@ export default function Privacy() {
               <li><strong>When you join the newsletter</strong> — your email address, nothing more.</li>
               <li><strong>We never see your payment details.</strong> UPI happens in your own banking app; no card or bank credentials ever reach this website.</li>
             </ul>
+            </div>
 
-            <h2 className="cc-policy__h2"><FiShield size={18} /> Where it goes</h2>
+            <div className="cc-policy__card">
+            <h2 className="cc-policy__h2"><span className="cc-policy__h2-icon"><FiSend /></span> Where it goes</h2>
             <ul className="cc-policy__list">
               <li>Order details are stored in our private order book, readable only by the bakery.</li>
               <li>
@@ -89,15 +104,19 @@ export default function Privacy() {
               </li>
               <li><strong>Reviews are public</strong> by design, including any photo you attach. Only post what you are happy for others to see.</li>
             </ul>
+            </div>
 
-            <h2 className="cc-policy__h2"><FiEye size={18} /> Analytics</h2>
+            <div className="cc-policy__card">
+            <h2 className="cc-policy__h2"><span className="cc-policy__h2-icon"><FiEye /></span> Analytics</h2>
             <p>
               We use Plausible to count page visits. It is <strong>cookieless</strong>, stores
               no personal data and cannot follow you to other websites. It tells us which
               cakes people look at — not who looked at them.
             </p>
+            </div>
 
-            <h2 className="cc-policy__h2"><FiShield size={18} /> Checking you are not a robot</h2>
+            <div className="cc-policy__card">
+            <h2 className="cc-policy__h2"><span className="cc-policy__h2-icon"><FiShield /></span> Checking you are not a robot</h2>
             <p>
               Every page runs <strong>Google reCAPTCHA</strong>. It does the job of a
               tick-box that asks you to prove you are human, without asking you to tick
@@ -119,21 +138,26 @@ export default function Privacy() {
               The page fonts are also served by Google, which means Google sees the request
               for them. Nothing else on this site is shared with an advertising company.
             </p>
+            </div>
 
-            <h2 className="cc-policy__h2">How long we keep it</h2>
+            <div className="cc-policy__card">
+            <h2 className="cc-policy__h2"><span className="cc-policy__h2-icon"><FiClock /></span> How long we keep it</h2>
             <p>
               Order records are kept as long as we need them for our books and for any
               question you might raise later. Newsletter emails are kept until you ask us
               to remove them. Reviews stay until you or we take them down.
             </p>
+            </div>
 
-            <h2 className="cc-policy__h2">Having your data removed</h2>
+            <div className="cc-policy__card">
+            <h2 className="cc-policy__h2"><span className="cc-policy__h2-icon"><FiTrash2 /></span> Having your data removed</h2>
             <p>
               Message us on WhatsApp or email <a href="mailto:cakeandcrumb.in@gmail.com">cakeandcrumb.in@gmail.com</a>{' '}
               and ask. We will delete your details, remove your review or take you off the
               newsletter — no explanation needed. We may keep the bare record of a completed
               sale where we are required to for accounting.
             </p>
+            </div>
 
             <div className="cc-policy__cta">
               <a href={buildWhatsAppLink('Hi! I have a question about my data / privacy.')} target="_blank" rel="noopener noreferrer" className="btn-rose">
