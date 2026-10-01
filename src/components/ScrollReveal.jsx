@@ -39,9 +39,9 @@ const SKIP_INSIDE = 'nav, [role="dialog"], .modal, [aria-busy="true"], [data-no-
 // animate without its inputs ever being unready to type in.
 const CONTROLS = 'input, select, textarea'
 
-const DURATION = 700
-const STAGGER = 90
-const MAX_DELAY = 540
+const DURATION = 500
+const STAGGER = 70
+const MAX_DELAY = 400
 
 function directionFor(el) {
   // In a two-column split, the left column comes in from the left and the
