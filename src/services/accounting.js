@@ -230,8 +230,8 @@ export async function ensureCakePopPrices() {
 
 // ── The Excel importer is RETIRED. ──
 // It used to seed acc_orders / acc_expenses from the owner's Apr–Jul 2026
-// spreadsheet (`src/data/excelImport.js`, kept in the repo as the archive of
-// those figures). The owner cleared the books to start fresh from August 2026,
+// spreadsheet (`src/data/excelImport.js`, since deleted — the figures are
+// in git history before Oct 2026 if they are ever needed). The owner cleared the books to start fresh from August 2026,
 // and the importer rewrote its rows with `set` on any device that hadn't run it
 // — so leaving it wired up would have refilled the fresh book with the old year.
 // It is deliberately not called from anywhere. Don't reinstate it without the
