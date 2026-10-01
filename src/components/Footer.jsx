@@ -2,6 +2,7 @@ import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import {
   FiMapPin, FiPhone, FiMail, FiClock, FiInstagram, FiMessageCircle,
+  FiTruck, FiRotateCcw, FiShield,
 } from 'react-icons/fi'
 import Newsletter from './Newsletter.jsx'
 import Logo from './Logo.jsx'
@@ -32,6 +33,17 @@ const QUICK_LINKS = [
 const LEGAL_LINKS = [
   { to: '/refund-policy', label: 'Cancellation & Refunds' },
   { to: '/privacy',       label: 'Privacy' },
+]
+
+// The phone footer's dot-row is kept to the pages people browse. Track Order
+// and the two policies get their own row of icon chips just above the
+// copyright (MOBILE_HELP_LINKS) — as plain text in the dot-row and a loose
+// small-print line they read as clutter.
+const MOBILE_QUICK_LINKS = QUICK_LINKS.filter((l) => l.to !== '/track-order')
+const MOBILE_HELP_LINKS = [
+  { to: '/track-order',   label: 'Track order', Icon: FiTruck },
+  { to: '/refund-policy', label: 'Refunds',     Icon: FiRotateCcw },
+  { to: '/privacy',       label: 'Privacy',     Icon: FiShield },
 ]
 
 const ADDRESS = 'Vaso, Kheda, Gujarat 387380, India'
@@ -98,7 +110,7 @@ export default function Footer() {
 
         {/* Inline link row, dot-separated */}
         <nav className="cc-footer-m__links" aria-label="Footer">
-          {QUICK_LINKS.map((l, i) => (
+          {MOBILE_QUICK_LINKS.map((l, i) => (
             <Fragment key={l.to}>
               {i > 0 && <span className="cc-footer-m__sep" aria-hidden>·</span>}
               <Link to={l.to} className="cc-footer-m__link">{l.label}</Link>
@@ -151,13 +163,12 @@ export default function Footer() {
           <CertBadges variant="line" />
         </div>
 
-        {/* Small print + copyright */}
-        <nav className="cc-footer__legal" aria-label="Legal">
-          {LEGAL_LINKS.map((l, i) => (
-            <Fragment key={l.to}>
-              {i > 0 && <span className="cc-footer-m__sep" aria-hidden>·</span>}
-              <Link to={l.to}>{l.label}</Link>
-            </Fragment>
+        {/* Help + small print as one tidy row of chips. */}
+        <nav className="cc-footer-m__help" aria-label="Help and policies">
+          {MOBILE_HELP_LINKS.map(({ to, label, Icon }) => (
+            <Link key={to} to={to} className="cc-footer-m__help-link">
+              <Icon size={13} aria-hidden /> {label}
+            </Link>
           ))}
         </nav>
         <div className="cc-footer-m__copyright">{COPYRIGHT(year)}</div>

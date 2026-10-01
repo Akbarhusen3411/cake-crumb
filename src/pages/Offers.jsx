@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   FiGift, FiShoppingBag, FiMessageCircle, FiCheckCircle, FiArrowRight,
-  FiPlus, FiMinus, FiChevronDown, FiCalendar,
+  FiPlus, FiMinus, FiChevronDown, FiCalendar, FiClock, FiHeart, FiCreditCard, FiRefreshCw,
 } from 'react-icons/fi'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { u, srcSet } from '../data/images.js'
@@ -372,14 +372,38 @@ export default function Offers() {
           <section className="cc-offers-terms">
             <div className="container py-5">
               <h2 className="cc-offers-terms__title">The fine print</h2>
-              <ul>
-                <li><FiCheckCircle aria-hidden /> One offer per order — offers don’t combine. If your order fits more than one, you get the bigger gift.</li>
-                <li><FiCheckCircle aria-hidden /> The gift is added when we confirm on WhatsApp, so it won’t appear in your cart or checkout total.</li>
-                <li><FiCheckCircle aria-hidden /> Mid-Month Treat runs from 12:00 am on the {ordinal(OFFER_RULES.midMonth.fromDay)} to midnight on the {ordinal(OFFER_RULES.midMonth.toDay)}, and it’s the moment you place the order that counts — a basket filled on the {ordinal(OFFER_RULES.midMonth.toDay)} but ordered after midnight misses it.</li>
-                <li><FiCheckCircle aria-hidden /> Gift flavours are our pick from the day’s bake.</li>
-                <li><FiCheckCircle aria-hidden /> Orders of {inr(BULK_ORDER_MIN)} or more take a {Math.round(DEPOSIT_PCT * 100)}% advance by UPI, or full payment, as always.</li>
-                <li><FiCheckCircle aria-hidden /> Everything is made to order, so please order at least a day ahead.</li>
-                <li><FiCheckCircle aria-hidden /> Offers can change — this page always shows the ones running today.</li>
+              {/* One rule per tile: a short bold heading a customer can scan,
+                  then one plain line. Seven run-on sentences in a column were
+                  a wall of grey text on a phone. */}
+              <ul className="cc-offers-terms__list">
+                <li>
+                  <FiGift aria-hidden />
+                  <span><strong>One gift per order</strong>Offers don’t combine — if your order fits more than one, you get the bigger gift.</span>
+                </li>
+                <li>
+                  <FiMessageCircle aria-hidden />
+                  <span><strong>Not in your cart total</strong>The gift is added when we confirm your order on WhatsApp.</span>
+                </li>
+                <li>
+                  <FiClock aria-hidden />
+                  <span><strong>Mid-Month timing</strong>From 12:00 am on the {ordinal(OFFER_RULES.midMonth.fromDay)} to midnight on the {ordinal(OFFER_RULES.midMonth.toDay)}. The time you place the order is what counts.</span>
+                </li>
+                <li>
+                  <FiHeart aria-hidden />
+                  <span><strong>Our pick of flavours</strong>Gift flavours come from the day’s bake.</span>
+                </li>
+                <li>
+                  <FiCreditCard aria-hidden />
+                  <span><strong>Bigger orders</strong>Orders of {inr(BULK_ORDER_MIN)} or more take a {Math.round(DEPOSIT_PCT * 100)}% advance by UPI, or full payment, as always.</span>
+                </li>
+                <li>
+                  <FiCalendar aria-hidden />
+                  <span><strong>Order a day ahead</strong>Everything is made to order.</span>
+                </li>
+                <li>
+                  <FiRefreshCw aria-hidden />
+                  <span><strong>Offers can change</strong>This page always shows the ones running today.</span>
+                </li>
               </ul>
             </div>
           </section>

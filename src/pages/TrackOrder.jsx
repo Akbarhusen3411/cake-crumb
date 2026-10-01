@@ -10,7 +10,7 @@ import { inr } from '../data/format.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { WHATSAPP_PHONE } from '../components/WhatsAppButton.jsx'
 import PageHero from '../components/PageHero.jsx'
-import { img, u } from '../data/images.js'
+import { img, u, srcSet } from '../data/images.js'
 
 function formatDeliveryDate(iso) {
   if (!iso) return ''
@@ -207,8 +207,13 @@ export default function TrackOrder() {
         eyebrow="Track Your Order"
         title={<>Where is My<br />Sweet Treat?</>}
         text="Paste your Order ID below and we'll show you exactly where your order stands."
-        image={u(img.pinkDripCake, 1000, 750)}
-        imageAlt="Pink letter cake"
+        className="cc-track-hero"
+        /* The bakery's own photo of an order boxed and ready to go — it was a
+           stock letter cake, nothing to do with tracking. */
+        image={u(img.rcCupcakesFloralRose)}
+        imageSrcSet={srcSet(img.rcCupcakesFloralRose)}
+        imageSizes="(min-width: 992px) 540px, 100vw"
+        imageAlt="A box of six cupcakes piped with pink roses, packed and ready"
         cta={
           <>
             <form onSubmit={onSubmit} className="cc-track-form mt-4">
@@ -216,7 +221,7 @@ export default function TrackOrder() {
                 <FiSearch className="cc-track-form__icon" />
                 <input
                   type="text"
-                  placeholder="Order ID (e.g. CC-AB-200526-K9GEV)"
+                  placeholder="Enter your Order ID"
                   value={inputId}
                   onChange={(e) => setInputId(e.target.value.toUpperCase())}
                   className="cc-input"
@@ -228,8 +233,10 @@ export default function TrackOrder() {
                 {phase === 'loading' ? 'Looking up…' : 'Track'}
               </button>
             </form>
-            <p className="mt-2 mb-0" style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.82rem' }}>
-              Your Order ID is in the WhatsApp message you sent us.
+            <p className="cc-track-hint mt-2 mb-0">
+              {/* The example moved out of the placeholder: on a phone it was cut
+                  to "ORDER ID (E.G. CC-AB-200" and never read in full. */}
+              It's in the WhatsApp message you sent us — e.g. <strong>CC-AB-200526-K9GEV</strong>
             </p>
           </>
         }

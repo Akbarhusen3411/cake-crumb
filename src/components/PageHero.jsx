@@ -1,6 +1,8 @@
-export default function PageHero({ eyebrow, title, text, cta, image, imageAlt = '' }) {
+// `className` lets a page restyle its own hero (Track Order does, on phones);
+// `imageSrcSet` / `imageSizes` serve a right-sized photo. All optional.
+export default function PageHero({ eyebrow, title, text, cta, image, imageAlt = '', className = '', imageSrcSet, imageSizes }) {
   return (
-    <section className="fade-bg" style={{ overflow: 'hidden' }}>
+    <section className={`fade-bg ${className}`.trim()} style={{ overflow: 'hidden' }}>
       <div className="container py-5">
         <div className="row align-items-center g-4 g-lg-5">
           <div className="col-lg-6 text-center text-lg-start">
@@ -25,6 +27,7 @@ export default function PageHero({ eyebrow, title, text, cta, image, imageAlt = 
           </div>
           <div className="col-lg-6">
             <div
+              className="cc-page-hero__media"
               style={{
                 borderRadius: 16,
                 overflow: 'hidden',
@@ -33,6 +36,8 @@ export default function PageHero({ eyebrow, title, text, cta, image, imageAlt = 
             >
               <img
                 src={image}
+                srcSet={imageSrcSet}
+                sizes={imageSizes}
                 alt={imageAlt}
                 loading="eager"
                 fetchPriority="high"

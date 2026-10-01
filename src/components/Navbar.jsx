@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import {
   FiSearch, FiShoppingBag, FiHome, FiInfo, FiBook, FiImage,
-  FiStar, FiPhone, FiInstagram, FiMail, FiX, FiTruck,
+  FiStar, FiPhone, FiInstagram, FiMail, FiX, FiTruck, FiGift, FiChevronRight,
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import Logo from './Logo.jsx'
@@ -10,6 +10,7 @@ import SearchOverlay from './SearchOverlay.jsx'
 import { asset } from '../data/images.js'
 import { useCart } from '../context/CartContext.jsx'
 import { WHATSAPP_PHONE } from './WhatsAppButton.jsx'
+import { OFFERS_ON } from '../data/offers.js'
 
 // Order is the browsing journey, not the sitemap: look at what's on offer
 // (Menu), buy it (Shop), then the softer pages. About sits last because it's
@@ -24,6 +25,13 @@ const links = [
   { to: '/contact', label: 'Contact', icon: FiPhone },
   { to: '/about', label: 'About', icon: FiInfo },
 ]
+
+// The phone menu also links /offers — it was reachable on a phone only through
+// the Home page. Mobile only, by the owner's choice: the desktop bar is already
+// tight on small laptops. Hidden with everything else when OFFERS_ON is false.
+const mobileLinks = OFFERS_ON
+  ? [...links.slice(0, 3), { to: '/offers', label: 'Offers', icon: FiGift, tag: 'Free gifts' }, ...links.slice(3)]
+  : links
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
@@ -232,9 +240,10 @@ export default function Navbar() {
             <p className="mobile-menu__quote">Baked with love. Loved by you.</p>
           </div>
 
-          {/* Nav links — each with a small rose icon + grow-underline on active */}
+          {/* Nav links — icon, label, an optional tag, and a chevron so each row
+              reads as tappable. The current page carries a rose bar + solid icon. */}
           <nav className="mobile-menu__nav" aria-label="Mobile navigation">
-            {links.map((l) => {
+            {mobileLinks.map((l) => {
               const Icon = l.icon
               return (
                 <NavLink
@@ -245,7 +254,9 @@ export default function Navbar() {
                   className={({ isActive }) => 'mobile-menu__link' + (isActive ? ' active' : '')}
                 >
                   <span className="mobile-menu__link-icon"><Icon size={15} /></span>
-                  <span>{l.label}</span>
+                  <span className="mobile-menu__link-label">{l.label}</span>
+                  {l.tag && <span className="mobile-menu__tag">{l.tag}</span>}
+                  <FiChevronRight size={16} className="mobile-menu__chev" aria-hidden />
                 </NavLink>
               )
             })}
@@ -262,11 +273,26 @@ export default function Navbar() {
               in the same block. The number itself is still on every page, in
               the footer and on /contact. */}
           <div className="mobile-menu__footer">
+            {/* Each icon carries a caption — the truck alone did not say "Track
+                order". The caption is the link's name, so no aria-label (one
+                that differs from the visible words fails WCAG 2.5.3). */}
             <div className="mobile-menu__socials">
-              <a href="https://www.instagram.com/cake_and_crumb_1/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="mobile-menu__social"><FiInstagram size={15} /></a>
-              <a href="mailto:cakeandcrumb.in@gmail.com" aria-label="Email" className="mobile-menu__social"><FiMail size={15} /></a>
-              <a href={`https://wa.me/${WHATSAPP_PHONE}`} target="_blank" rel="noopener noreferrer" aria-label="Order on WhatsApp" className="mobile-menu__social mobile-menu__social--wa"><FaWhatsapp size={15} /></a>
-              <Link to="/track-order" onClick={() => setOpen(false)} aria-label="Track your order" title="Track Order" className="mobile-menu__social"><FiTruck size={15} /></Link>
+              <a href="https://www.instagram.com/cake_and_crumb_1/" target="_blank" rel="noopener noreferrer" className="mobile-menu__social-item">
+                <span className="mobile-menu__social"><FiInstagram size={15} aria-hidden /></span>
+                <span className="mobile-menu__social-label">Instagram</span>
+              </a>
+              <a href="mailto:cakeandcrumb.in@gmail.com" className="mobile-menu__social-item">
+                <span className="mobile-menu__social"><FiMail size={15} aria-hidden /></span>
+                <span className="mobile-menu__social-label">Email</span>
+              </a>
+              <a href={`https://wa.me/${WHATSAPP_PHONE}`} target="_blank" rel="noopener noreferrer" className="mobile-menu__social-item mobile-menu__social-item--wa">
+                <span className="mobile-menu__social"><FaWhatsapp size={15} aria-hidden /></span>
+                <span className="mobile-menu__social-label">WhatsApp</span>
+              </a>
+              <Link to="/track-order" onClick={() => setOpen(false)} className="mobile-menu__social-item">
+                <span className="mobile-menu__social"><FiTruck size={15} aria-hidden /></span>
+                <span className="mobile-menu__social-label">Track order</span>
+              </Link>
             </div>
           </div>
           </div>{/* /.mobile-menu__inner */}

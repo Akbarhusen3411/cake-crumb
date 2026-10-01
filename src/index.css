@@ -1718,8 +1718,8 @@ html, body { overflow-x: hidden; }
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 0.35rem;
-  margin-bottom: 1.1rem;
+  gap: 0.2rem;
+  margin-bottom: 0.7rem;
   opacity: 0;
   transform: translateY(8px);
   transition: opacity 0.45s ease, transform 0.45s ease;
@@ -1729,20 +1729,22 @@ html, body { overflow-x: hidden; }
   transform: translateY(0);
   transition-delay: 0.05s;
 }
+/* Compact brand block: at 92px plus wordmark, tagline, divider and quote it
+   took a third of the panel and squeezed the links. */
 .mobile-menu__logo {
   width: auto;
-  height: 92px;
+  height: 64px;
   display: block;
   filter: drop-shadow(0 8px 22px rgba(207, 62, 99, 0.20));
 }
 .mobile-menu__wordmark {
   font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
   font-weight: 700;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   color: #1a1a1a;
   letter-spacing: 0.06em;
   line-height: 1.1;
-  margin-top: 0.4rem;
+  margin-top: 0.25rem;
 }
 .mobile-menu__amp {
   font-style: italic;
@@ -1761,7 +1763,7 @@ html, body { overflow-x: hidden; }
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin: 0.5rem 0 0.1rem;
+  margin: 0.3rem 0 0;
 }
 .mobile-menu__heart-line {
   display: inline-block;
@@ -1778,7 +1780,7 @@ html, body { overflow-x: hidden; }
 .mobile-menu__quote {
   font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
   font-style: italic;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--cc-cocoa);
   margin: 0;
   letter-spacing: 0.02em;
@@ -1825,6 +1827,7 @@ html, body { overflow-x: hidden; }
 .mobile-menu-overlay.open .mobile-menu__link:nth-child(5) { transition-delay: 0.26s; }
 .mobile-menu-overlay.open .mobile-menu__link:nth-child(6) { transition-delay: 0.30s; }
 .mobile-menu-overlay.open .mobile-menu__link:nth-child(7) { transition-delay: 0.34s; }
+.mobile-menu-overlay.open .mobile-menu__link:nth-child(8) { transition-delay: 0.38s; }
 
 .mobile-menu__link-icon {
   display: inline-flex;
@@ -1838,10 +1841,12 @@ html, body { overflow-x: hidden; }
   flex-shrink: 0;
   transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
+/* Rose-ink, not --cc-rose: a 17px semibold word on blush needs 4.5:1, and
+   --cc-rose does not reach it there. */
 .mobile-menu__link:hover,
 .mobile-menu__link.active {
   background: rgba(207, 62, 99, 0.06);
-  color: var(--cc-rose);
+  color: var(--cc-rose-ink);
 }
 .mobile-menu__link:hover .mobile-menu__link-icon,
 .mobile-menu__link.active .mobile-menu__link-icon {
@@ -1849,7 +1854,35 @@ html, body { overflow-x: hidden; }
   color: #ffffff;
   transform: scale(1.05);
 }
-.mobile-menu__link.active { background: var(--cc-blush); }
+/* The current page: a solid rose bar on the left as well as the tint, so
+   "where am I" is answered at a glance rather than by a faint wash. */
+.mobile-menu__link.active {
+  background: var(--cc-blush);
+  box-shadow: inset 3px 0 0 var(--cc-rose);
+}
+.mobile-menu__link-label { flex: 1 1 auto; min-width: 0; }
+.mobile-menu__tag {
+  flex: 0 0 auto;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  background: var(--cc-offer-gold-soft);
+  color: var(--cc-offer-gold-text);
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.mobile-menu__chev {
+  flex: 0 0 auto;
+  color: var(--cc-rose-soft);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.mobile-menu__link:hover .mobile-menu__chev,
+.mobile-menu__link.active .mobile-menu__chev {
+  color: var(--cc-rose);
+  transform: translateX(2px);
+}
 
 /* Footer block — socials + WhatsApp CTA */
 .mobile-menu__footer {
@@ -1875,11 +1908,30 @@ html, body { overflow-x: hidden; }
   /* Four now, not two — Instagram · Email · WhatsApp · Track Order. Slightly
      tighter so the row stays comfortably on one line on a 320px phone
      (4 × 36px + 3 × 8px = 168px). */
-  gap: 0.5rem;
+  gap: 0.35rem;
+  width: 100%;
+}
+/* Icon over a caption; the whole item is the link. Four 64px items fit a
+   320px phone's panel. */
+.mobile-menu__social-item {
+  flex: 1 1 0;
+  max-width: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  text-decoration: none;
+}
+.mobile-menu__social-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--cc-cocoa);
+  white-space: nowrap;
 }
 /* WhatsApp keeps its own colour on hover so the one order channel is
    identifiable at a glance in a row of otherwise rose icons. */
-.mobile-menu__social--wa:hover {
+.mobile-menu__social-item--wa:hover .mobile-menu__social {
   background: #25d366;
   color: #fff;
 }
@@ -1896,12 +1948,13 @@ html, body { overflow-x: hidden; }
   box-shadow: 0 3px 10px rgba(207, 62, 99, 0.12);
   transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
-.mobile-menu__social:hover,
-.mobile-menu__social:focus-visible {
+.mobile-menu__social-item:hover .mobile-menu__social,
+.mobile-menu__social-item:focus-visible .mobile-menu__social {
   background: var(--cc-rose);
   color: #ffffff;
   transform: translateY(-2px);
 }
+.mobile-menu__social-item--wa:hover .mobile-menu__social { background: #25d366; }
 /* ─── Checkout delivery-method picker ───────────────────────────────────── */
 .cc-delivery-method {
   display: grid;
@@ -2548,6 +2601,23 @@ html, body { overflow-x: hidden; }
   align-items: center;
   gap: 0.4rem;
 }
+/* The placeholder is a prompt, not an ID — it shouldn't be shouted in caps. */
+.cc-track-form__field .cc-input::placeholder { text-transform: none; letter-spacing: 0; }
+.cc-track-hint { color: var(--cc-cocoa-soft); font-size: 0.82rem; }
+.cc-track-hint strong { color: var(--cc-cocoa); font-weight: 700; letter-spacing: 0.02em; }
+
+/* Track Order on a phone: a shorter hero, the field and button stacked at full
+   width, and the photo a short band — at 4:3 it was a full screen of picture
+   between the form and the result the customer came for. */
+@media (max-width: 575.98px) {
+  .cc-track-hero .container { padding-top: 1.75rem !important; padding-bottom: 1.75rem !important; }
+  .cc-track-hero h1 { font-size: 2rem !important; margin: 0.6rem 0 !important; }
+  .cc-track-form { flex-direction: column; gap: 0.6rem; }
+  .cc-track-form .cc-input { min-height: 48px; font-size: 1rem; }
+  .cc-track-form .btn-rose { justify-content: center; width: 100%; min-height: 46px; }
+  .cc-track-hint { text-align: center; }
+  .cc-track-hero .cc-page-hero__media img { aspect-ratio: 16 / 9 !important; }
+}
 
 /* ─── Back-to-top floating button ───────────────────────────────────────── */
 .cc-back-to-top {
@@ -2786,6 +2856,33 @@ html, body { overflow-x: hidden; }
 }
 
 /* Copyright bar — full bleed */
+/* Track order · Refunds · Privacy — three equal chips in one row, above the
+   copyright band. Fits a 320px phone (3 × ~92px + gaps). */
+.cc-footer-m__help {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin: 0.9rem 0 1.1rem;
+}
+.cc-footer-m__help-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 36px;
+  padding: 0.4rem 0.3rem;
+  background: #fff;
+  border: 1px solid var(--cc-rose-soft);
+  border-radius: 999px;
+  color: var(--cc-cocoa);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.cc-footer-m__help-link svg { color: var(--cc-rose-ink); flex: 0 0 auto; }
+.cc-footer-m__help-link:hover,
+.cc-footer-m__help-link:focus-visible { background: var(--cc-blush-soft); color: var(--cc-rose-ink); }
 .cc-footer-m__copyright {
   margin: 0 -1.25rem;  /* break out of the page padding */
   background: var(--cc-rose-deep);
@@ -4590,7 +4687,7 @@ header[style*="sticky"] {
   .cc-shop-promise .cc-features-card__heading,
   .cc-about-why .cc-features-card__heading { margin-top: 0.55rem !important; font-size: 0.7rem; }
   .cc-shop-promise .cc-features-card__text,
-  .cc-about-why .cc-features-card__text { margin-top: 0.2rem !important; margin-bottom: 0; font-size: 0.78rem; line-height: 1.4; }
+  .cc-about-why .cc-features-card__text { margin-top: 0.2rem !important; margin-bottom: 0; font-size: 0.78rem; line-height: 1.4; text-wrap: balance; }
 }
 
 /* ─── Reviews page ────────────────────────────────────────────────────────── */
@@ -6942,6 +7039,114 @@ header[style*="sticky"] {
   padding-top: 1rem;
 }
 
+/* ── Refund policy as cards (.cc-policy--cards) ──
+   The same words, laid out to be scanned by someone with a problem: the three
+   key terms up front, then one white card per section on a cream ground. */
+.cc-policy--cards { background: var(--cc-cream); }
+.cc-policy--cards .cc-policy__intro {
+  border-bottom: 0;
+  padding-bottom: 0;
+  text-align: center;
+  text-wrap: balance;
+}
+.cc-policy__glance {
+  list-style: none;
+  margin: 1.4rem 0 1.6rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.cc-policy__glance li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 1rem 0.6rem;
+  background: #fff;
+  border: 1px solid var(--cc-blush-soft);
+  border-radius: 14px;
+  text-align: center;
+  line-height: 1.3;
+}
+.cc-policy__glance svg {
+  box-sizing: content-box;
+  width: 18px;
+  height: 18px;
+  padding: 9px;
+  margin-bottom: 0.35rem;
+  border-radius: 50%;
+  background: var(--cc-blush-soft);
+  color: var(--cc-rose-ink);
+}
+.cc-policy__glance strong {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  color: var(--cc-cocoa);
+}
+.cc-policy__glance span { font-size: 0.8rem; color: var(--cc-cocoa-soft); }
+.cc-policy__card {
+  margin-bottom: 1rem;
+  padding: 1.15rem 1.35rem 1.2rem;
+  background: #fff;
+  border: 1px solid var(--cc-blush-soft);
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(176, 46, 82, 0.05);
+}
+.cc-policy--cards .cc-policy__h2 { margin: 0 0 0.75rem; gap: 0.65rem; }
+.cc-policy__h2-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--cc-blush-soft);
+  flex: 0 0 auto;
+}
+.cc-policy__h2-icon svg { width: 16px; height: 16px; color: var(--cc-rose-ink); }
+.cc-policy__card p { margin: 0; }
+/* Rose dots instead of browser bullets, each line its own little block. */
+.cc-policy--cards .cc-policy__list { list-style: none; padding: 0; }
+.cc-policy--cards .cc-policy__list li {
+  position: relative;
+  padding-left: 1.1rem;
+  margin-bottom: 0.55rem;
+}
+.cc-policy--cards .cc-policy__list li:last-child { margin-bottom: 0; }
+.cc-policy--cards .cc-policy__list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cc-rose);
+}
+/* The way out is a panel, not a line under a rule. */
+.cc-policy--cards .cc-policy__cta {
+  justify-content: center;
+  margin: 1.4rem 0 1.25rem;
+  padding: 1.25rem;
+  background: var(--cc-blush-soft);
+  border: 1px solid var(--cc-rose-soft);
+  border-radius: 16px;
+}
+.cc-policy--cards .cc-policy__link { color: var(--cc-rose-ink); font-weight: 700; }
+.cc-policy--cards .cc-policy__note { text-align: center; border-top: 0; padding-top: 0; }
+@media (max-width: 575.98px) {
+  .cc-policy__glance { gap: 0.45rem; margin: 1.1rem 0 1.25rem; }
+  .cc-policy__glance li { padding: 0.75rem 0.3rem; }
+  .cc-policy__glance svg { width: 15px; height: 15px; padding: 7px; }
+  .cc-policy__glance strong { font-size: 0.98rem; }
+  .cc-policy__glance span { font-size: 0.7rem; text-wrap: balance; }
+  .cc-policy__card { padding: 1rem 1rem 1.05rem; border-radius: 14px; }
+  .cc-policy--cards .cc-policy__h2 { font-size: 1.1rem; }
+  .cc-policy--cards .cc-policy__body { font-size: 0.9rem; }
+  .cc-policy--cards .cc-policy__cta { flex-direction: column; }
+}
+
 /* ═══════════════ FOOTER additions ═══════════════ */
 /* WhatsApp gets its own colour — it is the channel every order goes through,
    so it should not look like one more social icon. */
@@ -7900,24 +8105,93 @@ header[style*="sticky"] {
 }
 .cc-offers-steps h3 { font-family: var(--font-heading); font-size: 1.15rem; color: var(--cc-cocoa); margin: 0 0 0.4rem; }
 .cc-offers-steps p { margin: 0; color: var(--cc-cocoa-soft); font-size: 0.95rem; }
+/* Phone: one card split into cells, as the Shop / Reviews / About strips do —
+   not three tall cream boxes stacked a screen and a half deep. Two across,
+   and the third step takes the full width under them. */
 @media (max-width: 767.98px) {
-  .cc-offers-steps { grid-template-columns: 1fr; }
+  .cc-offers-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    background: var(--cc-cream);
+    border: 1px solid var(--cc-blush-soft);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .cc-offers-steps li { padding: 1rem 0.85rem; border-radius: 0; background: none; }
+  .cc-offers-steps li:nth-child(odd) { border-right: 1px solid var(--cc-blush-soft); }
+  .cc-offers-steps li:nth-child(-n + 2) { border-bottom: 1px solid var(--cc-blush-soft); }
+  .cc-offers-steps li:last-child:nth-child(odd) { grid-column: 1 / -1; border-right: 0; }
+  .cc-offers-steps__icon { width: 40px; height: 40px; margin-bottom: 0.55rem; }
+  .cc-offers-steps__icon svg { width: 17px; height: 17px; }
+  .cc-offers-steps h3 { font-size: 1rem; margin-bottom: 0.25rem; }
+  /* Balanced wrapping: centred text in a half-width cell broke into ragged
+     lines ("…through our / chat, or straight on / WhatsApp…"). Balance
+     evens the line lengths so the block reads as a tidy shape. */
+  .cc-offers-steps h3,
+  .cc-offers-steps p { text-wrap: balance; }
+  .cc-offers-steps p { font-size: 0.8rem; line-height: 1.45; }
 }
 
-/* Terms */
+/* Terms — one rule per tile: icon disc, bold heading, one plain line. A
+   white card, two columns from 768px, one on a phone. */
 .cc-offers-terms { background: var(--cc-cream); }
-.cc-offers-terms .container { max-width: 760px; }
-.cc-offers-terms__title { font-family: var(--font-heading); font-size: 1.4rem; color: var(--cc-cocoa); margin-bottom: 1rem; }
-.cc-offers-terms ul { list-style: none; padding: 0; margin: 0; }
-.cc-offers-terms li {
-  display: flex;
-  gap: 0.6rem;
-  align-items: flex-start;
-  padding: 0.55rem 0;
-  color: var(--cc-cocoa-soft);
-  border-bottom: 1px solid rgba(91, 62, 54, 0.1);
+.cc-offers-terms .container { max-width: 980px; }
+.cc-offers-terms__title {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  color: var(--cc-cocoa);
+  margin-bottom: 1.1rem;
+  text-align: center;
 }
-.cc-offers-terms li svg { color: var(--cc-offer-gold-text); flex-shrink: 0; margin-top: 0.25rem; }
+.cc-offers-terms__list {
+  list-style: none;
+  margin: 0;
+  padding: 0.4rem 1.1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  background: #fff;
+  border: 1px solid var(--cc-blush-soft);
+  border-radius: 16px;
+  box-shadow: 0 6px 22px rgba(176, 46, 82, 0.06);
+}
+.cc-offers-terms__list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px dashed var(--cc-blush-soft);
+}
+.cc-offers-terms__list li:last-child { border-bottom: 0; }
+.cc-offers-terms__list li > svg {
+  flex: 0 0 auto;
+  box-sizing: content-box;
+  width: 15px;
+  height: 15px;
+  padding: 8px;
+  border-radius: 50%;
+  background: var(--cc-blush-soft);
+  color: var(--cc-rose-ink);
+}
+.cc-offers-terms__list li > span {
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--cc-cocoa-soft);
+}
+.cc-offers-terms__list strong {
+  display: block;
+  margin-bottom: 0.1rem;
+  font-size: 0.92rem;
+  color: var(--cc-cocoa);
+}
+@media (min-width: 768px) {
+  .cc-offers-terms__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 2rem;
+    padding: 0.6rem 1.6rem;
+  }
+  /* Two columns: the last row's pair (or a lone last tile) loses its rule. */
+  .cc-offers-terms__list li:nth-last-child(2):nth-child(odd) { border-bottom: 0; }
+}
 
 /* Closing band */
 .cc-offers-close { color: #fff6f2; background: linear-gradient(160deg, var(--cc-offer-ink-2), var(--cc-offer-ink)); }

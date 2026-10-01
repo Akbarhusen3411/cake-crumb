@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FiClock, FiCreditCard, FiAlertCircle, FiMessageCircle } from 'react-icons/fi'
+import { FiClock, FiCreditCard, FiAlertCircle, FiMessageCircle, FiCamera, FiRotateCcw, FiShield } from 'react-icons/fi'
 import HeartDivider from '../components/HeartDivider.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
@@ -49,7 +49,10 @@ export default function RefundPolicy() {
         </div>
       </header>
 
-      <section className="cc-policy">
+      {/* cc-policy--cards: this page reads as a set of cards (Privacy shares the
+          base styles and keeps the plain document look). The wording is
+          unchanged — it must stay in step with /faq. */}
+      <section className="cc-policy cc-policy--cards">
         <div className="container py-5">
           <div className="cc-policy__body">
 
@@ -59,7 +62,16 @@ export default function RefundPolicy() {
               why we would always rather you asked us first.
             </p>
 
-            <h2 className="cc-policy__h2"><FiClock size={18} /> Cancelling an order</h2>
+            {/* The three terms people come here for, before the detail. Each
+                restates a line further down — nothing new is promised here. */}
+            <ul className="cc-policy__glance">
+              <li><FiClock aria-hidden /><strong>30 minutes</strong><span>to cancel, for any reason</span></li>
+              <li><FiRotateCcw aria-hidden /><strong>24 hours</strong><span>usual time for a refund</span></li>
+              <li><FiShield aria-hidden /><strong>100% back</strong><span>if we have to cancel</span></li>
+            </ul>
+
+            <div className="cc-policy__card">
+            <h2 className="cc-policy__h2"><span className="cc-policy__h2-icon"><FiClock /></span> Cancelling an order</h2>
             <ul className="cc-policy__list">
               <li>
                 <strong>Within 30 minutes of placing your order</strong> — cancel for any
@@ -76,8 +88,10 @@ export default function RefundPolicy() {
                 cancellation is not final until we have confirmed it.
               </li>
             </ul>
+            </div>
 
-            <h2 className="cc-policy__h2"><FiCreditCard size={18} /> Refunds</h2>
+            <div className="cc-policy__card">
+            <h2 className="cc-policy__h2"><span className="cc-policy__h2-icon"><FiCreditCard /></span> Refunds</h2>
             <ul className="cc-policy__list">
               <li>
                 Refunds apply to orders <strong>cancelled inside the 30-minute window</strong>,
@@ -95,22 +109,27 @@ export default function RefundPolicy() {
                 the window, or if we cancel.
               </li>
             </ul>
+            </div>
 
-            <h2 className="cc-policy__h2"><FiAlertCircle size={18} /> If we have to cancel</h2>
+            <div className="cc-policy__card">
+            <h2 className="cc-policy__h2"><span className="cc-policy__h2-icon"><FiAlertCircle /></span> If we have to cancel</h2>
             <p>
               Rarely — an ingredient we cannot source, or a problem in the kitchen — we may
               have to cancel. If that happens we tell you immediately on WhatsApp and refund{' '}
               <strong>100% within 24 hours</strong>, whatever stage the order had reached.
               You are never out of pocket for our problem.
             </p>
+            </div>
 
-            <h2 className="cc-policy__h2">Something not right?</h2>
+            <div className="cc-policy__card">
+            <h2 className="cc-policy__h2"><span className="cc-policy__h2-icon"><FiCamera /></span> Something not right?</h2>
             <p>
               Tell us on the day you receive it, with a photo if you can. Food is
               perishable and we cannot assess a complaint about an order eaten days ago,
               but if something was wrong when it reached you we want to know and we will
               put it right.
             </p>
+            </div>
 
             <div className="cc-policy__cta">
               <a href={buildWhatsAppLink('Hi! I need help with my order — Order ID: ')} target="_blank" rel="noopener noreferrer" className="btn-rose">
