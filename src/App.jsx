@@ -8,6 +8,7 @@ import CartToast from './components/CartToast.jsx'
 import DeferredChatBot from './components/DeferredChatBot.jsx'
 import FestivalBanner from './components/FestivalBanner.jsx'
 import BackToTop from './components/BackToTop.jsx'
+import ScrollReveal from './components/ScrollReveal.jsx'
 import Home from './pages/Home.jsx'
 import PageFallback from './components/skeletons/PageFallback.jsx'
 import ErrorBoundary, { clearChunkReloadGuard } from './components/ErrorBoundary.jsx'
@@ -63,6 +64,9 @@ function App() {
   return (
     <CartProvider>
       <ScrollToTop />
+      {/* Text and images animate in on arrival and on scroll. Off on admin;
+          form fields are never animated (see ScrollReveal). */}
+      <ScrollReveal enabled={!isAdmin} routeKey={pathname} />
       <a href="#main" className="cc-skip-link">Skip to main content</a>
       <div className="d-flex flex-column min-vh-100">
         {!isAdmin && <FestivalBanner />}

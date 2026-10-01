@@ -37,19 +37,3 @@ export default function Skeleton({
     />
   )
 }
-
-/** Convenience: a few text lines stacked. */
-export function SkeletonText({ lines = 3, lastWidth = '60%' }) {
-  return (
-    <span aria-hidden style={{ display: 'block' }}>
-      {Array.from({ length: lines }).map((_, i) => (
-        <Skeleton
-          key={i}
-          width={i === lines - 1 ? lastWidth : '100%'}
-          height={12}
-          style={{ marginBottom: i === lines - 1 ? 0 : 8 }}
-        />
-      ))}
-    </span>
-  )
-}

@@ -73,21 +73,13 @@ export function CartProvider({ children }) {
     setItems((prev) => prev.filter((p) => p.id !== id))
   }
 
-  // Falling below a line's minimum drops it from the cart, which is the same
-  // rule that already removed a line at qty 0 — there is just no valid quantity
-  // between 0 and the minimum to stop at.
-  function updateQty(id, qty) {
-    setItems((prev) =>
-      prev
-        .map((p) => (p.id === id ? { ...p, qty: Math.max(0, qty) } : p))
-        .filter((p) => p.qty >= minQtyOf(p))
-    )
-  }
-
   function increment(id) {
     setItems((prev) => prev.map((p) => (p.id === id ? { ...p, qty: p.qty + 1 } : p)))
   }
 
+  // Falling below a line's minimum drops it from the cart, which is the same
+  // rule that already removed a line at qty 0 — there is just no valid quantity
+  // between 0 and the minimum to stop at.
   function decrement(id) {
     setItems((prev) =>
       prev
@@ -114,7 +106,7 @@ export function CartProvider({ children }) {
     // Kept as 0 so any consumer of `total` matches the subtotal shown at checkout.
     const delivery = 0
     const total = subtotal
-    return { items, count, subtotal, delivery, total, add, remove, updateQty, increment, decrement, clear, toast }
+    return { items, count, subtotal, delivery, total, add, remove, increment, decrement, clear, toast }
   }, [items, toast])
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>

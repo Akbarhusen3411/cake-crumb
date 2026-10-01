@@ -671,8 +671,7 @@ export default function Shop() {
                     And on a phone this whole column lands directly above that
                     strip, so the two were read back to back. "Handcrafted with
                     Love" was the best line of the seven and now opens the closing
-                    strip instead. The .cc-shop-trust rules are still in
-                    index.css, unused. */}
+                    strip instead. */}
               </div>
             </aside>
           </div>

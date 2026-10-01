@@ -169,13 +169,6 @@ export async function markOrderConfirmed(firebaseId, orderId) {
   return setOrderStatus(firebaseId, orderId, 'confirmed', 'confirmedAt')
 }
 
-/**
- * Mark a Firestore order as cancelled. Same contract as markOrderConfirmed.
- */
-export async function markOrderCancelled(firebaseId, orderId) {
-  return setOrderStatus(firebaseId, orderId, 'cancelled', 'cancelledAt')
-}
-
 // Timestamp field recorded for each status transition.
 const STATUS_TS = {
   confirmed: 'confirmedAt',
