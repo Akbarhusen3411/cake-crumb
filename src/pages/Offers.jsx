@@ -130,17 +130,23 @@ function OfferStatus({ offer, status, subtotal }) {
   let text = null
   let progress = 0
   switch (offer.id) {
+    // Counters only once something relevant is in the basket — "₹0.00 of
+    // ₹499.00" and "0 of 2 boxes" on an empty basket read as noise.
     case 'mid-month':
-      text = mid.live
-        ? `${inr(subtotal)} of ${inr(OFFER_RULES.midMonth.min)} in your basket`
-        : `Opens ${dayMonth(mid.from)} — orders placed then qualify`
-      progress = mid.live ? subtotal / OFFER_RULES.midMonth.min : 0
+      if (!mid.live) text = `Opens ${dayMonth(mid.from)} — orders placed then qualify`
+      else if (subtotal > 0) {
+        text = `${inr(subtotal)} of ${inr(OFFER_RULES.midMonth.min)} in your basket`
+        progress = subtotal / OFFER_RULES.midMonth.min
+      }
       break
     case 'gift-pair':
-      text = `${counts.boxes} of 2 boxes in your basket`
-      progress = counts.boxes / 2
+      if (counts.boxes) {
+        text = `${counts.boxes} of 2 boxes in your basket`
+        progress = counts.boxes / 2
+      }
       break
     case 'tub-lover': {
+      if (!counts.tubs) break
       // Counts towards the first tier, then the top one.
       const tiers = OFFER_RULES.tubTiers
       const next = tiers.find((t) => counts.tubs < t.min) || tiers[tiers.length - 1]

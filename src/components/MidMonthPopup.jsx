@@ -39,9 +39,12 @@ const QUOTES = [
   'Love lives in the little things — like a box of cake pops.',
 ]
 
+let forgotOnce = false
+
 function alreadySeen(key) {
   try {
-    if (import.meta.env.DEV && new URLSearchParams(window.location.search).get('popup') === 'again') {
+    if (import.meta.env.DEV && !forgotOnce && new URLSearchParams(window.location.search).get('popup') === 'again') {
+      forgotOnce = true
       localStorage.removeItem(SEEN_KEY)
     }
     return localStorage.getItem(SEEN_KEY) === key

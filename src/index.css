@@ -720,6 +720,12 @@ a:hover { color: var(--cc-rose-deep); }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .nav-link-cc.active { background: var(--cc-blush); }
 }
+/* Small laptops (992–1199px): seven links at full padding and tracking left the
+   brand so little room that it clipped to "CAKE&CR". Tighter links here only —
+   the header height (--cc-header-h) is unchanged. */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .nav-link-cc { padding: 0.45rem 0.6rem; font-size: 0.78rem; letter-spacing: 0.07em; }
+}
 
 input.cc-input, select.cc-input, textarea.cc-input {
   width: 100%;
@@ -2592,6 +2598,9 @@ html, body { overflow-x: hidden; }
 }
 .cc-footer-m__info li > span:last-child {
   min-width: 0;
+  /* The links above are short and stay on one line; this sentence is long and
+   ran off the right edge of a phone under the li's nowrap. */
+  white-space: normal;
 }
 /* On very small phones, shrink the text just enough that the longest lines
    (address / pre-order) still fit on one line without overflowing. */
@@ -3470,8 +3479,18 @@ header[style*="sticky"] {
   grid-template-columns: 1fr;
   gap: 2rem 2.5rem;
 }
-@media (min-width: 768px) {
-  .cc-menu-grid { grid-template-columns: 1fr 1fr; }
+/* Two columns only where a card fits: photo (260px) + the unbreakable
+   "View all … +N more" line need ~600px. From 768 they did not fit and the
+   right-hand column was pushed off-screen on tablets and small laptops.
+   minmax(0, 1fr) so a column can never grow past its share. */
+@media (min-width: 1200px) {
+  .cc-menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* 1200–1399: a column is ~550px, so the full 260px photo left the price list
+   too narrow — badges cut to "PR…". A slimmer photo until the container widens. */
+@media (min-width: 1200px) and (max-width: 1399.98px) {
+  /* Doubled: the 260px rule for 992px+ is declared further down. */
+  .cc-menu-card .cc-menu-card__img { width: 200px; }
 }
 
 /* Boutique menu card — image left, text right on tablet/desktop; a white
@@ -3641,6 +3660,7 @@ header[style*="sticky"] {
   text-transform: uppercase;
   margin-top: 1rem;
   transition: color 0.15s, gap 0.15s;
+  flex-wrap: wrap;
 }
 .cc-menu-card__viewall:hover {
   color: var(--cc-rose-deep);
@@ -6969,6 +6989,9 @@ header[style*="sticky"] {
   color: var(--cc-cocoa-soft);
 }
 .cc-home-offers__all { flex-shrink: 0; }
+/* .section-title centres itself site-wide; this header is laid out left with
+   its button on the right, so the title follows the eyebrow and lede. */
+.cc-home-offers__head .section-title { text-align: left; }
 .cc-home-offers__grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -6979,7 +7002,9 @@ header[style*="sticky"] {
    a cocoa-to-rose panel on the right, a gold edge that breathes, and a sweep
    of light every few seconds. Everything a hurried visitor needs is on the
    tile itself — the deadline and a Claim button — so it reads at a glance. */
-.cc-offer-card--feature {
+/* Doubled class: .cc-offer-card (display: flex, its own border) is declared
+   further down and would otherwise win, collapsing the photo | panel grid. */
+.cc-offer-card.cc-offer-card--feature {
   grid-column: span 2;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -7066,7 +7091,10 @@ header[style*="sticky"] {
 /* Phone: one swipeable row rather than six stacked tiles. Fixed track width
    so the row overflows instead of squeezing. */
 @media (max-width: 575.98px) {
-  .cc-home-offers__head { flex-direction: column; align-items: flex-start; }
+  /* Phone: centred, like the other Home section headings. */
+  .cc-home-offers__head { flex-direction: column; align-items: center; text-align: center; }
+  .cc-home-offers__head .section-title { text-align: center; }
+  .cc-home-offers__lede { margin-left: auto; margin-right: auto; }
   .cc-home-offers__grid {
     grid-template-columns: none;
     grid-auto-flow: column;
@@ -7074,13 +7102,13 @@ header[style*="sticky"] {
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     padding-bottom: 0.6rem;
-    margin-right: -16px;
-    padding-right: 16px;
+    margin-right: calc(var(--bs-gutter-x, 1.5rem) * -0.5);
+    padding-right: calc(var(--bs-gutter-x, 1.5rem) * 0.5);
   }
   .cc-offer-card { scroll-snap-align: start; }
   /* No double-width tile in a swipe row — it would be 156vw wide. It stacks
      like the others but keeps its spotlight colours, and leads the row. */
-  .cc-offer-card--feature { grid-column: auto; display: flex; }
+  .cc-offer-card.cc-offer-card--feature { grid-column: auto; display: flex; }
   .cc-offer-card--feature .cc-offer-card__media { aspect-ratio: 4 / 3; min-height: 0; }
   .cc-offer-card--feature .cc-offer-card__media img { position: static; }
   .cc-offer-card--feature .cc-offer-card__name { font-size: 1.3rem; }
@@ -7380,7 +7408,7 @@ header[style*="sticky"] {
   gap: 0.4rem;
   margin: 0 0 0.8rem;
   padding: 0.4rem 0.85rem;
-  border-radius: 999px;
+  border-radius: 14px;
   background: #fff4dc;
   color: var(--cc-cocoa);
   font-size: 0.9rem;
@@ -7415,6 +7443,8 @@ header[style*="sticky"] {
   .cc-orow__name { font-size: 1.12rem; }
   .cc-orow__cond { font-size: 0.85rem; }
   .cc-orow__gift { font-size: 0.8rem; padding: 0.35rem 0.7rem; }
+  /* "Choose a tub & a drink" was 5px wider than a 360px phone allows. */
+  .cc-orow__btn { max-width: 100%; white-space: normal; font-size: 0.7rem; padding: 0.5rem 0.95rem; letter-spacing: 0.04em; }
   .cc-orow > .cc-opick { padding: 0.9rem 1rem 1rem; }
 }
 
@@ -7752,7 +7782,7 @@ header[style*="sticky"] {
   .cc-offers-dot::after,
   .cc-offers-confetti span,
   .cc-offer-card__gift-icon,
-  .cc-offer-card--feature,
+  .cc-offer-card.cc-offer-card--feature,
   .cc-offer-card--feature::after,
   .cc-ostatus.is-won,
   .cc-orow > .cc-opick,
