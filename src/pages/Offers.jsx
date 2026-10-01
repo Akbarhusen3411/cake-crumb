@@ -182,8 +182,9 @@ function OfferStatus({ offer, status, subtotal }) {
 }
 
 /**
- * One offer, one full-width row: a square photo, then name, condition, gift and
- * the action. The picker opens on demand, inside the card, so a card is only
+ * One offer, one full-width row: a square photo, then name, the BUY / FREE
+ * deal and the action. On a phone the photo shrinks to a thumbnail beside the
+ * name and everything below it takes the card's full width (see the CSS). The picker opens on demand, inside the card, so a card is only
  * ever as tall as what it says (a 2-up grid stretched short cards to match the
  * ones with a picker).
  */
@@ -194,15 +195,26 @@ function OfferCard({ offer: o, index, status, subtotal, startOpen }) {
   return (
     <article id={o.id} className={`cc-orow${won ? ' is-won' : ''}`}>
       <div className="cc-orow__media">
-        <img src={u(o.image)} srcSet={srcSet(o.image)} sizes="(min-width: 576px) 200px, 96px" alt={o.alt} loading="lazy" />
+        <img src={u(o.image)} srcSet={srcSet(o.image)} sizes="(min-width: 576px) 200px, 64px" alt={o.alt} loading="lazy" />
         <span className="cc-orow__num" aria-hidden>{String(index + 1).padStart(2, '0')}</span>
       </div>
       <div className="cc-orow__body">
         <span className="cc-orow__tag">{o.tag}</span>
         <h3 className="cc-orow__name">{o.name}</h3>
-        <p className="cc-orow__cond">{o.condition}</p>
-        <p className="cc-orow__gift">
-          <FiGift size={15} aria-hidden /> <span>Free:</span> <strong>{o.gift}</strong>
+        {/* Same BUY / FREE pair as the Home tiles, so the deal reads the same
+            on both pages. */}
+        <p className="cc-offer-deal">
+          <span className="cc-offer-deal__row">
+            <span className="cc-offer-deal__label">Buy</span>
+            <span className="cc-offer-deal__text">
+              {o.buy}
+              {o.buyNote && <small>{o.buyNote}</small>}
+            </span>
+          </span>
+          <span className="cc-offer-deal__row cc-offer-deal__row--get">
+            <span className="cc-offer-deal__label"><FiGift size={12} aria-hidden /> Free</span>
+            <span className="cc-offer-deal__text">{o.get || o.gift}</span>
+          </span>
         </p>
         <OfferStatus offer={o} status={status} subtotal={subtotal} />
         <div className="cc-orow__actions">
@@ -306,8 +318,8 @@ export default function Offers() {
         <>
           {/* ───── OFFERS ───── */}
           <section id="offer-list" className="cc-offers-list">
-            <div className="container py-5">
-              <div className="text-center mb-5">
+            <div className="container py-4 py-md-5">
+              <div className="text-center mb-4 mb-md-5">
                 <span className="eyebrow">The Offers</span>
                 <h2 className="section-title mt-3">Pick Your Free Treat</h2>
               </div>

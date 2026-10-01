@@ -19,6 +19,11 @@ const dayMonth = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: '
  * a "-card" class, which it picks up), the photo eases in on hover, a single
  * sweep of light crosses the tile, and the gift badge floats gently. The
  * Mid-Month tile says whether it's live, with a pulsing dot, or when it opens.
+ *
+ * Each tile states its deal as two labelled lines, BUY and FREE, rather than a
+ * condition sentence — on a phone the sentence buried which item was the gift.
+ * Below 576px the tiles become a stacked list (thumbnail | deal), not a swipe
+ * row: every offer is visible without sideways scrolling.
  */
 export default function OffersBand() {
   const now = useOfferClock()
@@ -54,13 +59,12 @@ export default function OffersBand() {
               key={o.id}
               to={`/offers#${o.id}`}
               className={`cc-offer-card${o.id === 'mid-month' ? ' cc-offer-card--feature' : ''}`}
-              aria-label={o.id === 'mid-month' ? `${o.name}, limited time: ${o.condition} Free: ${o.gift}. ${endsLine}.` : undefined}
             >
               <span className="cc-offer-card__media">
                 <img
                   src={u(o.image)}
                   srcSet={srcSet(o.image)}
-                  sizes="(min-width: 992px) 360px, (min-width: 576px) 45vw, 78vw"
+                  sizes="(min-width: 992px) 360px, (min-width: 576px) 45vw, 112px"
                   alt=""
                   loading="lazy"
                 />
@@ -75,10 +79,20 @@ export default function OffersBand() {
                 {o.id === 'mid-month' && <span className="cc-offer-card__ribbon">Limited time</span>}
                 <span className="cc-offer-card__tag">{o.tag}</span>
                 <span className="cc-offer-card__name">{o.name}</span>
-                <span className="cc-offer-card__cond">{o.condition}</span>
-                <span className="cc-offer-card__gift">
-                  <span className="cc-offer-card__gift-icon" aria-hidden><FiGift size={14} /></span>
-                  <span><small>Free</small>{o.gift}</span>
+                {/* The deal in two lines — what to buy, what comes free. The
+                    full condition sentence lives on /offers. */}
+                <span className="cc-offer-deal">
+                  <span className="cc-offer-deal__row">
+                    <span className="cc-offer-deal__label">Buy</span>
+                    <span className="cc-offer-deal__text">
+                      {o.buy}
+                      {o.buyNote && <small>{o.buyNote}</small>}
+                    </span>
+                  </span>
+                  <span className="cc-offer-deal__row cc-offer-deal__row--get">
+                    <span className="cc-offer-deal__label"><FiGift size={12} aria-hidden /> Free</span>
+                    <span className="cc-offer-deal__text">{o.get || o.gift}</span>
+                  </span>
                 </span>
                 {o.id === 'mid-month' && (
                   <span className="cc-offer-card__spot">
@@ -87,6 +101,8 @@ export default function OffersBand() {
                   </span>
                 )}
               </span>
+              {/* Phone only: the row is a link, and this says so. */}
+              <FiArrowRight size={16} className="cc-offer-card__go" aria-hidden />
             </Link>
           ))}
         </div>

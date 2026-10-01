@@ -13,8 +13,8 @@ const SLOTS = ['top', 'right', 'bottom']
  * They fly in one after another (from the top, the right, then the bottom) and
  * then float gently, each out of step with the others. Each is a link to its
  * offer on /offers. The first three running offers are used, so from the 13th
- * to the 20th the Mid-Month Treat leads. On a phone the third is dropped —
- * three cards over a narrow photo would cover it.
+ * to the 20th the Mid-Month Treat leads. On a phone (<576px) they are hidden
+ * altogether: they covered the photo, and the offers list follows the hero.
  *
  * Kept out of ScrollReveal (data-no-reveal): they carry their own entrance.
  */

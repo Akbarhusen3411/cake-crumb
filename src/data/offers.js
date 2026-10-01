@@ -39,9 +39,14 @@ export const ordinal = (n) => {
 const MID_FROM = ordinal(OFFER_RULES.midMonth.fromDay)
 const MID_TO = ordinal(OFFER_RULES.midMonth.toDay)
 
+// `buy` / `buyNote` / `get` are the short "Buy this → get that free" lines the
+// Home cards show; `condition` and `gift` stay the full wording for /offers and
+// the cart. `get` defaults to `gift`.
 export const OFFERS = [
   {
     id: 'mid-month',
+    buy: `Spend ${inr(OFFER_RULES.midMonth.min)} or more`,
+    buyNote: `Only from the ${MID_FROM} to the ${MID_TO}`,
     name: 'Mid-Month Treat',
     tag: `${MID_FROM} – ${MID_TO}, every month`,
     condition: `Order ${inr(OFFER_RULES.midMonth.min)} or more between the ${MID_FROM} and the ${MID_TO} of any month.`,
@@ -52,6 +57,8 @@ export const OFFERS = [
   },
   {
     id: 'gift-pair',
+    buy: 'Any 2 boxes of 6',
+    buyNote: 'Cupcakes, brownies, blondies or cookies',
     name: 'Gift Box Pair',
     tag: 'Made for gifting',
     condition: 'Order any 2 boxes of 6 — cupcakes, brownies, blondies or cookies, mixed as you like.',
@@ -62,6 +69,8 @@ export const OFFERS = [
   },
   {
     id: 'cheesecake',
+    buy: 'A whole Banto 4″ cheesecake',
+    buyNote: 'Any flavour',
     name: 'Cheesecake Lover',
     tag: 'Whole cheesecake',
     condition: 'Order any whole Banto 4″ cheesecake, in any flavour on the menu.',
@@ -72,6 +81,9 @@ export const OFFERS = [
   },
   {
     id: 'tub-lover',
+    buy: 'Any 2 cheesecake tubs',
+    buyNote: 'Buy 5 tubs and get 5 cake pops',
+    get: '3 cake pops',
     name: 'Tub Lover',
     tag: 'More tubs, more pops',
     condition: 'Order any 2 cheesecake tubs for 3 free cake pops — or 5 tubs for 5. Mix the flavours as you like.',
@@ -84,6 +96,8 @@ export const OFFERS = [
   },
   {
     id: 'tub-sip',
+    buy: '1 cheesecake tub + 1 drink',
+    buyNote: 'Mojito, shake or coffee',
     name: 'Tub & Sip',
     tag: 'A treat for one',
     condition: 'Order a cheesecake tub and any drink — mojito, shake or coffee.',
@@ -94,6 +108,8 @@ export const OFFERS = [
   },
   {
     id: 'cookie-dozen',
+    buy: 'A box of 12 cookies',
+    buyNote: 'Any flavour',
     name: 'Cookie Dozen',
     tag: 'Box of 12',
     condition: 'Order any box of 12 cookies, in any flavour.',
@@ -104,6 +120,8 @@ export const OFFERS = [
   },
   {
     id: 'big-basket',
+    buy: `Spend ${inr(OFFER_RULES.bigBasketMin)} or more`,
+    buyNote: 'On one order, before delivery',
     name: 'Big Basket',
     tag: 'Family & office',
     condition: 'Spend ₹1,500 or more on one order (before delivery) — for the family, the office or a party.',
