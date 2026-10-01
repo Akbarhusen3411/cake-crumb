@@ -1055,11 +1055,22 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
   .logo-icon { height: 56px; }
 }
 /* The tagline is 41 characters of script and is WIDER than the wordmark above
-   it, so it — not the mark — is what decides how much room the brand takes on a
-   phone. At 400px it left 2px of clearance before the icons. It is decoration;
-   below 480 it goes, and the lockup breathes again. */
+   it — on one line it decided the brand's width, and at 400px left 2px before
+   the icons. It used to be hidden here; the owner wants it on phones too. So it
+   WRAPS instead: `width: 0; min-width: 100%` stops it widening the column, which
+   then sizes to the wordmark alone, and the tagline breaks into two centred
+   lines beneath it. Wordmark + two lines (~44px) stays under the 56/48px mark,
+   so the header height — and --cc-header-h — is unchanged. !important beats
+   the nowrap set inline in Logo.jsx. */
 @media (max-width: 480px) {
-  .logo-tagline { display: none; }
+  .logo-tagline {
+    white-space: normal !important;
+    width: 0;
+    min-width: 100%;
+    font-size: 0.72rem;
+    line-height: 1.05;
+    margin-top: 0.15em !important;
+  }
 }
 @media (max-width: 380px) {
   .logo-icon { height: 48px; }
