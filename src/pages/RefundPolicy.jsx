@@ -3,7 +3,7 @@ import { FiClock, FiCreditCard, FiAlertCircle, FiMessageCircle, FiCamera, FiRota
 import HeartDivider from '../components/HeartDivider.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
-import { BULK_ORDER_MIN, DEPOSIT_PCT } from '../data/shopConfig.js'
+import { BULK_ORDER_MIN, DEPOSIT_PCT, BAKERY_ADDRESS } from '../data/shopConfig.js'
 import { inr } from '../data/format.js'
 
 /**
@@ -141,7 +141,7 @@ export default function RefundPolicy() {
             <p className="cc-policy__note">
               <strong>Last updated {LAST_UPDATED}.</strong> These terms sit alongside the
               answers on our <Link to="/faq">FAQ page</Link>.
-              Cake &amp; Crumb, Vaso, Kheda, Gujarat 387380. FSSAI-registered — the number
+              Cake &amp; Crumb, {BAKERY_ADDRESS.full}. FSSAI-registered — the number
               is in the footer of every page.
             </p>
           </div>

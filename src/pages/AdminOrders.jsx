@@ -7,11 +7,11 @@ import {
   subscribeOrders, getAllOrders, updateOrderStatus,
 } from '../services/orders.js'
 
-const PICKUP_LOCATION = 'Cake & Crumb, Vaso, Kheda, Gujarat 387380'
+const PICKUP_LOCATION = `Cake & Crumb, ${BAKERY_ADDRESS.full}`
 const REVIEW_LINK = 'https://akbarhusen3411.github.io/cake-crumb/review'
 import { getFirebaseAuth, isFirebaseEnabled } from '../firebase.js'
 import { inr } from '../data/format.js'
-import { isBulkOrder } from '../data/shopConfig.js'
+import { isBulkOrder, BAKERY_ADDRESS, MAP_LINK } from '../data/shopConfig.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import AdminNav from '../components/admin/AdminNav.jsx'
 import InvoiceModal from '../components/admin/InvoiceModal.jsx'
@@ -96,7 +96,7 @@ function buildCustomerMessage(order, status) {
         `🎉 *Your order is READY!* — ${id}`, '',
         `Hi ${name}!`, '',
         `Your treats are freshly made and ready for *pickup* 🛍️`, '',
-        `📍 *Collect from:* ${PICKUP_LOCATION}`, '',
+        `📍 *Collect from:* ${PICKUP_LOCATION}`, `🗺️ ${MAP_LINK}`, '',
         '*Your Items:*', ...items, '',
         `See you soon! 🎂`,
       ].join('\n')

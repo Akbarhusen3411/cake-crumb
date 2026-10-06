@@ -7,7 +7,7 @@
 // pincode covers an AREA (its geocoded point is only approximate), so a customer
 // at 11 km or 19 km should pay the same clean fee rather than a falsely-precise
 // per-km number. Distance is the straight-line km from the bakery (Plus Code
-// MQ84+2GQ, Vaso 387380) to the customer's pincode, geocoded — see
+// MQ84+58, Vaso 387380) to the customer's pincode, geocoded — see
 // src/services/delivery.js. The km is NEVER shown to the customer (only the
 // resulting fee); the bakery sees the km in the admin dashboard and confirms /
 // adjusts the final charge. Edit the bands below and every surface (checkout +
@@ -25,9 +25,28 @@ export const DELIVERY = {
     { maxKm: 100, fee: 450 }, // 75–100 km
     { maxKm: Infinity, fee: 550 }, // 100 km+
   ],
-  // Bakery origin — decoded from the Plus Code MQ84+2GQ, Vaso, Gujarat 387380.
-  origin: { lat: 22.665087, lng: 72.756359 },
+  // Bakery origin — the pin of the bakery's own Google Maps listing (Plus Code
+  // MQ84+58, Vaso, Gujarat 387380). It was MQ84+2GQ, ~60m off. The footer map,
+  // the "open in Maps" links and the JSON-LD geo in index.html all use it.
+  origin: { lat: 22.6654339, lng: 72.7558635 },
 }
+
+// ── Address + map — one copy for every surface that prints it ────────────────
+// Printed in the owner's own order ("386, Venipura, …"), deliberately not the
+// order Google Maps lists it in. Footer, Contact, invoice, ChatBot, the admin
+// pickup message and the policy pages all read these, so they can't drift.
+export const BAKERY_ADDRESS = {
+  street: '386, Venipura, Mominvad, near Police Station',
+  locality: 'Vaso, Kheda, Gujarat - 387380',
+  full: '386, Venipura, Mominvad, near Police Station, Vaso, Kheda, Gujarat - 387380',
+}
+// Opens the bakery's Google Maps LISTING (name, reviews, directions) by its CID
+// rather than a bare coordinate pin. The CID is the second half of the listing's
+// `0x…:0x2e921bc7422f4c06` id, written in decimal.
+export const MAP_LINK = 'https://maps.google.com/?cid=3355775214967278598'
+// Keyless embed of the same pin. www.google.com is already in the CSP's
+// frame-src (vite.config.js) — any other host here is blocked in production only.
+export const MAP_EMBED = `https://www.google.com/maps?q=${DELIVERY.origin.lat},${DELIVERY.origin.lng}&z=16&output=embed`
 
 // The delivery charge for a method + distance. distanceKm === null means "not
 // known yet" (e.g. address not geocoded) → treated as in-range/free, with the

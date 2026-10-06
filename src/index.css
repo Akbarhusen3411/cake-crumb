@@ -2051,6 +2051,36 @@ html, body { overflow-x: hidden; }
 
 .cc-footer-d__col {
   padding-top: 0.25rem;
+  min-width: 0;
+}
+
+/* Desktop footer layout — a grid, not Bootstrap columns, so each column is as
+   wide as what it holds: Quick Links hugs its two short lists (max-content),
+   the map is a fixed square, and the brand / contact / ordering text shares
+   what's left. Equal col-*-3 tracks left the brand column half empty while the
+   address and the ordering lines wrapped into narrow stacks beside it.
+   992–1399px: five columns don't fit, so Ordering tucks in under Contact Us. */
+.cc-footer-d__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1.3fr) 190px;
+  grid-template-areas:
+    "brand links contact map"
+    "brand links order   map";
+  column-gap: clamp(1.75rem, 3vw, 3rem);
+  row-gap: 1.1rem;
+  align-items: start;
+}
+.cc-footer-d__col--brand   { grid-area: brand; }
+.cc-footer-d__col--links   { grid-area: links; }
+.cc-footer-d__col--contact { grid-area: contact; }
+.cc-footer-d__col--order   { grid-area: order; }
+.cc-footer-d__col--map     { grid-area: map; }
+@media (min-width: 1400px) {
+  .cc-footer-d__grid {
+    grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1.25fr) minmax(0, 1.1fr) 220px;
+    grid-template-areas: "brand links contact order map";
+    column-gap: clamp(2rem, 3.2vw, 4rem);
+  }
 }
 
 .cc-footer-d__tagline {
@@ -2154,6 +2184,69 @@ html, body { overflow-x: hidden; }
   text-align: center;
   padding: 0.65rem 1rem;
   border-top: 1px solid var(--cc-border);
+}
+
+/* Embedded Google map — the desktop footer's 5th column ("Find Us"), and under
+   the info rows on a phone. Square via aspect-ratio, so the frame has a definite
+   height and never sizes itself to the map. The whole thing is one link to the
+   Maps listing: the iframe takes no pointer events, so a click anywhere lands on
+   the <a> rather than on the embed's own coordinate-only "View larger map". */
+.cc-footer-map {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 240px;
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--cc-border);
+  background: var(--cc-blush);
+  transition: box-shadow var(--cc-dur) var(--cc-ease), transform var(--cc-dur) var(--cc-ease);
+}
+.cc-footer-map iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  pointer-events: none;
+}
+/* Top, not bottom: Google draws its attribution, satellite toggle and controls
+   along the bottom edge of a small embed, and the pill landed on top of them. */
+.cc-footer-map__cta {
+  position: absolute;
+  left: 50%;
+  top: 0.6rem;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cc-rose-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(91, 62, 54, 0.18);
+}
+.cc-footer-map:hover,
+.cc-footer-map:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(207, 62, 99, 0.18);
+}
+.cc-footer-map:focus-visible { outline: 2px solid var(--cc-rose); outline-offset: 3px; }
+/* Phone: a short landscape strip, not the desktop square — a 260px square took
+   most of a screen between the contact rows and the newsletter. */
+.cc-footer-map--m {
+  max-width: 300px;
+  aspect-ratio: 2 / 1;
+  margin: 0.9rem auto 0;
+  border-radius: 12px;
+}
+.cc-footer-map--m .cc-footer-map__cta {
+  top: 0.45rem;
+  padding: 0.22rem 0.65rem;
+  font-size: 0.7rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc-footer-map:hover, .cc-footer-map:focus-visible { transform: none; }
 }
 
 .cc-footer-d__ribbon {
@@ -2802,6 +2895,11 @@ html, body { overflow-x: hidden; }
   /* Keep each contact item on a single line — no wrapping the address or
      pre-order note onto a second row on narrow phones. */
   white-space: nowrap;
+}
+/* The street address is far wider than a phone — let it wrap, icon on top. */
+.cc-footer-m__info li.cc-footer-m__info-addr {
+  white-space: normal;
+  align-items: flex-start;
 }
 .cc-footer-m__info li > span:last-child {
   min-width: 0;

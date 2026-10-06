@@ -9,7 +9,7 @@ import HeartDivider from '../components/HeartDivider.jsx'
 import { img, u } from '../data/images.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
-import { DELIVERY } from '../data/shopConfig.js'
+import { BAKERY_ADDRESS, MAP_LINK } from '../data/shopConfig.js'
 import { localIso } from '../utils/adminDate.js'
 import { sendEnquiryNotification } from '../services/emailNotify.js'
 
@@ -223,10 +223,10 @@ export default function Contact() {
                   </div>
                 </div>
                 {/* The old tile said "Home delivery or pickup" but never said pick
-                    up FROM WHERE. Coordinates come from DELIVERY.origin, the same
-                    constant the delivery calculator uses, so the pin cannot drift. */}
+                    up FROM WHERE. It opens the bakery's Google Maps listing; the address
+                    and link both come from shopConfig.js, shared with the footer. */}
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${DELIVERY.origin.lat},${DELIVERY.origin.lng}`}
+                  href={MAP_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="cc-contact-strip__item"
@@ -234,7 +234,7 @@ export default function Contact() {
                   <span className="cc-contact-strip__icon"><FiMapPin size={14} /></span>
                   <div>
                     <div className="cc-contact-strip__label">Delivery or pickup</div>
-                    <div className="cc-contact-strip__value">Vaso, Kheda, Gujarat 387380</div>
+                    <div className="cc-contact-strip__value">{BAKERY_ADDRESS.full}</div>
                   </div>
                 </a>
               </div>

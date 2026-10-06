@@ -8,10 +8,11 @@ import { fmtDate } from '../../utils/adminDate.js'
 import { invoiceQuote } from '../../utils/invoice.js'
 import { FSSAI, UDYAM } from '../../data/certifications.js'
 import { useIsMobile } from '../../hooks/useIsMobile.js'
+import { BAKERY_ADDRESS } from '../../data/shopConfig.js'
 
 // Bakery details, matching index.html's meta/JSON-LD and the Footer.
 const BAKERY = {
-  address: 'Vaso, Kheda, Gujarat 387380, India',
+  address: `${BAKERY_ADDRESS.full}, India`,
   phone: '+91 91731 83440',
   email: 'cakeandcrumb.in@gmail.com',
   instagram: '@cake_and_crumb_1',

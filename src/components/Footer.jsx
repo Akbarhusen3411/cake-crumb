@@ -9,7 +9,7 @@ import Logo from './Logo.jsx'
 import CertBadges from './CertBadges.jsx'
 import { asset } from '../data/images.js'
 import { buildWhatsAppLink } from './WhatsAppButton.jsx'
-import { DELIVERY } from '../data/shopConfig.js'
+import { BAKERY_ADDRESS, MAP_LINK, MAP_EMBED } from '../data/shopConfig.js'
 
 const QUICK_LINKS = [
   { to: '/',        label: 'Home' },
@@ -46,11 +46,34 @@ const MOBILE_HELP_LINKS = [
   { to: '/privacy',       label: 'Privacy',     Icon: FiShield },
 ]
 
-const ADDRESS = 'Vaso, Kheda, Gujarat 387380, India'
-// Straight to the pin rather than a name search — the bakery is a home kitchen,
-// so searching the name finds nothing. Coordinates come from the same constant
-// the delivery calculator uses, so they can never drift apart.
-const MAP_URL = `https://www.google.com/maps/search/?api=1&query=${DELIVERY.origin.lat},${DELIVERY.origin.lng}`
+// The whole map is ONE link to the bakery's Google Maps listing (name, address,
+// reviews, directions). The embed's own clicks ("View larger map", the pin)
+// opened a bare coordinate page instead — "22°39'55.6"N 72°45'21.1"E" with
+// nothing on it — so the iframe takes no pointer events and the link on top
+// catches every click. The trade is no panning/zooming in the footer, which is
+// fine: the listing is where anyone would want to go.
+// `loading="lazy"` keeps the map's Google request off the page until the footer
+// scrolls near; /privacy names Google Maps among the third parties.
+function FooterMap({ className }) {
+  return (
+    <a
+      href={MAP_LINK}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`cc-footer-map ${className || ''}`}
+    >
+      <iframe
+        src={MAP_EMBED}
+        title="Map showing Cake & Crumb in Vaso"
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        tabIndex={-1}
+        aria-hidden="true"
+      />
+      <span className="cc-footer-map__cta">Open in Google Maps</span>
+    </a>
+  )
+}
 
 // One line, both layouts. They used to differ — "Made with ♥ in India" on a
 // phone, "All Rights Reserved" on a desktop.
@@ -135,15 +158,21 @@ export default function Footer() {
             <span className="cc-footer-m__info-icon"><FiMail size={12} /></span>
             <a href="mailto:cakeandcrumb.in@gmail.com">cakeandcrumb.in@gmail.com</a>
           </li>
-          <li>
+          {/* The one row allowed to wrap — the full street address is far
+              wider than a phone, and the li's nowrap would clip it. */}
+          <li className="cc-footer-m__info-addr">
             <span className="cc-footer-m__info-icon"><FiMapPin size={12} /></span>
-            <a href={MAP_URL} target="_blank" rel="noopener noreferrer">{ADDRESS}</a>
+            <a href={MAP_LINK} target="_blank" rel="noopener noreferrer">
+              {BAKERY_ADDRESS.street},<br />{BAKERY_ADDRESS.locality}
+            </a>
           </li>
           <li>
             <span className="cc-footer-m__info-icon"><FiClock size={12} /></span>
             <span>Baked to order — order a day ahead. Ordered late? Ready the next day.</span>
           </li>
         </ul>
+
+        <FooterMap className="cc-footer-map--m" />
 
         {/* Cursive flourish */}
         <p className="cc-footer-m__script">We can't wait to sweeten your day!</p>
@@ -177,10 +206,10 @@ export default function Footer() {
       {/* ───── DESKTOP FOOTER (lg+) — matches mockup: brand / quick links / contact / hours ───── */}
       <div className="cc-footer-d d-none d-lg-block">
         <div className="container-fluid px-4 px-xl-5 pt-4 pb-3">
-          <div className="row g-4 align-items-start">
+          <div className="cc-footer-d__grid">
 
             {/* 1. Brand + socials */}
-            <div className="col-lg-3 cc-footer-d__col">
+            <div className="cc-footer-d__col cc-footer-d__col--brand">
               <Logo size="footer" />
               <p className="cc-footer-d__tagline">
                 The gourmet chocolate and<br />berry boutique!
@@ -206,7 +235,7 @@ export default function Footer() {
             </div>
 
             {/* 2. Quick Links */}
-            <div className="col-lg-3 cc-footer-d__col">
+            <div className="cc-footer-d__col cc-footer-d__col--links">
               <h6 className="cc-footer-d__heading">Quick Links</h6>
               <ul className="cc-footer-d__links">
                 {QUICK_LINKS.map((l) => (
@@ -218,13 +247,13 @@ export default function Footer() {
             </div>
 
             {/* 3. Contact Us */}
-            <div className="col-lg-3 cc-footer-d__col">
+            <div className="cc-footer-d__col cc-footer-d__col--contact">
               <h6 className="cc-footer-d__heading">Contact Us</h6>
               <ul className="cc-footer-d__info">
                 <li>
                   <span className="cc-footer-d__info-icon"><FiMapPin size={14} /></span>
-                  <a href={MAP_URL} target="_blank" rel="noopener noreferrer">
-                    Vaso, Kheda,<br />Gujarat 387380 — India
+                  <a href={MAP_LINK} target="_blank" rel="noopener noreferrer">
+                    {BAKERY_ADDRESS.street},<br />{BAKERY_ADDRESS.locality}
                   </a>
                 </li>
                 <li>
@@ -248,7 +277,7 @@ export default function Footer() {
                 on a shelf. An order comes in, the date is agreed, and the bake
                 starts after that — so shop hours would only turn away someone
                 messaging at 10pm, which is a perfectly good time to order. */}
-            <div className="col-lg-3 cc-footer-d__col">
+            <div className="cc-footer-d__col cc-footer-d__col--order">
               <h6 className="cc-footer-d__heading">Ordering</h6>
               <ul className="cc-footer-d__info">
                 <li>
@@ -263,6 +292,14 @@ export default function Footer() {
               <p className="cc-footer-d__script">
                 We can't wait to<br />sweeten your day! <span aria-hidden style={{ color: 'var(--cc-rose)' }}>♥</span>
               </p>
+            </div>
+
+            {/* 5. Find Us — the square map, its own column after Ordering. Below
+                1400px five columns are too tight, so Ordering tucks in under
+                Contact Us and the map keeps its own column (see .cc-footer-d__grid). */}
+            <div className="cc-footer-d__col cc-footer-d__col--map">
+              <h6 className="cc-footer-d__heading">Find Us</h6>
+              <FooterMap />
             </div>
           </div>
 

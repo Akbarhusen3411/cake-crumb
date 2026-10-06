@@ -10,7 +10,7 @@ import { saveOrder } from '../services/orders.js'
 // Cheap sync env check — safe to import anywhere, pulls no SDK.
 import { isFirebaseEnabled } from '../firebase.js'
 import { sendOrderEmail, sendCustomerConfirmation } from '../services/emailNotify.js'
-import { deliveryFee, isBulkOrder, depositAmount, DEPOSIT_PCT } from '../data/shopConfig.js'
+import { deliveryFee, isBulkOrder, depositAmount, DEPOSIT_PCT, BAKERY_ADDRESS, MAP_LINK } from '../data/shopConfig.js'
 import { kmFromBakeryByPincode } from '../services/delivery.js'
 import { WHATSAPP_PHONE } from './WhatsAppButton.jsx'
 import { useCart } from '../context/CartContext.jsx'
@@ -21,7 +21,7 @@ import {
 const WHATSAPP_NUMBER = WHATSAPP_PHONE
 // Where a self-pickup customer collects from. Same wording as AdminOrders' own
 // pickup message, so the bot and the bakery's WhatsApp reply name one place.
-const PICKUP_LOCATION = 'Vaso, Kheda, Gujarat 387380'
+const PICKUP_LOCATION = BAKERY_ADDRESS.full
 
 // The details questions, in one place so a Back button can re-ask any of them
 // without the wording drifting from where it's first asked.
@@ -1059,7 +1059,7 @@ export default function ChatBot() {
         break
       case 'location':
         setOptions([])
-        await addBotMessage('*Our Location*\n\n📍 Vaso, Kheda, Gujarat 387380\n🏠 Home bakery — we deliver across Gujarat!')
+        await addBotMessage(`*Our Location*\n\n📍 ${BAKERY_ADDRESS.full}\n🗺️ ${MAP_LINK}\n🏠 Home bakery — we deliver across Gujarat!`)
         setOptions([{ label: '🛒 Place Order', action: 'order' }, { label: '🏠 Main Menu', action: 'home' }])
         break
       case 'contact':

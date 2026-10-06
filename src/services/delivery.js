@@ -9,7 +9,7 @@
 
 import { DELIVERY } from '../data/shopConfig.js'
 
-const ORIGIN = DELIVERY.origin // decoded from Plus Code MQ84+2GQ, Vaso 387380
+const ORIGIN = DELIVERY.origin // the Google Maps listing pin, Plus Code MQ84+58, Vaso 387380
 
 function haversineKm(lat1, lng1, lat2, lng2) {
   const toRad = (d) => (d * Math.PI) / 180

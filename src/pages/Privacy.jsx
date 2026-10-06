@@ -5,6 +5,7 @@ import {
 import HeartDivider from '../components/HeartDivider.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
+import { BAKERY_ADDRESS } from '../data/shopConfig.js'
 
 /**
  * PRIVACY
@@ -30,6 +31,8 @@ import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
  *     third-party data flow beyond fonts, so it is stated plainly rather than
  *     buried — and it is why "we set no cookies" is no longer true site-wide.
  *     If App Check is ever removed, remove this section with it.
+ *   • The footer embeds a Google map (lazy-loaded), so Google also sees a
+ *     request from every page once the footer scrolls near. Named beside fonts.
  *
  * If any of those change, change this page in the same commit. A privacy page
  * that describes something the site no longer does is the one kind of error
@@ -37,7 +40,7 @@ import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
  */
 // Bumped BY HAND, and only when what this page describes actually changes —
 // see the note above about it having to match what the site really does.
-const LAST_UPDATED = '2 September 2026'
+const LAST_UPDATED = '6 October 2026'
 
 export default function Privacy() {
   usePageMeta({
@@ -135,8 +138,10 @@ export default function Privacy() {
               and <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">terms</a>.
             </p>
             <p>
-              The page fonts are also served by Google, which means Google sees the request
-              for them. Nothing else on this site is shared with an advertising company.
+              The page fonts are also served by Google, and the map at the bottom of every
+              page is a Google Maps embed, so Google sees the request for each of them. The
+              map only loads once you scroll near it. Nothing else on this site is shared
+              with an advertising company.
             </p>
             </div>
 
@@ -168,7 +173,7 @@ export default function Privacy() {
 
             <p className="cc-policy__note">
               <strong>Last updated {LAST_UPDATED}.</strong><br />
-              Cake &amp; Crumb, Vaso, Kheda, Gujarat 387380, India ·{' '}
+              Cake &amp; Crumb, {BAKERY_ADDRESS.full}, India ·{' '}
               <a href="mailto:cakeandcrumb.in@gmail.com">cakeandcrumb.in@gmail.com</a>
             </p>
           </div>
