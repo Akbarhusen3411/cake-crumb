@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thank-You Card — Cake &amp; Crumb</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Allura&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Lato:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="card.css" />
+  <style>
+    /* A7 portrait (74 × 105 mm) — tucks inside a cake box or a 6-cupcake box.
+       The layout below is drawn on a 105 × 149 mm canvas and shrunk with `zoom`
+       (74 / 105 = 0.705), so every measurement here is ~1.42× its printed size.
+       Small text is sized up for that: nothing prints below ~2.3 mm (6.5 pt). */
+    @page { size: 74mm 105mm; margin: 0; }
+    .side { width: 105mm; height: 149mm; zoom: 0.7048; }
+    .sheet { --preview-zoom: 2; }
+
+    /* ── Front ── */
+    .front {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 8mm 9mm 7mm;
+    }
+    .front .mark { width: 40mm; }
+    .front .name { font-size: 8.6mm; margin-top: 1mm; }
+    .front .rule { width: 72mm; margin-top: 1.4mm; }
+    .front .rule svg { width: 2.6mm; height: 2.4mm; }
+    .front .tagline { font-size: 5.6mm; margin-top: 0.2mm; }
+    .front .sprigs { margin-top: 1mm; }
+    .front .sprigs svg.s { width: 14mm; height: 4.2mm; }
+    .front .sprigs svg.h { width: 3mm; height: 2.8mm; }
+
+    .thanks {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 600;
+      font-size: 17mm;
+      line-height: 1;
+      color: var(--maroon);
+      margin-top: 5mm;
+    }
+    .for {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 3.8mm;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--maroon-soft);
+      margin-top: 1.6mm;
+    }
+    .msg {
+      font-size: 4.5mm;
+      font-weight: 500;
+      line-height: 1.4;
+      color: var(--maroon-soft);
+      max-width: 76mm;
+      margin-top: 4.2mm;
+    }
+    .sign {
+      font-style: italic;
+      font-weight: 600;
+      font-size: 5mm;
+      color: var(--maroon);
+      margin-top: 3mm;
+    }
+    .front .trades span + span::before { margin: 0 0.6em; }
+    .front .trades {
+      margin-top: auto;
+      font-size: 3.1mm;
+      letter-spacing: 0.05em;
+      padding: 1.5mm 4mm;
+      margin-bottom: 1mm;
+    }
+
+    /* ── Back ── */
+    .back {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 7.5mm 9mm 6mm;
+    }
+    .back h2 {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 9.6mm;
+      line-height: 1.05;
+      color: var(--maroon);
+    }
+    .back h2 em { font-style: italic; }
+    .back .rule { width: 70mm; margin-top: 2mm; }
+    .back .rule svg { width: 2.6mm; height: 2.4mm; }
+    .lede {
+      font-size: 4.4mm;
+      font-weight: 500;
+      line-height: 1.45;
+      color: var(--maroon-soft);
+      max-width: 80mm;
+      margin-top: 1.8mm;
+    }
+    .lede b { color: var(--maroon); font-weight: 700; }
+
+    .review {
+      margin-top: 3.4mm;
+      padding: 2.6mm 2.6mm 2mm;
+      border-radius: 3mm;
+      background: rgba(255, 250, 248, 0.6);
+      border: 0.25mm solid var(--pill-edge);
+    }
+    .review .qr__box { width: 27mm; height: 27mm; padding: 1mm; }
+    .review .qr__label { font-size: 3.6mm; margin-top: 1.8mm; letter-spacing: 0.08em; }
+    .stars { display: flex; justify-content: center; gap: 0.8mm; margin-top: 0.9mm; color: var(--gold); }
+    .stars svg { width: 3.2mm; height: 3.2mm; fill: currentColor; }
+
+    .back .sprigs { margin-top: 2.6mm; }
+    .back .sprigs svg.s { width: 13mm; height: 3.9mm; }
+    .back .sprigs svg.h { width: 2.8mm; height: 2.6mm; }
+
+    .again { font-size: 4.2mm; font-weight: 500; line-height: 1.35; color: var(--maroon-soft); max-width: 82mm; margin-top: 2.2mm; }
+    .again b { color: var(--maroon); font-weight: 700; font-style: italic; }
+    .fssai { margin-top: auto; padding-top: 2.6mm; font-size: 2.9mm; line-height: 1.35; letter-spacing: 0.04em; color: var(--maroon-soft); }
+    .fssai b { color: var(--maroon); }
+    .foot {
+      display: flex;
+      align-items: center;
+      gap: 4mm;
+      margin-top: 3mm;
+      text-align: left;
+    }
+    .foot .qr__box {
+      width: 21mm;
+      height: 21mm;
+      padding: 1mm;
+      border: 0.25mm solid var(--pill-edge);
+    }
+    .foot .qr__label { font-size: 3.3mm; margin-top: 1mm; }
+    .foot .contact { gap: 1.8mm; }
+    .foot .contact li { gap: 1.8mm; font-size: 4.1mm; }
+    .foot .disc { width: 5.4mm; height: 5.4mm; }
+
+    .branch--tr { width: 14mm; top: 0.8mm; right: 0.8mm; transform: scaleX(-1) rotate(-12deg); }
+    .branch--bl { width: 15mm; bottom: 1.2mm; left: 1mm; transform: rotate(-8deg); }
+  </style>
+</head>
+<body>
+  <!-- Shared drawings -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="heart" viewBox="0 0 24 22"><path d="M12 21S3 15.4 1 9.8C-.4 5.6 2.4 1 6.6 1 9.2 1 11 2.7 12 4.3 13 2.7 14.8 1 17.4 1c4.2 0 7 4.6 5.6 8.8C21 15.4 12 21 12 21z"/></symbol>
+    <symbol id="sprig" viewBox="0 0 40 12">
+      <path d="M39.5 6C28 6.6 16 6.6 1.5 5.6" fill="none" stroke="currentColor" stroke-width=".7" stroke-linecap="round"/>
+      <g>
+        <path transform="translate(34 6.2) rotate(-148)" d="M0 0C2-2 5.6-2 7.6 0 5.6 2 2 2 0 0Z"/>
+        <path transform="translate(30 6.4) rotate(146)" d="M0 0C2-2 5.6-2 7.6 0 5.6 2 2 2 0 0Z"/>
+        <path transform="translate(24 6.4) rotate(-150)" d="M0 0C2-2 5.6-2 7.6 0 5.6 2 2 2 0 0Z"/>
+        <path transform="translate(20 6.3) rotate(148)" d="M0 0C2-2 5.6-2 7.6 0 5.6 2 2 2 0 0Z"/>
+        <path transform="translate(14 6.1) rotate(-152)" d="M0 0C1.8-1.8 5-1.8 6.8 0 5 1.8 1.8 1.8 0 0Z"/>
+        <path transform="translate(10 6) rotate(150)" d="M0 0C1.6-1.6 4.4-1.6 6 0 4.4 1.6 1.6 1.6 0 0Z"/>
+        <path transform="translate(5 5.8) rotate(180)" d="M0 0C1.4-1.5 3.8-1.5 5 0 3.8 1.5 1.4 1.5 0 0Z"/>
+      </g>
+    </symbol>
+    <!-- One corner wave, drawn for the top-left; other corners transform it. -->
+    <symbol id="wave" viewBox="0 0 40 40" overflow="visible">
+      <path class="w1" d="M0 0H31C26 5 22 6.5 18 12.5 14 19.5 8 23 0 32Z"/>
+      <path class="w2" d="M0 0H21C17 4 13.4 6 10.4 10.4 7.2 15.4 4 17.6 0 21.5Z"/>
+      <path class="g" d="M34.5 0C28.5 6 24 7.6 20 13.8 15.6 21 9.4 25.4 0 35.5"/>
+    </symbol>
+    <symbol id="i-wa" viewBox="0 0 24 24"><path d="M3.5 20.5l1.3-4.2A8.6 8.6 0 1 1 8 19.4z"/><path d="M9 8.6c0 3 2.6 6 6 6.4l1.2-1.4-1.9-1-1 .8c-1-.4-1.8-1.2-2.2-2.2l.8-1-1-1.9z"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></symbol>
+    <symbol id="i-insta" viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="19" height="19" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r=".6"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6.5-8 12-8 12s-8-5.5-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4.5" width="20" height="15" rx="2"/><path d="m2.5 6 9.5 7 9.5-7"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m8.8 12 2.2 2.2 4.2-4.4"/></symbol>
+    <symbol id="i-udyam" viewBox="0 0 24 24"><path d="M2 21h20"/><path d="M4 21V10l5 3v-3l5 3V4h5v17"/><path d="M8 17h1M12 17h1M16.5 8.5h.5M16.5 12.5h.5M16.5 16.5h.5"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z"/></symbol>
+  </svg>
+
+  <main class="sheet">
+    <!-- FRONT -->
+    <section class="side front" aria-label="Front">
+      <svg class="waves" viewBox="0 0 105 148" preserveAspectRatio="none" aria-hidden="true">
+        <use href="#wave" width="40" height="40" transform="scale(1.05)"/>
+        <use href="#wave" width="40" height="40" transform="translate(105 149) rotate(180) scale(.55)"/>
+      </svg>
+
+      <img class="mark" src="img/logo-print.png" alt="" />
+      <div class="name">CAKE<i>&amp;</i>CRUMB</div>
+      <div class="tagline">The gourmet chocolate and berry boutique!</div>
+      <div class="sprigs" aria-hidden="true">
+        <svg class="s" viewBox="0 0 40 12"><use href="#sprig"/></svg>
+        <svg class="h" viewBox="0 0 24 22"><use href="#heart"/></svg>
+        <svg class="s flip" viewBox="0 0 40 12"><use href="#sprig"/></svg>
+      </div>
+
+      <div class="thanks">Thank you</div>
+      <div class="for">for choosing Cake &amp; Crumb</div>
+      <p class="msg">Every order is baked by hand, just for you, in our little kitchen in Vaso.
+        It means the world that you chose
+        us — we hope every bite made you smile.</p>
+      <div class="sign">With love, Cake &amp; Crumb</div>
+
+      <div class="trades pill"><span>Custom Cakes</span><span>Desserts</span><span>Sweet Treats</span></div>
+    </section>
+
+    <!-- BACK -->
+    <section class="side back" aria-label="Back">
+      <svg class="waves" viewBox="0 0 105 148" preserveAspectRatio="none" aria-hidden="true">
+        <use href="#wave" width="40" height="40" transform="scale(.85)"/>
+        <use href="#wave" width="40" height="40" transform="translate(105 149) rotate(180) scale(.45)"/>
+      </svg>
+      <img class="branch branch--tr" src="img/rose-spray.png" alt="" />
+
+      <h2>Loved your <em>treats?</em></h2>
+      <div class="rule" aria-hidden="true"><svg viewBox="0 0 24 22"><use href="#heart"/></svg></div>
+      <p class="lede">A quick Google review helps a small home bakery more than you know.
+        Scan, tap <b>Reviews</b>, and tell us what you thought.</p>
+
+      <div class="review qr">
+        <div class="qr__box">
+          <img src="qr/reviews.svg" alt="QR code: Cake & Crumb on Google Maps" />
+          <span class="qr__badge"><svg viewBox="0 0 24 24"><use href="#i-star"/></svg></span>
+        </div>
+        <div class="qr__label">Review us on Google</div>
+        <div class="stars" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><use href="#i-star"/></svg><svg viewBox="0 0 24 24"><use href="#i-star"/></svg><svg viewBox="0 0 24 24"><use href="#i-star"/></svg><svg viewBox="0 0 24 24"><use href="#i-star"/></svg><svg viewBox="0 0 24 24"><use href="#i-star"/></svg>
+        </div>
+      </div>
+
+      <div class="sprigs" aria-hidden="true">
+        <svg class="s" viewBox="0 0 40 12"><use href="#sprig"/></svg>
+        <svg class="h" viewBox="0 0 24 22"><use href="#heart"/></svg>
+        <svg class="s flip" viewBox="0 0 40 12"><use href="#sprig"/></svg>
+      </div>
+
+      <p class="again"><b>Craving more?</b> WhatsApp us a day ahead.</p>
+
+      <div class="foot">
+        <div class="qr">
+          <div class="qr__box">
+            <img src="qr/instagram.svg" alt="QR code: Cake & Crumb on Instagram" />
+            <span class="qr__badge"><svg viewBox="0 0 24 24"><use href="#i-insta"/></svg></span>
+          </div>
+          <div class="qr__label">Follow us</div>
+        </div>
+        <ul class="contact">
+          <li><span class="disc"><svg viewBox="0 0 24 24"><use href="#i-wa"/></svg></span>+91 91731 83440</li>
+          <li><span class="disc"><svg viewBox="0 0 24 24"><use href="#i-insta"/></svg></span>@cake_and_crumb_1</li>
+          <li><span class="disc"><svg viewBox="0 0 24 24"><use href="#i-mail"/></svg></span>cakeandcrumb.in@gmail.com</li>
+        </ul>
+      </div>
+
+      <p class="fssai">386, Zahir Manzil, Venipura, Mominvad, Near Police Station,<br />Vaso, Kheda, Gujarat-387380, India</p>
+    </section>
+  </main>
+
+  <div class="help">
+    <p><b>Size:</b> A7, 74 × 105 mm, front and back on separate pages.
+    <b>To print or save a PDF:</b> Ctrl+P → Destination “Save as PDF” → More settings → tick
+    <b>Background graphics</b>, Margins <b>None</b>, Scale <b>100</b>. Ask the printer for
+    300 gsm matt or textured card. Scan both QR codes with a phone before printing.</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,260 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Cake & Crumb — print cards (visiting card + thank-you card)
+
+   "Pink paper" theme: dusty-pink card stock, watercolour corner waves edged in
+   gold, maroon Cormorant Garamond, line-heart-line and sprig-heart-sprig
+   dividers, icons in blush discs. The cupcake mark is the website's own
+   (public/logo_final.png).
+
+   Every card is drawn in real millimetres. On screen it is enlarged with
+   `zoom`; in print each .side is one page at its true size (the @page size
+   lives in each HTML file, since the two cards differ).
+   ───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --paper: #f6e2dd;
+  --paper-hi: #fbeeea;
+  --wave-1: #f0cdc7;
+  --wave-2: #e7b6b0;
+  --gold: #c9a250;
+  --maroon: #5e222b;
+  --maroon-soft: #7d4148;
+  --line: #c99b9b;
+  --petal: #e6a3ab;
+  --disc: #ecc6c1;
+  --pill: rgba(236, 196, 191, 0.45);
+  --pill-edge: #dcb1ab;
+
+  --font-serif: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  --font-sans: 'Lato', system-ui, sans-serif;
+  --font-script: 'Allura', 'Segoe Script', cursive;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { background: #ead3ce; }
+body {
+  font-variant-numeric: lining-nums;
+  font-family: var(--font-serif);
+  color: var(--maroon);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ── Screen preview ───────────────────────────────────────────────────────── */
+.sheet {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 28px;
+  padding: 40px 16px 24px;
+  zoom: var(--preview-zoom, 2.4);
+}
+
+/* ── The card ─────────────────────────────────────────────────────────────── */
+.side {
+  position: relative;
+  overflow: hidden;
+  flex: none;
+  isolation: isolate;
+  background: radial-gradient(90% 80% at 50% 42%, var(--paper-hi) 0%, var(--paper) 70%);
+  box-shadow: 0 3px 10px rgba(94, 34, 43, 0.2);
+  border-radius: 1.2mm;
+}
+/* Paper grain — a fine noise layer so the pink reads as card stock, not flat ink. */
+.side::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.32;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.85 0 0 0 0 0.7 0 0 0 0 0.68 0 0 0 0.35 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* Watercolour corner waves + gold line: one SVG per card, drawn in mm. */
+.waves {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+.w1 { fill: var(--wave-1); }
+.w2 { fill: var(--wave-2); opacity: 0.85; }
+.g { fill: none; stroke: var(--gold); stroke-width: 0.28; stroke-linecap: round; }
+
+.help {
+  max-width: 640px;
+  margin: 0 auto 48px;
+  padding: 0 16px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--maroon-soft);
+}
+.help b { color: var(--maroon); }
+
+/* ── Brand ────────────────────────────────────────────────────────────────── */
+.mark { display: block; height: auto; }
+
+/* The website header's lockup (src/components/Logo.jsx): Playfair Display bold
+   with a larger italic "&", and the Allura tagline right under it. */
+.name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.05;
+  color: var(--maroon);
+  white-space: nowrap;
+}
+.name i {
+  font-weight: 500;
+  font-size: 1.3em;
+  margin: 0 0.04em;
+  vertical-align: -0.06em;
+}
+.tagline {
+  font-family: var(--font-script);
+  color: var(--maroon);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+/* line — ♥ — line */
+.rule {
+  display: flex;
+  align-items: center;
+  gap: 1.2mm;
+}
+.rule::before,
+.rule::after {
+  content: '';
+  flex: 1;
+  height: 0.22mm;
+  background: var(--line);
+}
+.rule svg { flex: none; fill: var(--petal); }
+
+/* sprig — ♥ — sprig */
+.sprigs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.4mm;
+}
+.sprigs svg { display: block; color: var(--petal); fill: currentColor; }
+.sprigs .flip { transform: scaleX(-1); }
+
+/* ── Pills ────────────────────────────────────────────────────────────────── */
+.pill {
+  background: var(--pill);
+  border-radius: 999px;
+}
+.pill--dashed { border: 0.25mm dashed var(--pill-edge); }
+
+.trades {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--maroon-soft);
+  white-space: nowrap;
+}
+.trades span + span::before {
+  content: '|';
+  font-weight: 400;
+  color: var(--line);
+  margin: 0 0.9em;
+}
+
+/* Registrations strip: [icon] label / number  |  [icon] label / number */
+.regs {
+  display: inline-flex;
+  align-items: center;
+}
+.reg { display: flex; align-items: center; }
+.reg__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--disc);
+  color: var(--maroon);
+}
+.reg__icon svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.reg__text {
+  border-left: 0.22mm solid var(--line);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.reg__label { color: var(--maroon-soft); font-weight: 500; }
+.reg__num { font-weight: 700; letter-spacing: 0.02em; }
+.regs__sep { width: 0.22mm; align-self: stretch; background: var(--line); }
+
+/* ── Contact rows ─────────────────────────────────────────────────────────── */
+.contact { list-style: none; display: grid; }
+.contact li { display: flex; align-items: center; white-space: nowrap; font-weight: 600; }
+.disc {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--disc);
+  color: var(--maroon);
+}
+.disc svg { width: 52%; height: 52%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── QR codes ─────────────────────────────────────────────────────────────── */
+.qr { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.qr__box {
+  position: relative;
+  background: #fffaf8;
+  border-radius: 1.4mm;
+  display: grid;
+  place-items: center;
+}
+.qr__box > img { display: block; width: 100%; height: 100%; }
+/* Icon in the middle of the code. The codes are error-correction level H
+   (30% recoverable), and this badge covers well under that. */
+.qr__badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24%;
+  height: 24%;
+  transform: translate(-50%, -50%);
+  background: #fffaf8;
+  border-radius: 22%;
+  display: grid;
+  place-items: center;
+  color: var(--maroon);
+}
+.qr__badge svg { width: 78%; height: 78%; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.qr__label {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--maroon);
+  white-space: nowrap;
+}
+
+/* Rose branches in the corners. */
+.branch { position: absolute; display: block; height: auto; pointer-events: none; }
+
+/* ── Print ────────────────────────────────────────────────────────────────── */
+@media print {
+  html, body { background: none; }
+  .help { display: none; }
+  .sheet { display: block; padding: 0; zoom: 1; }
+  .side {
+    box-shadow: none;
+    border-radius: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+  .side:last-child { break-after: auto; page-break-after: auto; }
+}
