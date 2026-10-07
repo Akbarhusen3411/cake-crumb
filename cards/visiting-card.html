@@ -13,6 +13,21 @@
     @page { size: 3.5in 2in; margin: 0; }
     .side { width: 3.5in; height: 2in; }
 
+    /* Bleed version (open with ?bleed): 0.125 in of background on every side, so the
+       page is 3.75 × 2.25 in and is trimmed to 3.5 × 2. The layout is untouched — the
+       bleed is a transparent border the paper colour, grain and waves paint into. */
+    html.bleed .side {
+      width: 3.75in;
+      height: 2.25in;
+      border: 0.125in solid transparent;
+      background-color: var(--paper);
+      background-repeat: no-repeat;
+      overflow: clip;
+      overflow-clip-margin: 0.125in;
+      border-radius: 0;
+    }
+    html.bleed .side::before { inset: -0.125in; }
+
     /* ── Front ── */
     .front {
       display: flex;
@@ -89,6 +104,12 @@
     .branch--tr { width: 12.5mm; top: 0.4mm; right: 0.6mm; transform: scaleX(-1) rotate(-12deg); }
     .branch--br { width: 9.5mm; bottom: 0.6mm; right: 0.4mm; transform: scaleX(-1) rotate(70deg); opacity: 0.95; }
   </style>
+  <script>
+    if (/[?&]bleed/.test(location.search)) {
+      document.documentElement.classList.add('bleed')
+      document.write('<style>@page { size: 3.75in 2.25in; margin: 0; }</style>')
+    }
+  </script>
 </head>
 <body>
   <!-- Shared drawings -->
@@ -108,9 +129,9 @@
     </symbol>
     <!-- One corner wave, drawn for the top-left; other corners transform it. -->
     <symbol id="wave" viewBox="0 0 40 40" overflow="visible">
-      <path class="w1" d="M0 0H31C26 5 22 6.5 18 12.5 14 19.5 8 23 0 32Z"/>
-      <path class="w2" d="M0 0H21C17 4 13.4 6 10.4 10.4 7.2 15.4 4 17.6 0 21.5Z"/>
-      <path class="g" d="M34.5 0C28.5 6 24 7.6 20 13.8 15.6 21 9.4 25.4 0 35.5"/>
+      <path class="w1" d="M-8 -8H39L31 0C26 5 22 6.5 18 12.5 14 19.5 8 23 0 32L-8 41Z"/>
+      <path class="w2" d="M-8 -8H29L21 0C17 4 13.4 6 10.4 10.4 7.2 15.4 4 17.6 0 21.5L-8 29.3Z"/>
+      <path class="g" d="M42.5 -8L34.5 0C28.5 6 24 7.6 20 13.8 15.6 21 9.4 25.4 0 35.5L-8 44.1"/>
     </symbol>
     <symbol id="i-wa" viewBox="0 0 24 24"><path d="M3.5 20.5l1.3-4.2A8.6 8.6 0 1 1 8 19.4z"/><path d="M9 8.6c0 3 2.6 6 6 6.4l1.2-1.4-1.9-1-1 .8c-1-.4-1.8-1.2-2.2-2.2l.8-1-1-1.9z"/></symbol>
     <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.8 3.8 6 3.8 9.5s-1.2 6.7-3.8 9.5c-2.6-2.8-3.8-6-3.8-9.5S9.4 5.3 12 2.5z"/></symbol>
@@ -127,7 +148,7 @@
   <main class="sheet">
     <!-- FRONT -->
     <section class="side front" aria-label="Front">
-      <svg class="waves" viewBox="0 0 88.9 50.8" preserveAspectRatio="none" aria-hidden="true">
+      <svg class="waves waves--bleed" viewBox="-3.175 -3.175 95.25 57.15" preserveAspectRatio="none" aria-hidden="true">
         <use href="#wave" width="40" height="40" transform="scale(.66)"/>
         <use href="#wave" width="40" height="40" transform="translate(88.9 50.8) rotate(180) scale(.52)"/>
       </svg>
@@ -146,9 +167,9 @@
 
     <!-- BACK -->
     <section class="side back" aria-label="Back">
-      <svg class="waves" viewBox="0 0 88.9 50.8" preserveAspectRatio="none" aria-hidden="true">
+      <svg class="waves waves--bleed" viewBox="-3.175 -3.175 95.25 57.15" preserveAspectRatio="none" aria-hidden="true">
         <use href="#wave" width="40" height="40" transform="scale(.72)"/>
-        <use href="#wave" width="40" height="40" transform="translate(0 51) scale(.5 -.5)"/>
+        <use href="#wave" width="40" height="40" transform="translate(0 50.8) scale(.5 -.5)"/>
       </svg>
       <img class="branch branch--tr" src="img/rose-spray.png" alt="" />
       <img class="branch branch--br" src="img/rose-spray.png" alt="" />
@@ -192,7 +213,9 @@
     <p><b>Size:</b> 3.5 × 2 in (88.9 × 50.8 mm), front and back on separate pages.
     <b>To print or save a PDF:</b> Ctrl+P → Destination “Save as PDF” → More settings → tick
     <b>Background graphics</b>, Margins <b>None</b>, Scale <b>100</b>. Send that PDF to the printer
-    and ask for 300–350 gsm matt card. Scan both QR codes with a phone before printing.</p>
+    and ask for 300–350 gsm matt card.
+    <b>Printer asking for bleed?</b> Send <b>visiting-card-bleed.pdf</b> instead (3.75 × 2.25 in, trimmed to 3.5 × 2),
+    or open this page with <b>?bleed</b> on the end of the address to print it yourself. Scan both QR codes with a phone before printing.</p>
   </div>
 </body>
 </html>

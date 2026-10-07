@@ -80,6 +80,13 @@ body {
   z-index: -1;
   pointer-events: none;
 }
+/* Visiting card: the SVG reaches 0.125 in past the trim so the bleed version has
+   waves to show. The normal card clips it at the trim, so nothing changes there. */
+.waves--bleed {
+  inset: -0.125in;
+  width: calc(100% + 0.25in);
+  height: calc(100% + 0.25in);
+}
 .w1 { fill: var(--wave-1); }
 .w2 { fill: var(--wave-2); opacity: 0.85; }
 .g { fill: none; stroke: var(--gold); stroke-width: 0.28; stroke-linecap: round; }

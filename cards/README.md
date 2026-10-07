@@ -12,6 +12,11 @@ maroon Cormorant Garamond, the website's cupcake mark. Not part of the Vite buil
 | `thank-you-card.html` / `.pdf` | A7, 74 × 105 mm | Front: logo, name, thank-you message · Back: large Google review QR, order-again line, Instagram QR, contact, address |
 
 The `.pdf` files are ready to send to a printer (one page per side, exact size).
+
+**Bleed:** `visiting-card-bleed.pdf` is the visiting card with 0.125 in (3 mm) of background on
+every side — 3.75 × 2.25 in, trimmed to 3.5 × 2 — for printers that cut after printing. It is
+the same HTML opened as `visiting-card.html?bleed`; all text stays at least 3 mm inside the cut.
+`png/visiting-card-front-bleed.png` / `-back-bleed.png` are the same at 600 dpi (2250 × 1350).
 Ask for 300–350 gsm matt card. To re-make a PDF after editing the HTML: open it in
 Chrome → Ctrl+P → Save as PDF → More settings → **Background graphics** on,
 Margins **None**, Scale **100**.
