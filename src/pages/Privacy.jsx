@@ -173,7 +173,7 @@ export default function Privacy() {
 
             <p className="cc-policy__note">
               <strong>Last updated {LAST_UPDATED}.</strong><br />
-              Cake &amp; Crumb, {BAKERY_ADDRESS.full}, India ·{' '}
+              Cake &amp; Crumb, {BAKERY_ADDRESS.full} ·{' '}
               <a href="mailto:cakeandcrumb.in@gmail.com">cakeandcrumb.in@gmail.com</a>
             </p>
           </div>

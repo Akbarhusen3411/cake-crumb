@@ -12,7 +12,7 @@ import { BAKERY_ADDRESS } from '../../data/shopConfig.js'
 
 // Bakery details, matching index.html's meta/JSON-LD and the Footer.
 const BAKERY = {
-  address: `${BAKERY_ADDRESS.full}, India`,
+  address: BAKERY_ADDRESS.full,
   phone: '+91 91731 83440',
   email: 'cakeandcrumb.in@gmail.com',
   instagram: '@cake_and_crumb_1',

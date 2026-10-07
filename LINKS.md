@@ -57,7 +57,7 @@ Never linked from any public page — bookmark these. All three use the **same F
 - **Phone / WhatsApp:** +91 91731 83440
 - **Email:** cakeandcrumb.in@gmail.com
 - **Instagram:** https://www.instagram.com/cake_and_crumb_1/
-- **Address:** Vaso, Kheda, Gujarat 387380, India
+- **Address:** 386, Zahir Manzil, Venipura, Mominvad, Near Police Station, Vaso, Kheda, Gujarat-387380, India
 
 ---
 _Note: deep links (e.g. `/admin/orders`) log a harmless 404 in the browser console on first load — that's normal GitHub Pages single-page-app behavior; the page still loads correctly via the `404.html` fallback._

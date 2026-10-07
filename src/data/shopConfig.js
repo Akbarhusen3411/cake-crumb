@@ -32,13 +32,13 @@ export const DELIVERY = {
 }
 
 // ── Address + map — one copy for every surface that prints it ────────────────
-// Printed in the owner's own order ("386, Venipura, …"), deliberately not the
+// Printed in the owner's own order ("386, Zahir Manzil, Venipura, …"), deliberately not the
 // order Google Maps lists it in. Footer, Contact, invoice, ChatBot, the admin
 // pickup message and the policy pages all read these, so they can't drift.
 export const BAKERY_ADDRESS = {
-  street: '386, Venipura, Mominvad, near Police Station',
-  locality: 'Vaso, Kheda, Gujarat - 387380',
-  full: '386, Venipura, Mominvad, near Police Station, Vaso, Kheda, Gujarat - 387380',
+  street: '386, Zahir Manzil, Venipura, Mominvad, Near Police Station',
+  locality: 'Vaso, Kheda, Gujarat-387380, India',
+  full: '386, Zahir Manzil, Venipura, Mominvad, Near Police Station, Vaso, Kheda, Gujarat-387380, India',
 }
 // Opens the bakery's Google Maps LISTING (name, reviews, directions) by its CID
 // rather than a bare coordinate pin. The CID is the second half of the listing's
