@@ -61,7 +61,7 @@ body {
 .sheet {
   position: absolute;
   inset: var(--b);
-  padding: 22mm 22mm 0;
+  padding: 11mm 22mm 0;
 }
 
 .wash {
@@ -77,18 +77,20 @@ body {
 }
 
 /* ─── Masthead ───────────────────────────────────────────────────────────── */
+/* Logo + words centred as ONE group between the two ribbons, so the gap
+   either side is the same. */
 .mast {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 9mm;
+  gap: 6mm;
 }
-.mast__logo { height: 46mm; width: auto; display: block; }
+.mast__logo { height: 52mm; width: auto; display: block; flex-shrink: 0; }
 .wordmark {
   font-family: var(--serif);
   font-weight: 700;
-  font-size: 66pt;
+  font-size: 62pt;
   letter-spacing: 0.06em;
   line-height: 1;
   white-space: nowrap;
@@ -101,7 +103,7 @@ body {
 }
 .tagline {
   font-family: var(--script);
-  font-size: 42pt;
+  font-size: 38pt;
   line-height: 1.05;
   color: var(--rose-deep);
   margin-top: 2mm;
@@ -167,20 +169,20 @@ body {
 .ribbon {
   position: absolute;
   top: 0;
-  width: calc(64mm + var(--b));
-  height: calc(86mm + var(--b));
+  width: calc(58mm + var(--b));
+  height: calc(80mm + var(--b));
   background: linear-gradient(160deg, var(--cocoa) 0%, #442c26 100%);
   color: #fff;
   padding-top: calc(12mm + var(--b));
   z-index: 1;
 }
-.ribbon--l { left: 0; clip-path: polygon(0 0, 100% 0, 100% 70%, 0 100%); padding-left: calc(9mm + var(--b)); }
-.ribbon--r { right: 0; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 70%); padding-right: calc(9mm + var(--b)); text-align: right; }
+.ribbon--l { left: 0; clip-path: polygon(0 0, 100% 0, 100% 70%, 0 100%); padding-left: calc(7mm + var(--b)); }
+.ribbon--r { right: 0; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 70%); padding-right: calc(7mm + var(--b)); text-align: right; }
 .ribbon::after { content: ''; position: absolute; inset: 0; background: var(--gold, #c9a250); }
 .ribbon--l::after { clip-path: polygon(100% 70%, 0 100%, 0 98.2%, 100% 68.2%); }
 .ribbon--r::after { clip-path: polygon(0 70%, 100% 100%, 100% 98.2%, 0 68.2%); }
-.ribbon__script { font-family: var(--script); font-size: 26pt; line-height: 1; color: var(--pinktext); }
-.ribbon__big { font-family: var(--serif); font-weight: 800; font-size: 26pt; line-height: 1.05; margin-top: 2.5mm; }
+.ribbon__script { font-family: var(--script); font-size: 24pt; line-height: 1; color: var(--pinktext); }
+.ribbon__big { font-family: var(--serif); font-weight: 800; font-size: 24pt; line-height: 1.05; margin-top: 2.5mm; }
 .ribbon__big em { font-style: italic; color: var(--pinktext); }
 
 /* ─── Photo mosaic ───────────────────────────────────────────────────────── */
@@ -189,7 +191,7 @@ body {
   margin-top: 9mm;
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  grid-template-rows: repeat(3, 50mm);
+  grid-template-rows: repeat(3, 58mm);
   gap: 3.5mm;
 }
 .tile {
@@ -522,7 +524,7 @@ body {
 
     <header class="mast">
       <img class="mast__logo" src="img/logo-print.png" alt="">
-      <div>
+      <div class="mast__words">
         <div class="wordmark">CAKE<span class="amp">&amp;</span>CRUMB</div>
         <div class="tagline">The gourmet chocolate &amp; berry boutique</div>
         <div class="eyebrow">Homemade cakes &amp; desserts · Vaso, Kheda</div>
