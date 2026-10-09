@@ -145,30 +145,56 @@ export default function Footer() {
         {/* Every one of these is now a real link. They were plain <span> text
             on mobile while the DESKTOP footer had tel:/mailto: anchors — exactly
             backwards, since tapping to call is what a phone is for. */}
+        {/* A left-aligned card with a caption over each value. It used to
+            inherit the footer's centring, so the address and the ordering line
+            wrapped into ragged centred lines that no longer sat beside their
+            icons. Each row is one tap target; the caption is visible text, so
+            no aria-label is needed. */}
         <ul className="cc-footer-m__info">
           <li>
-            <span className="cc-footer-m__info-icon"><FiPhone size={12} /></span>
-            <a href="tel:+919173183440">+91 91731 83440</a>
-          </li>
-          <li>
-            <span className="cc-footer-m__info-icon"><FiMessageCircle size={12} /></span>
-            <a href={waHref} target="_blank" rel="noopener noreferrer">Order on WhatsApp</a>
-          </li>
-          <li>
-            <span className="cc-footer-m__info-icon"><FiMail size={12} /></span>
-            <a href="mailto:cakeandcrumb.in@gmail.com">cakeandcrumb.in@gmail.com</a>
-          </li>
-          {/* The one row allowed to wrap — the full street address is far
-              wider than a phone, and the li's nowrap would clip it. */}
-          <li className="cc-footer-m__info-addr">
-            <span className="cc-footer-m__info-icon"><FiMapPin size={12} /></span>
-            <a href={MAP_LINK} target="_blank" rel="noopener noreferrer">
-              {BAKERY_ADDRESS.street},<br />{BAKERY_ADDRESS.locality}
+            <a href="tel:+919173183440" className="cc-footer-m__info-row">
+              <span className="cc-footer-m__info-icon"><FiPhone size={13} /></span>
+              <span className="cc-footer-m__info-text">
+                <span className="cc-footer-m__info-label">Call</span>
+                <span className="cc-footer-m__info-value">+91 91731 83440</span>
+              </span>
             </a>
           </li>
           <li>
-            <span className="cc-footer-m__info-icon"><FiClock size={12} /></span>
-            <span>Baked to order — order a day ahead. Ordered late? Ready the next day.</span>
+            <a href={waHref} target="_blank" rel="noopener noreferrer" className="cc-footer-m__info-row">
+              <span className="cc-footer-m__info-icon"><FiMessageCircle size={13} /></span>
+              <span className="cc-footer-m__info-text">
+                <span className="cc-footer-m__info-label">WhatsApp</span>
+                <span className="cc-footer-m__info-value">Order on WhatsApp</span>
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href="mailto:cakeandcrumb.in@gmail.com" className="cc-footer-m__info-row">
+              <span className="cc-footer-m__info-icon"><FiMail size={13} /></span>
+              <span className="cc-footer-m__info-text">
+                <span className="cc-footer-m__info-label">Email</span>
+                <span className="cc-footer-m__info-value">cakeandcrumb.in@gmail.com</span>
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href={MAP_LINK} target="_blank" rel="noopener noreferrer" className="cc-footer-m__info-row">
+              <span className="cc-footer-m__info-icon"><FiMapPin size={13} /></span>
+              <span className="cc-footer-m__info-text">
+                <span className="cc-footer-m__info-label">Delivery or pickup</span>
+                <span className="cc-footer-m__info-value">{BAKERY_ADDRESS.full}</span>
+              </span>
+            </a>
+          </li>
+          <li>
+            <div className="cc-footer-m__info-row">
+              <span className="cc-footer-m__info-icon"><FiClock size={13} /></span>
+              <span className="cc-footer-m__info-text">
+                <span className="cc-footer-m__info-label">Baked to order</span>
+                <span className="cc-footer-m__info-value">Order a day ahead. Ordered late? Ready the next day.</span>
+              </span>
+            </div>
           </li>
         </ul>
 

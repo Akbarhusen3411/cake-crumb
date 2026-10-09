@@ -4,12 +4,12 @@ import {
   FiMapPin, FiPhone, FiClock, FiInstagram, FiHeart, FiMail,
   FiCheckCircle, FiChevronDown, FiHelpCircle, FiArrowRight,
 } from 'react-icons/fi'
-import { FaWhatsapp } from 'react-icons/fa'
+import { FaWhatsapp, FaGoogle } from 'react-icons/fa'
 import HeartDivider from '../components/HeartDivider.jsx'
-import { img, u } from '../data/images.js'
+import { img, u, asset } from '../data/images.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
-import { BAKERY_ADDRESS, MAP_LINK } from '../data/shopConfig.js'
+import { BAKERY_ADDRESS, MAP_LINK, GOOGLE_PROFILE_LINK, GOOGLE_REVIEW_LINK } from '../data/shopConfig.js'
 import { localIso } from '../utils/adminDate.js'
 import { sendEnquiryNotification } from '../services/emailNotify.js'
 
@@ -187,76 +187,73 @@ export default function Contact() {
                     <div className="cc-contact-strip__value">WhatsApp Us</div>
                   </div>
                 </a>
-                <a href="tel:+919173183440" className="cc-contact-strip__item">
-                  <span className="cc-contact-strip__icon"><FiPhone size={14} /></span>
-                  <div>
-                    <div className="cc-contact-strip__label">Call</div>
-                    <div className="cc-contact-strip__value">+91 91731 83440</div>
+
+                {/* One list with hairline dividers, not a box per detail. Six
+                    separate boxes plus the Google QR made this card far taller
+                    than the form beside it. The rows share out any spare height
+                    (flex: 1) so the card ends level with the form without a gap. */}
+                <div className="cc-contact-list">
+                  <a href="tel:+919173183440" className="cc-contact-list__row">
+                    <span className="cc-contact-strip__icon"><FiPhone size={14} /></span>
+                    <div>
+                      <div className="cc-contact-strip__label">Call</div>
+                      <div className="cc-contact-strip__value">+91 91731 83440</div>
+                    </div>
+                  </a>
+                  <a
+                    href="https://www.instagram.com/cake_and_crumb_1/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cc-contact-list__row"
+                  >
+                    <span className="cc-contact-strip__icon"><FiInstagram size={14} /></span>
+                    <div>
+                      <div className="cc-contact-strip__label">DM us</div>
+                      <div className="cc-contact-strip__value">@cake_and_crumb_1</div>
+                    </div>
+                  </a>
+                  {/* The contact page listed no email at all — it was in the footer
+                      on every page except the one whose job is contact. */}
+                  <a href="mailto:cakeandcrumb.in@gmail.com" className="cc-contact-list__row">
+                    <span className="cc-contact-strip__icon"><FiMail size={14} /></span>
+                    <div>
+                      <div className="cc-contact-strip__label">Email</div>
+                      <div className="cc-contact-strip__value">cakeandcrumb.in@gmail.com</div>
+                    </div>
+                  </a>
+                  <div className="cc-contact-list__row cc-contact-list__row--info">
+                    <span className="cc-contact-strip__icon"><FiClock size={14} /></span>
+                    <div>
+                      <div className="cc-contact-strip__label">Lead time</div>
+                      <div className="cc-contact-strip__value">Order a day ahead — late orders are ready the next day</div>
+                    </div>
                   </div>
-                </a>
-                <a
-                  href="https://www.instagram.com/cake_and_crumb_1/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="cc-contact-strip__item"
-                >
-                  <span className="cc-contact-strip__icon"><FiInstagram size={14} /></span>
-                  <div>
-                    <div className="cc-contact-strip__label">DM us</div>
-                    <div className="cc-contact-strip__value">@cake_and_crumb_1</div>
-                  </div>
-                </a>
-                {/* The contact page listed no email at all — it was in the footer
-                    on every page except the one whose job is contact. */}
-                <a href="mailto:cakeandcrumb.in@gmail.com" className="cc-contact-strip__item">
-                  <span className="cc-contact-strip__icon"><FiMail size={14} /></span>
-                  <div>
-                    <div className="cc-contact-strip__label">Email</div>
-                    <div className="cc-contact-strip__value">cakeandcrumb.in@gmail.com</div>
-                  </div>
-                </a>
-                <div className="cc-contact-strip__item cc-contact-strip__item--info">
-                  <span className="cc-contact-strip__icon"><FiClock size={14} /></span>
-                  <div>
-                    <div className="cc-contact-strip__label">Lead time</div>
-                    <div className="cc-contact-strip__value">Order a day ahead — late orders are ready the next day</div>
-                  </div>
+                  {/* Opens the bakery's Google Maps listing; the address and link
+                      both come from shopConfig.js, shared with the footer. */}
+                  <a
+                    href={MAP_LINK}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cc-contact-list__row"
+                  >
+                    <span className="cc-contact-strip__icon"><FiMapPin size={14} /></span>
+                    <div>
+                      <div className="cc-contact-strip__label">Delivery or pickup</div>
+                      <div className="cc-contact-strip__value">{BAKERY_ADDRESS.full}</div>
+                    </div>
+                  </a>
                 </div>
-                {/* The old tile said "Home delivery or pickup" but never said pick
-                    up FROM WHERE. It opens the bakery's Google Maps listing; the address
-                    and link both come from shopConfig.js, shared with the footer. */}
-                <a
-                  href={MAP_LINK}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="cc-contact-strip__item"
-                >
-                  <span className="cc-contact-strip__icon"><FiMapPin size={14} /></span>
-                  <div>
-                    <div className="cc-contact-strip__label">Delivery or pickup</div>
-                    <div className="cc-contact-strip__value">{BAKERY_ADDRESS.full}</div>
-                  </div>
-                </a>
               </div>
             </div>
 
             {/* RIGHT — the custom order form */}
             <div className="col-lg-8">
-              {/* height:100% so this and the "Reach us" card end level.
-                  Bootstrap's .row already stretches the two COLUMNS to equal
-                  height; without this the card inside each column still sized
-                  to its own content, so the shorter one stopped early and left
-                  a ragged bottom edge between them. */}
-              <form
-                onSubmit={onSubmit}
-                className="p-4 p-md-4"
-                style={{
-                  background: '#fff',
-                  border: '1px solid var(--cc-border)',
-                  borderRadius: 14,
-                  height: '100%',
-                }}
-              >
+              {/* Fills its column so it ends level with "Reach us". Its footer
+                  (note + button) is pushed down with margin-top: auto, so any
+                  spare height sits above the button, never as a blank band under
+                  it — which is what showed when this was height:100% as a plain
+                  block. */}
+              <form onSubmit={onSubmit} className="cc-contact-form p-4">
                 <div className="d-flex align-items-center mb-3" style={{ gap: '0.6rem' }}>
                   <span className="feature-icon" style={{ width: 36, height: 36 }}>
                     <FiHeart size={14} />
@@ -418,6 +415,7 @@ export default function Contact() {
                   </div>
                 )}
 
+                <div className="cc-contact-form__foot">
                 <div
                   className="mt-3 p-2 d-flex align-items-start"
                   style={{
@@ -466,7 +464,40 @@ export default function Contact() {
                 >
                   <FaWhatsapp size={16} /> Send via WhatsApp
                 </button>
+                </div>
               </form>
+            </div>
+          </div>
+
+          {/* Google Business Profile — its own band under both cards rather than
+              a tile in "Reach us", where its height made that card outgrow the
+              form. The QR is for a laptop visitor to scan with a phone; on a
+              phone the two buttons do the same job. */}
+          <div className="cc-gbp-band">
+            <div className="cc-gbp-band__qr">
+              <img
+                src={asset('/google-qr.png')}
+                alt="QR code for Cake & Crumb on Google"
+                width="456"
+                height="456"
+                loading="lazy"
+              />
+            </div>
+            <div className="cc-gbp-band__text">
+              <span className="cc-gbp-band__eyebrow"><FaGoogle size={12} aria-hidden="true" /> Find us on Google</span>
+              <h2 className="cc-gbp-band__title">Directions, photos and reviews</h2>
+              <p className="cc-gbp-band__lede">
+                Scan the code with your phone camera, or use the buttons. Enjoyed your
+                order? A Google review helps other families find us.
+              </p>
+            </div>
+            <div className="cc-gbp-band__actions">
+              <a href={GOOGLE_PROFILE_LINK} target="_blank" rel="noopener noreferrer" className="btn-rose">
+                <FiMapPin size={14} /> Open on Google
+              </a>
+              <a href={GOOGLE_REVIEW_LINK} target="_blank" rel="noopener noreferrer" className="btn-outline-rose cc-google-review-btn">
+                <FaGoogle size={13} aria-hidden="true" /> Review us on Google
+              </a>
             </div>
           </div>
         </div>

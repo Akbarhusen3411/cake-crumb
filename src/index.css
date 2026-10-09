@@ -2418,6 +2418,146 @@ html, body { overflow-x: hidden; }
   line-height: 1.2;
   overflow-wrap: anywhere;
 }
+/* Reach us — one list with hairline dividers instead of a box per detail.
+   flex: 1 on the list and on each row shares any spare height out evenly, so
+   the card ends level with the form beside it without a blank band. */
+.cc-contact-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--cc-blush-soft);
+  border-radius: 12px;
+  background: var(--cc-cream);
+  overflow: hidden;
+}
+.cc-contact-list__row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.95rem;
+  color: var(--cc-cocoa);
+  text-decoration: none;
+  min-width: 0;
+  transition: background var(--cc-dur) var(--cc-ease);
+}
+.cc-contact-list__row + .cc-contact-list__row {
+  border-top: 1px solid var(--cc-blush-soft);
+}
+a.cc-contact-list__row:hover,
+a.cc-contact-list__row:focus-visible {
+  background: var(--cc-blush);
+  color: var(--cc-cocoa);
+}
+.cc-contact-list__row .cc-contact-strip__icon {
+  background: #ffffff;
+}
+
+/* The custom-order form fills its column; its footer sits at the bottom. */
+.cc-contact-form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #ffffff;
+  border: 1px solid var(--cc-border);
+  border-radius: 16px;
+}
+.cc-contact-form__foot {
+  margin-top: auto;
+}
+
+/* Google Business Profile band — QR · text · two buttons in one row on a
+   laptop, stacked and centred on a phone. The QR sits on white with its own
+   padding: a code needs a light quiet zone to scan. */
+.cc-gbp-band {
+  margin-top: 1.5rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, var(--cc-cream) 0%, var(--cc-blush) 100%);
+  border: 1px solid var(--cc-blush-soft);
+  border-radius: 16px;
+}
+.cc-gbp-band__qr {
+  width: 112px;
+  aspect-ratio: 1;
+  padding: 8px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px -10px rgba(91, 62, 54, 0.45);
+}
+.cc-gbp-band__qr img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.cc-gbp-band__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cc-rose-ink);
+}
+.cc-gbp-band__title {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  color: var(--cc-cocoa);
+  margin: 0.25rem 0 0.3rem;
+}
+.cc-gbp-band__lede {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--cc-cocoa-soft);
+  max-width: 460px;
+}
+.cc-gbp-band__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.cc-gbp-band__actions a {
+  justify-content: center;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.cc-gbp-band__actions .cc-google-review-btn {
+  margin-top: 0;
+  background: #ffffff;
+}
+/* Same specificity as .btn-outline-rose:hover and later in the file, so the
+   white above would win on hover and hide the (now white) text. */
+.cc-gbp-band__actions .cc-google-review-btn:hover,
+.cc-gbp-band__actions .cc-google-review-btn:focus-visible {
+  background: var(--cc-rose-ink);
+  color: #ffffff;
+}
+@media (max-width: 991.98px) {
+  .cc-gbp-band {
+    grid-template-columns: auto 1fr;
+  }
+  .cc-gbp-band__actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .cc-gbp-band__actions a { flex: 1 1 200px; }
+}
+@media (max-width: 575.98px) {
+  .cc-gbp-band {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 1rem;
+    padding: 1.25rem 1rem;
+  }
+  .cc-gbp-band__actions { width: 100%; }
+}
 
 /* ─── Search overlay ─────────────────────────────────────────────────────── */
 .cc-search-overlay {
@@ -2872,49 +3012,63 @@ html, body { overflow-x: hidden; }
 }
 
 /* Info column */
+/* A white card of rows, LEFT-aligned inside a centred footer: the footer's
+   text-align: center used to leak in, so the address and the ordering note
+   wrapped into ragged centred lines that drifted away from their icons. */
 .cc-footer-m__info {
   list-style: none;
-  padding: 0.85rem 0 0;
-  /* Shrink the block to its content and center it, so all four rows are
-     left-aligned to each other (icons stack in one neat vertical line). */
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  font-size: 0.84rem;
-  color: var(--cc-cocoa);
+  padding: 0;
+  margin: 1rem auto 0;
+  max-width: 420px;
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid var(--cc-border);
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(207, 62, 99, 0.06);
+  overflow: hidden;
 }
-.cc-footer-m__info li {
+.cc-footer-m__info li + li {
+  border-top: 1px solid var(--cc-blush-soft);
+}
+.cc-footer-m__info-row {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 0.5rem;
-  line-height: 1.25;
-  /* Keep each contact item on a single line — no wrapping the address or
-     pre-order note onto a second row on narrow phones. */
-  white-space: nowrap;
+  gap: 0.75rem;
+  padding: 0.7rem 0.95rem;
+  color: var(--cc-cocoa);
+  text-decoration: none;
+  transition: background var(--cc-dur) var(--cc-ease);
 }
-/* The street address is far wider than a phone — let it wrap, icon on top. */
-.cc-footer-m__info li.cc-footer-m__info-addr {
-  white-space: normal;
-  align-items: flex-start;
+a.cc-footer-m__info-row:hover,
+a.cc-footer-m__info-row:focus-visible,
+a.cc-footer-m__info-row:active {
+  background: var(--cc-cream);
+  color: var(--cc-cocoa);
 }
-.cc-footer-m__info li > span:last-child {
+.cc-footer-m__info-text {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  /* The links above are short and stay on one line; this sentence is long and
-   ran off the right edge of a phone under the li's nowrap. */
-  white-space: normal;
 }
-/* On very small phones, shrink the text just enough that the longest lines
-   (address / pre-order) still fit on one line without overflowing. */
-@media (max-width: 360px) {
-  .cc-footer-m__info { font-size: 0.78rem; }
+.cc-footer-m__info-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cc-rose-ink);
+  line-height: 1.2;
+}
+.cc-footer-m__info-value {
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-top: 2px;
+  /* The email is one long unbreakable token. */
+  overflow-wrap: anywhere;
 }
 .cc-footer-m__info-icon {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: var(--cc-blush);
   color: var(--cc-rose);
@@ -4810,6 +4964,13 @@ header[style*="sticky"] {
 }
 @media (max-width: 991.98px) {
   .cc-reviews-hero__lede { margin-left: auto; margin-right: auto; }
+}
+/* Small text — --cc-rose-ink, not --cc-rose, which is under 4.5:1 here. */
+.cc-google-review-btn {
+  margin-top: 1.1rem;
+  text-decoration: none;
+  color: var(--cc-rose-ink);
+  border-color: var(--cc-rose-ink);
 }
 .cc-reviews-hero__img {
   width: 100%;

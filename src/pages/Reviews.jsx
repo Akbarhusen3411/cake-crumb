@@ -5,6 +5,8 @@ import {
 } from 'react-icons/fi'
 import { compressImage } from '../utils/compressImage.js'
 import { TbLeaf, TbCake, TbToolsKitchen2 } from 'react-icons/tb'
+import { FaGoogle } from 'react-icons/fa'
+import { GOOGLE_REVIEW_LINK } from '../data/shopConfig.js'
 import HeartDivider from '../components/HeartDivider.jsx'
 import { addReview, deleteReview, getReviews, summarize, timeAgo } from '../services/reviews.js'
 import { isFirebaseEnabled, getFirebaseAuth } from '../firebase.js'
@@ -316,6 +318,16 @@ export default function Reviews() {
                 We're so grateful for your sweet words! Here's what our lovely customers
                 have to say about their experience.
               </p>
+              {/* Google reviews are separate from the ones on this page — this
+                  opens Google's own write-a-review box for the listing. */}
+              <a
+                href={GOOGLE_REVIEW_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-outline-rose cc-google-review-btn"
+              >
+                <FaGoogle size={14} aria-hidden="true" /> Review us on Google
+              </a>
             </div>
             <div className="col-lg-6">
               <img

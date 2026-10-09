@@ -44,6 +44,12 @@ export const BAKERY_ADDRESS = {
 // rather than a bare coordinate pin. The CID is the second half of the listing's
 // `0x…:0x2e921bc7422f4c06` id, written in decimal.
 export const MAP_LINK = 'https://maps.google.com/?cid=3355775214967278598'
+// What the Google Business Profile QR (public/google-qr.png) encodes, decoded
+// from the PDF Google issued — the same listing as MAP_LINK, by place id.
+// Regenerating the QR in the profile means re-exporting that image too.
+export const GOOGLE_PROFILE_LINK = 'https://local.google.com/place?placeid=ChIJy73gGoNZXjkRBkwvQscbki4'
+// Same place id, straight into Google's write-a-review box.
+export const GOOGLE_REVIEW_LINK = 'https://search.google.com/local/writereview?placeid=ChIJy73gGoNZXjkRBkwvQscbki4'
 // Keyless embed of the same pin. www.google.com is already in the CSP's
 // frame-src (vite.config.js) — any other host here is blocked in production only.
 export const MAP_EMBED = `https://www.google.com/maps?q=${DELIVERY.origin.lat},${DELIVERY.origin.lng}&z=16&output=embed`
