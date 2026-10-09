@@ -54,3 +54,22 @@ strip. English only, no prices. Same assets as the poster.
 | `ad-a2-share.pdf` | Light image PDF for WhatsApp / phones |
 | `png/ad-a2.png` / `png/ad-a2-small.png` | Images |
 | `ad-a2.html` | Source (`?bleed`, `?png` as for the poster) |
+
+# A4 poster — `poster-a4.*`
+
+The A2 poster shrunk to A4 (210 × 297 mm), for handouts, counters and shop windows.
+`poster-a4.html` is a copy of `poster-a2.html` with `zoom: 0.5` on `.page`, plus an **"A4 readability"**
+block at the end of its stylesheet that sets larger type, because a plain half-size copy printed its smallest text
+at about 5 pt. Sizes there are still A2 values (printed size = half). To make room, the photo grid
+is two rows (8 of the 13 photos). **An edit to one poster has to be copied into the other.**
+The smallest text now prints at about 7.5 pt; QR codes are 21–23 mm.
+
+| File | Use |
+|---|---|
+| `poster-a4.pdf` | **Give this to the printer** — exact A4 |
+| `poster-a4-bleed.pdf` | 216 × 303 mm with 3 mm bleed |
+| `poster-a4-share.pdf` | Light image PDF for WhatsApp / phones |
+| `png/poster-a4.png` / `png/poster-a4-small.png` | 2481 × 3509 (300 dpi) / 1400 px wide |
+
+Screenshot command as for the A2, with `--force-device-scale-factor=3.125 --window-size=794,1123`.
+Print on 130–170 gsm gloss or matt.
