@@ -43,10 +43,13 @@ PNG are made from that screenshot (resized with `sharp`, wrapped with `jspdf`).
 # A2 advertisement — `ad-a2.*`
 
 A second A2 poster laid out like a retail ad (after a reference the owner supplied): corner ribbon,
-round brand emblem, a "made to order · eggless option · custom designs" seal, headline, four
-product cards beside a hero cake photo, a dark feature band, an Order-today box, address and
-socials, four QR codes (WhatsApp, Instagram, Google, and a pink "Prices?" tile → website /menu), an occasions row and a rose closing
-strip. English only, no prices. Same assets as the poster.
+round brand emblem, a pink "Easy as 1·2·3" gift tag (how to order — the promises are in the
+feature band, so the tag doesn't repeat them), headline, four product cards beside a hero cake
+photo, a dark feature band, one order panel (rose "Ready to order?" call-to-action with the
+number, Call / WhatsApp pills and the lead time · address and socials · three QR codes for
+WhatsApp, Instagram and Google — the "Prices?" tile was removed at the owner's request), an occasions row and
+a rose closing strip. English only, no prices. Same assets as the poster. The cheesecake tag says
+**Banto**, the owner's word for the whole cheesecake (Bento is the milk/sponge cake size).
 
 | File | Use |
 |---|---|
@@ -73,3 +76,27 @@ The smallest text now prints at about 7.5 pt; QR codes are 21–23 mm.
 
 Screenshot command as for the A2, with `--force-device-scale-factor=3.125 --window-size=794,1123`.
 Print on 130–170 gsm gloss or matt.
+
+# A4 advertisement — `ad-a4.*`
+
+The A2 ad on A4, built the same way as `poster-a4`: a copy of `ad-a2.html` with `zoom: 0.5` plus an
+**"A4 readability"** block that sets larger type and re-places the blocks (its `top` values are A2
+millimetres), and a smaller emblem so the name clears its ring. Otherwise the same content.
+**An edit to one ad has to be copied into the other.**
+
+| File | Use |
+|---|---|
+| `ad-a4.pdf` / `ad-a4-bleed.pdf` | For the printer (exact A4 / 3 mm bleed) |
+| `ad-a4-share.pdf` | Light image PDF for WhatsApp / phones |
+| `png/ad-a4.png` / `png/ad-a4-small.png` | 300 dpi / 1400 px wide |
+
+## Sharp files for phones
+
+- **`png/*-hd.jpg` / `png/*-hd.png`** (A4 only) — 3970 × 5615, i.e. 600 dpi. The `.jpg` is the one to
+  send; send it on WhatsApp **as a Document**, never as a Photo, or WhatsApp shrinks it and it blurs.
+  Made with `--force-device-scale-factor=5 --window-size=794,1123`.
+- **`*-share.pdf`** are built from those full-resolution images (the A2 ones from `png/*-a2.png`), not
+  a downsized copy, so they stay sharp when zoomed.
+- **`qr/google-hd.png`** is `qr/google.png` enlarged 4× with nearest-neighbour, so its squares keep
+  hard edges; at 456 px PDF viewers smoothed it into a blur. All four designs use it. Remake it the
+  same way if Google's QR is ever re-exported.

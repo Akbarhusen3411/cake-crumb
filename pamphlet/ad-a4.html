@@ -3,25 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cake &amp; Crumb — A2 advertisement</title>
+<title>Cake &amp; Crumb — A4 advertisement</title>
 <!--
-  A2 advertisement poster (420 × 594 mm), English, one side. Laid out like a
+  A4 copy of ad-a2.html (210 × 297 mm), English, one side. Laid out like a
   retail ad: corner ribbon, round brand emblem, a "how to order" gift tag, headline, product
   cards beside a hero photo, a dark feature band, order + contact boxes with
   QR codes (WhatsApp, Instagram, Google), an occasions row and a closing
   strip. No prices.
 
-  ad-a2.html        → 420 × 594 mm
-  ad-a2.html?bleed  → 426 × 600 mm (3 mm bleed)
-  ad-a2.html?png    → page alone, for the PNG screenshot
+  Laid out in A2 millimetres and scaled to half with zoom on .page; the
+  "A4 readability" block at the end of the stylesheet moves blocks and sets
+  larger type, so nothing prints much under 7.5 pt. Sizes there are A2
+  values (printed size = half).
+
+  ad-a4.html        → 210 × 297 mm
+  ad-a4.html?bleed  → 216 × 303 mm (3 mm bleed = 6 A2-mm)
+  ad-a4.html?png    → page alone, for the PNG screenshot
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Allura&family=Lato:wght@400;700;900&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700&display=block" rel="stylesheet">
 <style>
 :root {
-  --op-top: 474mm;
-  --op-h: 68mm;
+  --op-top: 471mm;
+  --op-h: 71mm;
   --rose: #e0617a;
   --rose-deep: #cf3e63;
   --rose-ink: #ad2f4e;
@@ -40,8 +45,8 @@
   --sans: 'Lato', system-ui, sans-serif;
   --script: 'Allura', cursive;
 }
-html.bleed { --b: 3mm; }
-@page { size: 420mm 594mm; margin: 0; }
+html.bleed { --b: 6mm; }
+@page { size: 210mm 297mm; margin: 0; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
@@ -59,6 +64,7 @@ body {
   margin: 10mm auto;
   overflow: hidden;
   box-shadow: 0 6px 30px rgba(0, 0, 0, 0.35);
+  zoom: 0.5;
   background:
     radial-gradient(200mm 150mm at 50% 14%, #ffffff 0%, transparent 70%),
     radial-gradient(260mm 200mm at 100% 45%, rgba(243, 215, 217, 0.85), transparent 70%),
@@ -502,6 +508,51 @@ body {
 .strip .star { color: var(--pinktext); font-size: 13pt; }
 .strip em { font-family: var(--script); font-style: normal; font-size: 24pt; font-weight: 400; color: var(--pinktext); letter-spacing: 0; }
 
+/* ─── A4 readability ────────────────────────────────────────────────────
+   Everything above is the A2 design. At half size its smallest text printed
+   near 4–5 pt, so the A4 takes larger type, and blocks are re-placed to make
+   room (still A2 units: printed size is half the figure). */
+/* Smaller circle, and the words inside it smaller still, so the name
+   sits with clear space from the ring instead of touching it. */
+.emblem { top: 14mm; width: 150mm; height: 150mm; }
+.emblem__logo { height: 38mm; margin-top: -2mm; }
+.emblem__word { font-size: 40pt; }
+.emblem__tagline { font-size: 21pt; }
+.emblem__line { font-size: 15pt; margin-top: 2.5mm; }
+.emblem__line::before, .emblem__line::after { width: 12mm; }
+.emblem__sub { font-size: 12.5pt; letter-spacing: 0.12em; }
+.headline { top: 176mm; }
+
+.quote { top: 112mm; }
+
+
+.cards { top: 226mm; width: 212mm; grid-template-rows: 97mm 97mm; gap: 5mm; }
+.card { padding: 4mm 4mm 0; }
+.card__img { width: 42mm; height: 42mm; }
+.card__name { font-size: 16.5pt; margin-top: 3mm; letter-spacing: 0.04em; }
+.card__rule { margin: 1.6mm auto 2mm; }
+.card__tag { font-size: 13pt; padding: 1.2mm 4mm; }
+.card__note { font-size: 15.5pt; line-height: 1.35; margin-top: 2.2mm; }
+.hero { top: 226mm; height: 199mm; }
+
+/* Slimmer band; its room went to larger card photos. */
+.features { top: 433mm; height: 32mm; padding: 0 6mm; }
+.feature { gap: 3mm; padding: 0 3mm; }
+.feature i { width: 12mm; height: 12mm; }
+.feature i svg { width: 6.5mm; height: 6.5mm; }
+.feature b { font-size: 16pt; }
+.feature span { font-size: 13pt; }
+
+
+.occasions { top: 546mm; height: 24mm; }
+.occ svg { width: 14mm; height: 14mm; }
+.occ b { font-size: 19pt; }
+.occ span { font-size: 15pt; }
+
+.strip { height: calc(24mm + var(--b)); font-size: 18pt; gap: 5mm; }
+.strip .star { font-size: 15pt; }
+.strip em { font-size: 30pt; }
+
 /* Gift tag — not a second circle beside the emblem. */
 .tag {
   position: absolute;
@@ -574,7 +625,6 @@ body {
   font-size: 13pt;
   letter-spacing: 0;
 }
-
 </style>
 </head>
 <body>
@@ -583,7 +633,7 @@ body {
   if (q.has('bleed')) {
     document.documentElement.classList.add('bleed')
     const s = document.createElement('style')
-    s.textContent = '@page { size: 426mm 600mm; margin: 0; }'
+    s.textContent = '@page { size: 216mm 303mm; margin: 0; }'
     document.head.appendChild(s)
   }
   if (q.has('png')) {
