@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cake &amp; Crumb — A2 poster</title>
+<!--
+  A2 portrait poster (420 × 594 mm), one side, English. Brand, the owner's
+  photos (img/g00–g12), a names-only menu and QR codes. Deliberately no
+  prices: the "Prices?" QR opens the website's /menu, which is always current.
+
+  poster-a2.html        → 420 × 594 mm
+  poster-a2.html?bleed  → 426 × 600 mm (3 mm bleed all round)
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Lato:wght@400;700;900&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600;1,700&display=block" rel="stylesheet">
+<style>
+:root {
+  --rose: #e0617a;
+  --rose-deep: #cf3e63;
+  --rose-ink: #ad2f4e;
+  --rose-soft: #d7a7ae;
+  --blush: #f7e3df;
+  --blush-soft: #f3d7d9;
+  --cream: #fff6f2;
+  --cocoa: #5b3e36;
+  --cocoa-soft: #7a584d;
+  --pinktext: #f7c9d2;
+
+  --b: 0mm;
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans: 'Lato', system-ui, sans-serif;
+  --script: 'Allura', cursive;
+}
+html.bleed { --b: 3mm; }
+@page { size: 420mm 594mm; margin: 0; }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: #8d7d79;
+  font-family: var(--sans);
+  color: var(--cocoa);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.page {
+  position: relative;
+  width: calc(420mm + 2 * var(--b));
+  height: calc(594mm + 2 * var(--b));
+  margin: 10mm auto;
+  background: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.35);
+}
+@media print {
+  body { background: none; }
+  .page { margin: 0; box-shadow: none; }
+}
+.sheet {
+  position: absolute;
+  inset: var(--b);
+  padding: 22mm 22mm 0;
+}
+
+.wash {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: calc(260mm + var(--b));
+  background:
+    radial-gradient(240mm 140mm at 10% 0%, rgba(224, 97, 122, 0.16), transparent 70%),
+    radial-gradient(220mm 160mm at 100% 8%, rgba(243, 215, 217, 0.95), transparent 70%),
+    linear-gradient(180deg, var(--cream) 0%, #ffffff 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+}
+
+/* ─── Masthead ───────────────────────────────────────────────────────────── */
+.mast {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9mm;
+}
+.mast__logo { height: 54mm; width: auto; display: block; }
+.wordmark {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 66pt;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.wordmark .amp {
+  font-style: italic;
+  font-size: 1.3em;
+  color: var(--rose-deep);
+  margin: 0 0.04em;
+}
+.tagline {
+  font-family: var(--script);
+  font-size: 42pt;
+  line-height: 1.05;
+  color: var(--rose-deep);
+  margin-top: 2mm;
+}
+.eyebrow {
+  margin-top: 3mm;
+  font-size: 15pt;
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--cocoa-soft);
+}
+.heart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5mm;
+  color: var(--rose);
+  font-size: 20pt;
+  margin-top: 5mm;
+}
+.heart::before, .heart::after {
+  content: '';
+  width: 42mm;
+  height: 0.5mm;
+  background: var(--rose-soft);
+}
+.headline { position: relative; text-align: center; margin-top: 5mm; }
+.headline h1 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 60pt;
+  line-height: 1.05;
+}
+.headline h1 em { font-style: italic; color: var(--rose-deep); }
+
+/* ─── Photo mosaic ───────────────────────────────────────────────────────── */
+.mosaic {
+  position: relative;
+  margin-top: 9mm;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(3, 57mm);
+  gap: 3.5mm;
+}
+.tile {
+  position: relative;
+  margin: 0;
+  border-radius: 4.5mm;
+  overflow: hidden;
+  background: var(--blush);
+  box-shadow: 0 3mm 8mm -4mm rgba(91, 62, 54, 0.35);
+}
+.tile img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tile--big { grid-column: span 2; grid-row: span 2; }
+.tile--wide { grid-column: span 2; }
+.tile figcaption {
+  position: absolute;
+  left: 4mm;
+  bottom: 4mm;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20mm;
+  padding: 2.4mm 6mm 2.2mm;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 15pt;
+  line-height: 1;
+  color: var(--cocoa);
+  white-space: nowrap;
+}
+.tile--big figcaption { left: 6mm; bottom: 6mm; font-size: 22pt; padding: 3.4mm 8mm 3.2mm; }
+
+/* ─── Promise line ───────────────────────────────────────────────────────── */
+.promises {
+  margin-top: 10mm;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7mm;
+  flex-wrap: nowrap;
+}
+.promise {
+  display: inline-flex;
+  align-items: center;
+  gap: 3.6mm;
+  font-size: 18pt;
+  font-weight: 700;
+  color: var(--cocoa);
+  white-space: nowrap;
+}
+.promise i {
+  width: 13mm;
+  height: 13mm;
+  border-radius: 50%;
+  border: 0.45mm solid var(--rose-soft);
+  background: var(--cream);
+  color: var(--rose-deep);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.promise i svg { width: 7mm; height: 7mm; }
+.promises .dot { color: var(--rose-soft); font-size: 16pt; }
+
+/* ─── Short menu (names only) + price card ──────────────────────────────── */
+.menu { position: relative; margin-top: 9mm; }
+.menu__title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6mm;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 32pt;
+  line-height: 1;
+}
+.menu__title::before, .menu__title::after {
+  content: '';
+  width: 40mm;
+  height: 0.5mm;
+  background: var(--rose-soft);
+}
+.menu__body {
+  margin-top: 6mm;
+  display: grid;
+  grid-template-columns: 1fr 82mm;
+  gap: 8mm;
+  align-items: stretch;
+}
+/* Nine equal cards in a 3 × 3 grid that stretches to the price card's
+   height, so the two sides end level and every card is the same size. */
+.menu__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 4mm;
+}
+.mcat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3.5mm 4.5mm;
+  background: var(--cream);
+  border: 0.35mm solid var(--blush-soft);
+  border-left: 1.4mm solid var(--rose);
+  border-radius: 3.5mm;
+}
+.mcat h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 15.5pt;
+  line-height: 1.15;
+  color: var(--cocoa);
+}
+.mcat p {
+  margin: 1.6mm 0 0;
+  font-size: 11.5pt;
+  line-height: 1.45;
+  color: var(--cocoa-soft);
+}
+.price-card {
+  background:
+    radial-gradient(70mm 50mm at 100% 0%, rgba(255, 255, 255, 0.14), transparent 70%),
+    linear-gradient(160deg, var(--rose-deep) 0%, #b7375a 100%);
+  color: #fff;
+  border-radius: 7mm;
+  padding: 6mm 6mm 5mm;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.price-card__kicker { font-family: var(--script); font-size: 30pt; line-height: 1; }
+.price-card__title {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 16pt;
+  text-wrap: balance;
+  line-height: 1.15;
+  margin-top: 1.5mm;
+}
+.price-card__qr {
+  margin-top: 4mm;
+  background: #fff;
+  border-radius: 4mm;
+  padding: 3.5mm;
+}
+.price-card__qr img { display: block; width: 44mm; height: 44mm; }
+.price-card__scan {
+  margin-top: 3mm;
+  font-size: 10pt;
+  text-wrap: balance;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.price-card__wa { margin-top: 1.6mm; font-size: 11pt; opacity: 0.95; }
+
+/* ─── Contact band (full bleed) ──────────────────────────────────────────── */
+.band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(124mm + var(--b));
+  padding: 0 calc(22mm + var(--b)) var(--b);
+  background:
+    radial-gradient(180mm 120mm at 0% 100%, rgba(207, 62, 99, 0.35), transparent 70%),
+    var(--cocoa);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 12mm;
+}
+.band__info { flex: 1; min-width: 0; }
+.band__title {
+  font-family: var(--script);
+  font-size: 46pt;
+  line-height: 1;
+  color: var(--pinktext);
+}
+.band__rows { margin-top: 5mm; display: grid; gap: 3.4mm; }
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4mm;
+  font-size: 15pt;
+  line-height: 1.35;
+}
+.row svg {
+  flex-shrink: 0;
+  width: 7mm;
+  height: 7mm;
+  margin-top: 0.2mm;
+  stroke: var(--pinktext);
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.row b { font-weight: 900; }
+.row .big { font-size: 22pt; font-weight: 900; letter-spacing: 0.02em; }
+.qrs { display: flex; gap: 6mm; flex-shrink: 0; }
+.qr {
+  background: #fff;
+  border-radius: 5mm;
+  padding: 4mm 4mm 3mm;
+  text-align: center;
+  color: var(--cocoa);
+}
+.qr img { display: block; width: 46mm; height: 46mm; image-rendering: pixelated; }
+.qr b {
+  display: block;
+  margin-top: 2.4mm;
+  font-size: 11pt;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.qr span { display: block; font-size: 10pt; color: var(--cocoa-soft); margin-top: 0.6mm; }
+
+</style>
+</head>
+<body>
+<script>
+  if (new URLSearchParams(location.search).has('bleed')) {
+    document.documentElement.classList.add('bleed')
+    const s = document.createElement('style')
+    s.textContent = '@page { size: 426mm 600mm; margin: 0; }'
+    document.head.appendChild(s)
+  }
+  // ?png → the page alone at 0,0 with no grey surround, so a screenshot of
+  // exactly the page's size is the PNG export.
+  if (new URLSearchParams(location.search).has('png')) {
+    const s = document.createElement('style')
+    s.textContent = 'body{background:none}.page{margin:0!important;box-shadow:none!important}'
+    document.head.appendChild(s)
+  }
+</script>
+
+<section class="page">
+  <div class="wash"></div>
+  <div class="sheet">
+
+    <header class="mast">
+      <img class="mast__logo" src="img/logo-print.png" alt="">
+      <div>
+        <div class="wordmark">CAKE<span class="amp">&amp;</span>CRUMB</div>
+        <div class="tagline">The gourmet chocolate &amp; berry boutique</div>
+        <div class="eyebrow">Homemade cakes &amp; desserts · Vaso, Kheda</div>
+      </div>
+    </header>
+
+    <div class="heart">♥</div>
+
+    <div class="headline">
+      <h1>Freshly baked, <em>made to order</em></h1>
+    </div>
+
+    <!-- All 13 of the owner's photos (img/g00–g12, from the WhatsApp folder):
+         one large, two landscape shots spanning two columns, ten small. -->
+    <div class="mosaic">
+      <figure class="tile tile--big"><img src="img/g02.jpg" alt=""><figcaption>Celebration Cakes</figcaption></figure>
+      <figure class="tile"><img src="img/g03.jpg" alt=""></figure>
+      <figure class="tile"><img src="img/g00.jpg" alt=""></figure>
+      <figure class="tile tile--wide"><img src="img/g05.jpg" alt=""></figure>
+      <figure class="tile"><img src="img/g07.jpg" alt=""></figure>
+      <figure class="tile"><img src="img/g08.jpg" alt=""></figure>
+      <figure class="tile"><img src="img/g01.jpg" alt=""></figure>
+      <figure class="tile"><img src="img/g10.jpg" alt=""></figure>
+      <figure class="tile tile--wide"><img src="img/g06.jpg" alt=""></figure>
+      <figure class="tile"><img src="img/g09.jpg" alt=""></figure>
+      <figure class="tile"><img src="img/g04.jpg" alt=""></figure>
+      <figure class="tile"><img src="img/g11.jpg" alt=""></figure>
+      <figure class="tile"><img src="img/g12.jpg" alt=""></figure>
+    </div>
+
+    <!-- Names only, never prices: prices change, paper doesn't. The QR opens
+         the website's /menu, which reads products.js and is always current. -->
+    <section class="menu">
+      <h2 class="menu__title">Our Menu</h2>
+      <div class="menu__body">
+        <div class="menu__grid">
+          <div class="mcat"><h3>Cheesecakes</h3>
+            <p>Strawberry&nbsp;· Blueberry&nbsp;· Mango&nbsp;· Lemon&nbsp;· Biscoff&nbsp;· Nutella&nbsp;· Cookies&nbsp;&amp;&nbsp;Cream&nbsp;· Pistachio&nbsp;· Dubai</p></div>
+          <div class="mcat"><h3>Milk Cakes</h3>
+            <p>Trés&nbsp;Léches&nbsp;· Rose&nbsp;· Mango&nbsp;· Biscoff&nbsp;· Nutella&nbsp;· Turkish&nbsp;Caramel&nbsp;· Pistachio</p></div>
+          <div class="mcat"><h3>Sponge Cakes</h3>
+            <p>Vanilla&nbsp;· Chocolate&nbsp;· Red&nbsp;Velvet&nbsp;· Strawberry&nbsp;· Mango&nbsp;· Biscoff&nbsp;· Pistachio</p></div>
+          <div class="mcat"><h3>Cupcakes</h3>
+            <p>Vanilla&nbsp;· Red&nbsp;Velvet&nbsp;· Chocolate&nbsp;· Nutella&nbsp;· Biscoff&nbsp;· Pistachio&nbsp;· Variety&nbsp;box</p></div>
+          <div class="mcat"><h3>Cookies</h3>
+            <p>Classic&nbsp;· White&nbsp;Choc&nbsp;· Triple&nbsp;Choc&nbsp;· Red&nbsp;Velvet&nbsp;· Almond&nbsp;· Pistachio&nbsp;&amp;&nbsp;Rose</p></div>
+          <div class="mcat"><h3>Brownies &amp; Blondies</h3>
+            <p>Classic&nbsp;· Nutella&nbsp;· Biscoff&nbsp;· Oreo&nbsp;· Pistachio&nbsp;· Strawberry&nbsp;· Blueberry</p></div>
+          <div class="mcat"><h3>Cake Pops &amp; Cakesicles</h3>
+            <p>Chocolate&nbsp;· Vanilla&nbsp;· Red&nbsp;Velvet&nbsp;· Pistachio&nbsp;· Choc&#8209;covered&nbsp;Strawberries</p></div>
+          <div class="mcat"><h3>Dessert Cups</h3>
+            <p>Custard&nbsp;· Trifle&nbsp;· Jelly&nbsp;· Milk&nbsp;Pudding&nbsp;(Ghas)</p></div>
+          <div class="mcat"><h3>Drinks</h3>
+            <p>Mojitos&nbsp;· Milkshakes&nbsp;· Iced&nbsp;Coffee&nbsp;· Hot&nbsp;Coffee&nbsp;· Pancakes&nbsp;· Crêpes</p></div>
+        </div>
+        <aside class="price-card">
+          <div class="price-card__kicker">Prices?</div>
+          <div class="price-card__title">Get in touch for<br>today's prices</div>
+          <div class="price-card__qr"><img src="qr/menu.svg" alt="QR code for the live menu and prices"></div>
+          <div class="price-card__scan">Scan for live prices</div>
+          <div class="price-card__wa">or WhatsApp <b>+91 91731 83440</b></div>
+        </aside>
+      </div>
+    </section>
+
+    <div class="promises">
+      <span class="promise"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></i>Order a day ahead</span>
+      <span class="dot">•</span>
+      <span class="promise"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-3.5 0-6 4.5-6 9a6 6 0 0 0 12 0c0-4.5-2.5-9-6-9z"/><path d="M4 20 20 4"/></svg></i>Eggless on request</span>
+      <span class="dot">•</span>
+      <span class="promise"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="14" height="10" rx="1"/><path d="M15 9h4l3 3v4h-7"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg></i>Home delivery or pickup</span>
+      <span class="dot">•</span>
+      <span class="promise"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></i>Custom designs</span>
+    </div>
+
+  </div>
+
+  <div class="band">
+    <div class="band__info">
+      <div class="band__title">We can't wait to sweeten your day!</div>
+      <div class="band__rows">
+        <div class="row">
+          <svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
+          <span class="big">+91 91731 83440 <span style="font-size:13pt;font-weight:700;opacity:.85">· Call / WhatsApp</span></span>
+        </div>
+        <div class="row">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>386, Zahir Manzil, Venipura, Mominvad,<br>Near Police Station, Vaso, Kheda, Gujarat-387380</span>
+        </div>
+        <div class="row">
+          <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.6"/></svg>
+          <span>@cake_and_crumb_1</span>
+        </div>
+        <div class="row">
+          <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
+          <span>cakeandcrumb.in@gmail.com</span>
+        </div>
+      </div>
+    </div>
+    <div class="qrs">
+      <div class="qr"><img src="qr/whatsapp.svg" alt="WhatsApp QR code"><b>WhatsApp</b><span>Order now</span></div>
+      <div class="qr"><img src="qr/instagram.svg" alt="Instagram QR code"><b>Instagram</b><span>Follow us</span></div>
+      <div class="qr"><img src="qr/google.png" alt="Google QR code"><b>Google</b><span>Find &amp; review us</span></div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>
