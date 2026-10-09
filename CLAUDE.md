@@ -303,22 +303,55 @@ No coupon field, no promo code, no percentage off. Discounts were scoped and **e
 
 ### Print posters — `pamphlet/`
 
-Two A2 posters (420 × 594 mm), English only, as editable HTML plus exports. Not imported by the app
-and not in the Vite build; `pamphlet/README.md` lists every file. (The older `offers/` folder of
-offer posters was deleted in Oct 2026.)
+Two designs, each in A2 (420 × 594 mm) and A4, English only, as editable HTML plus exports. Not
+imported by the app and not in the Vite build; `pamphlet/README.md` lists every file. (The older
+`offers/` folder of offer posters was deleted in Oct 2026.)
 
-- **`ad-a2.html`** is the retail-ad layout (emblem, seal, product cards, hero photo, order box, four
-  QR codes) and the one recommended for walls. **`poster-a2.html`** is the calmer menu-board one
-  (13 photos, names-only menu) for counters and waiting areas.
-- **No prices are printed** — on purpose, so a price change never needs a reprint. Both carry a
-  "Prices?" QR (`qr/menu.svg` → the site's `/menu`, which reads `products.js`), so the `/menu` URL is
-  now load-bearing for paper in circulation.
+- **`ad-a2.html`** is the retail-ad layout (emblem, an "Easy as 1·2·3" gift tag, product cards, hero
+  photo, feature band, one order panel with three QR codes) and the one recommended for walls.
+  **`poster-a2.html`** is the calmer menu-board one (13 photos, names-only menu) for counters and
+  waiting areas.
+- **No prices are printed** — on purpose, so a price change never needs a reprint. `poster-a2`/`-a4`
+  carry a "Prices?" QR (`qr/menu.svg` → the site's `/menu`, which reads `products.js`), so the `/menu`
+  URL is load-bearing for paper in circulation. **The ads no longer have that tile** — the owner had it
+  removed; customers ask on WhatsApp.
+- **The A4s are copies, not derived.** `ad-a4.html` / `poster-a4.html` are the A2 file with
+  `zoom: 0.5` on `.page` plus an **"A4 readability"** block at the end of the stylesheet. A straight
+  half-size copy printed its smallest text at ~5 pt, so that block sets larger type and re-places
+  blocks — every size and `top` in it is still in **A2 millimetres** (printed size = half). An edit to
+  one size has to be made to the other by hand. `poster-a4` drops to two photo rows (8 of 13) to make
+  room; `ad-a4` has a smaller emblem (the name was touching its ring) and larger card photos.
+- **The ad's gift tag says how to order, not the promises.** "Made to order / Eggless / Custom
+  designs" are already in the brown feature band; the owner called the repeat out. Don't put a second
+  circle beside the emblem either — the round seal it replaced was rejected for exactly that.
+- **Facts on the ad, checked against the catalogue:** the cheesecake card's tag is **"Banto & tubs"**
+  (Banto is the whole cheesecake; Bento is the milk/sponge size — see *Product catalog*). No card
+  photo may show chocolates (none are sold — see *Customer-facing copy*); the heart-box shot appears
+  only as an unlabelled decorative circle beside the hero, which is the owner's choice.
 - **Contact details, address and flavour names are hand-copied**, same as `cards/`.
 - **Laid out in millimetres.** `ad-a2` places nearly every block `position: absolute` from the page
   top, so making one section taller means moving the ones below it. Re-render and look at it.
+- **`poster-a2` is two stacks that must not meet.** The masthead → photos → menu → promises flow
+  down from the top; the brown band, occasions row and closing strip are pinned `absolute` to the
+  bottom. Nothing pushes them apart, so a taller masthead overlaps the band and a shorter one leaves
+  an empty strip above it. The photo rows (`grid-template-rows` on `.mosaic`) are the slack — retune
+  them after any change above, and check the promises→band gap in the render.
+- **The masthead is one centred group**: logo beside the name, the pair centred between the corner
+  ribbons with equal space either side. The owner rejected both a stacked logo and a name centred
+  alone with the logo hanging off it.
 - **`?bleed`** gives a 3 mm bleed page and **`?png`** drops the grey surround for the screenshot. PDFs
-  and PNGs come from headless Chrome exactly like the cards (commands in its README); the light
-  `*-share.pdf` is that PNG wrapped with `jspdf` and is for phones, not print.
+  and PNGs come from headless Chrome exactly like the cards (commands in its README); the
+  `*-share.pdf` is that PNG wrapped with `jspdf` and is for phones, not print. A4 bleed is 6 A2-mm
+  (`--b: 6mm`) because of the zoom.
+- **Phone sharpness.** The A4s also export `png/*-hd.png`/`.jpg` at 600 dpi (device scale factor 5);
+  share PDFs are built from the full-resolution image, never a downsized copy, or they blur when
+  zoomed. `qr/google-hd.png` is Google's QR enlarged 4× with nearest-neighbour — at 456 px, PDF
+  viewers smoothed its modules into a blur. Blur after sending on WhatsApp is WhatsApp's photo
+  compression: send the file **as a Document**.
+- **Verify a rebuild actually wrote the files.** Driving Chrome from a bash `for` loop with
+  backslashed Windows paths once wrote every output to literal `pamphlet$n.pdf`-style names and left
+  the real PDFs stale, unnoticed until commit. Drive it from Node (`execFileSync`, no shell) and
+  check each output's mtime afterwards.
 - **Wording the owner settled on:** "Homemade cakes & desserts", never "homemade bakery"; the
   Gujarati spelling of the town is **વસો**, not વાસો. A Gujarati back side was built, then removed.
 
