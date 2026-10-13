@@ -7,7 +7,7 @@
 <!--
   A2 advertisement poster (420 × 594 mm), English, one side. Laid out like a
   retail ad: corner ribbon, round brand emblem, a "how to order" gift tag, headline, product
-  cards beside a hero photo, a dark feature band, order + contact boxes with
+  cards beside the birthday gift box photo, a dark feature band, order + contact boxes with
   QR codes (WhatsApp, Instagram, Google), an occasions row and a closing
   strip. No prices.
 
@@ -575,6 +575,31 @@ body {
   letter-spacing: 0;
 }
 
+
+/* ─── Birthday gift box ─────────────────────────────────────────────────
+   The hero is the gift box, a square photo with lettering in its corners:
+   the frame is a square (the old arch cut through the words), and the two
+   small circles that sat on its right edge are gone — they covered "Happy
+   Birthday". There is no room under the photo for the A4's banner, so the
+   box is named on a rose sticker over the empty cloth at the bottom-left. */
+.hero__frame { inset: 0 0 auto 0; height: 160mm; border-radius: 10mm; }
+.hero__gift {
+  position: absolute;
+  left: -7mm;
+  bottom: -3mm;
+  padding: 3.5mm 8mm 4mm;
+  border-radius: 6mm;
+  background:
+    radial-gradient(60mm 30mm at 100% 0%, rgba(255, 255, 255, 0.18), transparent 70%),
+    linear-gradient(160deg, var(--rose-deep) 0%, #a92f50 100%);
+  box-shadow: 0 0 0 1.2mm #fff, 0 0 0 1.8mm var(--rose-soft), 0 4mm 10mm -4mm rgba(91, 62, 54, 0.6);
+  color: #fff;
+  text-align: center;
+  transform: rotate(-3deg);
+}
+.hero__gift-kicker { display: block; font-family: var(--script); font-size: 27pt; line-height: 0.95; color: var(--pinktext); white-space: nowrap; }
+.hero__gift-title { display: block; font-family: var(--serif); font-weight: 800; font-size: 20pt; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.15; }
+.hero__gift-sub { display: block; margin-top: 0.8mm; font-size: 11.5pt; font-weight: 700; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -694,10 +719,13 @@ body {
     </div>
 
     <div class="hero">
-      <div class="hero__frame"><img src="img/g02.jpg" alt=""></div>
-      <div class="hero__mini" style="right:-8mm;top:20mm"><img src="img/g00.jpg" alt=""></div>
-      <div class="hero__mini" style="right:-6mm;top:74mm;width:38mm;height:38mm"><img src="img/g05.jpg" alt=""></div>
-      <div class="hero__sticker"><b>Made just for you</b><span>freshly baked</span></div>
+      <!-- public/products/gift-box-birthday-flatlay.jpeg — the birthday gift box. -->
+      <div class="hero__frame"><img src="img/gift-birthday-box.jpg" alt=""></div>
+      <div class="hero__gift">
+        <span class="hero__gift-kicker">Birthday special</span>
+        <span class="hero__gift-title">Gift Box</span>
+        <span class="hero__gift-sub">Cake · flowers · free dessert cup</span>
+      </div>
     </div>
 
     <div class="features">

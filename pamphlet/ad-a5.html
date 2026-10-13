@@ -17,6 +17,8 @@
   ad-a5.html?bleed         → 154 × 216 mm (3 mm bleed = 8.51 A2-mm)
   ad-a5.html?png           → front alone, for the PNG screenshot
   ad-a5.html?png&side=back → back alone
+  ad-a5.html?side=front    → front alone when PRINTED (the single-sided PDF);
+                             ?side=back likewise, and both combine with ?bleed
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -538,8 +540,10 @@ body {
    its corners, so the frame is a square, not the A2's arch, and nothing
    overlaps it; the room left under it is the banner that names the box,
    with one round photo of the cake at its left end. */
-.hero__frame { inset: 0 0 auto 0; height: 160mm; border-radius: 10mm; }
-.hero__sticker { bottom: 47mm; }
+/* 156, not 160: the frame's ring is 3mm and the banner's 2mm, so at 160 the
+   two outlines met with nothing between them. */
+.hero__frame { inset: 0 0 auto 0; height: 156mm; border-radius: 10mm; }
+.hero__sticker { left: -5mm; bottom: 49mm; }
 .bday {
   position: absolute;
   left: 0;
@@ -685,7 +689,7 @@ body {
   text-align: center;
 }
 .mast__brand { display: flex; align-items: center; gap: 5mm; }
-.mast__logo { height: 27mm; width: auto; }
+.mast__logo { height: 30mm; width: auto; }
 .mast__word {
   font-family: var(--serif);
   font-weight: 800;
@@ -696,13 +700,23 @@ body {
   white-space: nowrap;
 }
 .mast__word .amp { font-style: italic; font-size: 1.3em; color: var(--rose-deep); margin: 0 0.03em; }
+/* The brand's own tagline, under the name exactly as in the front's emblem. */
+.mast__name { text-align: center; }
+.mast__tagline {
+  margin-top: 1.4mm;
+  font-family: var(--script);
+  font-size: 24pt;
+  line-height: 1;
+  color: var(--rose-deep);
+  white-space: nowrap;
+}
 .mast__line {
   display: flex;
   align-items: center;
   gap: 5mm;
-  margin-top: 0.5mm;
+  margin-top: 1.5mm;
   font-family: var(--script);
-  font-size: 38pt;
+  font-size: 32pt;
   line-height: 1;
   color: var(--rose-deep);
 }
@@ -835,6 +849,9 @@ body {
   grid-template-columns: 150mm 1fr 1fr 1fr;
   gap: 5mm;
 }
+/* Two photos sharing one tile, a white hairline between them. */
+.tile--duo img { right: auto; width: 50%; }
+.tile--duo img + img { left: 50%; right: 0; border-left: 1.2mm solid #fff; }
 
 /* Closing panel — NO contact details: the number, address and QR codes are
    all on the front, and the owner did not want them said twice. A rose
@@ -965,7 +982,13 @@ body {
 .bk-hero .tile b { font-size: 22pt; }
 .sticker strong { font-size: 20pt; }
 .sticker span { font-size: 27pt; }
-.bk-flav__item b { font-size: 19pt; margin-top: 3mm; }
+/* Five favourites, as on the A4; one name runs to two lines. */
+.bk-flav__row { padding: 0 2mm; margin-top: 3mm; }
+.bk-flav__item { width: 72mm; }
+.bk-flav__pic { width: 50mm; height: 50mm; margin: 0 auto; }
+/* 6mm clear of the photo: its ring is a 2.2mm shadow outside the circle, so a
+   smaller gap left the name touching it. */
+.bk-flav__item b { font-size: 18pt; margin-top: 6mm; line-height: 1.12; letter-spacing: 0.06em; }
 .bk-cta__turn { font-size: 17pt; padding: 1.8mm 4mm; letter-spacing: 0.03em; }
 .bk-occ__item b { font-size: 17pt; letter-spacing: 0.02em; }
 </style>
@@ -977,6 +1000,12 @@ body {
     document.documentElement.classList.add('bleed')
     const s = document.createElement('style')
     s.textContent = '@page { size: 154mm 216mm; margin: 0; }'
+    document.head.appendChild(s)
+  }
+  // One side only in the printed PDF — for a single-sided run.
+  if (q.has('side') && !q.has('png')) {
+    const s = document.createElement('style')
+    s.textContent = (q.get('side') === 'back' ? '.page--front' : '.page--back') + '{display:none}.page{break-after:auto!important}'
     document.head.appendChild(s)
   }
   if (q.has('png')) {
@@ -1123,7 +1152,7 @@ body {
       </div>
       <div class="op-info">
         <div class="op-row"><i><svg><use href="#i-pin"/></svg></i><div><small>Visit / pick up</small>
-          <span>386, Zahir Manzil, Venipura, Mominvad, Near Police Station, Vaso, Kheda, Gujarat&#8209;387380</span></div></div>
+          <span>386, Zahir Manzil, Venipura, Mominvad, Near&nbsp;Police&nbsp;Station, Vaso, Kheda, Gujarat&#8209;387380</span></div></div>
         <div class="op-row"><i><svg><use href="#i-insta"/></svg></i><div><small>Instagram</small><span>@cake_and_crumb_1</span></div></div>
         <div class="op-row"><i><svg><use href="#i-mail"/></svg></i><div><small>Email</small><span>cakeandcrumb.in@gmail.com</span></div></div>
       </div>
@@ -1170,7 +1199,10 @@ body {
     <div class="mast">
       <div class="mast__brand">
         <img class="mast__logo" src="img/logo-print.png" alt="">
-        <div class="mast__word">CAKE<span class="amp">&amp;</span>CRUMB</div>
+        <div class="mast__name">
+          <div class="mast__word">CAKE<span class="amp">&amp;</span>CRUMB</div>
+          <div class="mast__tagline">The gourmet chocolate &amp; berry boutique</div>
+        </div>
       </div>
       <div class="mast__line"><svg><use href="#i-leaf"/></svg>A little taste of what we bake<svg><use href="#i-leaf"/></svg></div>
     </div>
@@ -1192,24 +1224,26 @@ body {
       <div class="tile"><img src="img/b03.jpg" alt=""><b>Cheesecake tubs</b></div>  <!-- cheesecake-choc-mango -->
     </div>
 
-    <!-- Flavours: round photos -->
+    <!-- Favourites: round photos — the same five on the A4 and the A5. The
+         names are the owner's own. -->
     <div class="bk-flav">
-      <div class="bk-flav__title"><svg><use href="#i-leaf"/></svg>Pick your favourite flavour<svg><use href="#i-leaf"/></svg></div>
+      <div class="bk-flav__title"><svg><use href="#i-leaf"/></svg>Pick your favourite<svg><use href="#i-leaf"/></svg></div>
       <div class="bk-flav__row">
-        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b10.jpg" alt="" style="object-position:50% 60%"></span><b>Mango</b></div>  <!-- milkcake-mango-bento -->
-        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b11.jpg" alt="" style="object-position:50% 62%"></span><b>Blueberry</b></div>  <!-- milkcake-blueberry-bento -->
-        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b12.jpg" alt="" style="object-position:50% 60%"></span><b>Rose</b></div>  <!-- milkcake-rose-bento -->
-        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b07.jpg" alt=""></span><b>Pistachio</b></div>  <!-- dessertcup-pistachio-cream -->
-        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b15.jpg" alt=""></span><b>Chocolate</b></div>  <!-- dessertcup-chocolate-pudding -->
+        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b16.jpg" alt="" style="object-position:50% 78%"></span><b>Nutella<br>cheesecake</b></div>  <!-- dessertcup-nutella -->
+        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b17.jpg" alt="" style="object-position:55% 55%"></span><b>Milk cake</b></div>  <!-- milkcake-tres-leche-dish -->
+        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b14.jpg" alt="" style="object-position:50% 60%"></span><b>Mango cupcake</b></div>  <!-- cupcakes-mango -->
+        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b19.jpg" alt="" style="object-position:50% 62%"></span><b>Birthday cake</b></div>  <!-- cake-yellow-flowers -->
+        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b23.jpg" alt=""></span><b>Cookies</b></div>  <!-- cookies-double-chocolate -->
       </div>
     </div>
 
     <!-- Gallery: one wide, three tall -->
     <div class="bk-row">
-      <div class="tile"><img src="img/b01.jpg" alt="" style="object-position:46% 50%"><b>Milk cake tubs</b></div>  <!-- milkcake-assorted-tubs -->
-      <div class="tile"><img src="img/b06.jpg" alt=""><b>Rose cream</b></div>  <!-- dessertcup-rose-cream -->
+      <!-- Two of the owner's own cake pop photos, side by side in the wide tile. -->
+      <div class="tile tile--duo"><img src="img/b21.jpg" alt="" style="object-position:50% 42%"><img src="img/b22.jpg" alt="" style="object-position:58% 50%"><b>Cake pops</b></div>
+      <div class="tile"><img src="img/b06.jpg" alt=""><b>Strawberry</b></div>  <!-- dessertcup-rose-cream -->
       <div class="tile"><img src="img/b13.jpg" alt="" style="object-position:50% 75%"><b>Brownies</b></div>  <!-- brownie-chocolate-boxes -->
-      <div class="tile"><img src="img/b14.jpg" alt="" style="object-position:50% 62%"><b>Mango cupcake</b></div>  <!-- cupcakes-mango -->
+      <div class="tile"><img src="img/b18.jpg" alt="" style="object-position:50% 58%"><b>Heart cake</b></div>  <!-- truffles-dark-heart-box (the owner's name for it) -->
     </div>
 
     <!-- Closing panel — no contact details here (they are on the front).
@@ -1223,7 +1257,7 @@ body {
       <div class="bk-gift">
         <div class="bk-gift__pics">
           <span class="bk-gift__pic"><img src="img/b08.jpg" alt="" style="object-position:50% 62%"></span>  <!-- truffles-rose-pistachio-hearts -->
-          <span class="bk-gift__pic"><img src="img/b09.jpg" alt="" style="object-position:50% 58%"></span>  <!-- truffles-hearts -->
+          <span class="bk-gift__pic"><img src="img/b24.jpg" alt="" style="object-position:50% 45%"></span>  <!-- dessertcup-mango-custard -->
         </div>
         <div class="bk-gift__script">A sweet surprise<br>for someone<br>special</div>
       </div>
