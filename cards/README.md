@@ -1,4 +1,4 @@
-# Print cards — visiting card & thank-you card
+# Print cards — visiting card, thank-you card & contact card
 
 Print artwork in the "pink paper" theme: dusty-pink stock, watercolour corner waves edged in gold,
 maroon Cormorant Garamond, the website's cupcake mark. Not part of the Vite build.
@@ -10,6 +10,7 @@ maroon Cormorant Garamond, the website's cupcake mark. Not part of the Vite buil
 |---|---|---|
 | `visiting-card.html` / `.pdf` | 3.5 × 2 in (88.9 × 50.8 mm) | Front: logo, name, tagline · Back: Instagram + Google review QR codes, delivery · eggless · lead-time notes, WhatsApp, Instagram, full address, email |
 | `thank-you-card.html` / `.pdf` | A7, 74 × 105 mm | Front: logo, name, thank-you message · Back: large Google review QR, order-again line, Instagram QR, contact, address |
+| `contact-card.html` / `.pdf` | A5, 148 × 210 mm | One side: logo, name, tagline, two corner ribbons with a script quote under each, WhatsApp number, Instagram, email, full address, order-a-day-ahead note, payment, delivery · pickup, cancellation note, three QR codes (WhatsApp · Instagram · Google) |
 
 The `.pdf` files are ready to send to a printer (one page per side, exact size).
 
@@ -28,7 +29,7 @@ Margins **None**, Scale **100**.
 | `instagram.svg` | https://www.instagram.com/cake_and_crumb_1/ |
 | `reviews.svg` | https://maps.google.com/?cid=3355775214967278598 (the Google listing — same as `MAP_LINK` in `src/data/shopConfig.js`) |
 | `website.svg` | https://akbarhusen3411.github.io/cake-crumb/ (spare — taken off the visiting card until the site's product photos are finished) |
-| `whatsapp.svg` | https://wa.me/919173183440 (spare, not used on a card yet) |
+| `whatsapp.svg` | https://wa.me/919173183440 (used on the contact card) |
 
 The review QR opens the bakery's Google listing, where the customer taps *Reviews*.
 For a QR that opens the "write a review" box directly, copy the **Ask for reviews**
@@ -37,3 +38,17 @@ middle doesn't stop them scanning) and drawn as filled squares, not strokes — 
 render stroked QR codes as stripes.
 
 Scan every QR with a phone before printing.
+
+## Contact card
+
+`contact-card.html` is the A5 "how to reach us" sheet, and `png/contact-card.png` is the same at
+300 dpi (1748 × 2480) for sharing on a phone. It has its own, paler look — blush paper, a
+rose-gold frame, rose icons — matched to a reference image; the colours are set at the top of
+that file, so `card.css` and the other two cards are untouched. Its logo is the website's own
+`public/logo_final.png`, not `img/logo-print.png`.
+
+Only one phone number is printed, **+91 91731 83440**. The payment line ("Orders of ₹1,000 or
+more: 50% advance by UPI") and the 30-minute cancellation line repeat the website's rules — if
+those change on the site, change them here and re-make the PDF and PNG.
+
+Opening `contact-card.html?png` shows the card alone, with no grey surround, for a screenshot.

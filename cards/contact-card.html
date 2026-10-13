@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contact Card — Cake &amp; Crumb</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Lato:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="card.css" />
+  <script>
+    // ?png drops the grey surround and the preview zoom, for the screenshot export.
+    if (location.search.includes('png')) document.documentElement.classList.add('png')
+  </script>
+  <style>
+    /* A5 portrait (148 × 210 mm), one side, drawn in real millimetres.
+       Every detail below is hand-copied from src/data/shopConfig.js — the phone,
+       the address, the bulk-order rule — and goes stale if those change.
+
+       This card has its OWN look, matched to a reference the owner supplied:
+       pale blush paper, a light Cormorant wordmark, rose icons and rose-gold
+       frame. It re-tints card.css's variables here rather than editing that
+       file, which the visiting and thank-you cards share. */
+    :root {
+      --paper: #fbe9e5;
+      --paper-hi: #fef4f1;
+      --gold: #d6a784;
+      --maroon: #4b2a21;
+      --maroon-soft: #6f4b40;
+      --line: #e6b9b8;
+      --petal: #ee8c9a;
+      --disc: #fbdada;
+      --pill: rgba(249, 214, 211, 0.42);
+      --pill-edge: #efb7b7;
+      --rose: #dc6379;
+      --heading: #b98a5c;
+    }
+    @page { size: 148mm 210mm; margin: 0; }
+    .side { width: 148mm; height: 210mm; }
+    .sheet { --preview-zoom: 1.35; }
+    .png, .png body { background: none; }
+    .png .sheet { padding: 0; zoom: 1; display: block; }
+    .png .side { box-shadow: none; border-radius: 0; }
+    .png .help { display: none; }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 8.5mm 12.5mm 7.5mm;
+      font-weight: 500;
+    }
+    /* Double rose-gold frame with a heart breaking the top line. */
+    .frame, .frame::after {
+      position: absolute;
+      border: 0.32mm solid var(--gold);
+      border-radius: 7mm;
+      pointer-events: none;
+    }
+    .frame { inset: 4mm; z-index: -1; }
+    .frame::after { content: ''; inset: 1.2mm; border-width: 0.18mm; border-color: var(--pill-edge); border-radius: 6mm; }
+    .frame-heart {
+      position: absolute;
+      top: 2.2mm;
+      left: 50%;
+      width: 9mm;
+      height: 3.8mm;
+      transform: translateX(-50%);
+      background: #fcedea;
+      display: grid;
+      place-items: center;
+    }
+    .frame-heart svg { width: 3.4mm; height: 3.1mm; fill: var(--petal); }
+
+    /* ── Corner ribbons + a script quote under each: the mirrored pair from
+       pamphlet/poster-a4.html, redrawn at this card's size. They run to the page
+       edge, over the frame's top corners. ── */
+    .ribbon {
+      position: absolute;
+      top: 0;
+      width: 34mm;
+      height: 41mm;
+      padding-top: 7mm;
+      background: linear-gradient(160deg, #5b3e36 0%, #442c26 100%);
+      color: #fff;
+      text-align: left;
+    }
+    .ribbon--l { left: 0; clip-path: polygon(0 0, 100% 0, 100% 70%, 0 100%); padding-left: 6.5mm; }
+    .ribbon--r { right: 0; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 70%); padding-right: 6.5mm; text-align: right; }
+    .ribbon::after { content: ''; position: absolute; inset: 0; background: #c9a250; }
+    .ribbon--l::after { clip-path: polygon(100% 70%, 0 100%, 0 98%, 100% 68%); }
+    .ribbon--r::after { clip-path: polygon(0 70%, 100% 100%, 100% 98%, 0 68%); }
+    .ribbon__script { font-family: var(--font-script); font-size: 4.7mm; line-height: 1; color: #f7c9d2; white-space: nowrap; }
+    .ribbon__big { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 4.9mm; line-height: 1.06; margin-top: 1.2mm; }
+    .ribbon__big em { font-style: italic; font-weight: 500; color: #f7c9d2; }
+
+    .quote { position: absolute; top: 40.5mm; width: 24mm; text-align: center; }
+    .quote--l { left: 6mm; transform: rotate(-6deg); }
+    .quote--r { right: 6mm; transform: rotate(6deg); }
+    .quote__mark { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 8mm; line-height: 0.6; height: 3mm; color: #d7a7ae; }
+    .quote__text { font-family: var(--font-script); font-size: 4mm; line-height: 1.02; color: var(--rose); }
+    .quote svg { width: 1.8mm; height: 1.7mm; fill: var(--petal); margin-top: 0.5mm; }
+
+    /* ── Masthead ── */
+    .card .mark { width: 38mm; }
+    /* The site header's lockup (src/components/Logo.jsx): bold Playfair, a larger
+       rose italic ampersand, the Allura tagline right under it. */
+    .card .name {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-weight: 700;
+      font-size: 10mm;
+      letter-spacing: 0.05em;
+      line-height: 1.05;
+      margin-top: 1mm;
+    }
+    .card .name i { font-style: italic; font-weight: 500; font-size: 1.3em; margin: 0 0.04em; vertical-align: -0.06em; color: var(--rose); }
+    .card .tagline {
+      font-family: var(--font-script);
+      font-size: 6.5mm;
+      line-height: 1.1;
+      color: var(--rose);
+      margin-top: 0.4mm;
+    }
+    .card .sprigs svg.s { width: 10mm; height: 3mm; }
+    .card .sprigs svg.h { width: 2.6mm; height: 2.4mm; }
+
+    /* ── Details panel ── */
+    .panel {
+      position: relative;
+      width: 100%;
+      margin-top: 4.2mm;
+      padding: 1.6mm 4.5mm 1mm;
+      border-radius: 3.6mm;
+      background: rgba(255, 251, 249, 0.5);
+      border: 0.25mm solid var(--pill-edge);
+      text-align: left;
+    }
+    /* The heart sitting on the panel's top edge, under the tagline. */
+    .panel__heart {
+      position: absolute;
+      top: -1.6mm;
+      left: 50%;
+      width: 8mm;
+      height: 3mm;
+      transform: translateX(-50%);
+      background: var(--paper-hi);
+      display: grid;
+      place-items: center;
+    }
+    .panel__heart svg { width: 2.8mm; height: 2.6mm; fill: var(--petal); }
+    .row { display: flex; align-items: center; padding: 1.2mm 0; }
+    .row + .row { border-top: 0.22mm dotted var(--pill-edge); }
+    .row--two > .item { flex: 1; }
+    .row--two > .item + .item { border-left: 0.22mm solid var(--line); padding-left: 4mm; }
+    .row--centre { justify-content: center; }
+    .item { display: flex; align-items: center; gap: 2.8mm; min-width: 0; }
+    .item .disc { width: 7.4mm; height: 7.4mm; color: var(--rose); }
+    .disc svg { stroke-width: 2.2; }
+    .val { font-size: 4.4mm; line-height: 1.16; color: var(--maroon); }
+    .val small { display: block; font-size: 3.5mm; color: var(--maroon-soft); }
+    .val--addr { font-size: 4mm; line-height: 1.2; }
+    /* Delivery / pickup: a bare rose drawing, no disc, as on the reference. */
+    .big { flex: none; width: 9.5mm; height: 9.5mm; fill: none; stroke: var(--rose); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+    .preorder {
+      margin: 1.2mm 0 0.6mm;
+      padding: 1.7mm 4mm;
+      border-radius: 2.4mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2.6mm;
+      font-size: 4.2mm;
+      line-height: 1.15;
+    }
+    .preorder svg, .warn svg.ico { flex: none; width: 5.4mm; height: 5.4mm; fill: none; stroke: var(--rose); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ── Cancellation box, a sprig either side ── */
+    .warnrow { display: flex; align-items: center; gap: 3mm; margin-top: 2.2mm; }
+    .warnrow > svg { width: 9mm; height: 2.7mm; color: var(--petal); fill: currentColor; }
+    .warnrow > svg.flip { transform: scaleX(-1); }
+    .warn {
+      padding: 1.7mm 6mm;
+      border-radius: 2.4mm;
+      background: rgba(247, 199, 200, 0.5);
+      border: 0.25mm solid var(--pill-edge);
+      display: flex;
+      align-items: center;
+      gap: 3.4mm;
+      text-align: left;
+      font-size: 4.1mm;
+      line-height: 1.18;
+    }
+
+    /* ── QR codes ── */
+    .codes { display: flex; justify-content: center; gap: 4mm; margin-top: 3mm; }
+    .codes .qr__box { width: 23mm; height: 23mm; padding: 1.3mm; border: 0.3mm solid var(--pill-edge); border-radius: 2.4mm; }
+    .codes .qr__badge { color: var(--maroon); }
+    .codes .qr__label { font-size: 2.3mm; margin-top: 1.2mm; letter-spacing: 0.08em; color: var(--rose); }
+    .codes .qr__sub { font-size: 3.4mm; color: var(--maroon); line-height: 1.1; margin-top: 0.3mm; }
+
+    .thanks {
+      font-family: var(--font-script);
+      font-size: 6mm;
+      line-height: 1;
+      color: var(--rose);
+      margin-top: auto;
+      padding-top: 2mm;
+    }
+    .card .sprigs--end { margin-top: 0.6mm; gap: 5mm; }
+
+    /* Corner bouquets: one cut-out rose (img/rose-spray.png) used twice a side. */
+    .branch { z-index: -1; }
+    .branch--bl  { width: 22mm; bottom: 3.6mm; left: 2.6mm; transform: scaleX(-1); }
+    .branch--bl2 { width: 14mm; bottom: 18.5mm; left: 3.4mm; transform: rotate(62deg); }
+    .branch--br  { width: 22mm; bottom: 3.6mm; right: 2.6mm; }
+    .branch--br2 { width: 14mm; bottom: 18.5mm; right: 3.4mm; transform: scaleX(-1) rotate(62deg); }
+  </style>
+</head>
+<body>
+  <!-- Shared drawings -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="heart" viewBox="0 0 24 22"><path d="M12 21S3 15.4 1 9.8C-.4 5.6 2.4 1 6.6 1 9.2 1 11 2.7 12 4.3 13 2.7 14.8 1 17.4 1c4.2 0 7 4.6 5.6 8.8C21 15.4 12 21 12 21z"/></symbol>
+    <symbol id="sprig" viewBox="0 0 40 12">
+      <path d="M39.5 6C28 6.6 16 6.6 1.5 5.6" fill="none" stroke="currentColor" stroke-width=".7" stroke-linecap="round"/>
+      <g>
+        <path transform="translate(34 6.2) rotate(-148)" d="M0 0C2-2 5.6-2 7.6 0 5.6 2 2 2 0 0Z"/>
+        <path transform="translate(30 6.4) rotate(146)" d="M0 0C2-2 5.6-2 7.6 0 5.6 2 2 2 0 0Z"/>
+        <path transform="translate(24 6.4) rotate(-150)" d="M0 0C2-2 5.6-2 7.6 0 5.6 2 2 2 0 0Z"/>
+        <path transform="translate(20 6.3) rotate(148)" d="M0 0C2-2 5.6-2 7.6 0 5.6 2 2 2 0 0Z"/>
+        <path transform="translate(14 6.1) rotate(-152)" d="M0 0C1.8-1.8 5-1.8 6.8 0 5 1.8 1.8 1.8 0 0Z"/>
+        <path transform="translate(10 6) rotate(150)" d="M0 0C1.6-1.6 4.4-1.6 6 0 4.4 1.6 1.6 1.6 0 0Z"/>
+        <path transform="translate(5 5.8) rotate(180)" d="M0 0C1.4-1.5 3.8-1.5 5 0 3.8 1.5 1.4 1.5 0 0Z"/>
+      </g>
+    </symbol>
+    <symbol id="i-wa" viewBox="0 0 24 24"><path d="M3.5 20.5l1.3-4.2A8.6 8.6 0 1 1 8 19.4z"/><path d="M9 8.6c0 3 2.6 6 6 6.4l1.2-1.4-1.9-1-1 .8c-1-.4-1.8-1.2-2.2-2.2l.8-1-1-1.9z"/></symbol>
+    <symbol id="i-insta" viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="19" height="19" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r=".6"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6.5-8 12-8 12s-8-5.5-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4.5" width="20" height="15" rx="2"/><path d="m2.5 6 9.5 7 9.5-7"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.6 1.6M9.5 2.5h5"/></symbol>
+    <symbol id="i-pay" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2.2"/><path d="M2 10h20M6 15h4"/></symbol>
+    <symbol id="i-van" viewBox="0 0 24 24"><path d="M1.5 6.5h12v10h-12zM13.5 10h4.2l3.8 3.4v3.1h-8z"/><circle cx="6" cy="17.5" r="1.9"/><circle cx="17.5" cy="17.5" r="1.9"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11.2 12 3.5l9 7.7"/><path d="M5.5 9.6V20.5h13V9.6"/><path d="M10 20.5v-6h4v6"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.2 22 20.5H2z"/><path d="M12 9.8v5M12 17.6v.2"/></symbol>
+  </svg>
+
+  <main class="sheet">
+    <section class="side card" aria-label="Contact card">
+      <div class="frame" aria-hidden="true"></div>
+      <div class="frame-heart" aria-hidden="true"><svg viewBox="0 0 24 22"><use href="#heart"/></svg></div>
+      <div class="ribbon ribbon--l"><div class="ribbon__script">Baked with love</div><div class="ribbon__big">Fresh,<br /><em>every</em><br />order</div></div>
+      <div class="ribbon ribbon--r"><div class="ribbon__script">Made for you</div><div class="ribbon__big">Your cake,<br /><em>your</em><br />way</div></div>
+      <div class="quote quote--l">
+        <div class="quote__mark">&ldquo;</div>
+        <div class="quote__text">We can&rsquo;t wait<br />to sweeten<br />your day!</div>
+        <svg viewBox="0 0 24 22" aria-hidden="true"><use href="#heart"/></svg>
+      </div>
+      <div class="quote quote--r">
+        <div class="quote__mark">&ldquo;</div>
+        <div class="quote__text">Life is short,<br />eat the<br />cake!</div>
+        <svg viewBox="0 0 24 22" aria-hidden="true"><use href="#heart"/></svg>
+      </div>
+      <img class="branch branch--bl2" src="img/rose-spray.png" alt="" />
+      <img class="branch branch--bl" src="img/rose-spray.png" alt="" />
+      <img class="branch branch--br2" src="img/rose-spray.png" alt="" />
+      <img class="branch branch--br" src="img/rose-spray.png" alt="" />
+
+      <!-- The site's own logo file: softer than img/logo-print.png, which suits this paler card. -->
+      <img class="mark" src="../public/logo_final.png" alt="" />
+      <div class="name">CAKE<i>&amp;</i>CRUMB</div>
+      <div class="tagline">The gourmet chocolate &amp; berry boutique</div>
+
+      <div class="panel">
+        <span class="panel__heart" aria-hidden="true"><svg viewBox="0 0 24 22"><use href="#heart"/></svg></span>
+        <div class="row row--two">
+          <div class="item">
+            <span class="disc"><svg viewBox="0 0 24 24"><use href="#i-wa"/></svg></span>
+            <span class="val">+91 91731 83440</span>
+          </div>
+          <div class="item">
+            <span class="disc"><svg viewBox="0 0 24 24"><use href="#i-insta"/></svg></span>
+            <span class="val">@cake_and_crumb_1</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="item">
+            <span class="disc"><svg viewBox="0 0 24 24"><use href="#i-mail"/></svg></span>
+            <span class="val">cakeandcrumb.in@gmail.com</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="item">
+            <span class="disc"><svg viewBox="0 0 24 24"><use href="#i-pin"/></svg></span>
+            <span class="val val--addr">386, Zahir Manzil, Venipura, Mominvad, Near Police Station,<br />Vaso, Kheda, Gujarat-387380, India</span>
+          </div>
+        </div>
+
+        <div class="preorder pill pill--dashed">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-clock"/></svg>
+          <span>Pre-order required · Please order 1 day in advance</span>
+        </div>
+
+        <div class="row row--centre" style="border-top: 0">
+          <div class="item">
+            <span class="disc"><svg viewBox="0 0 24 24"><use href="#i-pay"/></svg></span>
+            <span class="val">UPI (any app) · Cash<small>Orders of ₹1,000 or more: 50% advance by UPI</small></span>
+          </div>
+        </div>
+        <div class="row row--two">
+          <div class="item">
+            <svg class="big" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-van"/></svg>
+            <span class="val">Home delivery available<small>(charges by distance)</small></span>
+          </div>
+          <div class="item">
+            <svg class="big" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-home"/></svg>
+            <span class="val">Self-pickup<small>free, from Vaso</small></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="warnrow">
+        <svg viewBox="0 0 40 12" aria-hidden="true"><use href="#sprig"/></svg>
+        <div class="warn">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-alert"/></svg>
+          <span>Cancellation within 30 min of ordering only<br />· Bulk &amp; custom orders welcome</span>
+        </div>
+        <svg class="flip" viewBox="0 0 40 12" aria-hidden="true"><use href="#sprig"/></svg>
+      </div>
+
+      <div class="codes">
+        <div class="qr">
+          <div class="qr__box">
+            <img src="qr/whatsapp.svg" alt="QR code: WhatsApp +91 91731 83440" />
+            <span class="qr__badge"><svg viewBox="0 0 24 24"><use href="#i-wa"/></svg></span>
+          </div>
+          <div class="qr__label">Order on WhatsApp</div>
+          <div class="qr__sub">+91 91731 83440</div>
+        </div>
+        <div class="qr">
+          <div class="qr__box">
+            <img src="qr/instagram.svg" alt="QR code: Cake & Crumb on Instagram" />
+            <span class="qr__badge"><svg viewBox="0 0 24 24"><use href="#i-insta"/></svg></span>
+          </div>
+          <div class="qr__label">Follow us on Instagram</div>
+          <div class="qr__sub">@cake_and_crumb_1</div>
+        </div>
+        <div class="qr">
+          <div class="qr__box">
+            <img src="qr/reviews.svg" alt="QR code: Cake & Crumb on Google Maps" />
+            <span class="qr__badge"><svg viewBox="0 0 24 24"><use href="#i-star"/></svg></span>
+          </div>
+          <div class="qr__label">Find us on Google</div>
+          <div class="qr__sub">Map &amp; reviews</div>
+        </div>
+      </div>
+
+      <div class="thanks">Thank you for supporting our small business!</div>
+      <div class="sprigs sprigs--end" aria-hidden="true">
+        <svg class="s" viewBox="0 0 40 12"><use href="#sprig"/></svg>
+        <svg class="h" viewBox="0 0 24 22"><use href="#heart"/></svg>
+        <svg class="s flip" viewBox="0 0 40 12"><use href="#sprig"/></svg>
+      </div>
+    </section>
+  </main>
+
+  <div class="help">
+    <p><b>Size:</b> A5, 148 × 210 mm, one side.
+    <b>To print or save a PDF:</b> Ctrl+P → Destination “Save as PDF” → More settings → tick
+    <b>Background graphics</b>, Margins <b>None</b>, Scale <b>100</b>.
+    Scan all three QR codes with a phone before printing.</p>
+  </div>
+</body>
+</html>

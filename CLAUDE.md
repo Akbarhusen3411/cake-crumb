@@ -400,8 +400,8 @@ imported by the app and not in the Vite build; `pamphlet/README.md` lists every 
 
 ### Print cards — `cards/`
 
-A 3.5 × 2 in visiting card and an A7 thank-you card: editable HTML, print-ready PDFs (one page per
-side, exact size) and 600 dpi PNGs. Like `pamphlet/`, it is not imported by the app and not in the Vite
+A 3.5 × 2 in visiting card, an A7 thank-you card and an A5 contact card: editable HTML, print-ready
+PDFs (one page per side, exact size) and 600 dpi PNGs (the contact card's is 300 dpi). Like `pamphlet/`, it is not imported by the app and not in the Vite
 build. `cards/README.md` lists every file.
 
 - **Every contact detail is hand-copied** — phone, email, Instagram handle and the full address.
@@ -433,6 +433,27 @@ build. `cards/README.md` lists every file.
   `GOOGLE_REVIEW_LINK`, so regenerating it from that would open the review box directly.
   `qr/website.svg` exists but is **off the visiting card by the owner's choice** until the shop's
   product photos match their names.
+- **`contact-card.html` is a third card with a THIRD look** — A5, one side, drawn in real millimetres
+  (no `zoom`). It began as an image the owner supplied with wrong details, and its theme is matched
+  to that image: blush paper, rose-gold double frame, rose icons. It re-tints `card.css`'s variables
+  in its own `<style>` rather than editing the shared file, and loads `../public/logo_final.png`
+  (the softer original), not `img/logo-print.png`.
+  - **What was wrong on the supplied image, so it isn't put back:** it printed `90816 68490` as a
+    second contact number (that is the UPI number — see *Contact, registrations & brand*), gave the
+    address as "Kheda, Nadiad", listed "GPay · PhonePe · Paytm" and carried a QR that encoded nothing.
+  - **Hand-copied rules as well as contact details**: the ₹1,000 / 50% advance line mirrors
+    `BULK_ORDER_MIN` / `DEPOSIT_PCT`, and the 30-minute cancellation line mirrors `/faq`. Delivery
+    says "charges by distance" — no km, no figure, as everywhere else.
+  - **The wordmark is the site's lockup** (bold Playfair, rose italic `&`, Allura tagline). A thin
+    Cormorant wordmark with a caps tagline, copied from the reference, was built and the owner
+    replaced it; a "Contact Us" heading was also built and removed.
+  - **The two corner ribbons are `poster-a4.html`'s mirrored pair**, redrawn smaller, each with a
+    script quote under it. They run to the page edge over the frame's top corners. The right-hand
+    quote ("Life is short, eat the cake!") is a placeholder line, not the owner's wording.
+  - **The bottom is tight.** The wordmark, the QR boxes and the logo were each resized to fit the
+    page; anything added above the QR row pushes the thank-you line into the corner roses.
+  - `?png` drops the grey surround for the screenshot (window `560,794`, scale factor 3.125, cropped
+    to 1748 × 2480). `qr/whatsapp.svg` is no longer a spare — this card uses it.
 - **Owner decisions:** no founder names and no FSSAI/Udyam numbers on either card — both were
   added, then removed on request.
 
