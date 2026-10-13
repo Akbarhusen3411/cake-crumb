@@ -121,3 +121,20 @@ Screenshots hold one page: `?png` is the front, `?png&side=back` the back.
 `img/b00.jpg` – `b15.jpg` are untouched copies of `public/products/<name>.jpeg`; the source name is
 in a comment beside each tile. To swap a photo, replace that `bNN.jpg` and re-export. To print bare
 photos, delete the `<b>…</b>` pill inside each tile. Bands are placed absolutely from the page top.
+
+# A5 advertisement — `ad-a5.*`
+
+The two-sided A4 ad on A5 (148 × 210 mm), for handbills. A5 has the same proportions as A4, so
+`ad-a5.html` is a copy of `ad-a4.html` with a smaller `zoom` (148 / 420) and an **"A5 readability"**
+block at the very end of its stylesheet: larger type, QR codes at about 19 mm, and no occasions row
+on the front (the back's closing panel shows the same four). Sizes there are A2 values (printed size
+= 0.352 of the figure). **An edit to `ad-a4.html` has to be copied here by hand.**
+
+| File | Use |
+|---|---|
+| `ad-a5.pdf` / `ad-a5-bleed.pdf` | Two pages, front then back — exact A5 / 154 × 216 mm with 3 mm bleed |
+| `ad-a5-share.pdf` | Two-page image PDF for WhatsApp / phones |
+| `png/ad-a5*.png`, `png/ad-a5-back*.png` | 1748 × 2480 (300 dpi), `-hd` 3496 × 4960 (600 dpi), `-small` 1400 px wide |
+
+Screenshots use `--window-size=560,794` (A5 is a fraction of a pixel smaller) and are cropped to the
+exact pixel size; `?png` is the front, `?png&side=back` the back.

@@ -1,0 +1,1250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cake &amp; Crumb — A5 advertisement</title>
+<!--
+  A5 copy of ad-a4.html (148 × 210 mm), two pages: front, then the photo back.
+  A5 has the same proportions as A4 and A2, so this is the same layout in A2
+  millimetres with a smaller zoom on .page (148 / 420). The "A5 readability"
+  block at the very end of the stylesheet enlarges the smallest type and the
+  QR codes and drops the occasions row to pay for it; sizes there are still
+  A2 values (printed size = 0.352 of the figure). An edit to ad-a4.html has
+  to be copied here by hand.
+
+  ad-a5.html               → 148 × 210 mm, two pages
+  ad-a5.html?bleed         → 154 × 216 mm (3 mm bleed = 8.51 A2-mm)
+  ad-a5.html?png           → front alone, for the PNG screenshot
+  ad-a5.html?png&side=back → back alone
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Lato:wght@400;700;900&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700&display=block" rel="stylesheet">
+<style>
+:root {
+  --op-top: 471mm;
+  --op-h: 71mm;
+  --rose: #e0617a;
+  --rose-deep: #cf3e63;
+  --rose-ink: #ad2f4e;
+  --rose-soft: #d7a7ae;
+  --blush: #f7e3df;
+  --blush-soft: #f3d7d9;
+  --cream: #fff6f2;
+  --cocoa: #5b3e36;
+  --cocoa-deep: #442c26;
+  --cocoa-soft: #7a584d;
+  --gold: #c9a250;
+  --pinktext: #f7c9d2;
+
+  --b: 0mm;
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans: 'Lato', system-ui, sans-serif;
+  --script: 'Allura', cursive;
+}
+html.bleed { --b: 8.5135mm; }
+@page { size: 148mm 210mm; margin: 0; }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: #8d7d79;
+  font-family: var(--sans);
+  color: var(--cocoa);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.page {
+  position: relative;
+  width: calc(420mm + 2 * var(--b));
+  height: calc(594mm + 2 * var(--b));
+  margin: 10mm auto;
+  overflow: hidden;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.35);
+  zoom: 0.35238;
+  background:
+    radial-gradient(200mm 150mm at 50% 14%, #ffffff 0%, transparent 70%),
+    radial-gradient(260mm 200mm at 100% 45%, rgba(243, 215, 217, 0.85), transparent 70%),
+    radial-gradient(220mm 200mm at 0% 60%, rgba(247, 227, 223, 0.9), transparent 70%),
+    linear-gradient(180deg, #fff9f6 0%, var(--cream) 100%);
+}
+@media print {
+  body { background: none; }
+  .page { margin: 0; box-shadow: none; break-after: page; }
+  .page:last-of-type { break-after: auto; }
+}
+/* Everything below is placed in the trim box, in millimetres from its top. */
+.sheet { position: absolute; inset: var(--b); }
+.abs { position: absolute; }
+
+/* Scattered sparkles and hearts — decoration only. */
+.deco { position: absolute; color: var(--rose); opacity: 0.55; }
+.deco svg { width: 100%; height: 100%; display: block; }
+
+/* ─── Corner ribbon ─────────────────────────────────────────────────────── */
+.ribbon {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(96mm + var(--b));
+  height: calc(112mm + var(--b));
+  background: linear-gradient(160deg, var(--cocoa) 0%, var(--cocoa-deep) 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 72%, 0 100%);
+  color: #fff;
+  padding: calc(14mm + var(--b)) 0 0 calc(12mm + var(--b));
+}
+.ribbon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(100% 72%, 0 100%, 0 98.6%, 100% 70.6%);
+  background: var(--gold);
+}
+.ribbon__script { font-family: var(--script); font-size: 38pt; line-height: 1; color: var(--pinktext); }
+.ribbon__big {
+  font-family: var(--serif);
+  font-weight: 800;
+  font-size: 38pt;
+  line-height: 1.05;
+  margin-top: 3mm;
+}
+.ribbon__big em { font-style: italic; color: var(--pinktext); }
+
+/* ─── Brand emblem ──────────────────────────────────────────────────────── */
+.emblem {
+  position: absolute;
+  left: 50%;
+  top: 10mm;
+  width: 178mm;
+  height: 178mm;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #ffffff 0%, #ffffff 58%, var(--cream) 100%);
+  box-shadow: 0 4mm 14mm -6mm rgba(91, 62, 54, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.emblem::before, .emblem::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.emblem::before { inset: 4mm; border: 0.8mm solid var(--rose-soft); }
+.emblem::after { inset: -5mm; border: 2.6mm solid transparent; border-top-color: var(--rose-deep); border-left-color: var(--rose-deep); transform: rotate(-20deg); }
+.emblem__logo { height: 50mm; width: auto; margin-top: -4mm; }
+.emblem__word {
+  font-family: var(--serif);
+  font-weight: 800;
+  font-size: 52pt;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  color: var(--cocoa);
+  white-space: nowrap;
+  margin-top: 1mm;
+}
+.emblem__word .amp { font-style: italic; font-size: 1.3em; color: var(--rose-deep); margin: 0 0.03em; }
+.emblem__tagline {
+  font-family: var(--script);
+  font-size: 25pt;
+  line-height: 1;
+  color: var(--rose-deep);
+  margin-top: 2mm;
+  white-space: nowrap;
+}
+.emblem__line {
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+  margin-top: 3mm;
+  font-family: var(--sans);
+  font-weight: 900;
+  font-size: 15pt;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--rose-ink);
+}
+.emblem__line::before, .emblem__line::after { content: ''; width: 16mm; height: 0.6mm; background: var(--rose-soft); }
+.emblem__sub {
+  margin-top: 2.6mm;
+  font-size: 10.5pt;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cocoa-soft);
+}
+
+/* ─── Quote (left, balancing the tag on the right) ─────────────────────── */
+.quote {
+  position: absolute;
+  left: 8mm;
+  top: 120mm;
+  width: 112mm;
+  text-align: center;
+  transform: rotate(-6deg);
+}
+.quote__mark {
+  font-family: var(--serif);
+  font-size: 90pt;
+  line-height: 0.6;
+  height: 16mm;
+  color: var(--rose-soft);
+}
+.quote__text {
+  font-family: var(--script);
+  font-size: 47pt;
+  line-height: 1.05;
+  color: var(--rose-deep);
+}
+.quote__heart { width: 7mm; height: 7mm; color: var(--rose); margin-top: 2mm; }
+
+/* ─── Headline ──────────────────────────────────────────────────────────── */
+.headline {
+  position: absolute;
+  left: 18mm;
+  right: 18mm;
+  top: 196mm;
+  text-align: center;
+}
+.headline h1 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 800;
+  font-size: 46pt;
+  line-height: 1.05;
+  color: var(--cocoa);
+}
+.headline h1 .flour {
+  display: inline-flex;
+  align-items: center;
+  gap: 5mm;
+  font-style: italic;
+  color: var(--rose-deep);
+}
+.headline h1 .flour svg { width: 13mm; height: 13mm; color: var(--rose); }
+.headline h1 .flour svg:last-child { transform: scaleX(-1); }
+
+/* ─── Product cards (left) + hero (right) ───────────────────────────────── */
+.cards {
+  position: absolute;
+  left: 18mm;
+  top: 252mm;
+  width: 210mm;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 80mm 80mm;
+  gap: 6mm;
+}
+.card {
+  background: #fff;
+  border-radius: 6mm;
+  border: 0.6mm solid var(--blush-soft);
+  box-shadow: 0 3mm 8mm -5mm rgba(91, 62, 54, 0.35);
+  padding: 5mm 4mm 0;
+  text-align: center;
+}
+.card__img {
+  width: 34mm;
+  height: 34mm;
+  margin: 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 0 0 1.6mm #fff, 0 0 0 2.4mm var(--rose-soft);
+}
+.card__img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.card__name {
+  margin-top: 3.4mm;
+  font-family: var(--sans);
+  font-weight: 900;
+  font-size: 13.5pt;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cocoa);
+}
+.card__rule { width: 34mm; margin: 2mm auto 2.4mm; border-top: 0.6mm dotted var(--rose-soft); }
+.card__tag {
+  display: inline-block;
+  background: var(--rose-deep);
+  color: #fff;
+  font-weight: 900;
+  font-size: 10.5pt;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 1.4mm 4.5mm;
+  border-radius: 2mm;
+}
+.card__note { margin-top: 2.6mm; font-size: 12.5pt; line-height: 1.45; color: var(--cocoa-soft); }
+
+.hero {
+  position: absolute;
+  right: 18mm;
+  top: 252mm;
+  width: 160mm;
+  height: 166mm;
+}
+.hero__frame {
+  position: absolute;
+  inset: 0;
+  border-radius: 80mm 80mm 8mm 8mm;
+  overflow: hidden;
+  box-shadow: 0 0 0 2.2mm #fff, 0 0 0 3mm var(--rose-soft), 0 6mm 16mm -6mm rgba(91, 62, 54, 0.5);
+}
+.hero__frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hero__sticker {
+  position: absolute;
+  left: -10mm;
+  bottom: 14mm;
+  background: #fff;
+  border-radius: 5mm;
+  padding: 3mm 6mm;
+  box-shadow: 0 3mm 8mm -4mm rgba(91, 62, 54, 0.45);
+  text-align: left;
+}
+.hero__sticker b { display: block; font-family: var(--serif); font-size: 17pt; color: var(--cocoa); line-height: 1.1; }
+.hero__sticker span { font-family: var(--script); font-size: 22pt; color: var(--rose-deep); line-height: 1; }
+.hero__mini {
+  position: absolute;
+  width: 46mm;
+  height: 46mm;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 1.8mm #fff, 0 3mm 8mm -3mm rgba(91, 62, 54, 0.5);
+}
+.hero__mini img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* ─── Feature band ──────────────────────────────────────────────────────── */
+.features {
+  position: absolute;
+  left: 14mm;
+  right: 14mm;
+  top: 428mm;
+  height: 40mm;
+  border-radius: 20mm;
+  background: linear-gradient(90deg, var(--cocoa-deep) 0%, var(--cocoa) 100%);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: center;
+  padding: 0 8mm;
+  color: #fff;
+}
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 3.5mm;
+  padding: 0 4mm;
+  border-left: 0.4mm dashed rgba(247, 201, 210, 0.45);
+}
+.feature:first-child { border-left: 0; }
+.feature i {
+  flex-shrink: 0;
+  width: 16mm;
+  height: 16mm;
+  border-radius: 50%;
+  background: var(--rose-deep);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.feature i svg { width: 8.5mm; height: 8.5mm; }
+.feature b { display: block; font-size: 14pt; font-weight: 900; line-height: 1.2; }
+.feature span { display: block; font-size: 11pt; color: var(--pinktext); line-height: 1.3; margin-top: 0.4mm; }
+
+/* ─── Order panel ───────────────────────────────────────────────────────
+   One card, three zones: a rose call-to-action (the number, how to reach
+   it, the lead time), the address and socials, then the QR codes. Replaced
+   five separate boxes that read as a form rather than an invitation. */
+.op {
+  position: absolute;
+  left: 14mm;
+  right: 14mm;
+  top: var(--op-top);
+  height: var(--op-h);
+  display: grid;
+  grid-template-columns: 124mm 1fr auto;
+  background: #fff;
+  border-radius: 8mm;
+  border: 0.6mm solid var(--blush-soft);
+  box-shadow: 0 5mm 14mm -7mm rgba(91, 62, 54, 0.45);
+  overflow: hidden;
+}
+.op-cta {
+  position: relative;
+  background:
+    radial-gradient(80mm 60mm at 100% 0%, rgba(255, 255, 255, 0.18), transparent 70%),
+    linear-gradient(160deg, var(--rose-deep) 0%, #a92f50 100%);
+  color: #fff;
+  padding: 5mm 7mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.op-kicker { font-family: var(--script); font-size: 32pt; line-height: 1; color: var(--pinktext); }
+.op-phone {
+  margin-top: 1.5mm;
+  font-family: var(--sans);
+  font-weight: 900;
+  font-size: 29pt;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.op-pills { display: flex; gap: 2.5mm; margin-top: 3mm; }
+.op-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.8mm;
+  padding: 1.6mm 4mm;
+  border-radius: 10mm;
+  background: #fff;
+  color: var(--rose-ink);
+  font-weight: 900;
+  font-size: 13pt;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.op-pill svg { width: 5mm; height: 5mm; }
+.op-pill--wa { background: #1f8f4e; color: #fff; }
+.op-note { margin-top: 3mm; font-size: 13.5pt; line-height: 1.3; color: #fff; opacity: 0.95; }
+.op-note b { color: var(--pinktext); }
+
+.op-info {
+  padding: 5mm 6mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3.4mm;
+}
+.op-row { display: flex; align-items: flex-start; gap: 3mm; }
+.op-row i {
+  flex-shrink: 0;
+  width: 10mm;
+  height: 10mm;
+  border-radius: 50%;
+  background: var(--blush);
+  color: var(--rose-deep);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.op-row i svg { width: 5.5mm; height: 5.5mm; }
+.op-row small { display: block; font-size: 11.5pt; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; color: var(--rose-ink); }
+.op-row span { display: block; font-size: 14pt; line-height: 1.25; font-weight: 700; color: var(--cocoa); }
+
+.op-qrs {
+  padding: 4mm 5mm 4mm 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.op-qrs__title {
+  text-align: center;
+  font-size: 11.5pt;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cocoa-soft);
+  margin-bottom: 2mm;
+}
+.op-qrs__row { display: flex; gap: 3mm; }
+.op-qr {
+  width: 46mm;
+  border: 0.5mm solid var(--blush-soft);
+  border-radius: 4mm;
+  padding: 2.6mm 2.6mm 2mm;
+  text-align: center;
+  background: var(--cream);
+}
+.op-qr img { display: block; width: 40mm; height: 40mm; image-rendering: pixelated; background: #fff; border-radius: 1.5mm; }
+.op-qr b { display: block; margin-top: 1.6mm; font-size: 12.5pt; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cocoa); }
+
+/* ─── Occasions row ─────────────────────────────────────────────────────── */
+.occasions {
+  position: absolute;
+  left: 14mm;
+  right: 14mm;
+  top: 547mm;
+  height: 24mm;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: center;
+}
+.occ {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3.5mm;
+  border-left: 0.4mm dashed var(--rose-soft);
+}
+.occ:first-child { border-left: 0; }
+.occ svg { width: 13mm; height: 13mm; color: var(--rose-deep); flex-shrink: 0; }
+.occ b { display: block; font-size: 14pt; font-weight: 900; color: var(--cocoa); line-height: 1.2; }
+.occ span { display: block; font-size: 11pt; color: var(--cocoa-soft); }
+
+/* ─── Closing strip (full bleed) ────────────────────────────────────────── */
+.strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(19mm + var(--b));
+  padding-bottom: var(--b);
+  background: linear-gradient(90deg, var(--rose-deep) 0%, #b7375a 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6mm;
+  font-size: 14pt;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.strip b { font-family: var(--serif); font-weight: 800; letter-spacing: 0.08em; }
+.strip .star { color: var(--pinktext); font-size: 13pt; }
+.strip em { font-family: var(--script); font-style: normal; font-size: 24pt; font-weight: 400; color: var(--pinktext); letter-spacing: 0; }
+
+/* ─── A4 readability ────────────────────────────────────────────────────
+   Everything above is the A2 design. At half size its smallest text printed
+   near 4–5 pt, so the A4 takes larger type, and blocks are re-placed to make
+   room (still A2 units: printed size is half the figure). */
+/* Smaller circle, and the words inside it smaller still, so the name
+   sits with clear space from the ring instead of touching it. */
+.emblem { top: 14mm; width: 150mm; height: 150mm; }
+.emblem__logo { height: 38mm; margin-top: -2mm; }
+.emblem__word { font-size: 40pt; }
+.emblem__tagline { font-size: 21pt; }
+.emblem__line { font-size: 15pt; margin-top: 2.5mm; }
+.emblem__line::before, .emblem__line::after { width: 12mm; }
+.emblem__sub { font-size: 12.5pt; letter-spacing: 0.12em; }
+.headline { top: 176mm; }
+
+.quote { top: 112mm; }
+
+
+.cards { top: 226mm; width: 212mm; grid-template-rows: 97mm 97mm; gap: 5mm; }
+.card { padding: 4mm 4mm 0; }
+.card__img { width: 42mm; height: 42mm; }
+.card__name { font-size: 16.5pt; margin-top: 3mm; letter-spacing: 0.04em; }
+.card__rule { margin: 1.6mm auto 2mm; }
+.card__tag { font-size: 13pt; padding: 1.2mm 4mm; }
+.card__note { font-size: 15.5pt; line-height: 1.35; margin-top: 2.2mm; }
+.hero { top: 226mm; height: 199mm; }
+
+/* Birthday gift box (A4 front only). The photo is square with lettering in
+   its corners, so the frame is a square, not the A2's arch, and nothing
+   overlaps it; the room left under it is the banner that names the box,
+   with one round photo of the cake at its left end. */
+.hero__frame { inset: 0 0 auto 0; height: 160mm; border-radius: 10mm; }
+.hero__sticker { bottom: 47mm; }
+.bday {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34mm;
+  border-radius: 17mm;
+  background:
+    radial-gradient(80mm 40mm at 100% 0%, rgba(255, 255, 255, 0.18), transparent 70%),
+    linear-gradient(160deg, var(--rose-deep) 0%, #a92f50 100%);
+  box-shadow: 0 0 0 1.4mm #fff, 0 0 0 2mm var(--rose-soft), 0 4mm 10mm -5mm rgba(91, 62, 54, 0.5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3mm;
+  text-align: center;
+}
+.bday__pic {
+  position: relative;
+  flex-shrink: 0;
+  width: 28mm;
+  height: 28mm;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 1.2mm #fff;
+}
+.bday__pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bday__text { flex: 1; padding-right: 6mm; }
+.bday__kicker { display: block; font-family: var(--script); font-size: 30pt; line-height: 0.95; color: var(--pinktext); }
+.bday__title { display: block; font-family: var(--serif); font-weight: 800; font-size: 23pt; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.1; }
+.bday__sub { display: block; margin-top: 0.6mm; font-size: 15pt; font-weight: 700; line-height: 1.15; }
+
+/* Slimmer band; its room went to larger card photos. */
+.features { top: 433mm; height: 32mm; padding: 0 6mm; }
+.feature { gap: 3mm; padding: 0 3mm; }
+.feature i { width: 12mm; height: 12mm; }
+.feature i svg { width: 6.5mm; height: 6.5mm; }
+.feature b { font-size: 16pt; }
+.feature span { font-size: 13pt; }
+
+
+.occasions { top: 546mm; height: 24mm; }
+.occ svg { width: 14mm; height: 14mm; }
+.occ b { font-size: 19pt; }
+.occ span { font-size: 15pt; }
+
+.strip { height: calc(24mm + var(--b)); font-size: 18pt; gap: 5mm; }
+.strip .star { font-size: 15pt; }
+.strip em { font-size: 30pt; }
+
+/* Gift tag — not a second circle beside the emblem. */
+.tag {
+  position: absolute;
+  right: 18mm;
+  top: 100mm;
+  width: 96mm;
+  padding: 15mm 8mm 9mm;
+  border-radius: 7mm;
+  background:
+    radial-gradient(70mm 50mm at 100% 0%, rgba(255, 255, 255, 0.16), transparent 70%),
+    linear-gradient(160deg, var(--rose-deep) 0%, #b7375a 100%);
+  color: #fff;
+  text-align: center;
+  transform: rotate(6deg);
+  transform-origin: 50% 0;
+  box-shadow: 0 0 0 1.6mm #fff, 0 0 0 2.3mm var(--rose-soft), 0 6mm 14mm -6mm rgba(91, 62, 54, 0.5);
+}
+.tag::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -16mm;
+  width: 0.7mm;
+  height: 21mm;
+  margin-left: -0.35mm;
+  background: var(--gold);
+}
+.tag__hole {
+  position: absolute;
+  left: 50%;
+  top: 5mm;
+  width: 6mm;
+  height: 6mm;
+  margin-left: -3mm;
+  border-radius: 50%;
+  background: var(--cream);
+  box-shadow: inset 0 0.6mm 1.2mm rgba(0, 0, 0, 0.3), 0 0 0 0.6mm var(--gold);
+}
+.tag__kicker { font-family: var(--script); font-size: 32pt; line-height: 1; color: var(--pinktext); }
+.tag__list {
+  list-style: none;
+  margin: 4mm auto 0;
+  padding: 0;
+  width: max-content;
+  display: grid;
+  gap: 2.8mm;
+  text-align: left;
+}
+.tag__list li {
+  display: flex;
+  align-items: center;
+  gap: 3mm;
+  font-family: var(--serif);
+  font-weight: 800;
+  font-size: 17pt;
+  line-height: 1.1;
+}
+.tag__list b {
+  flex-shrink: 0;
+  width: 8mm;
+  height: 8mm;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--rose-deep);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--sans);
+  font-weight: 900;
+  font-size: 13pt;
+  letter-spacing: 0;
+}
+/* ─── Back side (second page) ───────────────────────────────────────────
+   A4 only — ad-a2 has no back. Same A2 millimetres as the front. Sixteen
+   photos the owner picked from public/products (untouched copies in
+   img/b00–b15.jpg), in five bands placed from the page top like the front:
+
+     masthead 10 · feature 68 (hero + 2×2) · flavours 272 (round photos)
+     · gallery 380 (one wide + three tall) · closing panel 490 · strip
+
+   Each band is absolute, so making one taller means moving those below. */
+.mast {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 10mm;
+  height: 52mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.mast__brand { display: flex; align-items: center; gap: 5mm; }
+.mast__logo { height: 27mm; width: auto; }
+.mast__word {
+  font-family: var(--serif);
+  font-weight: 800;
+  font-size: 40pt;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  color: var(--cocoa);
+  white-space: nowrap;
+}
+.mast__word .amp { font-style: italic; font-size: 1.3em; color: var(--rose-deep); margin: 0 0.03em; }
+.mast__line {
+  display: flex;
+  align-items: center;
+  gap: 5mm;
+  margin-top: 0.5mm;
+  font-family: var(--script);
+  font-size: 38pt;
+  line-height: 1;
+  color: var(--rose-deep);
+}
+.mast__line svg { width: 15mm; height: 8mm; color: var(--rose); }
+.mast__line svg:last-child { transform: scaleX(-1); }
+
+/* Shared photo tile + name pill. */
+.tile {
+  position: relative;
+  border-radius: 6mm;
+  overflow: hidden;
+  background: var(--blush);
+  box-shadow: 0 0 0 1.2mm #fff, 0 0 0 1.7mm var(--rose-soft), 0 4mm 10mm -5mm rgba(91, 62, 54, 0.5);
+}
+.tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tile b {
+  position: absolute;
+  left: 3mm;
+  bottom: 3mm;
+  max-width: calc(100% - 6mm);
+  padding: 1.4mm 4mm;
+  border-radius: 10mm;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--cocoa);
+  font-size: 15pt;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 1.5mm 4mm -2mm rgba(68, 44, 38, 0.6);
+}
+
+/* Feature band: a large hero on a tilted rose card, four tiles beside it. */
+.bk-hero {
+  position: absolute;
+  left: 16mm;
+  top: 68mm;
+  width: 198mm;
+  height: 196mm;
+}
+.bk-hero::before {
+  content: '';
+  position: absolute;
+  inset: -1mm;
+  border-radius: 12mm;
+  background: linear-gradient(160deg, var(--rose-deep) 0%, #a92f50 100%);
+  transform: rotate(-2.2deg);
+}
+.bk-hero .tile { position: absolute; inset: 0; border-radius: 10mm; box-shadow: 0 0 0 2mm #fff, 0 6mm 14mm -6mm rgba(91, 62, 54, 0.6); }
+.bk-hero .tile b { left: 5mm; bottom: 5mm; font-size: 19pt; padding: 2mm 6mm; background: var(--rose-deep); color: #fff; }
+.sticker {
+  position: absolute;
+  right: 5mm;
+  top: 5mm;
+  background: #fff;
+  border-radius: 5mm;
+  padding: 3mm 6mm;
+  box-shadow: 0 3mm 8mm -4mm rgba(91, 62, 54, 0.6);
+  transform: rotate(4deg);
+}
+.sticker strong { display: block; font-family: var(--serif); font-size: 18pt; color: var(--cocoa); line-height: 1.1; }
+.sticker span { font-family: var(--script); font-size: 25pt; color: var(--rose-deep); line-height: 1; }
+.bk-four {
+  position: absolute;
+  right: 14mm;
+  top: 68mm;
+  width: 182mm;
+  height: 196mm;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 5mm;
+}
+
+/* Flavour band: round photos with the flavour under each. */
+.bk-flav {
+  position: absolute;
+  left: 14mm;
+  right: 14mm;
+  top: 274mm;
+  height: 98mm;
+  border-radius: 8mm;
+  background: #fff;
+  border: 0.6mm solid var(--blush-soft);
+  box-shadow: 0 5mm 14mm -8mm rgba(91, 62, 54, 0.45);
+  padding: 4mm 8mm 0;
+  text-align: center;
+}
+.bk-flav__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 5mm;
+  font-family: var(--script);
+  font-size: 36pt;
+  line-height: 1;
+  color: var(--rose-deep);
+}
+.bk-flav__title svg { width: 13mm; height: 7mm; color: var(--rose); }
+.bk-flav__title svg:last-child { transform: scaleX(-1); }
+.bk-flav__row { display: flex; justify-content: space-between; margin-top: 3.5mm; padding: 0 6mm; }
+.bk-flav__item { width: 60mm; }
+.bk-flav__pic {
+  position: relative;
+  display: block;
+  width: 60mm;
+  height: 60mm;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 1.4mm #fff, 0 0 0 2.2mm var(--rose-soft), 0 3mm 8mm -3mm rgba(91, 62, 54, 0.5);
+}
+.bk-flav__pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bk-flav__item b {
+  display: block;
+  margin-top: 3.4mm;
+  font-size: 16pt;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cocoa);
+}
+
+/* Gallery band: the one landscape photo wide, three tall ones beside it. */
+.bk-row {
+  position: absolute;
+  left: 14mm;
+  right: 14mm;
+  top: 381mm;
+  height: 101mm;
+  display: grid;
+  grid-template-columns: 150mm 1fr 1fr 1fr;
+  gap: 5mm;
+}
+
+/* Closing panel — NO contact details: the number, address and QR codes are
+   all on the front, and the owner did not want them said twice. A rose
+   invitation, the two gift photos, and the occasions. */
+.bk-order {
+  position: absolute;
+  left: 14mm;
+  right: 14mm;
+  top: 491mm;
+  height: 71mm;
+  display: grid;
+  /* The middle column holds unbreakable content (~146mm): if the three do not
+     add up to 392mm it overflows and pushes the occasions off the edge. */
+  grid-template-columns: 106mm minmax(0, 1fr) 132mm;
+  background: #fff;
+  border-radius: 8mm;
+  border: 0.6mm solid var(--blush-soft);
+  box-shadow: 0 5mm 14mm -7mm rgba(91, 62, 54, 0.45);
+  overflow: hidden;
+}
+.bk-cta {
+  background:
+    radial-gradient(80mm 60mm at 100% 0%, rgba(255, 255, 255, 0.18), transparent 70%),
+    linear-gradient(160deg, var(--rose-deep) 0%, #a92f50 100%);
+  color: #fff;
+  padding: 4mm 7mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.bk-cta__kicker { font-family: var(--script); font-size: 36pt; line-height: 1; color: var(--pinktext); white-space: nowrap; }
+.bk-cta__big { margin-top: 2mm; font-family: var(--serif); font-weight: 800; font-size: 27pt; line-height: 1.12; }
+.bk-cta__big em { font-style: italic; color: var(--pinktext); }
+.bk-cta__turn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5mm;
+  margin-top: 4mm;
+  padding: 1.8mm 5mm;
+  border-radius: 10mm;
+  background: #fff;
+  color: var(--rose-ink);
+  font-weight: 900;
+  font-size: 15pt;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.bk-gift { display: flex; align-items: center; justify-content: center; gap: 5mm; padding: 0 4mm; }
+.bk-gift__pics { display: flex; flex-shrink: 0; }
+.bk-gift__pic {
+  position: relative;
+  width: 40mm;
+  height: 40mm;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 1.4mm #fff, 0 0 0 2.1mm var(--rose-soft), 0 3mm 8mm -3mm rgba(91, 62, 54, 0.5);
+}
+.bk-gift__pic + .bk-gift__pic { margin-left: -9mm; }
+.bk-gift__pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bk-gift__script { font-family: var(--script); font-size: 31pt; line-height: 1; color: var(--rose-deep); white-space: nowrap; }
+.bk-occ {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  margin: 5mm 5mm 5mm 0;
+  border-radius: 5mm;
+  background: var(--cream);
+  border: 0.5mm solid var(--blush-soft);
+}
+.bk-occ__item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2mm; }
+.bk-occ__item:nth-child(odd) { border-right: 0.4mm dashed var(--rose-soft); }
+.bk-occ__item:nth-child(-n+2) { border-bottom: 0.4mm dashed var(--rose-soft); }
+.bk-occ__item svg { width: 13mm; height: 13mm; color: var(--rose-deep); }
+.bk-occ__item b { font-size: 15pt; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; color: var(--cocoa); }
+
+/* ─── A5 readability ────────────────────────────────────────────────────
+   Everything above is the A4 design. At A5 its smallest text printed near
+   4–5 pt and the QR codes at 14 mm, so this block sets larger type and
+   larger codes (still A2 units: printed size = 0.352 of the figure). The
+   occasions row is dropped on the front — the back's closing panel already
+   shows the same four — and its room goes to a taller order panel. */
+
+/* Front */
+.emblem__line { font-size: 17pt; }
+.emblem__sub { font-size: 15pt; letter-spacing: 0.08em; }
+.tag { width: 104mm; }
+.tag__list li { font-size: 19pt; }
+.card { padding: 3mm 4mm 0; }
+.card__img { width: 31mm; height: 31mm; }
+.card__name { font-size: 19pt; margin-top: 2.6mm; letter-spacing: 0.02em; }
+.card__rule { margin: 1.2mm auto 1.6mm; }
+.card__tag { font-size: 16pt; }
+.card__note { font-size: 18pt; line-height: 1.28; margin-top: 2mm; }
+.hero__sticker b { font-size: 19pt; }
+.hero__sticker span { font-size: 25pt; }
+.bday__sub { font-size: 17.5pt; }
+.feature { gap: 3mm; padding: 0 2mm; justify-content: center; }
+.feature span { display: none; }
+.feature b { font-size: 19pt; }
+
+.occasions { display: none; }
+:root { --op-h: 95mm; }
+.op { grid-template-columns: 116mm 1fr auto; }
+.op-cta { padding: 5mm 6mm; }
+.op-kicker { font-size: 36pt; }
+.op-phone { font-size: 32pt; }
+.op-pills { margin-top: 4mm; }
+.op-pill { font-size: 16pt; padding: 2mm 4.5mm; }
+.op-pill svg { width: 6mm; height: 6mm; }
+.op-note { font-size: 17.5pt; margin-top: 4mm; }
+.op-info { padding: 4mm 4mm 4mm 5mm; gap: 3mm; }
+.op-row { gap: 2.5mm; }
+.op-row small { font-size: 14pt; letter-spacing: 0.08em; }
+.op-row span { font-size: 16.5pt; line-height: 1.2; }
+.op-row:last-child span { font-size: 15pt; letter-spacing: -0.01em; white-space: nowrap; }
+.op-qrs { padding: 4mm 4mm 4mm 0; }
+.op-qrs__title { font-size: 15pt; letter-spacing: 0.1em; }
+.op-qrs__row { gap: 2.5mm; }
+.op-qr { width: 58mm; padding: 2.5mm 2.5mm 2mm; }
+.op-qr img { width: 53mm; height: 53mm; }
+.op-qr b { font-size: 16pt; }
+.strip { font-size: 19pt; gap: 4mm; }
+
+/* Back */
+.tile b { font-size: 18pt; padding: 1.6mm 4.5mm; }
+.bk-hero .tile b { font-size: 22pt; }
+.sticker strong { font-size: 20pt; }
+.sticker span { font-size: 27pt; }
+.bk-flav__item b { font-size: 19pt; margin-top: 3mm; }
+.bk-cta__turn { font-size: 17pt; padding: 1.8mm 4mm; letter-spacing: 0.03em; }
+.bk-occ__item b { font-size: 17pt; letter-spacing: 0.02em; }
+</style>
+</head>
+<body>
+<script>
+  const q = new URLSearchParams(location.search)
+  if (q.has('bleed')) {
+    document.documentElement.classList.add('bleed')
+    const s = document.createElement('style')
+    s.textContent = '@page { size: 154mm 216mm; margin: 0; }'
+    document.head.appendChild(s)
+  }
+  if (q.has('png')) {
+    // A screenshot holds one page: the front, or the back with &side=back.
+    const hide = q.get('side') === 'back' ? '.page--front' : '.page--back'
+    const s = document.createElement('style')
+    s.textContent = 'body{background:none}.page{margin:0!important;box-shadow:none!important}' + hide + '{display:none}'
+    document.head.appendChild(s)
+  }
+</script>
+
+<!-- Inline icon set (Feather-style strokes). -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></symbol>
+    <symbol id="i-heart-fill" viewBox="0 0 24 24"><path fill="currentColor" d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path fill="currentColor" d="M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6z"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 48 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M2 12h28M30 12c4-7 10-8 16-6-3 6-9 9-16 6zM30 12c4 7 10 8 16 6-3-6-9-9-16-6z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></g></symbol>
+    <symbol id="i-egg" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-3.5 0-6 4.5-6 9a6 6 0 0 0 12 0c0-4.5-2.5-9-6-9z"/><path d="M4 20 20 4"/></g></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></g></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="14" height="10" rx="1"/><path d="M15 9h4l3 3v4h-7"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></g></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></g></symbol>
+    <symbol id="i-cake" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21h16v-8H4z"/><path d="M4 16c2 1.5 4 1.5 6 0s4-1.5 6 0 4 1.5 4 0"/><path d="M12 13V9"/><path d="M12 6.5c.8 0 1.3-.7 1-1.5L12 3l-1 2c-.3.8.2 1.5 1 1.5z"/><path d="M7 13v-2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v2"/></g></symbol>
+    <symbol id="i-rings" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="14" r="6"/><circle cx="15" cy="14" r="6"/><path d="M10 4l2-2 2 2-2 2z"/></g></symbol>
+    <symbol id="i-party" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l5-14 9 9z"/><path d="M14 3v2M19 5l-1.5 1.5M21 10h-2M16 8c1-2 3-2 4-1"/></g></symbol>
+    <symbol id="i-gift" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13"/><path d="M12 8c-2-4-6-4-6-1.5S10 8 12 8zM12 8c2-4 6-4 6-1.5S14 8 12 8z"/></g></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/></symbol>
+    <symbol id="i-insta" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.6"/></g></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></g></symbol>
+  </defs>
+</svg>
+
+<section class="page page--front">
+  <div class="sheet">
+
+    <!-- decoration -->
+    <span class="deco" style="left:120mm;top:20mm;width:7mm;height:7mm"><svg><use href="#i-spark"/></svg></span>
+    <span class="deco" style="left:300mm;top:16mm;width:10mm;height:10mm"><svg><use href="#i-spark"/></svg></span>
+    <span class="deco" style="left:318mm;top:44mm;width:6mm;height:6mm"><svg><use href="#i-heart-fill"/></svg></span>
+    <span class="deco" style="left:382mm;top:28mm;width:12mm;height:12mm;opacity:.35"><svg><use href="#i-heart-fill"/></svg></span>
+    <span class="deco" style="left:360mm;top:70mm;width:7mm;height:7mm"><svg><use href="#i-spark"/></svg></span>
+
+    <div class="ribbon">
+      <div class="ribbon__script">Baked with love</div>
+      <div class="ribbon__big">Fresh,<br><em>every</em><br>order</div>
+    </div>
+
+    <div class="emblem">
+      <img class="emblem__logo" src="img/logo-print.png" alt="">
+      <div class="emblem__word">CAKE<span class="amp">&amp;</span>CRUMB</div>
+      <div class="emblem__tagline">The gourmet chocolate &amp; berry boutique</div>
+      <div class="emblem__line">Homemade</div>
+      <div class="emblem__sub">Cakes · Desserts · Celebrations</div>
+    </div>
+
+    <div class="quote">
+      <div class="quote__mark">&ldquo;</div>
+      <div class="quote__text">We can&rsquo;t wait<br>to sweeten<br>your day!</div>
+      <svg class="quote__heart"><use href="#i-heart-fill"/></svg>
+    </div>
+
+    <!-- A hanging gift tag rather than a second circle beside the emblem. -->
+    <div class="tag">
+      <span class="tag__hole"></span>
+      <!-- How to order, not the promises: those are already in the feature band. -->
+      <div class="tag__kicker">Easy as 1·2·3</div>
+      <ol class="tag__list">
+        <li><b>1</b>Choose your treat</li>
+        <li><b>2</b>WhatsApp your order</li>
+        <li><b>3</b>We bake it fresh</li>
+      </ol>
+    </div>
+
+    <div class="headline">
+      <h1>Every celebration deserves<br>
+        <span class="flour"><svg><use href="#i-leaf"/></svg>something sweet<svg><use href="#i-leaf"/></svg></span></h1>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card__img"><img src="img/g07.jpg" alt=""></div>
+        <div class="card__name">Celebration Cakes</div>
+        <div class="card__rule"></div>
+        <span class="card__tag">Your design</span>
+        <div class="card__note">Red&nbsp;Velvet&nbsp;· Chocolate&nbsp;· Vanilla&nbsp;· Strawberry&nbsp;· Mango&nbsp;· Biscoff&nbsp;· Nutella&nbsp;· Pistachio</div>
+      </div>
+      <div class="card">
+        <div class="card__img"><img src="img/g03.jpg" alt=""></div>
+        <div class="card__name">Cheesecakes</div>
+        <div class="card__rule"></div>
+        <span class="card__tag">Banto &amp; tubs</span>
+        <div class="card__note">Mango&nbsp;· Blueberry&nbsp;· Strawberry&nbsp;· Biscoff&nbsp;· Nutella&nbsp;· Cookies&nbsp;&&nbsp;Cream&nbsp;· Pistachio&nbsp;· Dubai</div>
+      </div>
+      <div class="card">
+        <div class="card__img"><img src="img/g12.jpg" alt=""></div>
+        <div class="card__name">Cupcakes</div>
+        <div class="card__rule"></div>
+        <span class="card__tag">Box of 6</span>
+        <div class="card__note">Vanilla&nbsp;· Red&nbsp;Velvet&nbsp;· Chocolate&nbsp;· Nutella&nbsp;· Biscoff&nbsp;· Strawberry&nbsp;· Pistachio&nbsp;· Variety&nbsp;box</div>
+      </div>
+      <div class="card">
+        <div class="card__img"><img src="img/g10.jpg" alt=""></div>
+        <div class="card__name">Treats &amp; Gifts</div>
+        <div class="card__rule"></div>
+        <span class="card__tag">Gift boxes</span>
+        <div class="card__note">Brownies&nbsp;· Blondies&nbsp;· Cookies&nbsp;· Cake&nbsp;Pops&nbsp;· Cakesicles&nbsp;· Milk&nbsp;Cakes&nbsp;· Dessert&nbsp;Cups</div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <!-- public/products/gift-box-birthday-flatlay.jpeg — the owner chose this styled shot over the plain one. -->
+      <div class="hero__frame"><img src="img/gift-birthday-box.jpg" alt=""></div>
+      <div class="hero__sticker"><b>Made just for you</b><span>freshly baked</span></div>
+      <div class="bday">
+        <!-- the same photo as the hero, zoomed onto the cake -->
+        <span class="bday__pic"><img src="img/gift-birthday-box.jpg" alt="" style="inset:auto;left:-31%;top:-120%;width:267%;height:267%"></span>
+        <div class="bday__text">
+          <span class="bday__kicker">Birthday special</span>
+          <span class="bday__title">Gift Box</span>
+          <span class="bday__sub">Cake · flowers · free dessert cup</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="features">
+      <div class="feature"><i><svg><use href="#i-clock"/></svg></i><div><b>Made to order</b><span>Baked after you order</span></div></div>
+      <div class="feature"><i><svg><use href="#i-egg"/></svg></i><div><b>Eggless option</b><span>On most cakes &amp; bakes</span></div></div>
+      <div class="feature"><i><svg><use href="#i-pen"/></svg></i><div><b>Custom designs</b><span>Your theme &amp; message</span></div></div>
+      <div class="feature"><i><svg><use href="#i-truck"/></svg></i><div><b>Delivery or pickup</b><span>Home delivery available</span></div></div>
+    </div>
+
+    <!-- Order panel: call-to-action · contact · QR codes, as one card. -->
+    <div class="op">
+      <div class="op-cta">
+        <div class="op-kicker">Ready to order?</div>
+        <div class="op-phone">+91 91731 83440</div>
+        <div class="op-pills">
+          <span class="op-pill"><svg><use href="#i-phone"/></svg>Call</span>
+          <span class="op-pill op-pill--wa"><svg><use href="#i-chat"/></svg>WhatsApp</span>
+        </div>
+        <div class="op-note">Order <b>a day ahead</b> —<br>late orders are ready the next day.</div>
+      </div>
+      <div class="op-info">
+        <div class="op-row"><i><svg><use href="#i-pin"/></svg></i><div><small>Visit / pick up</small>
+          <span>386, Zahir Manzil, Venipura, Mominvad, Near Police Station, Vaso, Kheda, Gujarat&#8209;387380</span></div></div>
+        <div class="op-row"><i><svg><use href="#i-insta"/></svg></i><div><small>Instagram</small><span>@cake_and_crumb_1</span></div></div>
+        <div class="op-row"><i><svg><use href="#i-mail"/></svg></i><div><small>Email</small><span>cakeandcrumb.in@gmail.com</span></div></div>
+      </div>
+      <div class="op-qrs">
+        <div class="op-qrs__title">Scan with your phone</div>
+        <div class="op-qrs__row">
+          <div class="op-qr"><img src="qr/whatsapp.svg" alt="WhatsApp QR code"><b>WhatsApp</b></div>
+          <div class="op-qr"><img src="qr/instagram.svg" alt="Instagram QR code"><b>Instagram</b></div>
+          <div class="op-qr"><img src="qr/google-hd.png" alt="Google QR code"><b>Google</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="occasions">
+      <div class="occ"><svg><use href="#i-cake"/></svg><div><b>Birthdays</b><span>Cakes &amp; cupcakes</span></div></div>
+      <div class="occ"><svg><use href="#i-rings"/></svg><div><b>Anniversaries</b><span>Made-to-order cakes</span></div></div>
+      <div class="occ"><svg><use href="#i-party"/></svg><div><b>Parties</b><span>Dessert boxes &amp; tubs</span></div></div>
+      <div class="occ"><svg><use href="#i-gift"/></svg><div><b>Gifting</b><span>Treat boxes</span></div></div>
+    </div>
+
+  </div>
+
+  <div class="strip">
+    <span class="star">✦</span>
+    <span>Life is sweeter when it&rsquo;s shared…</span>
+    <span class="star">✦</span>
+    <b>CAKE &amp; CRUMB</b>
+    <em>where every bite tells a sweet story</em>
+    <span class="star">✦</span>
+  </div>
+</section>
+
+<!-- ═══ Back side ═══ -->
+<section class="page page--back">
+  <div class="sheet">
+
+    <span class="deco" style="left:30mm;top:18mm;width:9mm;height:9mm"><svg><use href="#i-spark"/></svg></span>
+    <span class="deco" style="left:58mm;top:42mm;width:6mm;height:6mm"><svg><use href="#i-heart-fill"/></svg></span>
+    <span class="deco" style="left:20mm;top:50mm;width:5mm;height:5mm"><svg><use href="#i-spark"/></svg></span>
+    <span class="deco" style="left:380mm;top:16mm;width:10mm;height:10mm;opacity:.4"><svg><use href="#i-heart-fill"/></svg></span>
+    <span class="deco" style="left:352mm;top:40mm;width:7mm;height:7mm"><svg><use href="#i-spark"/></svg></span>
+    <span class="deco" style="left:394mm;top:52mm;width:5mm;height:5mm"><svg><use href="#i-spark"/></svg></span>
+
+    <div class="mast">
+      <div class="mast__brand">
+        <img class="mast__logo" src="img/logo-print.png" alt="">
+        <div class="mast__word">CAKE<span class="amp">&amp;</span>CRUMB</div>
+      </div>
+      <div class="mast__line"><svg><use href="#i-leaf"/></svg>A little taste of what we bake<svg><use href="#i-leaf"/></svg></div>
+    </div>
+
+    <!-- Each photo is public/products/<name>.jpeg — the name is beside it. -->
+
+    <!-- Feature: hero + four -->
+    <div class="bk-hero">
+      <div class="tile">
+        <img src="img/b00.jpg" alt="" style="object-position:50% 45%">  <!-- dessertcup-assorted-flatlay -->
+        <div class="sticker"><strong>Made just for you</strong><span>freshly baked</span></div>
+        <b>Dessert tubs</b>
+      </div>
+    </div>
+    <div class="bk-four">
+      <div class="tile"><img src="img/b02.jpg" alt="" style="object-position:50% 55%"><b>Custom cakes</b></div>  <!-- cake-pink-rose-mothers-day -->
+      <div class="tile"><img src="img/b04.jpg" alt=""><b>Cupcakes</b></div>  <!-- cupcakes-box-large -->
+      <div class="tile"><img src="img/b05.jpg" alt="" style="object-position:50% 55%"><b>Cheesecakes</b></div>  <!-- milkcake-pomegranate -->
+      <div class="tile"><img src="img/b03.jpg" alt=""><b>Cheesecake tubs</b></div>  <!-- cheesecake-choc-mango -->
+    </div>
+
+    <!-- Flavours: round photos -->
+    <div class="bk-flav">
+      <div class="bk-flav__title"><svg><use href="#i-leaf"/></svg>Pick your favourite flavour<svg><use href="#i-leaf"/></svg></div>
+      <div class="bk-flav__row">
+        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b10.jpg" alt="" style="object-position:50% 60%"></span><b>Mango</b></div>  <!-- milkcake-mango-bento -->
+        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b11.jpg" alt="" style="object-position:50% 62%"></span><b>Blueberry</b></div>  <!-- milkcake-blueberry-bento -->
+        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b12.jpg" alt="" style="object-position:50% 60%"></span><b>Rose</b></div>  <!-- milkcake-rose-bento -->
+        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b07.jpg" alt=""></span><b>Pistachio</b></div>  <!-- dessertcup-pistachio-cream -->
+        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b15.jpg" alt=""></span><b>Chocolate</b></div>  <!-- dessertcup-chocolate-pudding -->
+      </div>
+    </div>
+
+    <!-- Gallery: one wide, three tall -->
+    <div class="bk-row">
+      <div class="tile"><img src="img/b01.jpg" alt="" style="object-position:46% 50%"><b>Milk cake tubs</b></div>  <!-- milkcake-assorted-tubs -->
+      <div class="tile"><img src="img/b06.jpg" alt=""><b>Rose cream</b></div>  <!-- dessertcup-rose-cream -->
+      <div class="tile"><img src="img/b13.jpg" alt="" style="object-position:50% 75%"><b>Brownies</b></div>  <!-- brownie-chocolate-boxes -->
+      <div class="tile"><img src="img/b14.jpg" alt="" style="object-position:50% 62%"><b>Mango cupcake</b></div>  <!-- cupcakes-mango -->
+    </div>
+
+    <!-- Closing panel — no contact details here (they are on the front).
+         The two heart photos are unnamed on purpose. -->
+    <div class="bk-order">
+      <div class="bk-cta">
+        <div class="bk-cta__kicker">Which one is yours?</div>
+        <div class="bk-cta__big">Your favourite,<br><em>freshly made</em> for you</div>
+        <span class="bk-cta__turn">Turn over to order &#8594;</span>
+      </div>
+      <div class="bk-gift">
+        <div class="bk-gift__pics">
+          <span class="bk-gift__pic"><img src="img/b08.jpg" alt="" style="object-position:50% 62%"></span>  <!-- truffles-rose-pistachio-hearts -->
+          <span class="bk-gift__pic"><img src="img/b09.jpg" alt="" style="object-position:50% 58%"></span>  <!-- truffles-hearts -->
+        </div>
+        <div class="bk-gift__script">A sweet surprise<br>for someone<br>special</div>
+      </div>
+      <div class="bk-occ">
+        <div class="bk-occ__item"><svg><use href="#i-cake"/></svg><b>Birthdays</b></div>
+        <div class="bk-occ__item"><svg><use href="#i-rings"/></svg><b>Anniversaries</b></div>
+        <div class="bk-occ__item"><svg><use href="#i-party"/></svg><b>Parties</b></div>
+        <div class="bk-occ__item"><svg><use href="#i-gift"/></svg><b>Gifting</b></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="strip">
+    <span class="star">✦</span>
+    <span>Life is sweeter when it&rsquo;s shared…</span>
+    <span class="star">✦</span>
+    <b>CAKE &amp; CRUMB</b>
+    <em>where every bite tells a sweet story</em>
+    <span class="star">✦</span>
+  </div>
+</section>
+</body>
+</html>
