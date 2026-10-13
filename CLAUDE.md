@@ -304,7 +304,7 @@ No coupon field, no promo code, no percentage off. Discounts were scoped and **e
 
 ### Print posters — `pamphlet/`
 
-Two designs, each in A2 (420 × 594 mm) and A4, English only, as editable HTML plus exports. Not
+Two designs, each in A2 (420 × 594 mm) and A4 — the ad in A5 as well — English only, as editable HTML plus exports. Not
 imported by the app and not in the Vite build; `pamphlet/README.md` lists every file. (The older
 `offers/` folder of offer posters was deleted in Oct 2026.)
 
@@ -344,32 +344,48 @@ imported by the app and not in the Vite build; `pamphlet/README.md` lists every 
   and PNGs come from headless Chrome exactly like the cards (commands in its README); the
   `*-share.pdf` is that PNG wrapped with `jspdf` and is for phones, not print. A4 bleed is 6 A2-mm
   (`--b: 6mm`) because of the zoom.
-- **`ad-a4.html` is TWO pages and no longer a straight copy of the A2.** A second `.page`
-  (`.page--back`) holds a photos-only back, so `ad-a4.pdf`, `-bleed.pdf` and `-share.pdf` are each
-  two pages, front then back; `ad-a2` has no back. A screenshot holds one page: `?png` is the front,
-  **`?png&side=back`** the back (exported as `png/ad-a4-back*`). A separate `ad-a4-back.html` was
-  built first and the owner had it merged into this file — don't split it out again.
-  - **The A4 front also differs from the A2 now**: its hero is the birthday gift box in a **square**
-    frame (the photo has lettering in its corners, which the A2's arch cut through), with a
-    "Birthday special — Gift Box" banner in the room left beneath it. The banner reads
-    *Cake · flowers · free dessert cup* — the cup is a free extra, not part of the box (see
-    *Product catalog*). A plain phone photo of the same box was tried as the hero and the owner went
-    back to the styled one.
-  - **The back is five absolutely-placed bands** (masthead · hero + four tiles · "Pick your favourite
-    flavour" round photos · one wide + three tall · closing panel), using sixteen photos the owner
-    picked, copied untouched to `img/b00`–`b15.jpg` with the source name in a comment beside each.
-    Like the front, a taller band means moving the ones below it.
+- **`ad-a4.html` and `ad-a5.html` are TWO pages each.** A second `.page` (`.page--back`) holds a
+  photo back, so their `.pdf`, `-bleed.pdf` and `-share.pdf` are two pages, front then back; `ad-a2`
+  has no back. A screenshot holds one page: `?png` is the front, **`?png&side=back`** the back
+  (exported as `png/*-back*`). A separate `ad-a4-back.html` was built first and the owner had it
+  merged in — don't split it out again.
+  - **The A5 is a third hand-kept copy.** A5 has A4's proportions, so `ad-a5.html` is `ad-a4.html`
+    with `zoom: 0.35238` (148 / 420), an 8.51 A2-mm bleed, and an **"A5 readability"** block at the
+    very end of the stylesheet: larger type, QR codes at ~19 mm, no occasions row on the front and no
+    sub-lines in the brown band. **The two backs are meant to be identical in content** — the owner
+    asked for that after they drifted — so a back-page edit goes into both files. Only the A5 takes
+    `?side=front` / `?side=back` when *printed*, which is how `ad-a5-front.pdf` (single-sided) is made.
+  - **A5 screenshots need a crop.** The page is 559.37 × 793.7 CSS px, so the window is `560,794` and
+    the PNG is cut back to the exact pixel size (1748 × 2480 at 300 dpi) afterwards.
+  - **All three fronts feature the birthday gift box** in a **square** frame — the photo has lettering
+    in its corners, which the old arch cut through. The A4/A5 name it on a banner under the photo;
+    the A2 has no room there, so it uses a sticker over the photo's bottom-left and drops the two
+    small circles that covered "Happy Birthday". Wording everywhere: *Cake · flowers · free dessert
+    cup* — the cup is a free extra, not part of the box (see *Product catalog*). A plain phone photo
+    of the box was tried as the hero and the owner went back to the styled one.
+  - **Outlines are shadows OUTSIDE the box, and have touched twice because of it.** The hero frame's
+    ring is 3 mm and the banner's 2 mm, so a 5 mm gap between the boxes was no gap at all (the frame
+    is 156 mm tall, not 160, for that reason); the round photos' ring is 2.2 mm, so their names sit
+    6 mm below. Leave room for the ring, not just the box.
+  - **The back is five absolutely-placed bands** — masthead (logo, name, the brand tagline, "A little
+    taste of what we bake") · dessert-tub hero + four tiles · "Pick your favourite" round photos ·
+    one wide + three tall · closing panel. Photos are untouched copies in `img/bNN.jpg`, the source
+    name in a comment beside each; several are spare files from earlier rounds. Like the front, a
+    taller band means moving the ones below it.
+  - **Every name on the back is the owner's wording, corrected by hand — don't re-derive one from a
+    filename.** The file `dessertcup-rose-cream` is **Strawberry**; the dark hearts are **"Heart
+    cake"**, not chocolates; the assorted-tubs shot is not milk cake. The same filenames are attached
+    to differently-named products on the site, which is still unresolved.
+  - **No photo appears twice on the back.** The wide tile is two cake-pop photos side by side
+    (`.tile--duo`).
   - **The back carries NO contact details** — no number, no pills, no QR. A full order panel was
     built there and the owner had it removed because the front already says it; the closing panel
-    is an invitation ("Turn over to order"), the two heart photos and four occasion icons.
+    is an invitation ("Turn over to order"), two unlabelled photos and four occasion icons.
   - **The closing panel's middle column holds unbreakable content.** Its three columns must add up
     to the 392 mm inside the margins or the middle one overflows and pushes the occasions grid off
     the right edge — which looked like a clipped label, not a layout error. Hence `minmax(0, 1fr)`.
-  - **The two heart photos are unnamed on purpose.** They are the owner's pick, but the site sells
-    no chocolates (see *Customer-facing copy*), so they carry no name pill — same rule as the
-    unlabelled circle on the A2.
-  - Every other photo's name pill was read off the photo or its filename. They are labels on print,
-    so check them against the catalogue before adding one.
+  - **A shared front image opens WhatsApp on many Android phones.** Their galleries scan pictures for
+    QR codes and offer the link; it is the WhatsApp code, not a fault. The back has no code.
 - **Phone sharpness.** The A4s also export `png/*-hd.png`/`.jpg` at 600 dpi (device scale factor 5);
   share PDFs are built from the full-resolution image, never a downsized copy, or they blur when
   zoomed. `qr/google-hd.png` is Google's QR enlarged 4× with nearest-neighbour — at 456 px, PDF
