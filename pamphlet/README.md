@@ -44,8 +44,8 @@ PNG are made from that screenshot (resized with `sharp`, wrapped with `jspdf`).
 
 A second A2 poster laid out like a retail ad (after a reference the owner supplied): corner ribbon,
 round brand emblem, a pink "Easy as 1·2·3" gift tag (how to order — the promises are in the
-feature band, so the tag doesn't repeat them), headline, four product cards beside a hero cake
-photo, a dark feature band, one order panel (rose "Ready to order?" call-to-action with the
+feature band, so the tag doesn't repeat them), headline, four product cards beside the birthday gift box
+photo (square frame, with a "Birthday special — Gift Box" sticker on its bottom-left corner), a dark feature band, one order panel (rose "Ready to order?" call-to-action with the
 number, Call / WhatsApp pills and the lead time · address and socials · three QR codes for
 WhatsApp, Instagram and Google — the "Prices?" tile was removed at the owner's request), an occasions row and
 a rose closing strip. English only, no prices. Same assets as the poster. The cheesecake tag says
@@ -81,34 +81,50 @@ Print on 130–170 gsm gloss or matt.
 
 The A2 ad on A4, built the same way as `poster-a4`: a copy of `ad-a2.html` with `zoom: 0.5` plus an
 **"A4 readability"** block that sets larger type and re-places the blocks (its `top` values are A2
-millimetres), and a smaller emblem so the name clears its ring. Otherwise the same content.
-**An edit to one ad has to be copied into the other.**
+millimetres), and a smaller emblem so the name clears its ring. The front is otherwise the A2's,
+except that the gift box is named on a **banner under the photo** instead of a sticker on it.
+It also has a second page, the photo back — see below. **An edit to one ad has to be copied into
+the others by hand** (`ad-a2`, `ad-a4`, `ad-a5`).
 
 | File | Use |
 |---|---|
-| `ad-a4.pdf` / `ad-a4-bleed.pdf` | For the printer (exact A4 / 3 mm bleed) |
-| `ad-a4-share.pdf` | Light image PDF for WhatsApp / phones |
-| `png/ad-a4.png` / `png/ad-a4-small.png` | 300 dpi / 1400 px wide |
+| `ad-a4.pdf` / `ad-a4-bleed.pdf` | For the printer — **two pages, front then back** (exact A4 / 3 mm bleed) |
+| `ad-a4-share.pdf` | Two-page image PDF for WhatsApp / phones |
+| `png/ad-a4.png` / `png/ad-a4-small.png` | The front: 300 dpi / 1400 px wide |
 
 ## Sharp files for phones
 
-- **`png/*-hd.jpg` / `png/*-hd.png`** (A4 only) — 3970 × 5615, i.e. 600 dpi. The `.jpg` is the one to
+- **`png/*-hd.jpg` / `png/*-hd.png`** (A4 and A5) — 600 dpi: 3970 × 5615 for A4, 3496 × 4960 for A5. The `.jpg` is the one to
   send; send it on WhatsApp **as a Document**, never as a Photo, or WhatsApp shrinks it and it blurs.
-  Made with `--force-device-scale-factor=5 --window-size=794,1123`.
+  A4: `--force-device-scale-factor=5 --window-size=794,1123`; A5: `6.25` and `560,794`, then cropped.
+- **A shared front image opens WhatsApp on many Android phones.** Their galleries scan a picture
+  for QR codes and offer the link. It is the WhatsApp code on the front, not a fault; the back has
+  no code and opens as a plain photo.
 - **`*-share.pdf`** are built from those full-resolution images (the A2 ones from `png/*-a2.png`), not
   a downsized copy, so they stay sharp when zoomed.
 - **`qr/google-hd.png`** is `qr/google.png` enlarged 4× with nearest-neighbour, so its squares keep
   hard edges; at 456 px PDF viewers smoothed it into a blur. All four designs use it. Remake it the
   same way if Google's QR is ever re-exported.
 
-# A4 advertisement, back side — second page of `ad-a4.html`
+# The ad's back side — second page of `ad-a4.html` and `ad-a5.html`
 
-`ad-a4.html` holds both sides: the front, then a photos-only back (A4 only — `ad-a2` has no back).
-The back is five bands of the owner's sixteen photos: a masthead, a large dessert-tub hero beside four
-tiles, a "Pick your favourite flavour" row of round photos, a wide-plus-three photo row, and an order
-panel (number, Call / WhatsApp pills, lead time, the WhatsApp QR) above the same closing strip as the
-front. The two heart photos sit unnamed in the order panel. No prices. The front's hero is the
-birthday gift box, with a "Birthday special — Gift Box" banner under it (A4 only).
+Both files hold two pages: the front, then a photo back (`ad-a2` has no back). **The two backs carry
+the same content — an edit to one goes into the other.** No prices, no contact details (the front
+has them; a full order panel was built here and removed at the owner's request). Five bands:
+
+1. **Masthead** — logo, name, the brand tagline, "A little taste of what we bake".
+2. **Feature** — the dessert tubs large on a tilted rose card, beside Custom cakes, Cupcakes,
+   Cheesecakes and Cheesecake tubs.
+3. **"Pick your favourite"** — five round photos: Nutella cheesecake, Milk cake, Mango cupcake,
+   Birthday cake, Cookies.
+4. **Photo row** — Cake pops (two photos side by side in the wide tile), Strawberry, Brownies,
+   Heart cake.
+5. **Closing panel** — "Which one is yours? … Turn over to order", two unlabelled photos beside
+   "A sweet surprise for someone special", and Birthdays / Anniversaries / Parties / Gifting.
+
+**The names are the owner's own, corrected by hand — don't rename one from its filename.** The file
+`dessertcup-rose-cream` is **Strawberry**, and the dark hearts are **"Heart cake"**. No photo appears
+twice on the page.
 
 | File | Use |
 |---|---|
@@ -118,23 +134,28 @@ birthday gift box, with a "Birthday special — Gift Box" banner under it (A4 on
 
 Screenshots hold one page: `?png` is the front, `?png&side=back` the back.
 
-`img/b00.jpg` – `b15.jpg` are untouched copies of `public/products/<name>.jpeg`; the source name is
-in a comment beside each tile. To swap a photo, replace that `bNN.jpg` and re-export. To print bare
-photos, delete the `<b>…</b>` pill inside each tile. Bands are placed absolutely from the page top.
+`img/bNN.jpg` are untouched copies of the owner's photos — most from `public/products/<name>.jpeg`
+(the source name is in a comment beside each tile), `b21`/`b22` the two cake-pop photos sent
+separately. A few numbers are spares from earlier rounds and are no longer on the page. To swap a
+photo, replace that `bNN.jpg` and re-export. Bands are placed absolutely from the page top, so a
+taller band means moving the ones below it; leave room for the photo rings, which are drawn
+*outside* their boxes.
 
 # A5 advertisement — `ad-a5.*`
 
 The two-sided A4 ad on A5 (148 × 210 mm), for handbills. A5 has the same proportions as A4, so
 `ad-a5.html` is a copy of `ad-a4.html` with a smaller `zoom` (148 / 420) and an **"A5 readability"**
-block at the very end of its stylesheet: larger type, QR codes at about 19 mm, and no occasions row
-on the front (the back's closing panel shows the same four). Sizes there are A2 values (printed size
+block at the very end of its stylesheet: larger type, QR codes at about 19 mm, no occasions row
+on the front (the back's closing panel shows the same four) and no sub-lines in the brown band. Sizes there are A2 values (printed size
 = 0.352 of the figure). **An edit to `ad-a4.html` has to be copied here by hand.**
 
 | File | Use |
 |---|---|
 | `ad-a5.pdf` / `ad-a5-bleed.pdf` | Two pages, front then back — exact A5 / 154 × 216 mm with 3 mm bleed |
+| `ad-a5-front.pdf` / `ad-a5-front-bleed.pdf` | **Front only**, one page — for a single-sided run |
 | `ad-a5-share.pdf` | Two-page image PDF for WhatsApp / phones |
 | `png/ad-a5*.png`, `png/ad-a5-back*.png` | 1748 × 2480 (300 dpi), `-hd` 3496 × 4960 (600 dpi), `-small` 1400 px wide |
 
 Screenshots use `--window-size=560,794` (A5 is a fraction of a pixel smaller) and are cropped to the
-exact pixel size; `?png` is the front, `?png&side=back` the back.
+exact pixel size; `?png` is the front, `?png&side=back` the back. When *printing*, `?side=front` or
+`?side=back` gives that side alone (it combines with `?bleed`) — that is how the front-only PDFs are made.
