@@ -55,6 +55,12 @@ export const img = {
   heroGallery:  '1577222960414-17797ba82e98',  // flat-lay of decorated cookies
   heroContact:  '1599785209758-243af93bd074',  // pink-frosted cupcakes on white plate
 
+  // The birthday gift box (cake + flowers; the dessert cup beside them is a
+  // free extra). Square, with its own lettering in the corners, so every slot
+  // that shows it is 1:1. A plain phone shot of the same box was tried here
+  // and the owner preferred this one.
+  giftBirthdayBox: p('gift-box-birthday-flatlay.jpeg'),
+
   pinkDripCake: p('cake-pink-letter.jpeg'),
   cakeStand: p('cake-yellow-flowers.jpeg'),
   pipingBags: p('piping-bags.jpeg'),

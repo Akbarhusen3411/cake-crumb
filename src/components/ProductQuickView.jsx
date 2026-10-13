@@ -58,6 +58,8 @@ export default function ProductQuickView({ product, onClose }) {
   // The loose-piece row keeps its own count — it is a separate cart line
   // (`<id>-unit`) from the boxes, so sharing one stepper would be wrong.
   const [unitQty, setUnitQty] = useState(1)
+  // Which photo is showing, for the few products that have more than one.
+  const [shot, setShot] = useState(0)
   const modalRef = useRef(null)
 
   useEffect(() => {
@@ -120,10 +122,11 @@ export default function ProductQuickView({ product, onClose }) {
 
         <div className="qv-grid">
           {/* IMAGE — fills its column on desktop, stays square on mobile */}
-          <div className="qv-image-col">
+          <div className={`qv-image-col${p.photos ? ' qv-image-col--gallery' : ''}`}>
             <img
-              src={u(p.img, 800, 800)}
-              srcSet={srcSet(p.img)}
+              key={p.photos?.[shot] || p.img}
+              src={u(p.photos?.[shot] || p.img, 800, 800)}
+              srcSet={srcSet(p.photos?.[shot] || p.img)}
               /* The modal caps at 720px; the image column is 5/12 of it on
                  desktop and the full width on a phone. */
               sizes="(min-width: 720px) 300px, 100vw"
@@ -131,6 +134,22 @@ export default function ProductQuickView({ product, onClose }) {
               className="qv-image"
             />
             {p.badge && <span className="qv-badge">{p.badge}</span>}
+            {p.photos && (
+              <div className="qv-thumbs" role="group" aria-label="Product photos">
+                {p.photos.map((src, i) => (
+                  <button
+                    key={src}
+                    type="button"
+                    className={`qv-thumb${i === shot ? ' is-active' : ''}`}
+                    onClick={() => setShot(i)}
+                    aria-label={`Photo ${i + 1} of ${p.photos.length}`}
+                    aria-pressed={i === shot}
+                  >
+                    <img src={u(src)} srcSet={srcSet(src)} sizes="56px" alt="" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* DETAILS */}
@@ -447,6 +466,43 @@ export default function ProductQuickView({ product, onClose }) {
         }
         .qv-info-col > *:nth-child(1) { animation-delay: 0.10s; }
         .qv-info-col > *:nth-child(2) { animation-delay: 0.14s; }
+        /* A product with several photos: the frame shows the WHOLE picture
+           (contain, never cover) with the thumbnails under it. These are square
+           shots with lettering in the corners, which any crop cuts through. */
+        .qv-image-col--gallery {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 0.6rem;
+          padding: 0.75rem;
+          background: var(--cc-blush-soft);
+        }
+        .qv-image-col--gallery .qv-image {
+          width: 100%;
+          height: min(78vw, 44vh);
+          aspect-ratio: auto;
+          object-fit: contain;
+          border-radius: 12px;
+        }
+        .qv-thumbs { display: flex; gap: 0.5rem; }
+        .qv-thumb {
+          width: 56px;
+          height: 56px;
+          padding: 0;
+          border: 2px solid transparent;
+          border-radius: 10px;
+          overflow: hidden;
+          background: #fff;
+          cursor: pointer;
+          opacity: 0.7;
+          transition: opacity var(--cc-dur) var(--cc-ease), border-color var(--cc-dur) var(--cc-ease);
+        }
+        .qv-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .qv-thumb:hover { opacity: 1; }
+        .qv-thumb.is-active { opacity: 1; border-color: var(--cc-rose-deep); }
+        .qv-thumb:focus-visible { outline: 2px solid var(--cc-rose-deep); outline-offset: 2px; }
+
         .qv-info-col > *:nth-child(3) { animation-delay: 0.18s; }
         .qv-info-col > *:nth-child(4) { animation-delay: 0.22s; }
         .qv-info-col > *:nth-child(n+5) { animation-delay: 0.26s; }
@@ -472,6 +528,14 @@ export default function ProductQuickView({ product, onClose }) {
             aspect-ratio: auto;
             object-fit: cover;
             border-radius: 16px 0 0 16px;
+          }
+          /* Back in flow, so it can sit above its thumbnails: a square the
+             width of the column, which the 380px minimum already allows for. */
+          .qv-image-col--gallery .qv-image {
+            position: static;
+            height: auto;
+            aspect-ratio: 1 / 1;
+            border-radius: 12px;
           }
           .qv-info-col { padding: 1.4rem 1.6rem 1.6rem; }
         }

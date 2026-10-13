@@ -23,6 +23,7 @@ const CATEGORY_CONFIG = [
   { key: 'dessert-cups', category: 'Dessert Cups', emoji: '🍮', subtitle: 'Per cup · 150ml',                      strip: / Cup$/ },
   { key: 'drinks',       category: 'Drinks',       emoji: '🥤', subtitle: 'Per glass · +₹10 for cream on coffee' },
   { key: 'platters',     category: 'Platters',     emoji: '🥞', subtitle: 'Served fresh to order' },
+  { key: 'special-gifts', category: 'Special Gifts', emoji: '🎁', subtitle: 'Gift boxes · made to order' },
 ]
 
 // Long size labels get a compact form for the narrow price-column headers.

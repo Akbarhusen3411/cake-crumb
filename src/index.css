@@ -3732,6 +3732,72 @@ header[style*="sticky"] {
 }
 
 /* ABOUT — light pink, full bleed split */
+/* Birthday gift box band — photo beside text, stacked on a phone. The photo
+   is square and so is its frame; the frame carries the aspect ratio. */
+.cc-home-gift {
+  background: linear-gradient(180deg, #fbe6df 0%, #f5d9d2 100%);
+}
+.cc-home-gift__grid {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+  justify-items: center;
+}
+.cc-home-gift__media {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  aspect-ratio: 1/1;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow:
+    0 24px 60px -18px rgba(207, 62, 99, 0.28),
+    0 8px 22px -8px rgba(207, 62, 99, 0.14);
+}
+.cc-home-gift__media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cc-home-gift__text {
+  max-width: 480px;
+  text-align: center;
+}
+.cc-home-gift__lede {
+  margin: 0.5rem 0 1.25rem;
+  color: var(--cc-cocoa-soft);
+}
+.cc-home-gift__text .cc-infochips {
+  justify-content: center;
+}
+.cc-home-gift__price {
+  margin-top: 1.25rem;
+  font-family: var(--font-body);
+  font-variant-numeric: lining-nums tabular-nums;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--cc-rose-ink);
+}
+.cc-home-gift__btn {
+  margin-top: 0.9rem;
+}
+@media (min-width: 992px) {
+  .cc-home-gift__grid {
+    grid-template-columns: minmax(0, 460px) minmax(0, 480px);
+    justify-content: center;
+    gap: 4rem;
+  }
+  .cc-home-gift__text {
+    text-align: left;
+  }
+  .cc-home-gift__text .cc-infochips {
+    justify-content: flex-start;
+  }
+}
+
 .cc-home-about {
   background: var(--cc-blush-soft);
 }
@@ -3962,10 +4028,15 @@ header[style*="sticky"] {
     margin-right: auto;
   }
 }
+/* Square, and capped: the photo is a 1:1 gift-box shot with lettering in its
+   corners, which a 5/4 cover crop cut through. */
 .cc-menu-hero__img {
   width: 100%;
+  max-width: 520px;
+  height: auto;
+  margin: 0 auto;
   border-radius: 18px;
-  aspect-ratio: 5/4;
+  aspect-ratio: 1/1;
   object-fit: cover;
   object-position: center;
   display: block;
@@ -4032,6 +4103,12 @@ header[style*="sticky"] {
   width: 190px;
   border-radius: 14px;
   overflow: hidden;
+}
+/* A square photo keeps a square frame at every width, phone band included.
+   Doubled selector: the phone rule below sets 21/9 at the same specificity. */
+.cc-menu-card .cc-menu-card__media--square {
+  aspect-ratio: 1 / 1;
+  align-self: center;
 }
 .cc-menu-card__img {
   position: absolute;

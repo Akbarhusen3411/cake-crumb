@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cake &amp; Crumb — A4 advertisement</title>
 <!--
-  A4 copy of ad-a2.html (210 × 297 mm), English, one side. Laid out like a
+  A4 copy of ad-a2.html (210 × 297 mm), English, TWO sides: the front is the
+  A2 ad; the back (second .page, A4 only) is photos — see "Back side" in the
+  stylesheet. The PDF is two pages, front then back. The front is laid out like a
   retail ad: corner ribbon, round brand emblem, a "how to order" gift tag, headline, product
   cards beside a hero photo, a dark feature band, order + contact boxes with
   QR codes (WhatsApp, Instagram, Google), an occasions row and a closing
@@ -16,9 +18,10 @@
   larger type, so nothing prints much under 7.5 pt. Sizes there are A2
   values (printed size = half).
 
-  ad-a4.html        → 210 × 297 mm
-  ad-a4.html?bleed  → 216 × 303 mm (3 mm bleed = 6 A2-mm)
-  ad-a4.html?png    → page alone, for the PNG screenshot
+  ad-a4.html               → 210 × 297 mm, two pages
+  ad-a4.html?bleed         → 216 × 303 mm (3 mm bleed = 6 A2-mm)
+  ad-a4.html?png           → front alone, for the PNG screenshot
+  ad-a4.html?png&side=back → back alone
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -73,7 +76,8 @@ body {
 }
 @media print {
   body { background: none; }
-  .page { margin: 0; box-shadow: none; }
+  .page { margin: 0; box-shadow: none; break-after: page; }
+  .page:last-of-type { break-after: auto; }
 }
 /* Everything below is placed in the trim box, in millimetres from its top. */
 .sheet { position: absolute; inset: var(--b); }
@@ -535,6 +539,45 @@ body {
 .card__note { font-size: 15.5pt; line-height: 1.35; margin-top: 2.2mm; }
 .hero { top: 226mm; height: 199mm; }
 
+/* Birthday gift box (A4 front only). The photo is square with lettering in
+   its corners, so the frame is a square, not the A2's arch, and nothing
+   overlaps it; the room left under it is the banner that names the box,
+   with one round photo of the cake at its left end. */
+.hero__frame { inset: 0 0 auto 0; height: 160mm; border-radius: 10mm; }
+.hero__sticker { bottom: 47mm; }
+.bday {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34mm;
+  border-radius: 17mm;
+  background:
+    radial-gradient(80mm 40mm at 100% 0%, rgba(255, 255, 255, 0.18), transparent 70%),
+    linear-gradient(160deg, var(--rose-deep) 0%, #a92f50 100%);
+  box-shadow: 0 0 0 1.4mm #fff, 0 0 0 2mm var(--rose-soft), 0 4mm 10mm -5mm rgba(91, 62, 54, 0.5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3mm;
+  text-align: center;
+}
+.bday__pic {
+  position: relative;
+  flex-shrink: 0;
+  width: 28mm;
+  height: 28mm;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 1.2mm #fff;
+}
+.bday__pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bday__text { flex: 1; padding-right: 6mm; }
+.bday__kicker { display: block; font-family: var(--script); font-size: 30pt; line-height: 0.95; color: var(--pinktext); }
+.bday__title { display: block; font-family: var(--serif); font-weight: 800; font-size: 23pt; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.1; }
+.bday__sub { display: block; margin-top: 0.6mm; font-size: 15pt; font-weight: 700; line-height: 1.15; }
+
 /* Slimmer band; its room went to larger card photos. */
 .features { top: 433mm; height: 32mm; padding: 0 6mm; }
 .feature { gap: 3mm; padding: 0 3mm; }
@@ -625,6 +668,254 @@ body {
   font-size: 13pt;
   letter-spacing: 0;
 }
+/* ─── Back side (second page) ───────────────────────────────────────────
+   A4 only — ad-a2 has no back. Same A2 millimetres as the front. Sixteen
+   photos the owner picked from public/products (untouched copies in
+   img/b00–b15.jpg), in five bands placed from the page top like the front:
+
+     masthead 10 · feature 68 (hero + 2×2) · flavours 272 (round photos)
+     · gallery 380 (one wide + three tall) · closing panel 490 · strip
+
+   Each band is absolute, so making one taller means moving those below. */
+.mast {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 10mm;
+  height: 52mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.mast__brand { display: flex; align-items: center; gap: 5mm; }
+.mast__logo { height: 27mm; width: auto; }
+.mast__word {
+  font-family: var(--serif);
+  font-weight: 800;
+  font-size: 40pt;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  color: var(--cocoa);
+  white-space: nowrap;
+}
+.mast__word .amp { font-style: italic; font-size: 1.3em; color: var(--rose-deep); margin: 0 0.03em; }
+.mast__line {
+  display: flex;
+  align-items: center;
+  gap: 5mm;
+  margin-top: 0.5mm;
+  font-family: var(--script);
+  font-size: 38pt;
+  line-height: 1;
+  color: var(--rose-deep);
+}
+.mast__line svg { width: 15mm; height: 8mm; color: var(--rose); }
+.mast__line svg:last-child { transform: scaleX(-1); }
+
+/* Shared photo tile + name pill. */
+.tile {
+  position: relative;
+  border-radius: 6mm;
+  overflow: hidden;
+  background: var(--blush);
+  box-shadow: 0 0 0 1.2mm #fff, 0 0 0 1.7mm var(--rose-soft), 0 4mm 10mm -5mm rgba(91, 62, 54, 0.5);
+}
+.tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tile b {
+  position: absolute;
+  left: 3mm;
+  bottom: 3mm;
+  max-width: calc(100% - 6mm);
+  padding: 1.4mm 4mm;
+  border-radius: 10mm;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--cocoa);
+  font-size: 15pt;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 1.5mm 4mm -2mm rgba(68, 44, 38, 0.6);
+}
+
+/* Feature band: a large hero on a tilted rose card, four tiles beside it. */
+.bk-hero {
+  position: absolute;
+  left: 16mm;
+  top: 68mm;
+  width: 198mm;
+  height: 196mm;
+}
+.bk-hero::before {
+  content: '';
+  position: absolute;
+  inset: -1mm;
+  border-radius: 12mm;
+  background: linear-gradient(160deg, var(--rose-deep) 0%, #a92f50 100%);
+  transform: rotate(-2.2deg);
+}
+.bk-hero .tile { position: absolute; inset: 0; border-radius: 10mm; box-shadow: 0 0 0 2mm #fff, 0 6mm 14mm -6mm rgba(91, 62, 54, 0.6); }
+.bk-hero .tile b { left: 5mm; bottom: 5mm; font-size: 19pt; padding: 2mm 6mm; background: var(--rose-deep); color: #fff; }
+.sticker {
+  position: absolute;
+  right: 5mm;
+  top: 5mm;
+  background: #fff;
+  border-radius: 5mm;
+  padding: 3mm 6mm;
+  box-shadow: 0 3mm 8mm -4mm rgba(91, 62, 54, 0.6);
+  transform: rotate(4deg);
+}
+.sticker strong { display: block; font-family: var(--serif); font-size: 18pt; color: var(--cocoa); line-height: 1.1; }
+.sticker span { font-family: var(--script); font-size: 25pt; color: var(--rose-deep); line-height: 1; }
+.bk-four {
+  position: absolute;
+  right: 14mm;
+  top: 68mm;
+  width: 182mm;
+  height: 196mm;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 5mm;
+}
+
+/* Flavour band: round photos with the flavour under each. */
+.bk-flav {
+  position: absolute;
+  left: 14mm;
+  right: 14mm;
+  top: 274mm;
+  height: 98mm;
+  border-radius: 8mm;
+  background: #fff;
+  border: 0.6mm solid var(--blush-soft);
+  box-shadow: 0 5mm 14mm -8mm rgba(91, 62, 54, 0.45);
+  padding: 4mm 8mm 0;
+  text-align: center;
+}
+.bk-flav__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 5mm;
+  font-family: var(--script);
+  font-size: 36pt;
+  line-height: 1;
+  color: var(--rose-deep);
+}
+.bk-flav__title svg { width: 13mm; height: 7mm; color: var(--rose); }
+.bk-flav__title svg:last-child { transform: scaleX(-1); }
+.bk-flav__row { display: flex; justify-content: space-between; margin-top: 3.5mm; padding: 0 6mm; }
+.bk-flav__item { width: 60mm; }
+.bk-flav__pic {
+  position: relative;
+  display: block;
+  width: 60mm;
+  height: 60mm;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 1.4mm #fff, 0 0 0 2.2mm var(--rose-soft), 0 3mm 8mm -3mm rgba(91, 62, 54, 0.5);
+}
+.bk-flav__pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bk-flav__item b {
+  display: block;
+  margin-top: 3.4mm;
+  font-size: 16pt;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cocoa);
+}
+
+/* Gallery band: the one landscape photo wide, three tall ones beside it. */
+.bk-row {
+  position: absolute;
+  left: 14mm;
+  right: 14mm;
+  top: 381mm;
+  height: 101mm;
+  display: grid;
+  grid-template-columns: 150mm 1fr 1fr 1fr;
+  gap: 5mm;
+}
+
+/* Closing panel — NO contact details: the number, address and QR codes are
+   all on the front, and the owner did not want them said twice. A rose
+   invitation, the two gift photos, and the occasions. */
+.bk-order {
+  position: absolute;
+  left: 14mm;
+  right: 14mm;
+  top: 491mm;
+  height: 71mm;
+  display: grid;
+  /* The middle column holds unbreakable content (~146mm): if the three do not
+     add up to 392mm it overflows and pushes the occasions off the edge. */
+  grid-template-columns: 106mm minmax(0, 1fr) 132mm;
+  background: #fff;
+  border-radius: 8mm;
+  border: 0.6mm solid var(--blush-soft);
+  box-shadow: 0 5mm 14mm -7mm rgba(91, 62, 54, 0.45);
+  overflow: hidden;
+}
+.bk-cta {
+  background:
+    radial-gradient(80mm 60mm at 100% 0%, rgba(255, 255, 255, 0.18), transparent 70%),
+    linear-gradient(160deg, var(--rose-deep) 0%, #a92f50 100%);
+  color: #fff;
+  padding: 4mm 7mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.bk-cta__kicker { font-family: var(--script); font-size: 36pt; line-height: 1; color: var(--pinktext); white-space: nowrap; }
+.bk-cta__big { margin-top: 2mm; font-family: var(--serif); font-weight: 800; font-size: 27pt; line-height: 1.12; }
+.bk-cta__big em { font-style: italic; color: var(--pinktext); }
+.bk-cta__turn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5mm;
+  margin-top: 4mm;
+  padding: 1.8mm 5mm;
+  border-radius: 10mm;
+  background: #fff;
+  color: var(--rose-ink);
+  font-weight: 900;
+  font-size: 15pt;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.bk-gift { display: flex; align-items: center; justify-content: center; gap: 5mm; padding: 0 4mm; }
+.bk-gift__pics { display: flex; flex-shrink: 0; }
+.bk-gift__pic {
+  position: relative;
+  width: 40mm;
+  height: 40mm;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 1.4mm #fff, 0 0 0 2.1mm var(--rose-soft), 0 3mm 8mm -3mm rgba(91, 62, 54, 0.5);
+}
+.bk-gift__pic + .bk-gift__pic { margin-left: -9mm; }
+.bk-gift__pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bk-gift__script { font-family: var(--script); font-size: 31pt; line-height: 1; color: var(--rose-deep); white-space: nowrap; }
+.bk-occ {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  margin: 5mm 5mm 5mm 0;
+  border-radius: 5mm;
+  background: var(--cream);
+  border: 0.5mm solid var(--blush-soft);
+}
+.bk-occ__item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2mm; }
+.bk-occ__item:nth-child(odd) { border-right: 0.4mm dashed var(--rose-soft); }
+.bk-occ__item:nth-child(-n+2) { border-bottom: 0.4mm dashed var(--rose-soft); }
+.bk-occ__item svg { width: 13mm; height: 13mm; color: var(--rose-deep); }
+.bk-occ__item b { font-size: 15pt; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; color: var(--cocoa); }
 </style>
 </head>
 <body>
@@ -637,8 +928,10 @@ body {
     document.head.appendChild(s)
   }
   if (q.has('png')) {
+    // A screenshot holds one page: the front, or the back with &side=back.
+    const hide = q.get('side') === 'back' ? '.page--front' : '.page--back'
     const s = document.createElement('style')
-    s.textContent = 'body{background:none}.page{margin:0!important;box-shadow:none!important}'
+    s.textContent = 'body{background:none}.page{margin:0!important;box-shadow:none!important}' + hide + '{display:none}'
     document.head.appendChild(s)
   }
 </script>
@@ -666,7 +959,7 @@ body {
   </defs>
 </svg>
 
-<section class="page">
+<section class="page page--front">
   <div class="sheet">
 
     <!-- decoration -->
@@ -744,10 +1037,18 @@ body {
     </div>
 
     <div class="hero">
-      <div class="hero__frame"><img src="img/g02.jpg" alt=""></div>
-      <div class="hero__mini" style="right:-8mm;top:20mm"><img src="img/g00.jpg" alt=""></div>
-      <div class="hero__mini" style="right:-6mm;top:74mm;width:38mm;height:38mm"><img src="img/g05.jpg" alt=""></div>
+      <!-- public/products/gift-box-birthday-flatlay.jpeg — the owner chose this styled shot over the plain one. -->
+      <div class="hero__frame"><img src="img/gift-birthday-box.jpg" alt=""></div>
       <div class="hero__sticker"><b>Made just for you</b><span>freshly baked</span></div>
+      <div class="bday">
+        <!-- the same photo as the hero, zoomed onto the cake -->
+        <span class="bday__pic"><img src="img/gift-birthday-box.jpg" alt="" style="inset:auto;left:-31%;top:-120%;width:267%;height:267%"></span>
+        <div class="bday__text">
+          <span class="bday__kicker">Birthday special</span>
+          <span class="bday__title">Gift Box</span>
+          <span class="bday__sub">Cake · flowers · free dessert cup</span>
+        </div>
+      </div>
     </div>
 
     <div class="features">
@@ -789,6 +1090,97 @@ body {
       <div class="occ"><svg><use href="#i-rings"/></svg><div><b>Anniversaries</b><span>Made-to-order cakes</span></div></div>
       <div class="occ"><svg><use href="#i-party"/></svg><div><b>Parties</b><span>Dessert boxes &amp; tubs</span></div></div>
       <div class="occ"><svg><use href="#i-gift"/></svg><div><b>Gifting</b><span>Treat boxes</span></div></div>
+    </div>
+
+  </div>
+
+  <div class="strip">
+    <span class="star">✦</span>
+    <span>Life is sweeter when it&rsquo;s shared…</span>
+    <span class="star">✦</span>
+    <b>CAKE &amp; CRUMB</b>
+    <em>where every bite tells a sweet story</em>
+    <span class="star">✦</span>
+  </div>
+</section>
+
+<!-- ═══ Back side ═══ -->
+<section class="page page--back">
+  <div class="sheet">
+
+    <span class="deco" style="left:30mm;top:18mm;width:9mm;height:9mm"><svg><use href="#i-spark"/></svg></span>
+    <span class="deco" style="left:58mm;top:42mm;width:6mm;height:6mm"><svg><use href="#i-heart-fill"/></svg></span>
+    <span class="deco" style="left:20mm;top:50mm;width:5mm;height:5mm"><svg><use href="#i-spark"/></svg></span>
+    <span class="deco" style="left:380mm;top:16mm;width:10mm;height:10mm;opacity:.4"><svg><use href="#i-heart-fill"/></svg></span>
+    <span class="deco" style="left:352mm;top:40mm;width:7mm;height:7mm"><svg><use href="#i-spark"/></svg></span>
+    <span class="deco" style="left:394mm;top:52mm;width:5mm;height:5mm"><svg><use href="#i-spark"/></svg></span>
+
+    <div class="mast">
+      <div class="mast__brand">
+        <img class="mast__logo" src="img/logo-print.png" alt="">
+        <div class="mast__word">CAKE<span class="amp">&amp;</span>CRUMB</div>
+      </div>
+      <div class="mast__line"><svg><use href="#i-leaf"/></svg>A little taste of what we bake<svg><use href="#i-leaf"/></svg></div>
+    </div>
+
+    <!-- Each photo is public/products/<name>.jpeg — the name is beside it. -->
+
+    <!-- Feature: hero + four -->
+    <div class="bk-hero">
+      <div class="tile">
+        <img src="img/b00.jpg" alt="" style="object-position:50% 45%">  <!-- dessertcup-assorted-flatlay -->
+        <div class="sticker"><strong>Made just for you</strong><span>freshly baked</span></div>
+        <b>Dessert tubs</b>
+      </div>
+    </div>
+    <div class="bk-four">
+      <div class="tile"><img src="img/b02.jpg" alt="" style="object-position:50% 55%"><b>Custom cakes</b></div>  <!-- cake-pink-rose-mothers-day -->
+      <div class="tile"><img src="img/b04.jpg" alt=""><b>Cupcakes</b></div>  <!-- cupcakes-box-large -->
+      <div class="tile"><img src="img/b05.jpg" alt="" style="object-position:50% 55%"><b>Cheesecakes</b></div>  <!-- milkcake-pomegranate -->
+      <div class="tile"><img src="img/b03.jpg" alt=""><b>Cheesecake tubs</b></div>  <!-- cheesecake-choc-mango -->
+    </div>
+
+    <!-- Flavours: round photos -->
+    <div class="bk-flav">
+      <div class="bk-flav__title"><svg><use href="#i-leaf"/></svg>Pick your favourite flavour<svg><use href="#i-leaf"/></svg></div>
+      <div class="bk-flav__row">
+        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b10.jpg" alt="" style="object-position:50% 60%"></span><b>Mango</b></div>  <!-- milkcake-mango-bento -->
+        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b11.jpg" alt="" style="object-position:50% 62%"></span><b>Blueberry</b></div>  <!-- milkcake-blueberry-bento -->
+        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b12.jpg" alt="" style="object-position:50% 60%"></span><b>Rose</b></div>  <!-- milkcake-rose-bento -->
+        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b07.jpg" alt=""></span><b>Pistachio</b></div>  <!-- dessertcup-pistachio-cream -->
+        <div class="bk-flav__item"><span class="bk-flav__pic"><img src="img/b15.jpg" alt=""></span><b>Chocolate</b></div>  <!-- dessertcup-chocolate-pudding -->
+      </div>
+    </div>
+
+    <!-- Gallery: one wide, three tall -->
+    <div class="bk-row">
+      <div class="tile"><img src="img/b01.jpg" alt="" style="object-position:46% 50%"><b>Milk cake tubs</b></div>  <!-- milkcake-assorted-tubs -->
+      <div class="tile"><img src="img/b06.jpg" alt=""><b>Rose cream</b></div>  <!-- dessertcup-rose-cream -->
+      <div class="tile"><img src="img/b13.jpg" alt="" style="object-position:50% 75%"><b>Brownies</b></div>  <!-- brownie-chocolate-boxes -->
+      <div class="tile"><img src="img/b14.jpg" alt="" style="object-position:50% 62%"><b>Mango cupcake</b></div>  <!-- cupcakes-mango -->
+    </div>
+
+    <!-- Closing panel — no contact details here (they are on the front).
+         The two heart photos are unnamed on purpose. -->
+    <div class="bk-order">
+      <div class="bk-cta">
+        <div class="bk-cta__kicker">Which one is yours?</div>
+        <div class="bk-cta__big">Your favourite,<br><em>freshly made</em> for you</div>
+        <span class="bk-cta__turn">Turn over to order &#8594;</span>
+      </div>
+      <div class="bk-gift">
+        <div class="bk-gift__pics">
+          <span class="bk-gift__pic"><img src="img/b08.jpg" alt="" style="object-position:50% 62%"></span>  <!-- truffles-rose-pistachio-hearts -->
+          <span class="bk-gift__pic"><img src="img/b09.jpg" alt="" style="object-position:50% 58%"></span>  <!-- truffles-hearts -->
+        </div>
+        <div class="bk-gift__script">A sweet surprise<br>for someone<br>special</div>
+      </div>
+      <div class="bk-occ">
+        <div class="bk-occ__item"><svg><use href="#i-cake"/></svg><b>Birthdays</b></div>
+        <div class="bk-occ__item"><svg><use href="#i-rings"/></svg><b>Anniversaries</b></div>
+        <div class="bk-occ__item"><svg><use href="#i-party"/></svg><b>Parties</b></div>
+        <div class="bk-occ__item"><svg><use href="#i-gift"/></svg><b>Gifting</b></div>
+      </div>
     </div>
 
   </div>

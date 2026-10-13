@@ -132,12 +132,23 @@ const CARDS = [
     note: () => `♥ ${inCategory('Drinks').length} in all — mojitos, milkshakes, iced & hot coffee.`,
   },
   {
+    // One product, so one row — it sits beside Platters on the last row, the
+    // two short cards together, instead of beside a card of four.
+    title: 'Special Gifts',
+    category: 'Special Gifts',
+    picks: ['sg-birthday-box'],
+    // The photo is a 1:1 shot with lettering in its corners; the usual frame
+    // (as tall as the rows, a 21:9 band on a phone) cut through it.
+    square: true,
+    note: () => '♥ Birthday — a cake and fresh flowers in one box, with a free dessert cup.',
+  },
+  {
     // Platters had no card at all, so Pancakes and Crêpe Rolls appeared
     // nowhere on this page — the only category of the nine that was invisible
     // here. Both picks are the whole category, so there is no "+N more".
-    // LAST on purpose: with two rows it is the one card shorter than the
-    // rest, so it sits alone on the final row rather than beside a card of
-    // four and leaving a gap in the middle of the page.
+    // LAST on purpose: with two rows it is shorter than the cards of four,
+    // so it shares the final row with Special Gifts (one row) rather than
+    // sitting beside a card of four and leaving a gap mid-page.
     title: 'Platters',
     category: 'Platters',
     picks: ['pl-pancakes', 'pl-crepes'],
@@ -238,8 +249,12 @@ export default function Menu() {
             </div>
             <div className="col-lg-6">
               <img
-                src={u(img.heroMenu, 1000, 800)}
-                alt="Assorted pastries arranged on ceramic trays"
+                src={u(img.giftBirthdayBox)}
+                srcSet={srcSet(img.giftBirthdayBox)}
+                sizes="(min-width: 992px) 520px, 92vw"
+                width="800"
+                height="800"
+                alt="Cake & Crumb birthday gift box — a pink cake, a dessert tub and a rose bouquet"
                 className="cc-menu-hero__img"
                 fetchPriority="high"
               />
@@ -264,7 +279,7 @@ export default function Menu() {
                 {/* The photo fills a frame beside the text rather than setting
                     the card's height — out of flow, so the four rows decide it
                     and every card matches. Full-width band on a phone. */}
-                <span className="cc-menu-card__media">
+                <span className={`cc-menu-card__media${card.square ? ' cc-menu-card__media--square' : ''}`}>
                   <img
                     src={u(menuCardPhoto(card.title), 600, 700)}
                     srcSet={srcSet(menuCardPhoto(card.title))}

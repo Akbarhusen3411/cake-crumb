@@ -100,3 +100,24 @@ millimetres), and a smaller emblem so the name clears its ring. Otherwise the sa
 - **`qr/google-hd.png`** is `qr/google.png` enlarged 4× with nearest-neighbour, so its squares keep
   hard edges; at 456 px PDF viewers smoothed it into a blur. All four designs use it. Remake it the
   same way if Google's QR is ever re-exported.
+
+# A4 advertisement, back side — second page of `ad-a4.html`
+
+`ad-a4.html` holds both sides: the front, then a photos-only back (A4 only — `ad-a2` has no back).
+The back is five bands of the owner's sixteen photos: a masthead, a large dessert-tub hero beside four
+tiles, a "Pick your favourite flavour" row of round photos, a wide-plus-three photo row, and an order
+panel (number, Call / WhatsApp pills, lead time, the WhatsApp QR) above the same closing strip as the
+front. The two heart photos sit unnamed in the order panel. No prices. The front's hero is the
+birthday gift box, with a "Birthday special — Gift Box" banner under it (A4 only).
+
+| File | Use |
+|---|---|
+| `ad-a4.pdf` / `ad-a4-bleed.pdf` | **Two pages: front, then back** — print double-sided |
+| `ad-a4-share.pdf` | Two-page image PDF for WhatsApp / phones |
+| `png/ad-a4-back.png` / `-hd.png` / `-hd.jpg` / `-small.png` | The back alone: 300 dpi / 600 dpi / 1400 px wide |
+
+Screenshots hold one page: `?png` is the front, `?png&side=back` the back.
+
+`img/b00.jpg` – `b15.jpg` are untouched copies of `public/products/<name>.jpeg`; the source name is
+in a comment beside each tile. To swap a photo, replace that `bNN.jpg` and re-export. To print bare
+photos, delete the `<b>…</b>` pill inside each tile. Bands are placed absolutely from the page top.

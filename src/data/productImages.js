@@ -179,6 +179,9 @@ export const PRODUCT_IMAGES = {
   'Pancake (stack of 3)':                 'platter-pancake-strawberry.jpeg',
   'Crêpe Roll (Nutella filled)':          'bakes-rose-petal-bars.jpeg',
 
+  // ───── SPECIAL GIFTS ─────
+  'Birthday Gift Box':                    'birthday-gift-box.jpeg',
+
   // ───── DESSERT CUPS ─────
   'Vanilla Custard Cup':                  'dessert-cups-lemon.jpeg',
   'Chocolate Custard Cup':                'dessertcup-chocolate-pudding.jpeg',
@@ -234,6 +237,15 @@ export const PRODUCT_IMAGES = {
   'Brookie Dipping Box':                  'cookies-choc-chunk-nut.jpeg',
 }
 
+/**
+ * Further photos of a product, after the main one in PRODUCT_IMAGES — shown as
+ * thumbnails in the quick view. Almost nothing has a second photo, so this is
+ * a short opt-in list rather than an array on every row above.
+ */
+export const EXTRA_PHOTOS = {
+  'Birthday Gift Box': ['gift-box-birthday-flatlay.jpeg'],
+}
+
 /** The six category teaser cards on the Menu page (keyed by card title). */
 export const MENU_CARD_IMAGES = {
   'Cheesecakes':     'cheesecake-blueberry-whole.jpeg',
@@ -246,6 +258,7 @@ export const MENU_CARD_IMAGES = {
   // Added with the Platters card on /menu — without an entry here the card
   // silently falls back to the generic bakery shot.
   'Platters':        'platter-pancake-strawberry.jpeg',
+  'Special Gifts':   'birthday-gift-box.jpeg',
   'Drinks':          'drink-virgin-mojito.jpeg',
 }
 
@@ -275,6 +288,12 @@ export function photoFor(name, map = PRODUCT_IMAGES) {
     return toPath(FALLBACK_PHOTO)
   }
   return toPath(file)
+}
+
+/** Every photo of a product, main one first — or null when it has only the one. */
+export function photosFor(name) {
+  const extra = EXTRA_PHOTOS[name]
+  return extra?.length ? [photoFor(name), ...extra.map(toPath)] : null
 }
 
 /** Same lookup for the Menu page's category cards. */

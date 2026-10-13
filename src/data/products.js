@@ -1,4 +1,4 @@
-import { photoFor } from './productImages.js'
+import { photoFor, photosFor } from './productImages.js'
 import { inr } from './format.js'
 
 // All prices in INR. Sourced from menu.html.
@@ -10,7 +10,11 @@ import { inr } from './format.js'
 // name and the picture sat in two different columns and nothing checked them.
 // Rename a product below → rename its key in productImages.js too, or it falls
 // back to a generic shot (and says so in the dev console).
-const withPhoto = (p) => ({ ...p, img: photoFor(p.name) })
+// `photos` is only set for the few products with more than one (EXTRA_PHOTOS).
+const withPhoto = (p) => {
+  const photos = photosFor(p.name)
+  return { ...p, img: photoFor(p.name), ...(photos && { photos }) }
+}
 
 // Default allergen sets per category — most baked goods share these.
 const A_BAKED   = ['contains-egg', 'contains-dairy', 'contains-gluten', 'eggless-option']
@@ -190,6 +194,11 @@ export const shopProducts = [
   // ───── PLATTERS ─────
   { id: 'pl-pancakes', name: 'Pancake (stack of 3)', price: 180, category: 'Platters' },
   { id: 'pl-crepes', name: 'Crêpe Roll (Nutella filled)', price: 70, category: 'Platters' },
+
+  // ───── SPECIAL GIFTS ─────
+  // One product today. `group` is the occasion ("Birthday"), so a second
+  // occasion is a new row with its own group, not a new category.
+  { id: 'sg-birthday-box', name: 'Birthday Gift Box', price: 1400, category: 'Special Gifts', sizeLabel: 'Box', group: 'Birthday', desc: 'A birthday cake and fresh flowers, packed together in one gift box — and a dessert cup comes free with it.' },
 
   // ───── DESSERT CUPS ─────
   { id: 'dc-custard-vanilla', name: 'Vanilla Custard Cup', price: 60, category: 'Dessert Cups', sizeLabel: '150ml' },
@@ -434,6 +443,7 @@ function attachAllergens(p) {
     case 'Cupcakes':
     case 'Bakes':
     case 'Platters':
+    case 'Special Gifts':
       tags = ['contains-egg', 'contains-dairy', 'contains-gluten', 'eggless-option']
       if (hasNuts) tags.push('contains-nuts')
       break

@@ -32,7 +32,7 @@ import AllergenTags from '../components/AllergenTags.jsx'
  */
 const CATEGORIES = [
   'All Products', 'Cheesecakes', 'Milk Cakes', 'Sponge Cakes', 'Cookies', 'Cupcakes',
-  'Bakes', 'Cake Pops', 'Cakesicles', 'Dessert Cups', 'Platters', 'Drinks',
+  'Bakes', 'Cake Pops', 'Cakesicles', 'Dessert Cups', 'Platters', 'Drinks', 'Special Gifts',
 ]
 
 // How many products render before "Show more". 120 products at 12 a page meant

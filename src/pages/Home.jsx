@@ -5,7 +5,7 @@ import {
   FiSearch, FiMessageCircle, FiClock, FiStar, FiArrowRight,
 } from 'react-icons/fi'
 import { TbLeaf, TbCake } from 'react-icons/tb'
-import { featured } from '../data/products.js'
+import { featured, shopProducts } from '../data/products.js'
 import { img, u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { useCart } from '../context/CartContext.jsx'
@@ -16,6 +16,9 @@ import OffersBand from '../components/OffersBand.jsx'
 import HeroOffers from '../components/HeroOffers.jsx'
 import OffersTicker from '../components/OffersTicker.jsx'
 import { OFFERS_ON } from '../data/offers.js'
+
+// The Home band quotes this product's price from the catalogue, never its own copy.
+const GIFT_BOX = shopProducts.find((p) => p.id === 'sg-birthday-box')
 
 export default function Home() {
   const { add } = useCart()
@@ -155,6 +158,49 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ───── BIRTHDAY GIFT BOX ─────
+          The product is `sg-birthday-box` in products.js; the price shown and
+          the button's target both come from that entry. Remove the product
+          and the whole band goes with it. */}
+      {GIFT_BOX && (
+      <section className="cc-home-gift">
+        <div className="container py-5">
+          <div className="cc-home-gift__grid">
+            <div className="cc-home-gift__media">
+              <img
+                src={u(img.giftBirthdayBox)}
+                srcSet={srcSet(img.giftBirthdayBox)}
+                sizes="(min-width: 992px) 460px, 92vw"
+                alt="Birthday gift box with a pink cake, a dessert tub and a rose bouquet"
+                loading="lazy"
+              />
+            </div>
+            <div className="cc-home-gift__text">
+              <span className="eyebrow">Birthday Special</span>
+              <h2 className="section-title mt-3">The Birthday Gift Box</h2>
+              <HeartDivider width={50} />
+              <p className="cc-home-gift__lede">
+                A birthday cake and fresh flowers, packed together in one box — a whole
+                birthday surprise, ready to hand over. A dessert cup comes free with it.
+              </p>
+              <div className="cc-infochips">
+                <span className="cc-infochip"><FiGift aria-hidden /> Made to order</span>
+                <span className="cc-infochip"><FiClock aria-hidden /> Order a day ahead</span>
+                <span className="cc-infochip"><FiHeart aria-hidden /> Free dessert cup</span>
+              </div>
+              <div className="cc-home-gift__price">{inr(GIFT_BOX.price)}</div>
+              <Link
+                to={`/shop?category=${encodeURIComponent(GIFT_BOX.category)}&product=${GIFT_BOX.id}`}
+                className="btn-rose cc-home-gift__btn"
+              >
+                <FiGift size={16} /> Order the Birthday Gift Box
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+      )}
 
       {/* ───── HOW TO ORDER ─────
           The home page had exactly one link to /shop and never explained how
