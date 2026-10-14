@@ -372,7 +372,7 @@ imported by the app and not in the Vite build; `pamphlet/README.md` lists every 
   - **The back is five absolutely-placed bands** — masthead (logo, name, the brand tagline, "A little
     taste of what we bake") · dessert-tub hero + four tiles · "Pick your favourite" round photos ·
     one wide + three tall · closing panel. Photos are untouched copies in `img/bNN.jpg`, the source
-    name in a comment beside each; several are spare files from earlier rounds. Like the front, a
+    name in a comment beside each; the gaps in the numbering are spares deleted in Oct 2026. Like the front, a
     taller band means moving the ones below it.
   - **Every name on the back is the owner's wording, corrected by hand — don't re-derive one from a
     filename.** The file `dessertcup-rose-cream` is **Strawberry**; the dark hearts are **"Heart

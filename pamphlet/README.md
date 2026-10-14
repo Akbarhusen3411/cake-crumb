@@ -149,7 +149,7 @@ Screenshots hold one page: `?png` is the front, `?png&side=back` the back.
 
 `img/bNN.jpg` are untouched copies of the owner's photos — most from `public/products/<name>.jpeg`
 (the source name is in a comment beside each tile), `b21`/`b22` the two cake-pop photos sent
-separately. A few numbers are spares from earlier rounds and are no longer on the page. To swap a
+separately. Gaps in the numbering are spares from earlier rounds, since deleted. To swap a
 photo, replace that `bNN.jpg` and re-export. Bands are placed absolutely from the page top, so a
 taller band means moving the ones below it; leave room for the photo rings, which are drawn
 *outside* their boxes.
