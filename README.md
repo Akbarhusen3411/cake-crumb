@@ -30,7 +30,11 @@ npm run dev               # http://localhost:5173/cake-crumb/
 | `npm run build` | Production build → `dist/` |
 | `npm run preview` | Serve the built `dist/` for smoke-testing |
 | `npm run lint` | ESLint over the repo |
+| `npm run photos` | Link, resize and check product photos (see [`PHOTOS.md`](./PHOTOS.md)) |
+| `npm run check-images` | Every product has a photo, every photo exists |
+| `npm run check-prices` | Home's featured cards still match the catalogue price |
 | `npm run optimize-images` | Generate `.webp` siblings for everything in `/public` |
+| `npm run convert-videos` | Phone clips → web-ready muted `.mp4` + poster |
 | `npm run deploy` | Build + push `dist/` to the `gh-pages` branch |
 
 After dropping new raster files into `/public`, run `npm run optimize-images` once so the runtime helper can serve them as WebP.
@@ -65,6 +69,16 @@ src/
   services/        orders, reviews, newsletter, emailNotify, orderId
   firebase.js      Initializes Firebase only if VITE_FIREBASE_* are set
 ```
+
+## Print material
+
+Not part of the site build — each folder has its own README with the files and how to re-make them.
+
+| Folder | What's in it |
+|---|---|
+| [`menu/`](./menu/README.md) | Seven-page A4 **priced menu**, generated from `src/data/products.js` — run `node menu/build-menu.mjs && node menu/export-menu.mjs` after a price change |
+| [`pamphlet/`](./pamphlet/README.md) | Posters and ads (A2 · A4 · A5), no prices |
+| [`cards/`](./cards/README.md) | Visiting card, thank-you card, A5 contact card, and the shared QR codes |
 
 For deeper architecture notes (the GitHub Pages base-path quirk, the three-pronged order flow, the progressive-enhancement Firebase pattern) see [`CLAUDE.md`](./CLAUDE.md).
 
