@@ -307,7 +307,8 @@ No coupon field, no promo code, no percentage off. Discounts were scoped and **e
 
 Two designs, each in A2 (420 × 594 mm) and A4 — the ad in A5 as well — English only, as editable HTML plus exports. Not
 imported by the app and not in the Vite build; `pamphlet/README.md` lists every file. (The older
-`offers/` folder of offer posters was deleted in Oct 2026.)
+`offers/` folder of offer posters was deleted in Oct 2026.) The **priced** print piece is the A4 menu in
+`menu/` — see *Printed menu*; the posters stay unpriced so a price change never needs a reprint.
 
 - **`ad-a2.html`** is the retail-ad layout (emblem, an "Easy as 1·2·3" gift tag, product cards, hero
   photo, feature band, one order panel with three QR codes) and the one recommended for walls.
@@ -433,7 +434,9 @@ build. `cards/README.md` lists every file.
   opens `MAP_LINK`, the listing, not the write-review form — it predates the place ID now in
   `GOOGLE_REVIEW_LINK`, so regenerating it from that would open the review box directly.
   `qr/website.svg` exists but is **off the visiting card by the owner's choice** until the shop's
-  product photos match their names.
+  product photos match their names. **`menu/` loads `whatsapp.svg`, `instagram.svg` and `reviews.svg`
+  from here by relative path** — renaming or moving one breaks the menu's contact page, and a
+  regenerated code needs a menu rebuild before its PDFs carry it.
 - **`contact-card.html` is a third card with a THIRD look** — A5, one side, drawn in real millimetres
   (no `zoom`). It began as an image the owner supplied with wrong details, and its theme is matched
   to that image: blush paper, rose-gold double frame, rose icons. It re-tints `card.css`'s variables

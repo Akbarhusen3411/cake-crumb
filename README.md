@@ -63,11 +63,13 @@ Copy `.env.example` → `.env` and fill in the keys you want to use. **Restart t
 src/
   components/      Reusable UI (Navbar, Footer, ChatBot, WhatsAppButton, …)
   context/         CartContext — single source of truth for cart state
-  data/            Static catalogs: products, images, festivals
-  hooks/           usePageMeta, useJsonLd
-  pages/           Route components (Home, Shop, Checkout, Reviews, …)
-  services/        orders, reviews, newsletter, emailNotify, orderId
+  data/            Static data: products, images, offers, festivals, shopConfig, certifications, accounting menu
+  hooks/           usePageMeta, useJsonLd, useIsMobile, useOfferClock
+  pages/           Route components (Home, Shop, Checkout, Reviews, admin, …)
+  services/        orders, reviews, newsletter, emailNotify, orderId, delivery, accounting
+  utils/           invoice, CSV export, dates, image compression, review guard
   firebase.js      Initializes Firebase only if VITE_FIREBASE_* are set
+scripts/           Photo, price, video and sitemap helpers behind the npm scripts
 ```
 
 ## Print material
@@ -80,7 +82,7 @@ Not part of the site build — each folder has its own README with the files and
 | [`pamphlet/`](./pamphlet/README.md) | Posters and ads (A2 · A4 · A5), no prices |
 | [`cards/`](./cards/README.md) | Visiting card, thank-you card, A5 contact card, and the shared QR codes |
 
-For deeper architecture notes (the GitHub Pages base-path quirk, the three-pronged order flow, the progressive-enhancement Firebase pattern) see [`CLAUDE.md`](./CLAUDE.md).
+For deeper architecture notes (the GitHub Pages base-path quirk, the four-part order flow, the accounting admin, invoices, the progressive-enhancement Firebase pattern) see [`CLAUDE.md`](./CLAUDE.md).
 
 ## Deployment
 
