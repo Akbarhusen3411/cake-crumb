@@ -29,7 +29,7 @@ Margins **None**, Scale **100**.
 | `instagram.svg` | https://www.instagram.com/cake_and_crumb_1/ |
 | `reviews.svg` | https://maps.google.com/?cid=3355775214967278598 (the Google listing — same as `MAP_LINK` in `src/data/shopConfig.js`) |
 | `website.svg` | https://akbarhusen3411.github.io/cake-crumb/ (spare — taken off the visiting card until the site's product photos are finished) |
-| `whatsapp.svg` | https://wa.me/919173183440 (used on the contact card) |
+| `whatsapp.svg` | https://wa.me/919173183440 (used on the contact card and the menu) |
 
 The review QR opens the bakery's Google listing, where the customer taps *Reviews*.
 For a QR that opens the "write a review" box directly, copy the **Ask for reviews**
@@ -38,6 +38,11 @@ middle doesn't stop them scanning) and drawn as filled squares, not strokes — 
 render stroked QR codes as stripes.
 
 Scan every QR with a phone before printing.
+
+**The printed menu reads these files directly.** Page 7 of `../menu/` loads `whatsapp.svg`,
+`instagram.svg` and `reviews.svg` from this folder, so don't rename or move them. After
+regenerating one, rebuild the menu too (`node menu/build-menu.mjs && node menu/export-menu.mjs`)
+or its PDFs keep the old code.
 
 ## Contact card
 
