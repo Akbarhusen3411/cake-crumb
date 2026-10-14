@@ -1,3 +1,16 @@
+# Print posters — `pamphlet/`
+
+Two designs, English only, none of them priced:
+
+| Design | Sizes | Sides | For |
+|---|---|---|---|
+| **Poster** (`poster-*`) — calm menu board, 13 photos, names-only menu | A2 · A4 | One | Counters, waiting areas |
+| **Advertisement** (`ad-*`) — retail-ad layout, gift box, order panel with QR codes | A2 · A4 · A5 | A2 one side; A4 and A5 front + photo back | Walls, handouts, handbills |
+
+**Need a menu with prices?** That is `../menu/` — a seven-page A4 menu card generated from
+`src/data/products.js` (see `menu/README.md`). The posters stay unpriced so a price change never
+needs a reprint.
+
 # A2 poster — English, one side
 
 A 420 × 594 mm poster in the website's branding (Playfair Display, Lato, Allura; rose / cream /
