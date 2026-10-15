@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Red Velvet Taste Test</title>
+<!-- One-day social post (Instagram / WhatsApp status), 1080 × 1350 (4:5).
+     Price is the live Red Velvet Cupcakes box of 6 (₹180, products.js cup-redvelvet) at 50% off.
+     Export: chrome --headless=new --hide-scrollbars --virtual-time-budget=10000
+       --force-device-scale-factor=2 --window-size=1080,1350
+       --screenshot=png/offer-red-velvet-en.png "file:///…/pamphlet/offer-red-velvet-en.html?png" -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Baloo+Bhai+2:wght@500;600;700;800&family=Lato:wght@400;700;900&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&display=block" rel="stylesheet">
+<style>
+  :root {
+    --rv: #9e1b32;        /* red velvet */
+    --rv-deep: #6e0f22;
+    --rose: #e0617a;
+    --rose-ink: #ad2f4e;
+    --blush: #f7e3df;
+    --cream: #fff6f2;
+    --cocoa: #5b3e36;
+    --gold: #c9a24b;
+    --serif: 'Playfair Display', Georgia, serif;
+    --sans: 'Lato', system-ui, sans-serif;
+    --script: 'Allura', cursive;
+    --guj: 'Lato', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #d9d2cf; }
+  body { display: grid; place-items: center; min-height: 100vh; padding: 40px 0; font-family: var(--sans); }
+  html.png body { padding: 0; display: block; }
+
+  .page {
+    position: relative; width: 1080px; height: 1350px; overflow: hidden;
+    background:
+      radial-gradient(circle at 85% 8%, rgba(224,97,122,.18), transparent 38%),
+      radial-gradient(circle at 10% 95%, rgba(158,27,50,.12), transparent 40%),
+      var(--cream);
+    color: var(--cocoa);
+  }
+  /* double rose frame */
+  .page::before, .page::after { content: ''; position: absolute; pointer-events: none; border-radius: 28px; }
+  .page::before { inset: 22px; border: 3px solid var(--rv); }
+  .page::after  { inset: 32px; border: 1.5px solid var(--rose); opacity: .7; }
+
+  /* scattered hearts */
+  .heart { position: absolute; color: var(--rose); opacity: .35; font-size: 34px; line-height: 1; }
+
+  /* ---------- masthead ---------- */
+  .mast { position: absolute; top: 58px; left: 70px; right: 70px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 16px; }
+  .brand img { height: 84px; width: auto; }
+  .brand__name { font-family: var(--serif); font-weight: 800; font-size: 40px; color: var(--cocoa); line-height: 1; }
+  .brand__name i { font-style: italic; color: var(--rose); font-size: 1.15em; }
+  .brand__tag { font-family: var(--script); font-size: 28px; color: #1a1a1a; margin-top: 4px; white-space: nowrap; }
+  .today {
+    background: var(--rv); color: #fff; border-radius: 999px; padding: 12px 26px 10px;
+    font-family: var(--guj); font-weight: 700; font-size: 27px; line-height: 1.05; text-align: center;
+    box-shadow: 0 6px 16px rgba(110,15,34,.25);
+  }
+  .today small { display: block; font-family: var(--sans); font-weight: 900; font-size: 15px; letter-spacing: .22em; opacity: .85; }
+
+  /* ---------- headline ---------- */
+  .head { position: absolute; top: 178px; left: 0; right: 0; text-align: center; }
+  .kicker { font-family: var(--guj); font-weight: 700; font-size: 40px; color: var(--rose-ink); }
+  .title {
+    font-family: var(--serif); font-weight: 900; font-size: 92px; line-height: .95; color: var(--rv);
+    letter-spacing: -.01em; margin-top: 4px;
+  }
+  .title em { font-family: var(--script); font-style: normal; font-weight: 400; color: var(--rose); font-size: 1.05em; margin-left: 6px; }
+
+  /* ---------- photo + 50% badge ---------- */
+  .photo {
+    position: absolute; top: 382px; left: 70px; width: 470px; height: 560px;
+    border-radius: 235px 235px 30px 30px; overflow: hidden;
+    border: 8px solid #fff; box-shadow: 0 0 0 3px var(--rv), 0 18px 40px rgba(110,15,34,.25);
+  }
+  .photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; display: block; }
+  .burst {
+    position: absolute; top: 350px; left: 34px; width: 180px; height: 180px; z-index: 2;
+    display: grid; place-items: center; text-align: center; color: #fff;
+    background: var(--rv);
+    clip-path: polygon(50% 0%,61% 11%,75% 6%,79% 21%,94% 25%,89% 39%,100% 50%,89% 61%,94% 75%,79% 79%,75% 94%,61% 89%,50% 100%,39% 89%,25% 94%,21% 79%,6% 75%,11% 61%,0% 50%,11% 39%,6% 25%,21% 21%,25% 6%,39% 11%);
+    transform: rotate(-10deg);
+  }
+  .burst b { display: block; font-family: var(--serif); font-weight: 900; font-size: 64px; line-height: .9; }
+  .burst span { display: block; font-family: var(--sans); font-weight: 900; font-size: 26px; letter-spacing: .14em; }
+
+  /* ---------- right column ---------- */
+  .side { position: absolute; top: 400px; left: 580px; right: 66px; }
+  .pitch { font-family: var(--guj); font-weight: 600; font-size: 29px; line-height: 1.32; color: var(--cocoa); }
+  .pitch strong { color: var(--rv); font-weight: 800; }
+
+  .price {
+    margin-top: 24px; background: #fff; border-radius: 26px; padding: 22px 20px 20px; text-align: center;
+    border: 2.5px dashed var(--rose); box-shadow: 0 10px 26px rgba(158,27,50,.12);
+  }
+  .price__label { font-family: var(--sans); font-weight: 900; font-size: 17px; letter-spacing: .1em; color: var(--rose-ink); text-transform: uppercase; }
+  .was { position: relative; display: inline-block; margin-top: 6px; font-family: var(--serif); font-weight: 700; font-size: 44px; color: #8a7670; }
+  .was small { font-family: var(--sans); font-size: 24px; font-weight: 700; }
+  .was::after { /* the cross-out */
+    content: ''; position: absolute; left: -6px; right: -6px; top: 50%; height: 5px; border-radius: 3px;
+    background: var(--rv); transform: rotate(-7deg);
+  }
+  .now { font-family: var(--serif); font-weight: 900; font-size: 96px; line-height: 1; color: var(--rv); margin-top: 2px; }
+  .now small { font-family: var(--sans); font-weight: 900; font-size: 34px; color: var(--rv-deep); }
+  .now sup { font-size: .42em; vertical-align: .9em; margin-right: 4px; }
+  .price__note { font-family: var(--guj); font-weight: 600; font-size: 22px; color: var(--cocoa); margin-top: 4px; }
+
+  /* ---------- tester band ---------- */
+  .band {
+    position: absolute; top: 976px; left: 70px; right: 70px; border-radius: 24px;
+    background: var(--rv); color: #fff; padding: 24px 34px; display: flex; align-items: center; gap: 26px;
+  }
+  .band__icon { font-size: 58px; line-height: 1; }
+  .band p { font-family: var(--guj); font-weight: 600; font-size: 29px; line-height: 1.3; }
+  .band p b { color: #ffd9e0; font-weight: 800; }
+
+  /* ---------- order row ---------- */
+  .order { position: absolute; top: 1142px; left: 70px; right: 70px; display: flex; align-items: center; gap: 22px; }
+  .limited {
+    flex: 0 0 auto; font-family: var(--guj); font-weight: 700; font-size: 25px; color: var(--rose-ink);
+    background: var(--blush); border-radius: 18px; padding: 14px 20px; line-height: 1.2; text-align: center;
+  }
+  .dm { flex: 1; text-align: center; }
+  .dm__head { font-family: var(--guj); font-weight: 800; font-size: 36px; color: var(--rv); line-height: 1.1; }
+  .dm__links { margin-top: 10px; display: flex; justify-content: center; gap: 14px; font-family: var(--sans); font-weight: 700; font-size: 22px; color: var(--cocoa); }
+  .dm__links span { display: inline-flex; align-items: center; gap: 8px; border: 2px solid var(--rose); border-radius: 999px; padding: 6px 16px; background: #fff; }
+  .dm__links svg { width: 22px; height: 22px; fill: var(--rv); }
+
+  .thanks { position: absolute; bottom: 52px; left: 0; right: 0; text-align: center; font-family: var(--guj); font-weight: 600; font-size: 22px; color: var(--cocoa-soft, #7a584d); }
+  .thanks span { color: var(--rose); }
+</style>
+</head>
+<body>
+<script>if (location.search.includes('png')) document.documentElement.classList.add('png');</script>
+
+<div class="page">
+  <span class="heart" style="top:150px;left:60px">♥</span>
+  <span class="heart" style="top:300px;right:70px;font-size:26px">♥</span>
+  <span class="heart" style="top:950px;left:520px;font-size:24px">♥</span>
+  <span class="heart" style="top:1250px;right:90px;font-size:30px">♥</span>
+
+  <header class="mast">
+    <div class="brand">
+      <img src="../public/logo_final.png" alt="">
+      <div>
+        <div class="brand__name">Cake <i>&amp;</i> Crumb</div>
+        <div class="brand__tag">The gourmet chocolate and berry boutique!</div>
+      </div>
+    </div>
+    <div class="today"><small>LIMITED OFFER</small>Today Only</div>
+  </header>
+
+  <section class="head">
+    <div class="kicker">❤️ A Special Offer for Red Velvet Lovers! ❤️</div>
+    <h1 class="title">Red Velvet <em>Taste Test</em></h1>
+  </section>
+
+  <div class="photo"><img src="../public/products/cupcakes-red-velvet.jpeg" alt="Red velvet cupcakes"></div>
+  <div class="burst"><div><b>50%</b><span>OFF</span></div></div>
+
+  <section class="side">
+    <p class="pitch">We're trying out a <strong>new recipe</strong> for our <strong>Red Velvet</strong>! 🎂<br>And for that, we need <strong>Taste Testers</strong> just like you! 😋</p>
+
+    <div class="price">
+      <div class="price__label">Red Velvet Cupcakes</div>
+      <div class="was">Rs. 180 <small>for 6</small></div>
+      <div class="now"><sup>Rs.</sup>90 <small>for 6</small></div>
+      <div class="price__note">Today only · 50% OFF</div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="band__icon">🧁</div>
+    <p>All you have to do is taste our new recipe<br>and give us your <b>honest feedback</b>! 💗</p>
+  </section>
+
+  <section class="order">
+    <div class="limited">⏳ Limited orders<br>only!</div>
+    <div class="dm">
+      <div class="dm__head">📩 DM us now to order!</div>
+      <div class="dm__links">
+        <span><svg viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.4 1.1.4 2.2.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1.1.4-2.2.4-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.4-1.1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1.1-.4 2.2-.4C8.4 2.2 8.8 2.2 12 2.2zm0 4.6a5.2 5.2 0 1 0 0 10.4 5.2 5.2 0 0 0 0-10.4zm0 8.6a3.4 3.4 0 1 1 0-6.8 3.4 3.4 0 0 1 0 6.8zm5.4-9.9a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z"/></svg>@cake_and_crumb_1</span>
+        <span><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.6 14.1c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.1-1.9-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.8-2.2 1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .5l-.3.5-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.6 2.1 1.1 1 2.1 1.3 2.4 1.4.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.5.3.1.2.1.7-.1 1.4z"/></svg>+91 91731 83440</span>
+      </div>
+    </div>
+  </section>
+
+  <p class="thanks"><span>♥</span> Your feedback will help us make our cakes even more delicious! <span>♥</span></p>
+</div>
+</body>
+</html>
