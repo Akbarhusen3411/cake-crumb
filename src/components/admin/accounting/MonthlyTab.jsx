@@ -5,6 +5,7 @@ import { inr } from '../../../data/format.js'
 import { monthLabel, todayIso } from '../../../utils/adminDate.js'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
 import { downloadCsv } from '../../../utils/csv.js'
+import { spendByCat } from '../../../utils/expenseCats.js'
 
 export default function MonthlyTab({ orders, expenses, withdrawals }) {
   const mobile = useIsMobile()
@@ -13,6 +14,12 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
     () => months.map((m) => ({ m, s: computeSummary(orders, expenses, withdrawals, m) })),
     [months, orders, expenses, withdrawals]
   )
+  // Each month's expenses split by category (see utils/expenseCats.js).
+  const catsByMonth = useMemo(() => {
+    const out = {}
+    for (const m of months) out[m] = spendByCat(expenses.filter((e) => String(e.date || '').slice(0, 7) === m))
+    return out
+  }, [months, expenses])
   // Every month added up — the same sums as the CSV's TOTAL row, so the card,
   // the table's last row and the file all agree. Summed from the months shown
   // rather than recomputed, so it can only ever be the total of what's listed.
@@ -113,6 +120,16 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
                   <div><dt>Expenses</dt><dd className="cc-mrep__v--exp">{inr(s.totalExpenses)}</dd></div>
                   <div><dt>To collect</dt><dd className="cc-mrep__v--due">{inr(s.toCollect)}</dd></div>
                 </dl>
+
+                {/* Where the month's expenses went — the three biggest. */}
+                {catsByMonth[m]?.length ? (
+                  <div className="cc-mrep__cats">
+                    {catsByMonth[m].slice(0, 3).map((c) => (
+                      <span key={c.key}><i style={{ background: c.color }} />{c.key} <b>{inr(c.amount)}</b></span>
+                    ))}
+                    {catsByMonth[m].length > 3 ? <span>+{catsByMonth[m].length - 3} more</span> : null}
+                  </div>
+                ) : null}
 
                 {s.invested > 0 || s.totalWithdrawn > 0 ? (
                   <div className="cc-mrep__own">

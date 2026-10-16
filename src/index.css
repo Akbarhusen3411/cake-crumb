@@ -5979,6 +5979,44 @@ header[style*="sticky"] {
 .cc-acc-kpis .cc-acc-value { font-size: clamp(1.35rem, 3.4vw, 1.7rem); }
 .cc-acc-note { font-size: 0.78rem; color: #8a8a8a; margin-top: 0.35rem; }
 .cc-acc-note--short { display: none; }
+/* "▲ 12% vs Sep" — only when one month is picked (DashboardTab's Delta). */
+.cc-acc-delta { margin-top: 0.3rem; font-size: 0.76rem; font-weight: 800; font-variant-numeric: lining-nums tabular-nums; }
+.cc-acc-delta span { font-weight: 600; color: #7d6862; }
+.cc-acc-delta--up { color: #1a6e3f; }
+.cc-acc-delta--down { color: #a3172c; }
+/* Last backup — quiet while recent, amber when due (DashboardTab's BackupLine). */
+.cc-acc-backup {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.6rem;
+  margin-top: 0.75rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #ece4e1;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 0.78rem;
+  color: #7d6862;
+}
+.cc-acc-backup > svg { flex: 0 0 auto; width: 15px; height: 15px; }
+.cc-acc-backup > span { flex: 1 1 12rem; min-width: 0; }
+.cc-acc-backup button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2rem;
+  padding: 0 0.7rem;
+  border: 1px solid #e4d6d2;
+  border-radius: 999px;
+  background: #fff;
+  color: #6d5049;
+  font-weight: 700;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+.cc-acc-backup--due { border-color: #f3dcc0; background: #fff8ef; color: #8f4c14; }
+.cc-acc-backup--due button { border-color: #9a5a0c; background: #9a5a0c; color: #fff; }
+.cc-acc-backup button:disabled { opacity: 0.6; }
 /* Each tile's own colour along its top edge — four kinds of money, told apart
    before their labels are read. Tiles with no colour keep a neutral edge. */
 .cc-acc-kpis .cc-acc-card { border-top: 3px solid var(--tone, #e8dcd8); }
@@ -7761,6 +7799,64 @@ header[style*="sticky"] {
 .cc-ocard__ico:active { background: #fdeef2; }
 .cc-ocard__ico--edit { color: var(--cc-rose-ink, #ad2f4e); }
 .cc-ocard__ico--del { color: #b23b3b; }
+.cc-ocard__ico--wa { color: #1a7f4b; }
+
+/* ── Expense categories (utils/expenseCats.js) ── */
+.cc-expcat { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 700; color: #6d5049; }
+.cc-expcat i { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; }
+/* Where the money went: one split bar + a legend that filters on a tap. */
+.cc-expcats {
+  margin: 0 0 0.8rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #f1e1e5;
+  border-radius: 12px;
+  background: #fff;
+}
+.cc-expcats__bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: #f3ecea; }
+.cc-expcats__bar i { display: block; height: 100%; }
+.cc-expcats__legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.15rem 0.6rem;
+  margin-top: 0.5rem;
+}
+.cc-expcats__item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.2rem 0.25rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  font-size: 0.78rem;
+  color: #6d5049;
+}
+.cc-expcats__item i { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; align-self: center; }
+.cc-expcats__item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cc-expcats__item b { margin-left: auto; color: var(--cc-cocoa, #5b3e36); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.cc-expcats__item small { color: #7d6862; font-size: 0.7rem; }
+.cc-expcats__item:active { background: #fdeef2; }
+@media (hover: hover) { .cc-expcats__item:hover { background: #fdf3f5; } }
+/* The form's picker: six chips, the chosen one filled in its own colour. */
+.cc-catpick { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.cc-catpick__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.3rem;
+  padding: 0 0.75rem;
+  border: 1px solid #eadde0;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cc-cocoa, #5b3e36);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.cc-catpick__btn i { width: 8px; height: 8px; border-radius: 50%; background: var(--cat); }
+.cc-catpick__btn--on { border-color: var(--cat); box-shadow: inset 0 0 0 1px var(--cat); background: color-mix(in srgb, var(--cat) 10%, #fff); font-weight: 800; }
+.cc-catpick__btn:focus-visible { outline: 2px solid var(--cc-rose-deep, #cf3e63); outline-offset: 2px; }
 .cc-ocard__paybtn:focus-visible,
 .cc-ocard__ico:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 1px; }
 
@@ -8221,6 +8317,17 @@ header[style*="sticky"] {
 .cc-mrep__v--earn { color: var(--cc-cocoa, #5b3e36); }
 .cc-mrep__v--exp { color: #b23b3b; }
 .cc-mrep__v--due { color: #9a5a0c; }
+.cc-mrep__cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.7rem;
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  color: #7d6862;
+}
+.cc-mrep__cats span { display: inline-flex; align-items: center; gap: 0.25rem; }
+.cc-mrep__cats i { width: 7px; height: 7px; border-radius: 50%; }
+.cc-mrep__cats b { color: #6d5049; font-variant-numeric: lining-nums tabular-nums; }
 .cc-mrep__own {
   margin-top: 0.45rem;
   padding: 0.3rem 0.55rem;

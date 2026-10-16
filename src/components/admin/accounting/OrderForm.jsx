@@ -9,6 +9,7 @@ import { inr } from '../../../data/format.js'
 import { todayIso } from '../../../utils/adminDate.js'
 import { isPerPieceVariant } from '../../../services/accounting.js'
 import { variantLabel, sortVariants } from '../../../utils/orderItems.js'
+import { normalizePhone } from '../../../utils/customerPhone.js'
 
 // One shared empty array, so a row with no category still gets a stable prop and
 // stays memoised instead of re-rendering on every keystroke elsewhere.
@@ -206,13 +207,21 @@ const OrderLine = memo(function OrderLine({
  * customer, payment, status) sits in a column beside it. A thirty-item order
  * scrolls one list; nothing else on the sheet moves.
  */
-export default function OrderForm({ menu = [], customers = [], initial = null, saving = false, onSave, onClose }) {
+export default function OrderForm({ menu = [], customers = [], phones = {}, initial = null, saving = false, onSave, onClose }) {
   // Editing is decided by the id, not by `initial` being present: a duplicate
   // arrives fully prefilled but with no id, so it saves as a new order and gets
   // its own number.
   const editing = !!initial?.id
   const [date, setDate] = useState(initial?.date || todayIso())
   const [customer, setCustomer] = useState(initial?.customer || '')
+  // Optional. Filled in from the customer's last order when a known name is
+  // picked, until it's typed into by hand — then it's left alone.
+  const [phone, setPhone] = useState(initial?.phone || '')
+  const phoneTyped = useRef(!!initial?.phone)
+  const pickCustomer = (v) => {
+    setCustomer(v)
+    if (!phoneTyped.current) setPhone(phones[String(v || '').trim().toLowerCase()] || '')
+  }
   const [paid, setPaid] = useState(initial ? !!initial.paid : true)
   const [method, setMethod] = useState(initial?.method || 'Cash')
   const [status, setStatus] = useState(initial?.status || 'Completed')
@@ -285,6 +294,7 @@ export default function OrderForm({ menu = [], customers = [], initial = null, s
   function problem() {
     if (!date) return { field: 'date', msg: 'Pick a date.' }
     if (!customer.trim()) return { field: 'customer', msg: 'Enter the customer’s name.' }
+    if (normalizePhone(phone) === null) return { field: 'phone', msg: 'That phone number isn’t a 10-digit mobile — fix it or leave it blank.' }
     if (!clean.length) return { field: 'items', msg: 'Add at least one item.' }
     if (clean.some((l) => l.qty <= 0)) return { field: 'items', msg: 'Each item needs a quantity of 1 or more.' }
     // The rate can't be typed on the row any more, so a line with none is a
@@ -307,7 +317,7 @@ export default function OrderForm({ menu = [], customers = [], initial = null, s
     if (saving) return
     setTried(true)
     if (problem()) return
-    onSave({ date, customer: customer.trim(), items: clean, amount: total, paid, method, status, notes: notes.trim() })
+    onSave({ date, customer: customer.trim(), phone: normalizePhone(phone) || '', items: clean, amount: total, paid, method, status, notes: notes.trim() })
   }
 
   return (
@@ -355,8 +365,13 @@ export default function OrderForm({ menu = [], customers = [], initial = null, s
             <input type="date" className="form-control" value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
           <Field label="Customer" bad={err?.field === 'customer'}>
-            <SearchableSelect value={customer} onChange={setCustomer} options={customers}
+            <SearchableSelect value={customer} onChange={pickCustomer} options={customers}
               icon={<FiUser />} placeholder="Type customer name…" title="Customer" allowCustom />
+          </Field>
+          <Field label="Phone" hint="optional · for payment reminders" bad={err?.field === 'phone'}>
+            <input type="tel" inputMode="tel" autoComplete="off" className="form-control"
+              placeholder="10-digit mobile" value={phone}
+              onChange={(e) => { phoneTyped.current = true; setPhone(e.target.value) }} />
           </Field>
           <Field label="Payment" half>
             <Seg

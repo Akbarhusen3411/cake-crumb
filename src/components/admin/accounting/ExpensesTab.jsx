@@ -14,6 +14,9 @@ import { inr } from '../../../data/format.js'
 import { todayIso, fmtDate, inPeriod } from '../../../utils/adminDate.js'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
 import { downloadCsv } from '../../../utils/csv.js'
+import { EXPENSE_CATS, catOf, catColor, spendByCat } from '../../../utils/expenseCats.js'
+
+const CAT_FILTERS = [{ key: 'all', label: 'All' }, ...EXPENSE_CATS.map((c) => ({ key: c.key, label: c.key }))]
 
 const METHOD_FILTERS = [
   { key: 'all', label: 'All' },
@@ -80,6 +83,7 @@ export default function ExpensesTab({ expenses, reload }) {
   const { toast, offerUndo, closeToast } = useUndo(reload)
   const [page, setPage] = useState(1)
   const [methodFilter, setMethodFilter] = useState('all') // all | Cash | Online
+  const [catFilter, setCatFilter] = useState('all')       // all | an EXPENSE_CATS key
   const [period, setPeriod] = useState('all')             // all | today | YYYY-MM
   const mobile = useIsMobile()
 
@@ -96,11 +100,14 @@ export default function ExpensesTab({ expenses, reload }) {
     let list = [...expenses].sort((a, b) => String(b.date).localeCompare(String(a.date)))
     if (s) list = list.filter((e) => searchText(e).includes(s))
     if (methodFilter !== 'all') list = list.filter((e) => e.method === methodFilter)
+    if (catFilter !== 'all') list = list.filter((e) => catOf(e) === catFilter)
     if (period !== 'all') list = list.filter((e) => inPeriod(e.date, period))
     return list
-  }, [expenses, q, methodFilter, period])
+  }, [expenses, q, methodFilter, catFilter, period])
 
-  const filtered = methodFilter !== 'all' || period !== 'all' || q.trim() !== ''
+  const filtered = methodFilter !== 'all' || catFilter !== 'all' || period !== 'all' || q.trim() !== ''
+  // Where the money on screen went, by category — follows every other filter.
+  const byCat = useMemo(() => spendByCat(rows), [rows])
   // Total follows the filter, so "Cash" answers "how much cash went out".
   const total = rows.reduce((s, e) => s + (Number(e.amount) || 0), 0)
   const pageSize = mobile ? 10 : 25
@@ -138,7 +145,7 @@ export default function ExpensesTab({ expenses, reload }) {
         const amount = Math.round(qty * price)
         qtySum += qty; amountSum += amount
         out.push([
-          e.date || '', e.vendor || '', it.name || '', qty, price, amount,
+          e.date || '', e.vendor || '', catOf(e), it.name || '', qty, price, amount,
           i === 0 ? delivery : '', i === 0 ? total : '',
           e.method || '', i === 0 ? (e.notes || '') : '',
         ])
@@ -146,10 +153,10 @@ export default function ExpensesTab({ expenses, reload }) {
       deliverySum += delivery
       expenseSum += total
     }
-    out.push(['TOTAL', '', '', qtySum, '', amountSum, deliverySum, expenseSum, '', ''])
+    out.push(['TOTAL', '', '', '', qtySum, '', amountSum, deliverySum, expenseSum, '', ''])
     downloadCsv(
       `cake-crumb-expenses-${todayIso()}.csv`,
-      ['Date', 'Bought from', 'Item', 'Qty', '₹ each', 'Amount', 'Delivery', 'Expense total', 'Paid from', 'Notes'],
+      ['Date', 'Bought from', 'Category', 'Item', 'Qty', '₹ each', 'Amount', 'Delivery', 'Expense total', 'Paid from', 'Notes'],
       out
     )
   }
@@ -187,17 +194,44 @@ export default function ExpensesTab({ expenses, reload }) {
           label="Paid from" options={METHOD_FILTERS} value={methodFilter}
           onChange={(v) => { setMethodFilter(v); setPage(1) }}
         />
+        <FilterChips
+          label="Category" options={CAT_FILTERS} value={catFilter}
+          onChange={(v) => { setCatFilter(v); setPage(1) }}
+        />
         <PeriodSelect value={period} months={months} onChange={(v) => { setPeriod(v); setPage(1) }} />
         {filtered && (
           <button
             type="button" className="btn btn-sm btn-link text-secondary p-0"
-            onClick={() => { setQ(''); setMethodFilter('all'); setPeriod('all'); setPage(1) }}
+            onClick={() => { setQ(''); setMethodFilter('all'); setCatFilter('all'); setPeriod('all'); setPage(1) }}
           >
             Clear filters
           </button>
         )}
         <span className="ms-auto text-muted small">{rows.length} expense{rows.length === 1 ? '' : 's'}</span>
       </div>
+
+      {/* Where it went: one bar split by category, and a legend that filters
+          to its category on a tap. Only worth showing with two or more. */}
+      {byCat.length > 1 ? (
+        <div className="cc-expcats" aria-label="Spending by category">
+          <div className="cc-expcats__bar" aria-hidden="true">
+            {byCat.map((c) => (
+              <i key={c.key} style={{ width: `${(c.amount / total) * 100}%`, background: c.color }} />
+            ))}
+          </div>
+          <div className="cc-expcats__legend">
+            {byCat.map((c) => (
+              <button key={c.key} type="button" className="cc-expcats__item"
+                onClick={() => { setCatFilter(c.key); setPage(1) }} title={`Show only ${c.key}`}>
+                <i style={{ background: c.color }} />
+                <span>{c.key}</span>
+                <b>{inr(c.amount)}</b>
+                <small>{Math.round((c.amount / total) * 100)}%</small>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {rows.length === 0 ? (
         <div className="text-center text-muted py-4" style={{ border: '1px solid #f0e0e3', borderRadius: 12 }}>
@@ -223,7 +257,8 @@ export default function ExpensesTab({ expenses, reload }) {
 
                 <div className="cc-ocard__row cc-ocard__meta">
                   <span className="cc-ocard__metatext">
-                    {fmtDate(e.date)} · {e.method}
+                    <span className="cc-expcat"><i style={{ background: catColor(catOf(e)) }} />{catOf(e)}</span>
+                    {' · '}{fmtDate(e.date)} · {e.method}
                     {Number(e.delivery) > 0 ? ` · incl. ${inr(e.delivery)} delivery` : ''}
                   </span>
                   <span className="cc-ocard__icons">
@@ -264,7 +299,7 @@ export default function ExpensesTab({ expenses, reload }) {
           <table className="table table-hover align-middle mb-0 cc-grid-table" style={{ fontSize: 14 }}>
             <thead style={{ background: '#f9eef1' }}>
               <tr style={{ color: '#7a4a58' }}>
-                <th>Date</th><th>Bought from</th><th>Items</th>
+                <th>Date</th><th>Bought from</th><th>Category</th><th>Items</th>
                 <th>Delivery</th><th>Total</th>
                 <th>Paid from</th><th></th>
               </tr>
@@ -274,6 +309,9 @@ export default function ExpensesTab({ expenses, reload }) {
                 <tr key={e.id}>
                   <td className="text-nowrap">{fmtDate(e.date)}</td>
                   <td className="fw-semibold">{e.vendor}</td>
+                  <td className="text-nowrap">
+                    <span className="cc-expcat"><i style={{ background: catColor(catOf(e)) }} />{catOf(e)}</span>
+                  </td>
                   <td><ExpenseLines expense={e} /></td>
                   <td className="text-nowrap">{Number(e.delivery) > 0 ? inr(e.delivery) : '—'}</td>
                   <td className="fw-semibold text-nowrap" style={{ color: '#b23b3b' }}>{inr(e.amount)}</td>
@@ -323,6 +361,9 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], saving = false, on
   const [date, setDate] = useState(initial?.date || todayIso())
   const [vendor, setVendor] = useState(initial?.vendor || '')
   const [method, setMethod] = useState(initial?.method || 'Cash')
+  // New expenses start on Ingredients, the usual answer; an old one without a
+  // category opens on Other, which is how every total already counts it.
+  const [category, setCategory] = useState(initial ? catOf(initial) : 'Ingredients')
   const [notes, setNotes] = useState(initial?.notes || '')
   const [delivery, setDelivery] = useState(initial?.delivery ?? '')
   const [items, setItems] = useState(() => {
@@ -366,6 +407,7 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], saving = false, on
     onSave({
       date,
       vendor: vendor.trim() || 'Supplies',
+      category,
       method,
       notes: notes.trim(),
       items: cleanItems,
@@ -420,6 +462,20 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], saving = false, on
             <span className="cc-field__label">Bought from<i>shop / venue</i></span>
             <input className="form-control" list="cc-exp-vendors" placeholder="e.g. Blinkit, D-Mart…"
               value={vendor} onChange={(e) => setVendor(e.target.value)} spellCheck={false} />
+          </div>
+          {/* Pressed, like Paid from — six chips, one tap, and it's what splits
+              the spending on the Expenses tab and in the Monthly Report. */}
+          <div className="cc-field">
+            <span className="cc-field__label">What for</span>
+            <div className="cc-catpick" role="radiogroup" aria-label="Expense category">
+              {EXPENSE_CATS.map((c) => (
+                <button key={c.key} type="button" role="radio" aria-checked={category === c.key}
+                  className={`cc-catpick__btn${category === c.key ? ' cc-catpick__btn--on' : ''}`}
+                  style={{ '--cat': c.color }} onClick={() => setCategory(c.key)}>
+                  <i aria-hidden="true" />{c.key}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="cc-field cc-field--half">
             <span className="cc-field__label">Paid from</span>

@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react'
-import { computeSummary, monthsFrom } from '../../../services/accounting.js'
+import { useEffect, useMemo, useState } from 'react'
+import { FiDatabase, FiDownload } from 'react-icons/fi'
+import { computeSummary, monthsFrom, getLastBackupAt } from '../../../services/accounting.js'
+import { downloadAccountingBackup } from '../../../utils/accBackup.js'
 import { inr } from '../../../data/format.js'
 import { monthLabel } from '../../../utils/adminDate.js'
 
@@ -24,12 +26,75 @@ function short(n) {
 }
 
 // `color` also tints the tile's top edge, so the four read as four kinds of money.
-function Stat({ label, value, note, color }) {
+function Stat({ label, value, note, color, delta }) {
   return (
     <div className="cc-acc-card" style={color ? { '--tone': color } : undefined}>
       <div className="cc-acc-label">{label}</div>
       <div className="cc-acc-value mt-1" style={color ? { color } : undefined}>{value}</div>
+      {delta}
       {note ? <div className="cc-acc-note">{note}</div> : null}
+    </div>
+  )
+}
+
+/** "YYYY-MM" of the calendar month before `ym`. */
+function prevMonthOf(ym) {
+  const [y, m] = ym.split('-').map(Number)
+  const d = new Date(y, m - 2, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+/**
+ * "▲ 12% vs Sep" under a figure, when one month is picked. Rides under figures
+ * already on the page rather than adding a tile — the Dashboard is kept sparse
+ * on purpose. Nothing when last month was ₹0 (no percentage to state) or the
+ * two are equal.
+ */
+function Delta({ cur, prev, month }) {
+  if (!prev || cur === prev) return null
+  const pct = Math.round(((cur - prev) / Math.abs(prev)) * 100)
+  const up = cur > prev
+  return (
+    <div className={`cc-acc-delta ${up ? 'cc-acc-delta--up' : 'cc-acc-delta--down'}`}
+      title={`${monthLabel(month)}: ${inr(prev)}`}>
+      {up ? '▲' : '▼'} {Math.abs(pct)}% <span>vs {monthShort(month)}</span>
+    </div>
+  )
+}
+
+/**
+ * When the books were last downloaded as a backup — the only backup there is.
+ * Quiet while recent; amber with a button from 30 days, or if there's never
+ * been one. The date is shared across devices (see getLastBackupAt).
+ */
+const BACKUP_DUE_DAYS = 30
+function BackupLine() {
+  const [state, setState] = useState(null) // null while loading, then { at, days }
+  const [busy, setBusy] = useState(false)
+  const stamp = (at) => setState({ at, days: at ? Math.floor((Date.now() - new Date(at).getTime()) / 86400000) : null })
+  useEffect(() => {
+    let live = true
+    getLastBackupAt().then((at) => { if (live) stamp(at) })
+    return () => { live = false }
+  }, [])
+  if (!state) return null
+
+  async function backupNow() {
+    setBusy(true)
+    try { stamp(await downloadAccountingBackup()) } finally { setBusy(false) }
+  }
+  const due = state.at == null || state.days >= BACKUP_DUE_DAYS
+  const when = state.at == null ? 'No backup taken yet'
+    : state.days <= 0 ? 'Last backup: today'
+      : state.days === 1 ? 'Last backup: yesterday'
+        : `Last backup: ${state.days} days ago`
+  return (
+    <div className={`cc-acc-backup${due ? ' cc-acc-backup--due' : ''}`}>
+      <FiDatabase aria-hidden="true" />
+      <span>{when}{due ? ' — download one to keep the books safe.' : ''}</span>
+      <button type="button" onClick={backupNow} disabled={busy}>
+        <FiDownload /> {busy ? 'Saving…' : 'Back up now'}
+      </button>
     </div>
   )
 }
@@ -141,6 +206,13 @@ export default function DashboardTab({ orders, expenses, withdrawals, onShowUnpa
     () => computeSummary(orders, expenses, withdrawals, allTime ? null : sel),
     [orders, expenses, withdrawals, allTime, sel]
   )
+  // The calendar month before the one picked, for the "vs last month" lines.
+  // All time has nothing to compare with, so it shows none.
+  const prevMonth = allTime ? null : prevMonthOf(sel)
+  const prev = useMemo(
+    () => (prevMonth ? computeSummary(orders, expenses, withdrawals, prevMonth) : null),
+    [orders, expenses, withdrawals, prevMonth]
+  )
 
   return (
     <div className="cc-acc-dash">
@@ -181,6 +253,7 @@ export default function DashboardTab({ orders, expenses, withdrawals, onShowUnpa
           <div className="cc-acc-value mt-1" style={{ color: s.profit < 0 ? '#c23a2b' : '#1d6f3a' }}>
             {inr(s.profit)}
           </div>
+          {prev ? <Delta cur={s.profit} prev={prev.profit} month={prevMonth} /> : null}
           <div className="cc-acc-note cc-acc-note--long">
             Earnings {inr(s.received)} − expenses {inr(s.totalExpenses)}. Money you put in is not
             profit — it is your own money coming back.
@@ -194,6 +267,7 @@ export default function DashboardTab({ orders, expenses, withdrawals, onShowUnpa
         {/* paidCount, not orderCount — this figure is money received, and
             orderCount includes the ones still unpaid. */}
         <Stat label="Earnings" value={inr(s.received)} color={SERIES_SALES}
+          delta={prev ? <Delta cur={s.received} prev={prev.received} month={prevMonth} /> : null}
           note={`${s.paidCount} paid order${s.paidCount === 1 ? '' : 's'} of ${s.orderCount}`} />
         <Stat label="Expenses" value={inr(s.totalExpenses)} color={SERIES_EXPENSES} note="Material & supplies" />
         <Stat label="Taken out" value={inr(s.totalWithdrawn)} note="For yourself, not the bakery" />
@@ -219,6 +293,8 @@ export default function DashboardTab({ orders, expenses, withdrawals, onShowUnpa
           </span>
         ) : null}
       </p>
+
+      <BackupLine />
 
       <TrendChart orders={orders} expenses={expenses} withdrawals={withdrawals} months={months} />
 

@@ -19,6 +19,8 @@ import { fmtDate, inPeriod, todayIso } from '../../../utils/adminDate.js'
 import { orderLines, fullItem, oneLine, displayVariant, variantLabel } from '../../../utils/orderItems.js'
 import { buildAccountingInvoice } from '../../../utils/invoice.js'
 import { downloadCsv } from '../../../utils/csv.js'
+import { reminderText, waLink } from '../../../utils/customerPhone.js'
+import { FaWhatsapp } from 'react-icons/fa'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
 
 // Compact one-string summary — used where a list can't go (the delete confirm).
@@ -92,7 +94,7 @@ const statusInk = (s) => STATUS_INK[String(s || '').toLowerCase()] || '#7a6b66'
 // cake pop the same way it matches a legacy "Red velvet cake pop". The order
 // number is in here too — it's the fastest way to find one order out of a day.
 const searchText = (o) =>
-  [o.orderNo, o.customer, ...orderLines(o).map((it) => `${fullItem(it)} ${it.variant || ''}`)]
+  [o.orderNo, o.customer, o.phone, ...orderLines(o).map((it) => `${fullItem(it)} ${it.variant || ''}`)]
     .filter(Boolean).join(' ').toLowerCase()
 
 // Rows entered before order numbering show a dash rather than a fake number.
@@ -173,6 +175,31 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
     }
     return m
   }, [orders])
+  // Each customer's most recent phone number, for filling the form and for the
+  // reminder. Walked oldest → newest so the latest number wins.
+  const phoneByCustomer = useMemo(() => {
+    const m = {}
+    for (const o of [...orders].sort((a, b) => orderSortKey(a).localeCompare(orderSortKey(b)))) {
+      const key = String(o.customer || '').trim().toLowerCase()
+      if (key && o.phone) m[key] = o.phone
+    }
+    return m
+  }, [orders])
+  const phoneOf = (o) => o.phone || phoneByCustomer[String(o.customer || '').trim().toLowerCase()] || ''
+  // "Payment pending" on WhatsApp: everything this customer still owes, every
+  // unpaid order listed. Opened synchronously so a phone browser doesn't block
+  // the new tab.
+  const canRemind = (o) => !o.paid && statusKey(o) !== 'cancelled' && !!phoneOf(o)
+  function remind(o) {
+    const key = String(o.customer || '').trim().toLowerCase()
+    const unpaid = orders
+      .filter((x) => !x.paid && statusKey(x) !== 'cancelled' && String(x.customer || '').trim().toLowerCase() === key)
+      .sort((a, b) => orderSortKey(a).localeCompare(orderSortKey(b)))
+    const owed = unpaid.reduce((s, x) => s + orderTotal(x), 0)
+    const text = reminderText(o.customer, inr(owed),
+      unpaid.map((x) => ({ orderNo: x.orderNo, date: fmtDate(x.date), total: inr(orderTotal(x)) })))
+    window.open(waLink(phoneOf(o), text), '_blank', 'noopener')
+  }
   // Hidden when this unpaid row *is* the whole debt — repeating its own amount
   // beside it says nothing.
   const owedBesides = (o) => {
@@ -271,7 +298,7 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
         const amount = Math.round(qty * rate)
         if (counts) { qtySum += qty; amountSum += amount }
         out.push([
-          o.orderNo || '', o.date || '', o.customer || '',
+          o.orderNo || '', o.date || '', o.customer || '', o.phone || '',
           it.category || '', it.item || '', variantLabel(it.variant || ''),
           qty, rate, amount,
           i === 0 ? total : '',
@@ -288,12 +315,12 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
     // *invoiced*, not what came in. Split it the same way the Dashboard does —
     // Earnings is money received, and Earnings + Still to collect = TOTAL — or
     // the file quotes a figure the books never claimed.
-    out.push(['TOTAL — cancelled excluded', '', '', '', '', '', qtySum, '', amountSum, orderSum, '', '', '', ''])
-    out.push(['EARNINGS — paid orders only', '', '', '', '', '', '', '', '', receivedSum, '', '', '', ''])
-    out.push(['STILL TO COLLECT — unpaid', '', '', '', '', '', '', '', '', toCollectSum, '', '', '', ''])
+    out.push(['TOTAL — cancelled excluded', '', '', '', '', '', '', qtySum, '', amountSum, orderSum, '', '', '', ''])
+    out.push(['EARNINGS — paid orders only', '', '', '', '', '', '', '', '', '', receivedSum, '', '', '', ''])
+    out.push(['STILL TO COLLECT — unpaid', '', '', '', '', '', '', '', '', '', toCollectSum, '', '', '', ''])
     downloadCsv(
       `cake-crumb-orders-${todayIso()}.csv`,
-      ['Order ID', 'Date', 'Customer', 'Category', 'Item', 'Size', 'Qty', 'Rate', 'Amount',
+      ['Order ID', 'Date', 'Customer', 'Phone', 'Category', 'Item', 'Size', 'Qty', 'Rate', 'Amount',
         'Order total', 'Payment', 'Cash/Online', 'Status', 'Notes'],
       out
     )
@@ -469,6 +496,11 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
                     </button>
                   )}
                   <span className="cc-ocard__icons">
+                    {canRemind(o) ? (
+                      <button type="button" className="cc-ocard__ico cc-ocard__ico--wa"
+                        title="Send a payment reminder on WhatsApp" aria-label="WhatsApp payment reminder"
+                        onClick={() => remind(o)}><FaWhatsapp /></button>
+                    ) : null}
                     <button type="button" className="cc-ocard__ico" title="Invoice" aria-label="Invoice"
                       onClick={() => setInvoiceOf(o)}><FiFileText /></button>
                     <button type="button" className="cc-ocard__ico" title="Duplicate — same items, today"
@@ -550,6 +582,10 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
                   <td>
                     <div className="cc-row-actions">
                       <button className="cc-row-action text-secondary" title={o.paid ? 'Mark unpaid' : 'Mark paid'} aria-label={o.paid ? 'Mark unpaid' : 'Mark paid'} onClick={() => togglePaid(o)}><FiRepeat /></button>
+                      {canRemind(o) ? (
+                        <button className="cc-row-action" style={{ color: '#1a7f4b' }} title="Send a payment reminder on WhatsApp"
+                          aria-label="WhatsApp payment reminder" onClick={() => remind(o)}><FaWhatsapp /></button>
+                      ) : null}
                       <button className="cc-row-action text-secondary" title="Invoice" aria-label="Invoice" onClick={() => setInvoiceOf(o)}><FiFileText /></button>
                       <button className="cc-row-action text-secondary" title="Duplicate — same items, today" aria-label="Duplicate" onClick={() => duplicate(o)}><FiCopy /></button>
                       <button className="cc-row-action" style={{ color: '#cf3e63' }} title="Edit" aria-label="Edit" onClick={() => setEditing(o)}><FiEdit2 /></button>
@@ -575,6 +611,7 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
         <OrderForm
           menu={menu}
           customers={customers}
+          phones={phoneByCustomer}
           // Prefilled for an edit *and* for a duplicate; only the id says which.
           initial={editing.id || editing.items ? editing : null}
           saving={busy}

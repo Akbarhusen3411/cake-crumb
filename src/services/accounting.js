@@ -286,6 +286,44 @@ export async function exportAccountingBackup() {
   }
 }
 
+// ───────────────────── when the last backup was taken ─────────────────────
+// Kept in the cloud (`acc_settings/main.lastBackupAt`, merged beside the PIN
+// hash) so a backup downloaded on the laptop counts on the phone too; mirrored
+// to localStorage like everything else here, and never throws.
+const BACKUP_LS = 'cc_acc_last_backup_v1'
+
+/** ISO time of the newest backup known — cloud or this device — or null. */
+export async function getLastBackupAt() {
+  let local = null
+  try { local = localStorage.getItem(BACKUP_LS) } catch { /* ignore */ }
+  const db = await getDb()
+  if (!db) return local
+  try {
+    const { doc, getDoc } = await import('firebase/firestore')
+    const snap = await getDoc(doc(db, 'acc_settings', 'main'))
+    const cloud = snap.exists() ? (snap.data().lastBackupAt || null) : null
+    return [cloud, local].filter(Boolean).sort().pop() || null
+  } catch (err) {
+    reportCloudError('read', 'acc_settings', err)
+    return local
+  }
+}
+
+/** Record that a backup was just downloaded. Returns the time stamped. */
+export async function markBackupTaken() {
+  const at = new Date().toISOString()
+  try { localStorage.setItem(BACKUP_LS, at) } catch { /* ignore */ }
+  const db = await getDb()
+  if (!db) return at
+  try {
+    const { doc, setDoc } = await import('firebase/firestore')
+    await setDoc(doc(db, 'acc_settings', 'main'), { lastBackupAt: at }, { merge: true })
+  } catch (err) {
+    reportCloudError('write', 'acc_settings', err)
+  }
+  return at
+}
+
 // The "Expense Taken for Use" setting is gone. It was one hand-typed figure
 // standing in for two things the tool now records properly: material bought
 // (Expenses tab) and money the owner moves in or out of the business (My Money

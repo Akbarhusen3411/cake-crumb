@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { FiAlertTriangle, FiDownload } from 'react-icons/fi'
-import { clearAccountingBooks, exportAccountingBackup } from '../../../services/accounting.js'
+import { clearAccountingBooks } from '../../../services/accounting.js'
+import { downloadAccountingBackup } from '../../../utils/accBackup.js'
 import { inr } from '../../../data/format.js'
 
 // One-time tool for starting a fresh book. Deliberately tucked below everything
@@ -8,17 +9,6 @@ import { inr } from '../../../data/format.js'
 // bookkeeping and there is no undo. Menu & Prices are never touched.
 const CONFIRM_WORD = 'DELETE'
 
-function downloadJson(obj) {
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `cake-crumb-accounting-backup-${obj.exportedAt.slice(0, 10)}.json`
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(url)
-}
 
 export default function DangerZone({ orders, expenses, withdrawals }) {
   const [open, setOpen] = useState(false)
@@ -33,7 +23,7 @@ export default function DangerZone({ orders, expenses, withdrawals }) {
   async function backup() {
     setBusy('backup')
     try {
-      downloadJson(await exportAccountingBackup())
+      await downloadAccountingBackup() // also resets the Dashboard's backup reminder
       setBackedUp(true)
     } finally { setBusy('') }
   }
