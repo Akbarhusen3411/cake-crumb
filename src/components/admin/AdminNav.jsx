@@ -25,7 +25,8 @@ export default function AdminNav({ className = 'd-flex flex-wrap gap-2 mb-3' }) 
               textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6,
               border: '1px solid var(--cc-rose-soft, #d7a7ae)', borderRadius: 999, padding: '6px 16px',
               fontWeight: 700, fontSize: '0.85rem',
-              background: on ? 'var(--cc-rose, #e0617a)' : '#fff',
+              // Deep rose: white on plain --cc-rose is too faint to read.
+              background: on ? 'var(--cc-rose-deep, #cf3e63)' : '#fff',
               color: on ? '#fff' : 'var(--cc-cocoa, #5b3e36)',
             }}
           >

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { FiChevronDown, FiSearch, FiX } from 'react-icons/fi'
+import { FiCheck, FiChevronDown, FiSearch, FiX } from 'react-icons/fi'
+import { useIsMobile } from '../../hooks/useIsMobile.js'
 
 // A brand-styled searchable dropdown. Type to filter; click / Enter to pick.
 // options: array of strings, or { value, label, sub? } objects.
@@ -24,6 +25,7 @@ export default function SearchableSelect({
   autoOpen = false,
   compact = false,
   icon = null, // replaces the search glyph — a person for a customer, say
+  title = '',  // heading of the phone sheet; falls back to the placeholder
 }) {
   const opts = useMemo(() => normalise(options), [options])
   const [open, setOpen] = useState(false)
@@ -31,6 +33,17 @@ export default function SearchableSelect({
   const [hi, setHi] = useState(0)
   const boxRef = useRef(null)
   const listRef = useRef(null)
+  // Everything that counts as "inside" while open: the floating list on a
+  // desktop, the whole sheet (backdrop included) on a phone.
+  const panelRef = useRef(null)
+  const sheetInputRef = useRef(null)
+  // On a phone the list is a bottom sheet, not a dropdown. A dropdown glued to
+  // a field inside a scrolling sheet drifted off its field as the page moved,
+  // ran past the screen edge, and its rows were too small for a thumb.
+  const mobile = useIsMobile(768)
+  // Bottom offset for the sheet while the on-screen keyboard is up — iOS lays
+  // the keyboard over the page instead of shrinking it.
+  const [kb, setKb] = useState(0)
   // Where to draw the list. It's portalled onto <body> and positioned fixed,
   // because the dialog body and the items grid both scroll — as a child of the
   // field, an `overflow: auto` ancestor clipped the list to whatever was left of
@@ -54,7 +67,7 @@ export default function SearchableSelect({
   // an ancestor scrolls (capture, so inner scrollers count too).
   const MAX_LIST_H = 260
   useLayoutEffect(() => {
-    if (!open) return
+    if (!open || mobile) return
     const place = () => {
       const r = boxRef.current?.getBoundingClientRect()
       if (!r) return
@@ -75,7 +88,30 @@ export default function SearchableSelect({
       window.removeEventListener('scroll', place, true)
       window.removeEventListener('resize', place)
     }
-  }, [open])
+  }, [open, mobile])
+
+  // Phone sheet: follow the keyboard, and put the cursor in its search box only
+  // when there is nothing to tap — otherwise the keyboard rises over the very
+  // list you came to pick from. The search box is one tap away if wanted.
+  useEffect(() => {
+    if (!open || !mobile) return
+    const vv = window.visualViewport
+    const fit = () => {
+      if (vv) setKb(Math.max(0, Math.round(window.innerHeight - (vv.height + vv.offsetTop))))
+    }
+    fit()
+    vv?.addEventListener('resize', fit)
+    vv?.addEventListener('scroll', fit)
+    if (opts.length === 0) {
+      requestAnimationFrame(() => sheetInputRef.current?.focus({ preventScroll: true }))
+    }
+    return () => {
+      vv?.removeEventListener('resize', fit)
+      vv?.removeEventListener('scroll', fit)
+      setKb(0)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, mobile])
 
   // Close (and commit any custom text) on a click or tap anywhere outside —
   // in the capture phase, so it still fires when the click lands on something
@@ -84,7 +120,7 @@ export default function SearchableSelect({
     if (!open) return
     function onDoc(e) {
       // The list lives on <body>, so "outside" has to spare it too.
-      if (listRef.current?.contains(e.target)) return
+      if (panelRef.current?.contains(e.target)) return
       if (boxRef.current && !boxRef.current.contains(e.target)) commitAndClose()
     }
     document.addEventListener('mousedown', onDoc, true)
@@ -112,9 +148,10 @@ export default function SearchableSelect({
 
   // Keep the highlighted row scrolled into view.
   useEffect(() => {
+    if (mobile) return
     const el = listRef.current?.children?.[hi]
     if (el) el.scrollIntoView({ block: 'nearest' })
-  }, [hi])
+  }, [hi, mobile])
 
   function commitAndClose() {
     if (open && allowCustom && query.trim() && query.trim() !== labelForValue) {
@@ -125,6 +162,14 @@ export default function SearchableSelect({
   }
   function select(o) { onChange(o.value); setOpen(false); setQuery('') }
   function openList() { if (disabled) return; setOpen(true); setQuery(''); setHi(0) }
+  // Phone: the field is only a button that opens the sheet — typing happens in
+  // the sheet's own search box, so the keyboard never shoves the field around.
+  function onFieldPointer(e) {
+    if (!mobile) return
+    e.preventDefault()
+    openList()
+  }
+  function takeTyped() { onChange(query.trim()); setOpen(false); setQuery('') }
 
   function onKey(e) {
     if (!open && (e.key === 'ArrowDown' || e.key === 'Enter')) { openList(); return }
@@ -163,9 +208,12 @@ export default function SearchableSelect({
           }}
           placeholder={placeholder}
           disabled={disabled}
-          value={open ? query : labelForValue}
+          readOnly={mobile}
+          inputMode={mobile ? 'none' : undefined}
+          onMouseDown={onFieldPointer}
+          value={open && !mobile ? query : labelForValue}
           onChange={(e) => { setQuery(e.target.value); setOpen(true); setHi(0) }}
-          onFocus={openList}
+          onFocus={mobile ? undefined : openList}
           onKeyDown={onKey}
           autoComplete="off"
           // Customer and item names aren't dictionary words — the red squiggle
@@ -196,9 +244,73 @@ export default function SearchableSelect({
         />
       </div>
 
-      {open && pos && createPortal(
+      {/* Phone: a bottom sheet with its own search box and thumb-sized rows.
+          Portalled like the desktop list; React events still bubble to the
+          Modal's own stopPropagation, so a tap in here never closes the order. */}
+      {open && mobile && createPortal(
+        <div ref={panelRef} className="cc-ssheet" style={{ '--cc-kb': `${kb}px` }}>
+          <div className="cc-ssheet__backdrop" onClick={commitAndClose} />
+          <div className="cc-ssheet__panel" role="dialog" aria-modal="true" aria-label={title || placeholder}>
+            <div className="cc-ssheet__head">
+              <span className="cc-ssheet__title">{(title || placeholder).replace(/…$/, '')}</span>
+              <button type="button" className="cc-ssheet__close" aria-label="Close" onClick={commitAndClose}>
+                <FiX />
+              </button>
+            </div>
+            <label className="cc-ssheet__search">
+              <FiSearch aria-hidden="true" />
+              <input
+                ref={sheetInputRef}
+                type="search"
+                enterKeyHint="done"
+                value={query}
+                aria-label="Search"
+                placeholder={allowCustom ? 'Search, or type a new one…' : 'Search…'}
+                onChange={(e) => { setQuery(e.target.value); setHi(0) }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    if (filtered.length === 1 || (filtered[0] && !allowCustom)) select(filtered[0])
+                    else if (allowCustom && query.trim()) takeTyped()
+                  } else if (e.key === 'Escape') {
+                    e.stopPropagation(); setOpen(false); setQuery('')
+                  }
+                }}
+                autoComplete="off" spellCheck={false} autoCorrect="off"
+              />
+            </label>
+            <div ref={listRef} className="cc-ssheet__list">
+              {allowCustom && query.trim() &&
+                !opts.some((o) => o.label.toLowerCase() === query.trim().toLowerCase()) ? (
+                  <button type="button" className="cc-ssheet__opt cc-ssheet__opt--new" onClick={takeTyped}>
+                    <span className="cc-ssheet__label">Use “{query.trim()}”</span>
+                    <FiCheck className="cc-ssheet__tick" />
+                  </button>
+                ) : null}
+              {filtered.length === 0 && !allowCustom ? (
+                <div className="cc-ssheet__empty">No matches</div>
+              ) : (
+                filtered.map((o, i) => {
+                  const on = o.value === value
+                  return (
+                    <button key={o.value + i} type="button" onClick={() => select(o)}
+                      className={`cc-ssheet__opt${on ? ' cc-ssheet__opt--on' : ''}`} aria-pressed={on}>
+                      <span className="cc-ssheet__label">{o.label}</span>
+                      {o.sub ? <span className="cc-ssheet__sub">{o.sub}</span> : null}
+                      {on ? <FiCheck className="cc-ssheet__tick" /> : null}
+                    </button>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {open && !mobile && pos && createPortal(
         <div
-          ref={listRef}
+          ref={(el) => { listRef.current = el; panelRef.current = el }}
           style={{
             // Wider than its control when it needs to be: in a quarter-width
             // column the list was so narrow that "Box of 6" wrapped onto two

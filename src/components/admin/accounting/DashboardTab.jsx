@@ -23,9 +23,10 @@ function short(n) {
   return `₹${v}`
 }
 
+// `color` also tints the tile's top edge, so the four read as four kinds of money.
 function Stat({ label, value, note, color }) {
   return (
-    <div className="cc-acc-card">
+    <div className="cc-acc-card" style={color ? { '--tone': color } : undefined}>
       <div className="cc-acc-label">{label}</div>
       <div className="cc-acc-value mt-1" style={color ? { color } : undefined}>{value}</div>
       {note ? <div className="cc-acc-note">{note}</div> : null}
@@ -143,7 +144,7 @@ export default function DashboardTab({ orders, expenses, withdrawals, onShowUnpa
 
   return (
     <div className="cc-acc-dash">
-      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+      <div className="cc-acc-dash__top d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <h2 className="h5 m-0" style={{ fontFamily: 'var(--font-heading,serif)', color: '#7a4a58' }}>
           {monthLabel(sel)}
         </h2>
@@ -166,10 +167,13 @@ export default function DashboardTab({ orders, expenses, withdrawals, onShowUnpa
             {inr(s.moneyInHand)}
             {s.moneyInHand < 0 ? <span className="cc-acc-note d-block">More has gone out than came in.</span> : null}
           </div>
-          <div className="cc-acc-note">
+          {/* A phone gets the formula without the figures — the four tiles
+              right below carry them, and with them it ran to three lines. */}
+          <div className="cc-acc-note cc-acc-note--long">
             Invested {inr(s.invested)} + earnings {inr(s.received)} − expenses {inr(s.totalExpenses)}
             {' '}− taken out {inr(s.totalWithdrawn)}
           </div>
+          <div className="cc-acc-note cc-acc-note--short">Invested + earnings − expenses − taken out</div>
         </div>
 
         <div className="cc-acc-card cc-acc-card--hero">
@@ -177,10 +181,11 @@ export default function DashboardTab({ orders, expenses, withdrawals, onShowUnpa
           <div className="cc-acc-value mt-1" style={{ color: s.profit < 0 ? '#c23a2b' : '#1d6f3a' }}>
             {inr(s.profit)}
           </div>
-          <div className="cc-acc-note">
+          <div className="cc-acc-note cc-acc-note--long">
             Earnings {inr(s.received)} − expenses {inr(s.totalExpenses)}. Money you put in is not
             profit — it is your own money coming back.
           </div>
+          <div className="cc-acc-note cc-acc-note--short">Earnings − expenses</div>
         </div>
       </div>
 
@@ -194,7 +199,7 @@ export default function DashboardTab({ orders, expenses, withdrawals, onShowUnpa
         <Stat label="Taken out" value={inr(s.totalWithdrawn)} note="For yourself, not the bakery" />
       </div>
 
-      <p className="cc-acc-note mt-3 mb-0 text-center">
+      <p className="cc-acc-note cc-acc-strip mt-3 mb-0 text-center">
         {/* Money owed is the one figure here you can act on, so it opens the
             orders it refers to instead of leaving you to filter for them. */}
         {s.unpaidCount > 0 && onShowUnpaid ? (
@@ -207,12 +212,17 @@ export default function DashboardTab({ orders, expenses, withdrawals, onShowUnpa
           <>Still to collect <strong>{inr(s.toCollect)}</strong> from {s.unpaidCount} unpaid
             order{s.unpaidCount === 1 ? '' : 's'}</>
         )}
-        {allTime ? <> · Cash <strong>{inr(s.cashInHand)}</strong> · In bank <strong>{inr(s.bankOnline)}</strong></> : null}
+        {allTime ? (
+          <span className="cc-acc-strip__pockets">
+            <span className="cc-acc-strip__sep"> · </span>Cash <strong>{inr(s.cashInHand)}</strong>
+            {' '}· In bank <strong>{inr(s.bankOnline)}</strong>
+          </span>
+        ) : null}
       </p>
 
       <TrendChart orders={orders} expenses={expenses} withdrawals={withdrawals} months={months} />
 
-      <p className="cc-acc-note text-center mt-3 mb-0">
+      <p className="cc-acc-note cc-acc-footnote text-center mt-3 mb-0">
         Only paid orders count as earnings. Buying material goes in <strong>Expenses</strong>;
         money you put in or take out goes in <strong>My Money</strong>.
         Right after a big purchase profit dips — it comes back as those orders are sold.

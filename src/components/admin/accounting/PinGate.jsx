@@ -84,9 +84,12 @@ export default function PinGate({ onUnlock }) {
   }
 
   return (
-    <div className="container py-5" style={{ maxWidth: 400 }}>
+    // Sits under the page header now, so less top space; the lock is a
+    // centred disc (a bare inline icon drew flush left on phones).
+    <div className="mx-auto py-3 py-md-4" style={{ maxWidth: 400 }}>
       <div className="text-center mb-4">
-        <div style={{ fontSize: 38, color: 'var(--cc-rose,#e0617a)' }}><FiLock /></div>
+        <div className="mx-auto mb-2" style={{ width: 64, height: 64, borderRadius: '50%', display: 'grid', placeItems: 'center',
+          background: '#fdeef2', color: 'var(--cc-rose-deep,#cf3e63)', fontSize: 28 }}><FiLock /></div>
         <h3 style={{ fontFamily: 'var(--font-heading,serif)', color: '#cf3e63' }}>
           {settingUp ? 'Choose an accounting PIN' : 'Accounting PIN'}
         </h3>

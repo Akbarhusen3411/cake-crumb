@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   FiPlus, FiTrash2, FiUser, FiXCircle, FiArrowRight,
-  FiCheck, FiClock, FiDollarSign, FiSmartphone,
+  FiCheck, FiClock, FiDollarSign, FiSmartphone, FiMinus, FiAlertCircle,
 } from 'react-icons/fi'
 import Modal from '../Modal.jsx'
 import SearchableSelect from '../SearchableSelect.jsx'
@@ -17,8 +17,10 @@ const emptyLine = () => ({ category: '', item: '', variant: '', qty: 1, unitPric
 const lineTotal = (l) => Math.round((Number(l.qty) || 0) * (Number(l.unitPrice) || 0))
 
 /** A captioned control in the details pane. */
-const Field = ({ label, hint, children }) => (
-  <div className="cc-field">
+const Field = ({ label, hint, half = false, bad = false, children }) => (
+  // `half` pairs two short answers side by side on a phone (see .cc-field--half).
+  // `bad` rings the field the footer's error message is about.
+  <div className={`cc-field${half ? ' cc-field--half' : ''}${bad ? ' cc-field--bad' : ''}`}>
     <span className="cc-field__label">{label}{hint ? <i>{hint}</i> : null}</span>
     {children}
   </div>
@@ -136,26 +138,41 @@ const OrderLine = memo(function OrderLine({
       <div className="cc-sline__cell cc-sline__n">{index + 1}</div>
       <div className="cc-sline__cell cc-sline__cat">
         <SearchableSelect compact value={line.category} onChange={pickCategory}
-          options={categories} placeholder="Category…" />
+          options={categories} placeholder="Category…" title="Category" />
       </div>
       <div className="cc-sline__cell cc-sline__item">
         <SearchableSelect compact allowCustom value={line.item} onChange={pickItem}
           options={catEntry?.names || EMPTY} autoOpen={autoOpenItem}
+          title={line.category ? `${line.category} — item` : 'Item'}
           placeholder={line.category ? 'Item…' : 'Category first'} />
       </div>
       <div className="cc-sline__cell cc-sline__size">
         <SearchableSelect compact value={line.variant} onChange={pickVariant}
           options={variantOptions} disabled={variantOptions.length === 0}
+          title={line.item ? `${line.item} — size` : 'Size'}
           placeholder={variantOptions.length ? 'Size…' : '—'} />
       </div>
       <div className="cc-sline__cell cc-sline__qty">
         <span className="cc-sline__cap">Qty</span>
-        <input type="number" min={perPiece ? 2 : 1} className="form-control form-control-sm"
-          aria-label="Quantity" title={perPiece ? 'Sold per piece — minimum 2' : 'Quantity'}
-          value={line.qty} onChange={(e) => onChange(index, { ...line, qty: e.target.value })}
-          // Enter finishes the line and opens the next one: writing a long bill
-          // is then type · pick · Enter without reaching for the mouse.
-          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onAddRow() } }} />
+        {/* − / + are phone-only (hidden by the stylesheet on a wide screen): a
+            number box is a fiddly target for a thumb and pops a keyboard. */}
+        <div className="cc-qty">
+          <button type="button" className="cc-qty__btn" aria-label="One less"
+            disabled={(Number(line.qty) || 0) <= (perPiece ? 2 : 1)}
+            onClick={() => onChange(index, { ...line, qty: Math.max(perPiece ? 2 : 1, (Number(line.qty) || 0) - 1) })}>
+            <FiMinus />
+          </button>
+          <input type="number" min={perPiece ? 2 : 1} inputMode="numeric" className="form-control form-control-sm"
+            aria-label="Quantity" title={perPiece ? 'Sold per piece — minimum 2' : 'Quantity'}
+            value={line.qty} onChange={(e) => onChange(index, { ...line, qty: e.target.value })}
+            // Enter finishes the line and opens the next one: writing a long bill
+            // is then type · pick · Enter without reaching for the mouse.
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onAddRow() } }} />
+          <button type="button" className="cc-qty__btn" aria-label="One more"
+            onClick={() => onChange(index, { ...line, qty: (Number(line.qty) || 0) + 1 })}>
+            <FiPlus />
+          </button>
+        </div>
       </div>
       <div className="cc-sline__cell cc-sline__rate">
         <span className="cc-sline__cap">Rate</span>
@@ -189,7 +206,7 @@ const OrderLine = memo(function OrderLine({
  * customer, payment, status) sits in a column beside it. A thirty-item order
  * scrolls one list; nothing else on the sheet moves.
  */
-export default function OrderForm({ menu = [], customers = [], initial = null, onSave, onClose }) {
+export default function OrderForm({ menu = [], customers = [], initial = null, saving = false, onSave, onClose }) {
   // Editing is decided by the id, not by `initial` being present: a duplicate
   // arrives fully prefilled but with no id, so it saves as a new order and gets
   // its own number.
@@ -253,29 +270,43 @@ export default function OrderForm({ menu = [], customers = [], initial = null, o
   const totalQty = filled.reduce((s, l) => s + (Number(l.qty) || 0), 0)
   const total = filled.reduce((s, l) => s + lineTotal(l), 0)
 
-  function submit() {
-    if (!date) return alert('Please pick a date.')
-    if (!customer.trim()) return alert('Please enter a customer name.')
-    const clean = lines
-      .map((l) => ({
-        category: l.category.trim(), item: l.item.trim(),
-        variant: l.variant && l.variant !== 'Standard' ? l.variant : '',
-        qty: Math.round(Number(l.qty) || 0), unitPrice: Number(l.unitPrice) || 0,
-      }))
-      .filter((l) => l.item)
-    if (!clean.length) return alert('Add at least one item.')
-    if (clean.some((l) => l.qty <= 0)) return alert('Each item quantity must be 1 or more.')
+  const clean = lines
+    .map((l) => ({
+      category: l.category.trim(), item: l.item.trim(),
+      variant: l.variant && l.variant !== 'Standard' ? l.variant : '',
+      qty: Math.round(Number(l.qty) || 0), unitPrice: Number(l.unitPrice) || 0,
+    }))
+    .filter((l) => l.item)
+
+  // What's stopping a save, as { field, msg } — or null. Worked out from the
+  // form as it stands, so once Save has been pressed the message updates (and
+  // goes) as the mistake is fixed. These were browser alert() boxes: a grey
+  // system pop-up on a phone that named the problem and then hid where it was.
+  function problem() {
+    if (!date) return { field: 'date', msg: 'Pick a date.' }
+    if (!customer.trim()) return { field: 'customer', msg: 'Enter the customer’s name.' }
+    if (!clean.length) return { field: 'items', msg: 'Add at least one item.' }
+    if (clean.some((l) => l.qty <= 0)) return { field: 'items', msg: 'Each item needs a quantity of 1 or more.' }
     // The rate can't be typed on the row any more, so a line with none is a
     // size that was never picked (or an item that isn't on the menu) — saving it
     // would book an order worth ₹0.
     const unpriced = clean.find((l) => l.unitPrice <= 0)
     if (unpriced) {
-      return alert(`${unpriced.item} has no rate.\n\nPick its size, or add it in Menu & Prices first — rates come from there.`)
+      return { field: 'items', msg: `${unpriced.item} has no rate — pick its size, or add it in Menu & Prices first.` }
     }
     // The Qty box carries min 2 for per-piece items and picking the size bumps
     // it, but nothing stops you typing 1 back in — the bakery won't bake one.
     const single = clean.find((l) => isPerPieceVariant(l.variant) && l.qty < 2)
-    if (single) return alert(`${single.item} is sold per piece — the minimum is 2 pieces.`)
+    if (single) return { field: 'items', msg: `${single.item} is sold per piece — the minimum is 2.` }
+    return null
+  }
+  const [tried, setTried] = useState(false)
+  const err = tried ? problem() : null
+
+  function submit() {
+    if (saving) return
+    setTried(true)
+    if (problem()) return
     onSave({ date, customer: customer.trim(), items: clean, amount: total, paid, method, status, notes: notes.trim() })
   }
 
@@ -296,16 +327,21 @@ export default function OrderForm({ menu = [], customers = [], initial = null, o
       footer={<>
         {/* The total follows the buttons on every screen size, so it's still in
             front of you when the summary card has scrolled away on a phone. */}
+        {/* In the footer, so it's on screen wherever the sheet is scrolled. */}
+        {err ? <div className="cc-sheet__error" role="alert"><FiAlertCircle /> {err.msg}</div> : null}
         <div className="cc-sheet__foottotal me-auto">
           <span>Order total</span>
           <b>{inr(total)}</b>
         </div>
-        <button className="btn btn-light d-inline-flex align-items-center gap-2" onClick={onClose}>
+        <button className="btn btn-light d-inline-flex align-items-center gap-2" onClick={onClose} disabled={saving}>
           Cancel <FiXCircle />
         </button>
+        {/* Locked while saving: a second tap on a slow connection saved the
+            order twice, under the same order number. */}
         <button className="btn text-white d-inline-flex align-items-center gap-2"
-          style={{ background: 'var(--cc-rose, #e0617a)', fontWeight: 600 }} onClick={submit}>
-          {editing ? 'Save changes' : 'Add Order'} <FiArrowRight />
+          style={{ background: 'var(--cc-rose, #e0617a)', fontWeight: 600 }} onClick={submit}
+          disabled={saving} aria-busy={saving || undefined}>
+          {saving ? 'Saving…' : (editing ? 'Save changes' : 'Add Order')} {saving ? null : <FiArrowRight />}
         </button>
       </>}
     >
@@ -315,14 +351,14 @@ export default function OrderForm({ menu = [], customers = [], initial = null, o
         <aside className="cc-sheet__side">
           <div className="cc-sheet__sidetitle">Order details</div>
 
-          <Field label="Date">
+          <Field label="Date" bad={err?.field === 'date'}>
             <input type="date" className="form-control" value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
-          <Field label="Customer">
+          <Field label="Customer" bad={err?.field === 'customer'}>
             <SearchableSelect value={customer} onChange={setCustomer} options={customers}
-              icon={<FiUser />} placeholder="Type customer name…" allowCustom />
+              icon={<FiUser />} placeholder="Type customer name…" title="Customer" allowCustom />
           </Field>
-          <Field label="Payment">
+          <Field label="Payment" half>
             <Seg
               value={paid ? 'paid' : 'unpaid'} onChange={(v) => setPaid(v === 'paid')}
               options={[
@@ -331,7 +367,7 @@ export default function OrderForm({ menu = [], customers = [], initial = null, o
               ]}
             />
           </Field>
-          <Field label="Money in">
+          <Field label="Money in" half>
             <Seg
               value={method} onChange={setMethod}
               options={[
@@ -374,7 +410,7 @@ export default function OrderForm({ menu = [], customers = [], initial = null, o
 
         {/* One table, not eight labelled fields per item: the captions are stated
             once and every value sits centred under the one that names it. */}
-        <section className="cc-sheet__main">
+        <section className={`cc-sheet__main${err?.field === 'items' ? ' cc-sheet__main--bad' : ''}`}>
           <div className="cc-sheet__panehead">
             <span className="cc-sheet__title">Items</span>
             <span className="cc-sheet__hint">Rates come from Menu &amp; Prices · press Enter on Qty for the next item</span>

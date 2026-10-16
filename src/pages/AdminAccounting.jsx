@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { FiAlertTriangle, FiLock, FiLogOut, FiRefreshCw } from 'react-icons/fi'
+import { useEffect, useRef, useState } from 'react'
+import { FiAlertTriangle, FiLock, FiDollarSign } from 'react-icons/fi'
 import PinGate from '../components/admin/accounting/PinGate.jsx'
 import { getFirebaseAuth, isFirebaseEnabled } from '../firebase.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
@@ -7,7 +7,7 @@ import {
   ACC, listDocs, subscribeDocs, onCloudError,
   seedMenuIfEmpty, ensurePerPieceMenu, ensureCakePopPrices,
 } from '../services/accounting.js'
-import AdminNav from '../components/admin/AdminNav.jsx'
+import AdminPageHead from '../components/admin/AdminPageHead.jsx'
 import DashboardTab from '../components/admin/accounting/DashboardTab.jsx'
 import OrdersTab from '../components/admin/accounting/OrdersTab.jsx'
 import MenuTab from '../components/admin/accounting/MenuTab.jsx'
@@ -79,12 +79,35 @@ export default function AdminAccounting() {
     }
   }, [unlocked])
 
-  const [tab, setTab] = useState('dashboard')
+  // The open tab survives a refresh — sessionStorage, like the unlock, so it
+  // lasts for this browser tab only. A refresh used to drop you back on the
+  // Dashboard from wherever you were working.
+  const TAB_KEY = 'cc_acc_tab'
+  const [tab, setTab] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(TAB_KEY)
+      return TABS.some((t) => t.key === saved) ? saved : 'dashboard'
+    } catch { return 'dashboard' }
+  })
+  useEffect(() => {
+    try { sessionStorage.setItem(TAB_KEY, tab) } catch { /* ignore */ }
+  }, [tab])
   // A filter the Orders tab should open with, set by the Dashboard's "still to
   // collect" line. Cleared whenever a tab pill is used, so it applies to the one
   // jump that asked for it and not to every later visit.
   const [ordersPreset, setOrdersPreset] = useState(null)
   const goTab = (key) => { setOrdersPreset(null); setTab(key) }
+  // On a phone the tab bar is a sideways strip — keep the open tab in view
+  // rather than half cut off at the edge. Scrolls the strip only, never the page.
+  const tabsRef = useRef(null)
+  useEffect(() => {
+    const strip = tabsRef.current
+    const on = strip?.querySelector('.cc-acc-tab--on')
+    if (!strip || !on || strip.scrollWidth <= strip.clientWidth) return
+    const s = strip.getBoundingClientRect(), r = on.getBoundingClientRect()
+    const left = strip.scrollLeft + (r.left - s.left) - (s.width - r.width) / 2
+    strip.scrollTo({ left: Math.max(0, left), behavior: 'smooth' })
+  }, [tab, ready])
   const showUnpaid = () => { setOrdersPreset({ pay: 'unpaid', period: 'all' }); setTab('orders') }
   const [menu, setMenu] = useState([])
   const [orders, setOrders] = useState([])
@@ -205,8 +228,16 @@ export default function AdminAccounting() {
   // Signed in, but the money pages take one more step.
   if (!unlocked) {
     return (
-      <section className="container py-2">
-        <AdminNav />
+      // The same header as the unlocked page, so switching here from Website
+      // Orders keeps the header in place and only the content below changes.
+      // No refresh or lock — there's nothing loaded yet and it's already locked.
+      <section className="container py-3 py-md-4">
+        <AdminPageHead
+          icon={FiDollarSign}
+          title="Daily Accounting"
+          sub="Locked — enter your PIN to open"
+          onSignOut={logout}
+        />
         <PinGate onUnlock={unlock} />
       </section>
     )
@@ -217,22 +248,15 @@ export default function AdminAccounting() {
       {/* Title, the two-page switcher and the locks share one line. They were
           three stacked bands, which pushed the first real figure a third of the
           way down the screen. */}
-      <div className="cc-acc-head">
-        <h1 className="cc-acc-head__title">Daily Accounting</h1>
-        <button className="cc-acc-head__refresh" onClick={reload} title="Refresh" aria-label="Refresh">
-          <FiRefreshCw />
-        </button>
-        {loading ? <span className="text-muted small">Loading…</span> : null}
-        <AdminNav className="cc-acc-head__nav" />
-        <button
-          className="btn btn-sm btn-outline-secondary"
-          onClick={lock}
-          title="Lock without signing out — leaving this page locks it too"
-        >
-          <FiLock /> Lock
-        </button>
-        <button className="btn btn-sm btn-outline-secondary" onClick={logout}><FiLogOut /> Sign out</button>
-      </div>
+      <AdminPageHead
+        icon={FiDollarSign}
+        title="Daily Accounting"
+        sub={new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+        loading={loading}
+        onRefresh={reload}
+        onLock={lock}
+        onSignOut={logout}
+      />
 
       {cloudError ? (
         <div className="alert alert-warning d-flex align-items-start gap-2 py-2 px-3" style={{ borderRadius: 12 }}>
@@ -247,7 +271,7 @@ export default function AdminAccounting() {
         </div>
       ) : null}
 
-      <div className="cc-admin-tabs cc-acc-tabs">
+      <div className="cc-admin-tabs cc-acc-tabs" ref={tabsRef}>
         {TABS.map((t) => {
           const on = tab === t.key
           return (

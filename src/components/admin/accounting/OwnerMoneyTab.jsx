@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { FiArrowDownLeft, FiArrowUpRight, FiEdit2, FiTrash2 } from 'react-icons/fi'
 import Modal from '../Modal.jsx'
+import UndoToast from './UndoToast.jsx'
+import { useUndo, withoutId } from './useUndo.js'
 import FilterChips from './FilterChips.jsx'
 import PeriodSelect from './PeriodSelect.jsx'
 import { ACC, addDocRec, updateDocRec, deleteDocRec, monthsFrom } from '../../../services/accounting.js'
@@ -36,6 +38,7 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
   const [period, setPeriod] = useState('all') // all | today | YYYY-MM
   const [editing, setEditing] = useState(null) // row, or { direction } for new
   const [busy, setBusy] = useState(false)
+  const { toast, offerUndo, closeToast } = useUndo(reload)
   const [page, setPage] = useState(1)
   const mobile = useIsMobile()
 
@@ -78,6 +81,8 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
     const what = dirOf(w) === IN ? 'money you put in' : 'money you took out'
     if (!window.confirm(`Delete this entry?\n${inr(w.amount)} — ${what}${w.notes ? ` (${w.notes})` : ''}`)) return
     setBusy(true); await deleteDocRec(ACC.WITHDRAWALS, w.id); await reload(); setBusy(false)
+    offerUndo(`Deleted · ${dirOf(w) === IN ? 'money in' : 'money out'} ${inr(w.amount)}`,
+      () => addDocRec(ACC.WITHDRAWALS, withoutId(w)))
   }
 
   return (
@@ -132,29 +137,33 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
           {filtered ? 'No entries match these filters.' : 'Nothing yet. Use “Put money in” when you invest your own money.'}
         </div>
       ) : mobile ? (
-        <div className="d-flex flex-column gap-2">
+        // The same compact card as Orders and Expenses: in/out + amount, then
+        // date · cash/online with the edit/delete icons, then the reason.
+        <div className="cc-ocards">
           {pageRows.map((w) => {
             const isIn = dirOf(w) === IN
+            const ink = isIn ? IN_INK : OUT_INK
             return (
-              <div key={w.id} style={{ border: '1px solid #f0e0e3', borderRadius: 12, padding: 12, background: '#fff' }}>
-                <div className="d-flex justify-content-between align-items-start">
-                  <div>
-                    <div className="fw-bold" style={{ color: isIn ? IN_INK : OUT_INK, fontSize: 18 }}>
-                      {isIn ? '+' : '−'} {inr(w.amount)}
-                    </div>
-                    <div className="small text-muted">
-                      {fmtDate(w.date)} · {isIn ? 'put in as' : 'taken from'} {w.method}
-                    </div>
-                  </div>
+              <article key={w.id} className={`cc-ocard cc-ocard--${isIn ? 'in' : 'out'}`}>
+                <div className="cc-ocard__row">
+                  <span className="cc-ocard__name cc-ocard__dir" style={{ color: ink }}>
+                    {isIn ? <FiArrowDownLeft /> : <FiArrowUpRight />} {isIn ? 'Money in' : 'Money out'}
+                  </span>
+                  <b className="cc-ocard__amt" style={{ color: ink }}>{isIn ? '+' : '−'} {inr(w.amount)}</b>
                 </div>
-                {w.notes ? <div className="small mt-1" style={{ color: '#7a584d' }}>{w.notes}</div> : null}
-                <div className="cc-card-actions">
-                  <button className="cc-card-action" style={{ color: '#cf3e63' }} title="Edit" aria-label="Edit"
-                    onClick={() => setEditing(w)}><FiEdit2 /></button>
-                  <button className="cc-card-action text-danger" title="Delete" aria-label="Delete"
-                    onClick={() => remove(w)}><FiTrash2 /></button>
+                <div className="cc-ocard__row cc-ocard__meta">
+                  <span className="cc-ocard__metatext">
+                    {fmtDate(w.date)} · {isIn ? 'put in as' : 'taken from'} {w.method}
+                  </span>
+                  <span className="cc-ocard__icons">
+                    <button type="button" className="cc-ocard__ico cc-ocard__ico--edit" title="Edit"
+                      aria-label="Edit" onClick={() => setEditing(w)}><FiEdit2 /></button>
+                    <button type="button" className="cc-ocard__ico cc-ocard__ico--del" title="Delete"
+                      aria-label="Delete" onClick={() => remove(w)}><FiTrash2 /></button>
+                  </span>
                 </div>
-              </div>
+                {w.notes ? <p className="cc-ocard__note">{w.notes}</p> : null}
+              </article>
             )
           })}
         </div>
@@ -206,6 +215,8 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
         <OwnerMoneyForm initial={editing.id ? editing : null} direction={dirOf(editing)}
           onSave={save} onClose={() => setEditing(null)} />
       )}
+
+      <UndoToast toast={toast} onClose={closeToast} />
     </div>
   )
 }

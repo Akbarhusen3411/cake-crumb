@@ -1,6 +1,12 @@
-import { useMemo, useState } from 'react'
-import { FiPlus, FiEdit2, FiTrash2, FiRepeat, FiFileText, FiCopy, FiDownload } from 'react-icons/fi'
+import { useMemo, useRef, useState } from 'react'
+import {
+  FiPlus, FiEdit2, FiTrash2, FiRepeat, FiFileText, FiCopy, FiDownload,
+  FiCheck,
+} from 'react-icons/fi'
 import OrderForm from './OrderForm.jsx'
+import UndoToast from './UndoToast.jsx'
+import AddFab from './AddFab.jsx'
+import { useUndo, withoutId } from './useUndo.js'
 import FilterChips from './FilterChips.jsx'
 import PeriodSelect from './PeriodSelect.jsx'
 import InvoiceModal from '../InvoiceModal.jsx'
@@ -112,6 +118,8 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
   const [editing, setEditing] = useState(null) // order or {} for new
   const [invoiceOf, setInvoiceOf] = useState(null) // order being printed
   const [busy, setBusy] = useState(false)
+  const savingRef = useRef(false) // `busy` can lag a fast double tap by a render
+  const { toast, offerUndo, closeToast } = useUndo(reload)
   const [page, setPage] = useState(1)
   const mobile = useIsMobile()
 
@@ -193,6 +201,8 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
   const pageRows = rows.slice((p - 1) * pageSize, p * pageSize)
 
   async function save(data) {
+    if (savingRef.current) return
+    savingRef.current = true
     setBusy(true)
     if (editing && editing.id) {
       // An existing number is never regenerated — it's this order's identity,
@@ -208,12 +218,17 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
     setEditing(null)
     await reload()
     setBusy(false)
+    savingRef.current = false
   }
+  // Each of these moves money with one tap, so each offers an Undo for a few
+  // seconds. Undo writes the old value back rather than toggling a second time.
   async function togglePaid(o) {
     setBusy(true)
     await updateDocRec(ACC.ORDERS, o.id, { paid: !o.paid })
     await reload()
     setBusy(false)
+    offerUndo(`${o.paid ? 'Marked unpaid' : 'Marked paid'} · ${o.customer || 'order'} ${inr(orderTotal(o))}`,
+      () => updateDocRec(ACC.ORDERS, o.id, { paid: !!o.paid }))
   }
   // Mark an online payment as withdrawn from the bank to cash (or back).
   async function toggleWithdrawn(o) {
@@ -221,6 +236,8 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
     await updateDocRec(ACC.ORDERS, o.id, { withdrawn: !o.withdrawn })
     await reload()
     setBusy(false)
+    offerUndo(`${o.withdrawn ? 'Back in bank' : 'Taken to cash'} · ${inr(orderTotal(o))}`,
+      () => updateDocRec(ACC.ORDERS, o.id, { withdrawn: !!o.withdrawn }))
   }
   // Same customer, same items, today's date, no id and no number — so save()
   // treats it as new and `nextOrderNo` hands it the next one. Everything else is
@@ -289,6 +306,9 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
     await deleteDocRec(ACC.ORDERS, o.id)
     await reload()
     setBusy(false)
+    // Undo re-creates it with every field, its order number included — the
+    // number is a label, not the key, so it comes back exactly as it was.
+    offerUndo(`Deleted · ${o.orderNo || o.customer || 'order'}`, () => addDocRec(ACC.ORDERS, withoutId(o)))
   }
 
   return (
@@ -379,65 +399,89 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
         </div>
       ) : mobile ? (
         // ── mobile: stacked cards ──
-        <div className="d-flex flex-column gap-2">
-          {pageRows.map((o) => (
-            <div key={o.id}
-              className={statusKey(o) === 'cancelled' ? 'cc-card-cancelled' : undefined}
-              style={{
-                border: '1px solid #f0e0e3', borderRadius: 12, padding: 12,
-                background: statusKey(o) === 'cancelled' ? '#fafafa' : (o.paid ? '#fff' : '#fff7ec'),
-              }}>
-              <div className="d-flex justify-content-between align-items-start">
-                <div>
-                  <OrderNo value={o.orderNo} size={12} />
-                  <button type="button" className="cc-name-link fw-bold" style={{ color: '#5b3e36' }}
+        // Compact on purpose: name and total on the first line, every detail on
+        // the second, one plain row per item, one slim action bar. The roomier
+        // card (boxed items, a separate total band, tall labelled tiles) fitted
+        // barely two orders on a screen.
+        <div className="cc-ocards">
+          {pageRows.map((o) => {
+            const cancelled = statusKey(o) === 'cancelled'
+            const lines = orderLines(o).filter((it) => it.item || it.category)
+            return (
+              <article key={o.id} className={`cc-ocard${cancelled ? ' cc-ocard--cancelled cc-card-cancelled' : (o.paid ? '' : ' cc-ocard--unpaid')}`}>
+                <div className="cc-ocard__row">
+                  <button type="button" className="cc-name-link cc-ocard__name"
                     title={`Show ${o.customer}'s orders`}
                     onClick={() => { setQ(o.customer || ''); setPage(1) }}>
-                    {o.customer}
+                    {o.customer || '—'}
                   </button>
+                  <b className="cc-ocard__amt cc-amount" style={{ color: amountInk(o) }}>{inr(orderTotal(o))}</b>
+                </div>
+
+                <div className="cc-ocard__row cc-ocard__meta">
+                  <span className="cc-ocard__metatext">
+                    <OrderNo value={o.orderNo} size={11.5} /> · {fmtDate(o.date)} · {o.method}
+                  </span>
+                  <span className={`cc-ocard__pay${o.paid ? ' cc-ocard__pay--ok' : ''}`}>
+                    {o.paid ? 'Paid' : 'Unpaid'}
+                  </span>
+                </div>
+
+                <div className="cc-ocard__row cc-ocard__meta">
+                  <span className="cc-ocard__status" style={{ color: statusInk(o.status) }}>
+                    <i style={{ background: statusInk(o.status) }} />{o.status}
+                  </span>
                   {owedBesides(o) ? (
                     <span className="cc-owes" title="Unpaid across all of this customer's orders">
                       Owes {inr(owedBesides(o))}
                     </span>
                   ) : null}
-                  <div className="small text-muted">
-                    {fmtDate(o.date)} · {o.method} ·{' '}
-                    <span style={{ color: statusInk(o.status), fontWeight: 600 }}>{o.status}</span>
-                  </div>
                 </div>
-                <div className="text-end">
-                  <div className="fw-bold cc-amount" style={{ color: amountInk(o), fontSize: 18 }}>{inr(orderTotal(o))}</div>
-                  <span className="badge" style={{ background: o.paid ? '#d6f5e0' : '#ffe1c2', color: o.paid ? '#1d7a44' : '#a5591b' }}>
-                    {o.paid ? 'Paid' : 'Unpaid'}
+
+                <ul className="cc-ocard__items">
+                  {lines.map((it, i) => {
+                    const qty = Number(it.qty) || 0
+                    const rate = Number(it.unitPrice) || 0
+                    return (
+                      <li key={i}>
+                        <span className="cc-ocard__iname">{oneLine(it)}</span>
+                        <span className="cc-ocard__iqty">{qty} × {inr(rate)}</span>
+                        {/* One item is the order total already, said at the top. */}
+                        {lines.length > 1 ? (
+                          <b className="cc-ocard__iamt cc-item-line__amt">{inr(Math.round(qty * rate))}</b>
+                        ) : null}
+                      </li>
+                    )
+                  })}
+                </ul>
+
+                {/* The everyday action is labelled and leads; the rest are icons. */}
+                <div className="cc-ocard__actions">
+                  <button type="button" className={`cc-ocard__paybtn${o.paid ? '' : ' cc-ocard__paybtn--go'}`}
+                    title={o.paid ? 'Mark unpaid' : 'Mark paid'} onClick={() => togglePaid(o)}>
+                    {o.paid ? <><FiRepeat /> Mark unpaid</> : <><FiCheck /> Mark paid</>}
+                  </button>
+                  {isBankable(o) && (
+                    <button type="button" onClick={() => toggleWithdrawn(o)}
+                      title={o.withdrawn ? 'Taken out of the bank — tap to undo' : 'Money withdrawn from bank?'}
+                      className={`cc-bankchip${o.withdrawn ? ' cc-bankchip--on' : ''}`}>
+                      {o.withdrawn ? '✓ To cash' : 'In bank'}
+                    </button>
+                  )}
+                  <span className="cc-ocard__icons">
+                    <button type="button" className="cc-ocard__ico" title="Invoice" aria-label="Invoice"
+                      onClick={() => setInvoiceOf(o)}><FiFileText /></button>
+                    <button type="button" className="cc-ocard__ico" title="Duplicate — same items, today"
+                      aria-label="Duplicate" onClick={() => duplicate(o)}><FiCopy /></button>
+                    <button type="button" className="cc-ocard__ico cc-ocard__ico--edit" title="Edit"
+                      aria-label="Edit" onClick={() => setEditing(o)}><FiEdit2 /></button>
+                    <button type="button" className="cc-ocard__ico cc-ocard__ico--del" title="Delete"
+                      aria-label="Delete" onClick={() => remove(o)}><FiTrash2 /></button>
                   </span>
                 </div>
-              </div>
-              <div className="mt-2" style={{ color: '#7a584d' }}><ItemLines order={o} /></div>
-              {isBankable(o) && (
-                <button
-                  type="button" onClick={() => toggleWithdrawn(o)}
-                  className={`cc-bankchip cc-bankchip--card${o.withdrawn ? ' cc-bankchip--on' : ''}`}
-                >
-                  {o.withdrawn ? '✓ Taken to cash' : 'In bank — tap when withdrawn'}
-                </button>
-              )}
-              {/* Icons only, centred. Three labelled buttons and one bare icon
-                  sat unevenly against the right edge and ate the card's width;
-                  the label is on the title/aria for anyone who needs it. */}
-              <div className="cc-card-actions">
-                <button className="cc-card-action" title={o.paid ? 'Mark unpaid' : 'Mark paid'}
-                  aria-label={o.paid ? 'Mark unpaid' : 'Mark paid'} onClick={() => togglePaid(o)}><FiRepeat /></button>
-                <button className="cc-card-action" title="Invoice" aria-label="Invoice"
-                  onClick={() => setInvoiceOf(o)}><FiFileText /></button>
-                <button className="cc-card-action" title="Duplicate — same items, today" aria-label="Duplicate"
-                  onClick={() => duplicate(o)}><FiCopy /></button>
-                <button className="cc-card-action" title="Edit" aria-label="Edit"
-                  style={{ color: '#cf3e63' }} onClick={() => setEditing(o)}><FiEdit2 /></button>
-                <button className="cc-card-action text-danger" title="Delete" aria-label="Delete"
-                  onClick={() => remove(o)}><FiTrash2 /></button>
-              </div>
-            </div>
-          ))}
+              </article>
+            )
+          })}
         </div>
       ) : (
         // ── desktop: table ──
@@ -533,10 +577,14 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
           customers={customers}
           // Prefilled for an edit *and* for a duplicate; only the id says which.
           initial={editing.id || editing.items ? editing : null}
+          saving={busy}
           onSave={save}
           onClose={() => setEditing(null)}
         />
       )}
+
+      {mobile && editing === null && !invoiceOf ? <AddFab label="New order" onClick={() => setEditing({})} /> : null}
+      <UndoToast toast={toast} onClose={closeToast} />
 
       {invoiceOf && (
         <InvoiceModal

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  FiXCircle, FiRefreshCw, FiLock, FiLogOut, FiChevronDown, FiAlertTriangle, FiFileText,
+  FiXCircle, FiLock, FiChevronDown, FiAlertTriangle, FiFileText, FiClipboard,
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import {
@@ -13,7 +13,7 @@ import { getFirebaseAuth, isFirebaseEnabled } from '../firebase.js'
 import { inr } from '../data/format.js'
 import { isBulkOrder, BAKERY_ADDRESS, MAP_LINK } from '../data/shopConfig.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
-import AdminNav from '../components/admin/AdminNav.jsx'
+import AdminPageHead from '../components/admin/AdminPageHead.jsx'
 import InvoiceModal from '../components/admin/InvoiceModal.jsx'
 import { buildWebsiteInvoice, pendingQuote } from '../utils/invoice.js'
 
@@ -359,21 +359,14 @@ export default function AdminOrders() {
 
   return (
     <section className="container py-4 py-md-5">
-      <AdminNav />
-      {/* Same header row as /admin/accounting: title + icon refresh on the left,
-          sign-out pushed to the right, so the two admin pages don't drift apart. */}
-      <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
-        <h1 className="h4 m-0" style={{ fontFamily: 'var(--font-heading,serif)', color: '#cf3e63' }}>
-          Website Orders <span style={{ color: 'var(--cc-cocoa-soft)', fontSize: '0.9rem' }}>({orders.length})</span>
-        </h1>
-        <button className="btn btn-sm btn-light ms-2" onClick={refresh} disabled={loading} title="Refresh">
-          <FiRefreshCw />
-        </button>
-        {loading ? <span className="text-muted small">Loading…</span> : null}
-        <button className="btn btn-sm btn-outline-secondary ms-auto" onClick={logout}>
-          <FiLogOut /> Sign out
-        </button>
-      </div>
+      <AdminPageHead
+        icon={FiClipboard}
+        title="Website Orders"
+        sub={`${orders.length} order${orders.length === 1 ? '' : 's'}${counts.placed ? ` · ${counts.placed} waiting to confirm` : ''}`}
+        loading={loading}
+        onRefresh={refresh}
+        onSignOut={logout}
+      />
 
       {/* Filter tabs */}
       <div className="d-flex flex-wrap gap-2 mb-3">

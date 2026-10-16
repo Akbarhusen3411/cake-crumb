@@ -5978,6 +5978,46 @@ header[style*="sticky"] {
 .cc-acc-card--hero .cc-acc-value { font-size: clamp(1.9rem, 5vw, 2.6rem); }
 .cc-acc-kpis .cc-acc-value { font-size: clamp(1.35rem, 3.4vw, 1.7rem); }
 .cc-acc-note { font-size: 0.78rem; color: #8a8a8a; margin-top: 0.35rem; }
+.cc-acc-note--short { display: none; }
+/* Each tile's own colour along its top edge — four kinds of money, told apart
+   before their labels are read. Tiles with no colour keep a neutral edge. */
+.cc-acc-kpis .cc-acc-card { border-top: 3px solid var(--tone, #e8dcd8); }
+
+/* Phone: the same figures, half the scroll. The two heroes lose their padding
+   and their long formula (the tiles under them carry those figures), the four
+   tiles go 2 × 2, and the to-collect / cash / bank line becomes a strip. */
+@media (max-width: 699.98px) {
+  .cc-acc-dash__top { margin-bottom: 0.75rem !important; flex-wrap: nowrap !important; }
+  .cc-acc-dash__top .form-select { min-height: 2.4rem; font-size: 16px; border-radius: 10px; }
+  .cc-acc-hero { gap: 0.55rem; }
+  .cc-acc-card { border-radius: 14px; box-shadow: 0 2px 10px -6px rgba(160, 60, 90, 0.22); }
+  .cc-acc-card--hero { padding: 0.85rem 1rem; }
+  .cc-acc-card--hero .cc-acc-value { font-size: 1.9rem; }
+  .cc-acc-note--long { display: none; }
+  .cc-acc-note--short { display: block; margin-top: 0.25rem; font-size: 0.74rem; color: #7d6862; }
+  .cc-acc-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-top: 0.55rem !important; }
+  .cc-acc-kpis .cc-acc-card { padding: 0.65rem 0.75rem 0.6rem; }
+  .cc-acc-kpis .cc-acc-label { font-size: 0.64rem; }
+  .cc-acc-kpis .cc-acc-value { font-size: 1.15rem; margin-top: 0.15rem !important; white-space: nowrap; }
+  .cc-acc-kpis .cc-acc-note { font-size: 0.7rem; line-height: 1.3; margin-top: 0.2rem; color: #7d6862; }
+  .cc-acc-strip {
+    margin-top: 0.55rem !important;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #f3dcc0;
+    border-radius: 12px;
+    background: #fff8ef;
+    color: #6d5049;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  /* rose-deep is 4.3:1 on this amber; rose-ink clears 4.5. */
+  .cc-acc-strip .cc-acc-link { color: var(--cc-rose-ink, #ad2f4e); }
+  /* Cash and bank on a line of their own instead of trailing the sentence. */
+  .cc-acc-strip__pockets { display: block; margin-top: 0.15rem; padding-top: 0.3rem; border-top: 1px dashed #f0d9c0; }
+  .cc-acc-strip__sep { display: none; }
+  .cc-acc-dash .cc-acc-card.mt-3 { margin-top: 0.55rem !important; padding: 0.8rem 0.75rem; }
+  .cc-acc-footnote { font-size: 0.72rem; line-height: 1.45; color: #7d6862; }
+}
 
 /* Cash vs bank proportion — a bar, not a pie: two parts of one total. */
 
@@ -6421,38 +6461,95 @@ header[style*="sticky"] {
    actual work below the fold and made the row you wanted hard to hit. */
 .cc-admin-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
-/* ── the accounting page's own chrome ──
-   Title + page switcher + locks on one line, then the tab bar, then the work.
-   It used to be four stacked bands (nav pills, title, tabs, today strip) before
-   a single figure, which on a laptop is a third of the screen spent on chrome. */
+/* ── the admin pages' header (AdminPageHead.jsx, both pages) ──
+   A soft panel: icon badge · title with one line of context · page switcher ·
+   the tools (refresh, lock, sign out) in one framed toolbar with hairlines
+   between them. Laptop: one row. Phone: badge · title · tools, then the
+   switcher full width under it. It was a bare title beside two loose grey
+   outline buttons, which read as unfinished. */
 .cc-acc-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem 0.6rem;
-  margin-bottom: 0.7rem;
+  gap: 0.6rem 0.8rem;
+  margin-bottom: 1.25rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid #f3e1e6;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fff 0%, #fff6f7 60%, #fdeef2 100%);
+  box-shadow: 0 6px 20px -14px rgba(160, 60, 90, 0.35);
 }
+.cc-acc-head__badge {
+  flex: 0 0 auto;
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: linear-gradient(145deg, var(--cc-rose, #e0617a), var(--cc-rose-deep, #cf3e63));
+  color: #fff;
+  box-shadow: 0 6px 14px -8px rgba(207, 62, 99, 0.8);
+}
+.cc-acc-head__badge svg { width: 20px; height: 20px; }
+.cc-acc-head__text { min-width: 0; display: flex; flex-direction: column; }
 .cc-acc-head__title {
   margin: 0;
   font-family: var(--font-heading, serif);
-  font-size: 1.5rem;
-  color: var(--cc-rose-deep, #cf3e63);
+  font-size: 1.45rem;
+  line-height: 1.15;
+  color: var(--cc-rose-ink, #ad2f4e);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.cc-acc-head__refresh {
+.cc-acc-head__sub {
+  margin: 0.1rem 0 0;
+  font-size: 0.76rem;
+  color: #7d6862;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Pushes the switcher and the tools to the right as one group. */
+.cc-acc-head__nav { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-left: auto; }
+
+.cc-acc-head__tools {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #efd9df;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+.cc-acc-head__tool {
+  width: 2.5rem;
+  height: 2.5rem;
   display: grid;
   place-items: center;
-  width: 1.9rem;
-  height: 1.9rem;
-  border: 1px solid #f0dde1;
-  border-radius: 9px;
-  background: #fff;
-  color: #8a6a60;
+  border: 0;
+  border-left: 1px solid #f4e4e8;
+  background: transparent;
+  color: #7a584d;
   cursor: pointer;
   transition: background-color var(--cc-dur-fast, 110ms) var(--cc-ease, ease), color var(--cc-dur-fast, 110ms) var(--cc-ease, ease);
 }
-.cc-acc-head__refresh:hover { background: #fdeef2; color: var(--cc-rose-deep, #cf3e63); }
-/* Pushes the switcher and the two locks to the right as one group. */
-.cc-acc-head__nav { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-left: auto; }
+.cc-acc-head__tool:first-child { border-left: 0; }
+.cc-acc-head__tool svg { width: 17px; height: 17px; }
+.cc-acc-head__tool--out { color: #b23b3b; }
+.cc-acc-head__tool:active { background: #fdeef2; }
+.cc-acc-head__tool:focus-visible { outline: 2px solid var(--cc-rose-deep, #cf3e63); outline-offset: -2px; }
+.cc-acc-head__tool:disabled { cursor: default; }
+@media (hover: hover) {
+  .cc-acc-head__tool:hover { background: #fdeef2; color: var(--cc-rose-ink, #ad2f4e); }
+  .cc-acc-head__tool--out:hover { background: #fdecec; color: #9c2a2a; }
+}
+/* Refresh spins while loading instead of a "Loading…" word shoving the row. */
+.cc-acc-head__tool--busy svg { animation: cc-acc-spin 0.9s linear infinite; color: var(--cc-rose-deep, #cf3e63); }
+@keyframes cc-acc-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .cc-acc-head__tool--busy svg { animation: none; }
+}
 
 /* The tab bar reads as a bar — the pills sat on nothing and the eye had to
    guess where the page's controls ended and its contents began. */
@@ -6474,18 +6571,54 @@ header[style*="sticky"] {
   cursor: pointer;
   transition: background-color var(--cc-dur-fast, 110ms) var(--cc-ease, ease), color var(--cc-dur-fast, 110ms) var(--cc-ease, ease);
 }
-.cc-acc-tab:hover { background: #fdeef2; }
-.cc-acc-tab--on {
-  background: var(--cc-rose, #e0617a);
-  border-color: var(--cc-rose, #e0617a);
+/* Hover only where there IS hover. A phone keeps `:hover` on whatever was last
+   tapped, and `:hover` outranks a single class — so the open tab got the pale
+   hover pink under its white label and read as blank. */
+@media (hover: hover) {
+  .cc-acc-tab:hover { background: #fdeef2; }
+}
+/* Deep rose, not --cc-rose: white on #e0617a is ~3.4:1, under what a bold
+   0.85rem label needs. Doubled class so no hover/focus state can repaint it. */
+.cc-acc-tab.cc-acc-tab--on,
+.cc-acc-tab.cc-acc-tab--on:hover {
+  background: var(--cc-rose-deep, #cf3e63);
+  border-color: var(--cc-rose-deep, #cf3e63);
   color: #fff;
 }
 .cc-acc-tab:focus-visible { outline: 2px solid var(--cc-rose-deep, #cf3e63); outline-offset: 2px; }
 
 @media (max-width: 575.98px) {
-  .cc-acc-head__title { font-size: 1.25rem; }
-  /* The switcher takes its own line rather than squeezing beside the locks. */
-  .cc-acc-head__nav { flex: 1 1 100%; margin-left: 0; }
+  /* Phone: badge · title · tools on one row, the switcher under it as two
+     equal halves of one segmented control. */
+  .cc-acc-head { gap: 0.6rem; padding: 0.65rem; border-radius: 16px; margin-bottom: 1.2rem; }
+  .cc-acc-head__badge { width: 2.4rem; height: 2.4rem; border-radius: 12px; }
+  .cc-acc-head__badge svg { width: 18px; height: 18px; }
+  .cc-acc-head__text { flex: 1 1 0; }
+  .cc-acc-head__title { font-size: 1.2rem; }
+  .cc-acc-head__sub { font-size: 0.72rem; }
+  .cc-acc-head__tool { width: 2.4rem; height: 2.4rem; }
+  .cc-acc-head__nav {
+    order: 10;
+    flex: 1 1 100%;
+    margin-left: 0;
+    flex-wrap: nowrap;
+    gap: 0.3rem;
+    padding: 0.25rem;
+    border: 1px solid #f2dde2;
+    border-radius: 999px;
+    background: #fff;
+  }
+  /* AdminNav paints its pills inline; here they become the halves of one
+     segmented control. */
+  .cc-acc-head__nav > a {
+    flex: 1 1 0;
+    justify-content: center;
+    min-width: 0;
+    padding: 0.45rem 0.5rem !important;
+    border: 0 !important;
+    font-size: 0.8rem !important;
+    white-space: nowrap;
+  }
 }
 
 @media (max-width: 767.98px) {
@@ -6502,28 +6635,70 @@ header[style*="sticky"] {
     padding-bottom: 2px;
   }
   .cc-admin-tabs::-webkit-scrollbar { display: none; }
-  .cc-admin-tabs > button { flex: 0 0 auto; scroll-snap-align: start; }
+  .cc-admin-tabs > button { flex: 0 0 auto; scroll-snap-align: center; }
+  /* Thumb-sized tabs. */
+  .cc-acc-tab { padding: 0.5rem 1rem; font-size: 0.85rem; }
+  /* padding-bottom restates the base's room above the hairline — the
+     .cc-admin-tabs rule just above cut it to 2px, so the line ran along the
+     bottoms of the pills. */
+  .cc-acc-tabs { margin-bottom: 0.9rem; padding-top: 2px; padding-bottom: 0.7rem; }
 
-  /* Toolbar: one thing per line, each full width. Half-width controls next to a
-     stray count read as a broken grid at this size. */
+  /* Toolbar: the add button across the full width, then search and CSV share a
+     row, then the count. Three full-width rows spent a screen on controls. */
   .cc-admin-toolbar { gap: 0.5rem; }
-  .cc-admin-toolbar > .cc-admin-toolbar-btn { flex: 1 1 100%; justify-content: center; }
-  .cc-admin-toolbar > .form-control { max-width: none !important; flex: 1 1 100%; }
+  .cc-admin-toolbar > .cc-admin-toolbar-btn {
+    flex: 1 1 100%;
+    justify-content: center;
+    min-height: 2.9rem;
+    border-radius: 12px;
+    font-weight: 700;
+  }
+  .cc-admin-toolbar > .form-control {
+    max-width: none !important;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 2.75rem;
+    border-radius: 12px;
+    font-size: 16px; /* under 16px iOS zooms the page on focus */
+  }
+  .cc-admin-toolbar > .btn-light { min-height: 2.75rem; border-radius: 12px; }
+  /* A full-width line, so its figure reads centred — right-aligned it sat in
+     the corner of an otherwise empty band. `!important` beats `.text-end`. */
   .cc-admin-toolbar > .cc-admin-count {
     margin-left: 0 !important;
     flex: 1 1 100%;
-    text-align: right;
+    text-align: center !important;
   }
 
   /* Filters: one group per line with a fixed label column, so the chips start
-     at the same x whatever the label says. */
-  .cc-admin-filters { gap: 0.55rem !important; }
-  .cc-admin-filters > * { flex: 1 1 100%; }
+     at the same x whatever the label says — and a group too long for the line
+     slides sideways instead of wrapping one chip onto a ragged second row. */
+  .cc-admin-filters { gap: 0.5rem !important; }
+  .cc-admin-filters > * { flex: 1 1 100%; min-width: 0; }
+  .cc-admin-filters .cc-filter-group {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-block: 1px;
+  }
+  .cc-admin-filters .cc-filter-group::-webkit-scrollbar { display: none; }
+  .cc-admin-filters .cc-filter-group > .btn { flex: 0 0 auto; padding: 4px 13px !important; }
   .cc-admin-filters .cc-filter-label {
     flex: 0 0 5.4rem;
     margin-right: 0 !important;
   }
+
+  /* Today strip: the three figures on one line, the toggle under them. */
+  .cc-today { gap: 0.3rem 0.9rem; padding: 0.55rem 0.8rem; }
+  .cc-today__label { flex: 1 1 100%; }
+  .cc-today__btn { margin-left: 0; flex: 1 1 100%; padding: 0.4rem 0.7rem; }
 }
+
+/* Qty with − / +. The buttons are for thumbs; on a wide screen the row keeps its
+   plain number box (and Enter-for-the-next-line). */
+.cc-qty { display: flex; align-items: center; width: 100%; }
+.cc-qty__btn { display: none; }
 
 /* ═══════ admin accounting: the New Order / New Expense entry sheets ═══════
    Both sheets are one layout: the item list takes the width and the height, and
@@ -6900,6 +7075,113 @@ header[style*="sticky"] {
 /* The total rides with the buttons too, so it's still in front of you on a
    phone once the details column has scrolled away. */
 .cc-sheet__foottotal { display: flex; align-items: baseline; gap: 0.5rem; }
+
+/* Why Save didn't go through — first line of the footer, so it's on screen
+   wherever the sheet is scrolled. Replaced the browser alert() boxes. The
+   footer wraps only while a message is showing. */
+.cc-modal-foot:has(.cc-sheet__error) { flex-wrap: wrap; }
+.cc-sheet__error {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #f2c4c4;
+  border-radius: 10px;
+  background: #fdf0f0;
+  color: #9c2a2a;
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.cc-sheet__error svg { flex: 0 0 auto; width: 16px; height: 16px; margin-top: 1px; }
+/* …and the place it's about, ringed in the same red. */
+.cc-field--bad .cc-field__label { color: #9c2a2a; }
+.cc-field--bad input,
+.cc-field--bad .form-control {
+  border-color: #d9534f !important;
+  box-shadow: 0 0 0 3px rgba(217, 83, 79, 0.15) !important;
+}
+.cc-sheet__main--bad .cc-stable { border-color: #e08a8a; box-shadow: 0 0 0 3px rgba(217, 83, 79, 0.12); }
+
+/* Undo bar after Mark paid / To cash / Delete (UndoToast.jsx). Dark cocoa so it
+   reads as a message about the page, not part of it; sits above the iPhone
+   home bar. */
+.cc-undo {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  z-index: 1070;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+  padding: 0.4rem 0.4rem 0.4rem 0.95rem;
+  border-radius: 14px;
+  background: #3f2a24;
+  color: #fff;
+  box-shadow: 0 10px 30px -10px rgba(40, 20, 15, 0.55);
+  font-size: 0.86rem;
+  animation: cc-undo-in 180ms var(--cc-ease, ease);
+}
+.cc-undo__msg { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cc-undo__btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 2.2rem;
+  padding: 0 0.8rem;
+  border: 0;
+  border-radius: 10px;
+  background: #ffd9e2;
+  color: #7a1f37;
+  font-weight: 800;
+}
+.cc-undo__btn svg { width: 14px; height: 14px; }
+.cc-undo__x {
+  flex: 0 0 auto;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #e9d8d3;
+}
+.cc-undo__btn:focus-visible,
+.cc-undo__x:focus-visible { outline: 2px solid #ffd9e2; outline-offset: 2px; }
+@keyframes cc-undo-in { from { opacity: 0; transform: translate(-50%, 8px); } }
+
+/* Floating "+" (AddFab.jsx) — phone only, rendered by the Orders and Expenses
+   tabs. The list it sits in gets room at the bottom so the last card and the
+   pager aren't hidden under it, and the undo bar rides above it. */
+.cc-fab {
+  position: fixed;
+  right: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  z-index: 1040;
+  width: 3.5rem;
+  height: 3.5rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cc-rose-deep, #cf3e63);
+  color: #fff;
+  box-shadow: 0 10px 24px -8px rgba(160, 40, 70, 0.6), 0 2px 6px rgba(0, 0, 0, 0.12);
+  transition: transform var(--cc-dur-fast, 110ms) var(--cc-ease, ease);
+}
+.cc-fab svg { width: 26px; height: 26px; }
+.cc-fab:active { transform: scale(0.94); }
+@media (prefers-reduced-motion: reduce) { .cc-fab, .cc-fab:active { transition: none; transform: none; } }
+.cc-fab:focus-visible { outline: 3px solid #ffd9e2; outline-offset: 2px; }
+*:has(> .cc-fab) { padding-bottom: 5rem; }
+*:has(> .cc-fab) > .cc-undo { bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
+@media (prefers-reduced-motion: reduce) { .cc-undo { animation: none; } }
 .cc-sheet__foottotal span {
   font-size: 0.68rem;
   font-weight: 800;
@@ -6916,11 +7198,41 @@ header[style*="sticky"] {
 }
 .cc-sheet__foottotal--spend b { color: #b23b3b; }
 
+/* ── The entry sheets on a phone ──
+   Each item is its own card, laid out on named grid areas rather than a
+   wrapping flex row (which left fields at whatever width the leftovers came
+   to):
+
+       ITEM 1                       🗑
+       [ Category               ▾ ]
+       [ Item                   ▾ ]
+       [ Size                   ▾ ]
+       QTY [− 2 +] · RATE ₹350 · TOTAL ₹700
+
+   Inputs are 16px here — anything smaller makes iOS zoom the page on focus. */
 @media (max-width: 767.98px) {
-  /* Folded: the captions no longer sit over what they name, so each row becomes
-     its own boxed block and carries its own little captions instead. */
-  .cc-sheet__side, .cc-sheet__main { padding: 0.8rem 0.8rem 1rem; }
+  .cc-sheet__side, .cc-sheet__main { padding: 0.9rem 0.85rem 1rem; }
   .cc-sheet__hint { display: none; }
+
+  /* Details: two columns, the short answers paired side by side. The summary
+     card goes — the same total is on the band under the items and in the
+     footer, and this column is the first thing a phone shows. */
+  .cc-sheet__side {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 0.6rem;
+  }
+  .cc-sheet__side > * { grid-column: 1 / -1; }
+  .cc-sheet__side > .cc-field--half { grid-column: auto; }
+  .cc-sheet__side .cc-ssum { display: none; }
+  .cc-field--half .cc-seg { flex-wrap: nowrap; gap: 0.3rem; }
+  .cc-field--half .cc-seg__btn { flex: 1 1 0; min-width: 0; padding-inline: 0.3rem; }
+  .cc-sheet .form-control,
+  .cc-sheet .form-select { min-height: 2.75rem; font-size: 16px; }
+  .cc-seg__btn { min-height: 2.6rem; font-size: 0.85rem; }
+
+  .cc-sheet__panehead { margin-bottom: 0.6rem; }
+
   .cc-stable {
     border: 0;
     border-radius: 0;
@@ -6928,48 +7240,287 @@ header[style*="sticky"] {
     box-shadow: none;
     overflow: visible;
   }
-  .cc-sline--head { display: none; }
+  /* Doubled: `.cc-sline { display: grid }` below has the same weight and comes
+     later, which is how the column captions used to show up on a phone. */
+  .cc-sline.cc-sline--head { display: none; }
+
   .cc-sline {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    padding: 0.45rem 0.5rem;
+    grid-template-columns: minmax(7.4rem, 1.25fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'n    n    del'
+      'cat  cat  cat'
+      'item item item'
+      'size size size'
+      'qty  rate amt';
+    gap: 0.45rem;
+    padding: 0.6rem 0.7rem 0.7rem;
     border: 1px solid #f1dde2;
-    border-radius: 12px;
+    border-radius: 14px;
     background: #fff;
+    box-shadow: 0 1px 3px rgba(120, 60, 80, 0.06);
   }
-  .cc-sline + .cc-sline { margin-top: 0.5rem; border-top: 1px solid #f1dde2; }
-  .cc-sline__cell {
+  .cc-stable--expense .cc-sline {
+    grid-template-areas:
+      'n    n    del'
+      'item item item'
+      'qty  rate amt';
+  }
+  .cc-sline + .cc-sline { margin-top: 0.65rem; border-top: 1px solid #f1dde2; }
+  .cc-sline:not(.cc-sline--head):hover { background: #fff; }
+  .cc-sline:not(.cc-sline--head):focus-within {
+    background: #fff;
+    border-color: #f0b9c7;
+    box-shadow: 0 0 0 3px rgba(224, 97, 122, 0.1);
+  }
+  .cc-sline--noprice { border-color: #efc48f; box-shadow: inset 3px 0 0 0 #e39a4a; }
+
+  .cc-sline__cell { min-height: 0; }
+  .cc-sline__n { grid-area: n; justify-content: flex-start; }
+  .cc-sline__cat { grid-area: cat; }
+  .cc-sline__item { grid-area: item; }
+  .cc-sline__size { grid-area: size; }
+  .cc-sline__qty { grid-area: qty; }
+  .cc-sline__rate { grid-area: rate; }
+  .cc-sline__amt { grid-area: amt; }
+  .cc-sline__del { grid-area: del; justify-content: flex-end; }
+
+  /* "ITEM 1" as the card's own heading. */
+  .cc-sline__n {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cc-rose-ink, #ad2f4e);
+  }
+  .cc-sline__n::before { content: 'Item\00a0'; }
+  .cc-srow-del { width: 2.25rem; height: 2.25rem; }
+
+  /* The three figures sit on one tinted band at the foot of the card. */
+  .cc-sline__qty,
+  .cc-sline__rate,
+  .cc-sline__amt {
     flex-direction: column;
     align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.2rem;
+    padding: 0.45rem 0.4rem;
+    background: #fdf5f7;
+    border-radius: 10px;
+  }
+  .cc-sline__rate, .cc-sline__amt { text-align: center; }
+  .cc-sline__fixed, .cc-sline__money {
+    display: flex;
+    align-items: center;
     justify-content: center;
     min-height: 2.5rem;
+    font-size: 0.92rem;
   }
-  .cc-sline__n { flex: 0 0 1.5rem; align-items: center; }
-  .cc-sline__cat { flex: 1 1 7rem; }
-  .cc-sline__del { flex: 0 0 2rem; margin-left: auto; align-items: center; }
-  .cc-sline__item, .cc-sline__size { flex: 1 1 100%; }
-  .cc-sline__qty { flex: 0 0 4.4rem; }
-  .cc-sline__rate { flex: 0 0 5.4rem; align-items: center; }
-  .cc-sline__amt { flex: 1 1 auto; align-items: flex-end; }
-  .cc-sline__cap {
+  .cc-sline__rate .form-control { min-height: 2.5rem; }
+  .cc-sline__cap { display: none; }
+  .cc-sline__qty .cc-sline__cap,
+  .cc-sline__rate .cc-sline__cap,
+  .cc-sline__amt .cc-sline__cap {
     display: block;
-    margin-bottom: 0.1rem;
-    font-size: 0.58rem;
+    font-size: 0.6rem;
     font-weight: 800;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: #8a6f68;
     text-align: center;
   }
-  .cc-sline__amt .cc-sline__cap { text-align: right; }
-  .cc-saddrow { margin-top: 0.5rem; border: 1px dashed #f0ccd6; border-radius: 12px; background: #fff; }
-  .cc-stotal { margin-top: 0.6rem; border: 1px solid #f6dde3; border-radius: 12px; }
+
+  .cc-qty { gap: 0.25rem; }
+  .cc-qty__btn {
+    flex: 0 0 2.2rem;
+    height: 2.5rem;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid #f0ccd6;
+    border-radius: 9px;
+    background: #fff;
+    color: var(--cc-rose-deep, #cf3e63);
+    cursor: pointer;
+  }
+  .cc-qty__btn:active { background: #fdeef2; }
+  .cc-qty__btn:disabled { color: #d9c3c8; border-color: #f3e3e7; }
+  .cc-qty .form-control {
+    flex: 1 1 auto;
+    min-height: 2.5rem;
+    padding-inline: 0.15rem;
+    text-align: center;
+    font-weight: 700;
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  .cc-qty .form-control::-webkit-outer-spin-button,
+  .cc-qty .form-control::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  .cc-saddrow {
+    margin-top: 0.65rem;
+    min-height: 3rem;
+    border: 1.5px dashed #ecb6c4;
+    border-radius: 14px;
+    background: #fff;
+    font-size: 0.9rem;
+  }
+  .cc-stotal { margin-top: 0.65rem; padding: 0.7rem 0.9rem; border: 1px solid #f6dde3; border-radius: 14px; }
 }
 @media (max-width: 575.98px) {
-  /* Three things on one footer row won't fit — the figure stays, its caption
-     goes; "Total spent" is written on the band above it anyway. */
+  /* Footer: the figure, then the two buttons. The caption goes — "Order total"
+     is on the band just above. Safe-area padding keeps the buttons clear of
+     an iPhone's home bar. */
   .cc-sheet__foottotal span { display: none; }
+  .cc-modal-foot {
+    align-items: center;
+    gap: 0.5rem !important;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .cc-modal-foot > .btn { min-height: 2.75rem; border-radius: 12px; padding-inline: 0.85rem; }
+  .cc-modal-foot > .btn-light svg { display: none; }
+}
+
+/* ── SearchableSelect's phone sheet ──
+   On a phone the list rises from the bottom over a dimmed page: its own search
+   box, rows tall enough for a thumb, and the only thing that scrolls. It
+   replaced a dropdown pinned to the field, which drifted off the field as the
+   sheet behind it scrolled and ran past the screen's edge. `--cc-kb` lifts it
+   above an iOS keyboard (set from visualViewport in the component). */
+.cc-ssheet { position: fixed; inset: 0; z-index: 2000; }
+.cc-ssheet__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(60, 30, 40, 0.42);
+  animation: cc-ssheet-fade var(--cc-dur, 180ms) var(--cc-ease, ease);
+}
+.cc-ssheet__panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--cc-kb, 0px);
+  display: flex;
+  flex-direction: column;
+  max-height: min(78vh, calc(100% - var(--cc-kb, 0px) - 3rem));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -12px 40px rgba(120, 40, 70, 0.22);
+  animation: cc-ssheet-rise 220ms var(--cc-ease, ease);
+}
+.cc-ssheet__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.9rem 0.8rem 0.4rem 1.1rem;
+}
+.cc-ssheet__head::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  width: 40px;
+  height: 4px;
+  margin-left: -20px;
+  border-radius: 4px;
+  background: #ead3d9;
+}
+.cc-ssheet__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-heading, serif);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--cc-cocoa, #5b3e36);
+}
+.cc-ssheet__close {
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #fdf1f4;
+  color: #8a6a60;
+  font-size: 1.15rem;
+}
+.cc-ssheet__search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.2rem 1rem 0.6rem;
+  padding: 0 0.85rem;
+  min-height: 2.9rem;
+  border: 1px solid #eddbe0;
+  border-radius: 12px;
+  background: #fffafb;
+  color: #b07a88;
+}
+.cc-ssheet__search:focus-within {
+  border-color: var(--cc-rose, #e0617a);
+  box-shadow: 0 0 0 3px rgba(224, 97, 122, 0.14);
+}
+.cc-ssheet__search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--cc-cocoa, #5b3e36);
+  font-size: 16px;
+}
+.cc-ssheet__list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 0.6rem 0.8rem;
+  border-top: 1px solid #f6e6ea;
+}
+.cc-ssheet__opt {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 3.1rem;
+  padding: 0.55rem 0.6rem;
+  border: 0;
+  border-bottom: 1px solid #f8edf0;
+  background: #fff;
+  color: var(--cc-cocoa, #5b3e36);
+  font-size: 1rem;
+  text-align: left;
+}
+.cc-ssheet__opt:active { background: #fdeef2; }
+.cc-ssheet__opt--on { background: #fff4f7; font-weight: 700; }
+.cc-ssheet__opt--new { color: var(--cc-rose-ink, #ad2f4e); font-weight: 700; }
+.cc-ssheet__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.cc-ssheet__sub {
+  flex: 0 0 auto;
+  padding: 2px 10px;
+  border: 1px solid #f6d9e1;
+  border-radius: 999px;
+  background: #fdeef2;
+  color: var(--cc-rose-ink, #ad2f4e);
+  font-size: 0.85rem;
+  font-weight: 800;
+  white-space: nowrap;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-ssheet__tick { flex: 0 0 auto; color: var(--cc-rose-deep, #cf3e63); }
+.cc-ssheet__empty { padding: 1.2rem; text-align: center; color: #8a7a76; }
+@keyframes cc-ssheet-rise { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes cc-ssheet-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .cc-ssheet__panel, .cc-ssheet__backdrop { animation: none; }
 }
 
 /* The round action on a "You might also like" card — a + that adds, or a chevron
@@ -7076,6 +7627,609 @@ header[style*="sticky"] {
 }
 .cc-card-action svg { width: 18px; height: 18px; }
 .cc-card-action:active { background: #fdeef2; }
+
+/* ── An order as a card (Orders tab, phone) ──
+   Compact: name + total on line one, ID · date · cash/online + paid chip on
+   line two, status on three, one plain row per item, then one slim action bar
+   (Mark paid labelled, the rest icons). A roomier version with boxed items, a
+   total band and tall labelled tiles fitted barely two orders on a screen.
+   Unpaid carries the amber edge the table row has. */
+.cc-ocards { display: flex; flex-direction: column; gap: 0.55rem; }
+.cc-ocard {
+  padding: 0.65rem 0.75rem 0.55rem;
+  border: 1px solid #f1e1e5;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(120, 60, 80, 0.06);
+}
+.cc-ocard--unpaid { border-color: #f3dcc0; box-shadow: inset 3px 0 0 0 #e39a4a; }
+.cc-ocard--cancelled { background: #fafafa; box-shadow: none; }
+
+.cc-ocard__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.cc-ocard__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--cc-cocoa, #5b3e36);
+}
+.cc-ocard__amt {
+  flex: 0 0 auto;
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-ocard__meta {
+  align-items: center;
+  margin-top: 0.15rem;
+  font-size: 0.76rem;
+  color: #85706a;
+}
+.cc-ocard__metatext {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cc-ocard__pay {
+  flex: 0 0 auto;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #ffe8d1;
+  color: #8f4c14;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.cc-ocard__pay--ok { background: #dcf5e6; color: #1a6e3f; }
+.cc-ocard--cancelled .cc-ocard__pay { background: #eee; color: #8a8380; }
+.cc-ocard__status { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 700; }
+.cc-ocard__status i { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.cc-ocard__meta .cc-owes { margin-left: 0; }
+
+.cc-ocard__items {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0.35rem 0 0;
+  border-top: 1px dashed #f0dce1;
+}
+.cc-ocard__items li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.12rem 0;
+  font-size: 0.82rem;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-ocard__iname {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.3;
+  color: var(--cc-cocoa, #5b3e36);
+}
+.cc-ocard__iqty { flex: 0 0 auto; font-size: 0.74rem; color: #937a73; white-space: nowrap; }
+.cc-ocard__iamt { flex: 0 0 auto; font-weight: 700; color: #6d5049; white-space: nowrap; }
+
+.cc-ocard__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid #f4e6ea;
+}
+.cc-ocard__paybtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 2rem;
+  padding: 0 0.7rem;
+  border: 1px solid #eadde0;
+  border-radius: 999px;
+  background: #fff;
+  color: #7a584d;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.cc-ocard__paybtn svg { width: 14px; height: 14px; }
+.cc-ocard__paybtn--go { border-color: #1b7f5e; background: #1b7f5e; color: #fff; }
+.cc-ocard__paybtn:active { filter: brightness(0.95); }
+.cc-ocard__actions .cc-bankchip { height: 2rem; display: inline-flex; align-items: center; }
+.cc-ocard__icons { display: flex; gap: 0.15rem; margin-left: auto; }
+.cc-ocard__ico {
+  width: 2.1rem;
+  height: 2.1rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #8a6f68;
+  cursor: pointer;
+}
+.cc-ocard__ico svg { width: 17px; height: 17px; }
+.cc-ocard__ico:active { background: #fdeef2; }
+.cc-ocard__ico--edit { color: var(--cc-rose-ink, #ad2f4e); }
+.cc-ocard__ico--del { color: #b23b3b; }
+.cc-ocard__paybtn:focus-visible,
+.cc-ocard__ico:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 1px; }
+
+/* Expenses and My Money reuse the order card. With only Edit and Delete to
+   offer they skip the action bar and sit the two icons on the meta line,
+   pulled into its margin so they don't make the line taller. */
+.cc-ocard__meta .cc-ocard__icons { margin: -0.4rem -0.4rem -0.4rem auto; flex: 0 0 auto; }
+.cc-ocard__note {
+  margin: 0.3rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: #7a584d;
+}
+.cc-ocard__dir { display: inline-flex; align-items: center; gap: 0.3rem; }
+.cc-ocard__dir svg { width: 16px; height: 16px; flex: 0 0 auto; }
+.cc-ocard--in { box-shadow: inset 3px 0 0 0 #1b7f5e; }
+.cc-ocard--out { box-shadow: inset 3px 0 0 0 #7a5bb0; }
+
+/* ── Menu & Prices (accounting) ──
+   Search + New item on one line, categories as a chip row, then one card per
+   category: letter badge · name · counts · price range · chevron. Open, each
+   item lists its sizes as tappable price rows (tap = edit, bin = delete) with
+   a "+ Size" on the item and "Add an item to …" closing the card. It was a
+   grey dropdown, a search box and pale bars with pill-chips of prices that
+   wrapped unevenly on a phone. */
+.cc-mmenu__bar { display: flex; gap: 0.5rem; align-items: stretch; max-width: 640px; }
+.cc-mmenu__search {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 2.75rem;
+  margin: 0;
+  padding: 0 0.4rem 0 0.8rem;
+  border: 1px solid #eadde0;
+  border-radius: 12px;
+  background: #fff;
+  color: #8a6f68;
+  cursor: text;
+}
+.cc-mmenu__search:focus-within { border-color: var(--cc-rose, #e0617a); box-shadow: 0 0 0 3px rgba(224, 97, 122, 0.15); }
+.cc-mmenu__search svg { flex: 0 0 auto; width: 17px; height: 17px; }
+.cc-mmenu__search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 16px; /* under 16px iOS zooms the page on focus */
+  color: var(--cc-cocoa, #5b3e36);
+}
+.cc-mmenu__search input::-webkit-search-cancel-button { display: none; }
+.cc-mmenu__clear {
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #8a6f68;
+}
+.cc-mmenu__new {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 2.75rem;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 12px;
+  background: var(--cc-rose-deep, #cf3e63);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+.cc-mmenu__new:active { filter: brightness(0.94); }
+
+.cc-mmenu__chips {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0.7rem 0 0.35rem;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.cc-mmenu__chips::-webkit-scrollbar { display: none; }
+.cc-mmenu__chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 2.1rem;
+  padding: 0 0.85rem;
+  border: 1px solid #eadde0;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cc-cocoa, #5b3e36);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.cc-mmenu__chip i {
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #8a6f68;
+}
+.cc-mmenu__chip--on { border-color: var(--cc-rose-deep, #cf3e63); background: var(--cc-rose-deep, #cf3e63); color: #fff; }
+.cc-mmenu__chip--on i { color: #ffe3ea; }
+
+.cc-mmenu__hint { margin: 0.2rem 0 0.75rem; font-size: 0.78rem; color: #7d6862; }
+.cc-mmenu__empty {
+  padding: 1.5rem;
+  border: 1px dashed #eadde0;
+  border-radius: 14px;
+  text-align: center;
+  color: #7d6862;
+}
+
+.cc-mmenu__cats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; align-items: start; }
+.cc-mcat {
+  border: 1px solid #f1e1e5;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(120, 60, 80, 0.06);
+  overflow: hidden;
+}
+.cc-mcat--open { grid-column: 1 / -1; border-color: #ecd0d8; }
+.cc-mcat__head {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.75rem;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.cc-mcat--open .cc-mcat__head { background: #fdf3f5; border-bottom: 1px solid #f4e2e7; }
+.cc-mcat__badge {
+  width: 2.2rem;
+  height: 2.2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fdeef2;
+  color: var(--cc-rose-ink, #ad2f4e);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.cc-mcat--open .cc-mcat__badge { background: var(--cc-rose-deep, #cf3e63); color: #fff; }
+.cc-mcat__title { min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.cc-mcat__title b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  color: var(--cc-cocoa, #5b3e36);
+}
+.cc-mcat__title small { font-size: 0.72rem; color: #7d6862; }
+.cc-mcat__range {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #6d5049;
+  white-space: nowrap;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-mcat__chev { width: 18px; height: 18px; color: #a0858c; transition: transform var(--cc-dur, 180ms) var(--cc-ease, ease); }
+.cc-mcat--open .cc-mcat__chev { transform: rotate(180deg); color: var(--cc-rose-ink, #ad2f4e); }
+
+.cc-mcat__body { padding: 0.15rem 0.75rem 0.75rem; }
+.cc-mitem { padding: 0.6rem 0; border-bottom: 1px dashed #f0dce1; }
+.cc-mitem__head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.cc-mitem__name { min-width: 0; font-size: 0.88rem; font-weight: 700; color: var(--cc-cocoa, #5b3e36); line-height: 1.3; }
+.cc-mitem__add {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  height: 1.75rem;
+  padding: 0 0.6rem;
+  border: 1px solid #f0d3db;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cc-rose-ink, #ad2f4e);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.cc-mitem__prices {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 0.35rem;
+}
+/* The tile is the <li>: the price button and its bin share one frame, so two
+   tiles fit side by side on a phone. */
+.cc-mitem__prices li {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  border: 1px solid #f0e0e4;
+  border-radius: 10px;
+  background: #fffaf8;
+  overflow: hidden;
+}
+.cc-mitem__price {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.4rem;
+  padding: 0.3rem 0.65rem;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.cc-mitem__var {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  color: #6d5049;
+}
+.cc-mitem__price b {
+  flex: 0 0 auto;
+  font-size: 0.86rem;
+  color: #1b7f5e;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-mitem__pen { flex: 0 0 auto; width: 13px; height: 13px; color: #b9a0a6; }
+.cc-mitem__del {
+  flex: 0 0 auto;
+  width: 2.3rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-left: 1px solid #f4e6ea;
+  border-radius: 0;
+  background: transparent;
+  color: #b25a5a;
+}
+.cc-mitem__del svg { width: 15px; height: 15px; }
+.cc-mitem__price:active,
+.cc-mitem__del:active { background: #fdeef2; }
+/* A tile being edited in place (PriceTile in MenuTab.jsx) takes the whole row,
+   so the price box and its three buttons fit even on a phone's two columns. */
+.cc-mitem__prices li.cc-mitem__quick {
+  grid-column: 1 / -1;
+  border-color: var(--cc-rose, #e0617a);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(224, 97, 122, 0.14);
+}
+.cc-mitem__quick form {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.35rem 0.3rem 0.65rem;
+}
+.cc-mitem__quick .cc-mitem__var { flex: 1 1 auto; width: auto; font-size: 0.8rem; }
+.cc-mitem__qbox {
+  flex: 0 0 7.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  height: 2.3rem;
+  margin: 0;
+  padding: 0 0.5rem;
+  border: 1px solid #e7b9c5;
+  border-radius: 8px;
+  background: #fff;
+  color: #1b7f5e;
+  font-weight: 800;
+}
+.cc-mitem__qbox input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 16px; /* under 16px iOS zooms the page on focus */
+  font-weight: 800;
+  color: #1b7f5e;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-mitem__qbox--bad { border-color: #d9534f; color: #9c2a2a; }
+.cc-mitem__qbox--bad input { color: #9c2a2a; }
+.cc-mitem__qbtn {
+  flex: 0 0 auto;
+  width: 2.3rem;
+  height: 2.3rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid #f0e0e4;
+  border-radius: 8px;
+  background: #fff;
+  color: #7a584d;
+}
+.cc-mitem__qbtn svg { width: 16px; height: 16px; }
+.cc-mitem__qbtn--ok { border-color: #1b7f5e; background: #1b7f5e; color: #fff; }
+.cc-mitem__qbtn:disabled { opacity: 0.5; }
+.cc-mitem__qbtn:active { filter: brightness(0.95); }
+.cc-mcat__additem {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  height: 2.5rem;
+  margin-top: 0.7rem;
+  border: 1px dashed #e7b9c5;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--cc-rose-ink, #ad2f4e);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.cc-mmenu button:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 1px; }
+@media (hover: hover) {
+  .cc-mcat__head:hover { background: #fdf6f7; }
+  .cc-mitem__prices li:hover { border-color: #e7b9c5; background: #fff; }
+  .cc-mitem__price:hover .cc-mitem__pen { color: var(--cc-rose-ink, #ad2f4e); }
+  .cc-mitem__del:hover { background: #fdeef2; }
+}
+@media (max-width: 767.98px) {
+  .cc-mmenu__cats { grid-template-columns: 1fr; }
+  /* Chips run to the screen edge so a cut-off chip says "swipe for more". */
+  .cc-mmenu__chips { margin-right: -1rem; padding-right: 1rem; }
+  /* Two price tiles a row: size over price, the bin at the side. One a row
+     made Blondie alone a screen and a half. */
+  .cc-mitem__prices { grid-template-columns: 1fr 1fr; gap: 0.3rem; margin-top: 0.3rem; }
+  .cc-mitem__price {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    min-height: 2.6rem;
+    padding: 0.25rem 0.5rem;
+  }
+  .cc-mitem__var { width: 100%; font-size: 0.72rem; line-height: 1.25; }
+  .cc-mitem__price b { font-size: 0.86rem; line-height: 1.25; }
+  .cc-mitem__pen { display: none; }
+  .cc-mitem__del { width: 2rem; }
+  .cc-mitem__del svg { width: 14px; height: 14px; }
+  .cc-mitem { padding: 0.45rem 0; }
+  .cc-mcat__body { padding: 0.1rem 0.6rem 0.6rem; }
+}
+@media (max-width: 379.98px) {
+  .cc-mmenu__new span { display: none; }
+  .cc-mmenu__new { width: 2.75rem; padding: 0; justify-content: center; }
+}
+
+/* ── Monthly Report ──
+   Intro + CSV share a line. On a phone each month is a card: month and order
+   count left, profit (or loss) right as the headline, a bar of how much of the
+   earnings went on expenses, then Earnings · Expenses · To collect in three
+   columns, and the owner's own money only when there was some. Colours are
+   checked against white: to-collect amber is #9a5a0c, not the #c67c17 the
+   table uses (3:1). */
+.cc-mrep__intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.cc-mrep__intro p { margin: 0; font-size: 0.8rem; line-height: 1.45; color: #7d6862; }
+.cc-mrep__intro p strong { color: var(--cc-cocoa, #5b3e36); }
+.cc-mrep__intro .btn { flex: 0 0 auto; }
+
+.cc-mrep { display: flex; flex-direction: column; gap: 0.55rem; }
+.cc-mrep__card {
+  padding: 0.7rem 0.8rem 0.65rem;
+  border: 1px solid #f1e1e5;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: inset 3px 0 0 0 #1b7f5e, 0 1px 3px rgba(120, 60, 80, 0.06);
+}
+.cc-mrep__card--loss { box-shadow: inset 3px 0 0 0 #b23b3b, 0 1px 3px rgba(120, 60, 80, 0.06); }
+/* The all-months summary leads the list, so it gets the hero tint. */
+.cc-mrep__card--total { background: linear-gradient(160deg, #fff6f2 0%, #fbe6df 100%); border-color: #f0d3cb; }
+.cc-mrep__card--total .cc-mrep__month b { color: var(--cc-cocoa, #5b3e36); }
+.cc-mrep__card--total .cc-mrep__stats,
+.cc-mrep__card--total .cc-mrep__stats > div { border-color: #f0d9d2; }
+/* Desktop table: the total row sticks to the bottom of its scroller. */
+.cc-mrep__totalrow td {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: #fbefe9 !important;
+  font-weight: 800;
+  border-top: 2px solid #ecd2c9;
+}
+.cc-mrep__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+.cc-mrep__month { min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.cc-mrep__month b {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  color: var(--cc-rose-ink, #ad2f4e);
+}
+.cc-mrep__month small,
+.cc-mrep__profit small { font-size: 0.72rem; color: #7d6862; }
+.cc-mrep__profit { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+.cc-mrep__profit small { text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; font-size: 0.64rem; }
+.cc-mrep__profit b {
+  font-family: var(--font-body);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1b7f5e;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-mrep__card--loss .cc-mrep__profit b { color: #b23b3b; }
+
+.cc-mrep__bar {
+  height: 6px;
+  margin-top: 0.55rem;
+  border-radius: 999px;
+  background: #d5efe0;
+  overflow: hidden;
+}
+.cc-mrep__bar i { display: block; height: 100%; border-radius: inherit; background: #d9686b; }
+.cc-mrep__barnote { margin-top: 0.25rem; font-size: 0.7rem; color: #7d6862; }
+
+.cc-mrep__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0.5rem 0 0;
+  padding-top: 0.45rem;
+  border-top: 1px solid #f4e6ea;
+}
+.cc-mrep__stats > div { min-width: 0; padding: 0 0.4rem; border-left: 1px solid #f4e6ea; }
+.cc-mrep__stats > div:first-child { padding-left: 0; border-left: 0; }
+.cc-mrep__stats dt { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #7d6862; }
+.cc-mrep__stats dd {
+  margin: 0.05rem 0 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-mrep__v--earn { color: var(--cc-cocoa, #5b3e36); }
+.cc-mrep__v--exp { color: #b23b3b; }
+.cc-mrep__v--due { color: #9a5a0c; }
+.cc-mrep__own {
+  margin-top: 0.45rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 8px;
+  background: #faf6f4;
+  font-size: 0.74rem;
+  color: #7d6862;
+}
+.cc-mrep__own span { font-weight: 700; color: var(--cc-cocoa, #5b3e36); font-variant-numeric: lining-nums tabular-nums; }
 
 /* Ruled admin table. Bootstrap draws only horizontal lines, which left ten
    columns of text with nothing to hold a value to its own column. */

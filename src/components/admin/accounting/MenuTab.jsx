@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
-import { FiPlus, FiTrash2, FiChevronDown, FiChevronRight } from 'react-icons/fi'
+import { FiPlus, FiTrash2, FiChevronDown, FiSearch, FiX, FiEdit2, FiCheck, FiMoreHorizontal } from 'react-icons/fi'
 import Modal from '../Modal.jsx'
 import SearchableSelect from '../SearchableSelect.jsx'
 import { ACC, addDocRec, updateDocRec, deleteDocRec } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
-import { useIsMobile } from '../../../hooks/useIsMobile.js'
+import { sortVariants, variantLabel } from '../../../utils/orderItems.js'
+
+const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
 
 export default function MenuTab({ menu, reload }) {
   const [cat, setCat] = useState('')
@@ -12,9 +14,15 @@ export default function MenuTab({ menu, reload }) {
   const [editing, setEditing] = useState(null)
   const [busy, setBusy] = useState(false)
   const [open, setOpen] = useState('') // the one manually-expanded category
-  const mobile = useIsMobile()
 
   const categories = useMemo(() => [...new Set(menu.map((m) => m.category).filter(Boolean))].sort(), [menu])
+  // Items per category for the chips — counted over the whole menu, so a chip
+  // doesn't drop to 0 just because a search is typed.
+  const catCounts = useMemo(() => {
+    const n = {}
+    for (const m of menu) (n[m.category || 'Other'] ||= new Set()).add(m.name)
+    return n
+  }, [menu])
 
   // filter → group by category → group by item name
   const grouped = useMemo(() => {
@@ -45,82 +53,102 @@ export default function MenuTab({ menu, reload }) {
     else await addDocRec(ACC.MENU, data)
     setEditing(null); await reload(); setBusy(false)
   }
+  // Just the price, from the tile itself — the full form was a whole sheet to
+  // change one number.
+  async function quickSave(m, price) {
+    setBusy(true); await updateDocRec(ACC.MENU, m.id, { price }); await reload(); setBusy(false)
+  }
   async function remove(m) {
     if (!window.confirm(`Delete this price?\n${m.category} — ${m.name} (${m.variant || 'Standard'})`)) return
     setBusy(true); await deleteDocRec(ACC.MENU, m.id); await reload(); setBusy(false)
   }
 
   return (
-    <div>
-      <p className="text-muted small mb-3">These items feed the New Order form. Tap a category to open it; tap any price to edit.</p>
-      <div className="d-flex flex-wrap gap-2 align-items-center mb-3">
-        <button className="btn text-white d-inline-flex align-items-center gap-2" style={{ background: 'var(--cc-rose,#e0617a)', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => setEditing({})}>
-          <FiPlus /> New Item
+    <div className="cc-mmenu">
+      {/* Search and New item share a line; the categories are a chip row under
+          it. A dropdown was two taps and hid which categories existed. */}
+      <div className="cc-mmenu__bar">
+        <label className="cc-mmenu__search">
+          <FiSearch aria-hidden="true" />
+          <input type="search" placeholder="Search item…" value={q}
+            onChange={(e) => setQ(e.target.value)} aria-label="Search menu items" spellCheck={false} />
+          {q ? (
+            <button type="button" className="cc-mmenu__clear" aria-label="Clear search" onClick={() => setQ('')}><FiX /></button>
+          ) : null}
+        </label>
+        <button type="button" className="cc-mmenu__new" aria-label="New item" onClick={() => setEditing({ category: cat })}>
+          <FiPlus /> <span>New item</span>
         </button>
-        <div style={{ minWidth: 190 }}>
-          <SearchableSelect value={cat} onChange={setCat} options={categories} placeholder="All categories" />
-        </div>
-        <input className="form-control" style={{ maxWidth: 220 }} placeholder="Search item…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <span className="ms-auto text-muted small">{totalShown} of {menu.length}</span>
       </div>
 
+      <div className="cc-mmenu__chips" role="radiogroup" aria-label="Category">
+        <button type="button" role="radio" aria-checked={!cat}
+          className={`cc-mmenu__chip${!cat ? ' cc-mmenu__chip--on' : ''}`} onClick={() => setCat('')}>
+          All
+        </button>
+        {categories.map((c) => (
+          <button key={c} type="button" role="radio" aria-checked={cat === c}
+            className={`cc-mmenu__chip${cat === c ? ' cc-mmenu__chip--on' : ''}`}
+            onClick={() => setCat(cat === c ? '' : c)}>
+            {c} <i>{catCounts[c]?.size || 0}</i>
+          </button>
+        ))}
+      </div>
+
+      <p className="cc-mmenu__hint">
+        {filtering ? `${plural(totalShown, 'price')} shown of ${menu.length}` : `${plural(categories.length, 'category', 'categories')} · ${menu.length} prices`}
+        {' — '}these feed the New Order form. Tap a price to change it.
+      </p>
+
       {shownCats.length === 0 ? (
-        <div className="text-center text-muted py-4" style={{ border: '1px solid #f0e0e3', borderRadius: 12 }}>No items.</div>
+        <div className="cc-mmenu__empty">No items match.</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1fr 1fr', gap: 8, alignItems: 'start' }}>
+        <div className="cc-mmenu__cats">
           {shownCats.map((c) => {
             const items = grouped[c]
             const itemNames = Object.keys(items).sort()
-            const priceCount = itemNames.reduce((n, name) => n + items[name].length, 0)
+            const rows = itemNames.flatMap((n) => items[n])
+            const prices = rows.map((m) => Number(m.price) || 0).filter((p) => p > 0)
+            const lo = prices.length ? Math.min(...prices) : 0
+            const hi = prices.length ? Math.max(...prices) : 0
             const opened = isOpen(c)
             return (
-              <div key={c} style={{ gridColumn: !mobile && opened ? '1 / -1' : 'auto' }}>
-              <div style={{ border: '1px solid #f0e0e3', borderRadius: 12, overflow: 'hidden', background: '#fff' }}>
-                <button
-                  type="button" onClick={() => toggle(c)}
-                  style={{ width: '100%', textAlign: 'left', border: 0, background: '#f9eef1', padding: '10px 14px',
-                    display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: 700, color: '#7a4a58' }}
-                >
-                  {opened ? <FiChevronDown /> : <FiChevronRight />}
-                  {c}
-                  <span className="text-muted fw-normal" style={{ fontSize: 12 }}>
-                    · {itemNames.length} item{itemNames.length === 1 ? '' : 's'} · {priceCount} price{priceCount === 1 ? '' : 's'}
+              <section key={c} className={`cc-mcat${opened ? ' cc-mcat--open' : ''}`}>
+                <button type="button" className="cc-mcat__head" onClick={() => toggle(c)} aria-expanded={opened}>
+                  <span className="cc-mcat__badge" aria-hidden="true">{c.charAt(0)}</span>
+                  <span className="cc-mcat__title">
+                    <b>{c}</b>
+                    <small>{plural(itemNames.length, 'item')} · {plural(rows.length, 'price')}</small>
                   </span>
+                  {prices.length ? (
+                    <span className="cc-mcat__range">{lo === hi ? inr(lo) : `${inr(lo)} – ${inr(hi)}`}</span>
+                  ) : null}
+                  <FiChevronDown className="cc-mcat__chev" aria-hidden="true" />
                 </button>
                 {opened && (
-                  <div className="d-flex flex-column">
+                  <div className="cc-mcat__body">
                     {itemNames.map((name) => (
-                      <div key={name} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center',
-                        padding: '10px 14px', borderTop: '1px solid #f6e6ea' }}>
-                        <div style={{ minWidth: 150, flex: '0 0 auto', fontWeight: 600, color: '#5b3e36' }}>{name}</div>
-                        <div className="d-flex flex-wrap gap-2">
-                          {items[name]
-                            .slice()
-                            .sort((a, b) => (a.price || 0) - (b.price || 0))
-                            .map((m) => (
-                              <span key={m.id}
-                                onClick={() => setEditing(m)}
-                                title="Click to edit"
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer',
-                                  border: '1px solid #eccdd4', borderRadius: 999, padding: '3px 10px', fontSize: 13,
-                                  background: '#fff6f8', color: '#5b3e36' }}
-                              >
-                                <span style={{ color: '#977' }}>{m.variant || 'Standard'}</span>
-                                <strong style={{ color: '#1b7f5e' }}>{inr(m.price)}</strong>
-                                <button type="button" aria-label="Delete"
-                                  onClick={(e) => { e.stopPropagation(); remove(m) }}
-                                  style={{ border: 0, background: 'transparent', color: '#c99', padding: 0, lineHeight: 1, cursor: 'pointer' }}>
-                                  <FiTrash2 size={12} />
-                                </button>
-                              </span>
-                            ))}
+                      <div key={name} className="cc-mitem">
+                        <div className="cc-mitem__head">
+                          <span className="cc-mitem__name">{name}</span>
+                          <button type="button" className="cc-mitem__add" title={`Add a size to ${name}`}
+                            aria-label={`Add a size to ${name}`}
+                            onClick={() => setEditing({ category: c, name })}><FiPlus /> Size</button>
                         </div>
+                        <ul className="cc-mitem__prices">
+                          {sortVariants(items[name]).map((m) => (
+                            <PriceTile key={m.id} m={m} name={name} onQuickSave={quickSave}
+                              onFull={() => setEditing(m)} onDelete={() => remove(m)} />
+                          ))}
+                        </ul>
                       </div>
                     ))}
+                    <button type="button" className="cc-mcat__additem" onClick={() => setEditing({ category: c })}>
+                      <FiPlus /> Add an item to {c}
+                    </button>
                   </div>
                 )}
-              </div>
-              </div>
+              </section>
             )
           })}
         </div>
@@ -128,13 +156,77 @@ export default function MenuTab({ menu, reload }) {
       {busy ? <div className="text-muted small mt-2">Saving…</div> : null}
 
       {editing !== null && (
-        <MenuItemForm initial={editing.id ? editing : null} categories={categories} onSave={save} onClose={() => setEditing(null)} />
+        <MenuItemForm initial={editing} categories={categories} onSave={save} onClose={() => setEditing(null)} />
       )}
     </div>
   )
 }
 
+/**
+ * One size's price. Tapping it opens a price box right in the tile — Enter or
+ * ✓ saves, Esc or ✕ cancels, and ⋯ opens the full form for renaming the size
+ * or moving it to another item. Nothing saves on blur: a tap elsewhere while
+ * typing shouldn't change what a walk-in is charged.
+ */
+function PriceTile({ m, name, onQuickSave, onFull, onDelete }) {
+  const [val, setVal] = useState(null) // null = not editing
+  const [saving, setSaving] = useState(false)
+  const label = variantLabel(m.variant) || 'Standard'
+  const n = Number(val)
+  const bad = val !== null && (val.trim() === '' || !Number.isFinite(n) || n < 0)
+
+  async function commit(e) {
+    e.preventDefault()
+    if (bad || saving) return
+    if (n === Number(m.price)) { setVal(null); return }
+    setSaving(true)
+    await onQuickSave(m, n)
+    setSaving(false)
+    setVal(null)
+  }
+
+  if (val !== null) {
+    return (
+      <li className="cc-mitem__quick">
+        <form onSubmit={commit}>
+          <span className="cc-mitem__var">{label}</span>
+          <label className={`cc-mitem__qbox${bad ? ' cc-mitem__qbox--bad' : ''}`}>
+            <span aria-hidden="true">₹</span>
+            <input autoFocus type="text" inputMode="decimal" value={val} disabled={saving}
+              aria-label={`New price for ${name} — ${label}`} aria-invalid={bad || undefined}
+              onChange={(e) => setVal(e.target.value.replace(/[^\d.]/g, ''))}
+              onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setVal(null) } }}
+              onFocus={(e) => e.target.select()} />
+          </label>
+          <button type="submit" className="cc-mitem__qbtn cc-mitem__qbtn--ok" disabled={bad || saving}
+            aria-label="Save price" title="Save"><FiCheck /></button>
+          <button type="button" className="cc-mitem__qbtn" onClick={() => setVal(null)} disabled={saving}
+            aria-label="Cancel" title="Cancel"><FiX /></button>
+          <button type="button" className="cc-mitem__qbtn" onClick={() => { setVal(null); onFull() }} disabled={saving}
+            aria-label="Edit size and name" title="Edit size, name or category"><FiMoreHorizontal /></button>
+        </form>
+      </li>
+    )
+  }
+
+  return (
+    <li>
+      <button type="button" className="cc-mitem__price" onClick={() => setVal(String(m.price ?? ''))}
+        title="Change this price">
+        <span className="cc-mitem__var">{label}</span>
+        <b>{inr(m.price)}</b>
+        <FiEdit2 className="cc-mitem__pen" aria-hidden="true" />
+      </button>
+      <button type="button" className="cc-mitem__del" aria-label={`Delete ${name} ${label}`}
+        title="Delete this price" onClick={onDelete}><FiTrash2 /></button>
+    </li>
+  )
+}
+
+// `initial` may be a saved row (has an id → editing) or just a prefill —
+// { category } from "Add an item to …", { category, name } from "+ Size".
 function MenuItemForm({ initial, categories, onSave, onClose }) {
+  const editing = !!initial?.id
   const [f, setF] = useState({
     category: initial?.category || '',
     name: initial?.name || '',
@@ -149,7 +241,7 @@ function MenuItemForm({ initial, categories, onSave, onClose }) {
   }
   return (
     <Modal
-      title={initial ? 'Edit Menu Item' : 'New Menu Item'}
+      title={editing ? 'Edit price' : (initial?.name ? `New size — ${initial.name}` : 'New menu item')}
       onClose={onClose}
       footer={<>
         <button className="btn btn-light" onClick={onClose}>Cancel</button>
@@ -158,13 +250,16 @@ function MenuItemForm({ initial, categories, onSave, onClose }) {
     >
       <div className="row g-3">
         <div className="col-12"><label className="form-label small fw-semibold">Category</label>
-          <SearchableSelect value={f.category} onChange={(v) => set('category', v)} options={categories} placeholder="Pick / type…" allowCustom /></div>
+          <SearchableSelect value={f.category} onChange={(v) => set('category', v)} options={categories}
+            placeholder="Pick / type…" title="Category" allowCustom /></div>
         <div className="col-12"><label className="form-label small fw-semibold">Item name</label>
-          <input className="form-control" value={f.name} onChange={(e) => set('name', e.target.value)} /></div>
+          <input className="form-control" value={f.name} onChange={(e) => set('name', e.target.value)} spellCheck={false} /></div>
         <div className="col-7"><label className="form-label small fw-semibold">Variant / Size</label>
-          <input className="form-control" placeholder="e.g. Tub, Whole, Per slice" value={f.variant} onChange={(e) => set('variant', e.target.value)} /></div>
+          <input className="form-control" placeholder="e.g. Tub, Whole, Per slice" value={f.variant}
+            onChange={(e) => set('variant', e.target.value)} autoFocus={!!initial?.name && !editing} /></div>
         <div className="col-5"><label className="form-label small fw-semibold">Price (₹)</label>
-          <input type="number" min="0" className="form-control" value={f.price} onChange={(e) => set('price', e.target.value)} /></div>
+          <input type="number" min="0" inputMode="decimal" className="form-control" value={f.price}
+            onChange={(e) => set('price', e.target.value)} /></div>
       </div>
     </Modal>
   )

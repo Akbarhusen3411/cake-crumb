@@ -1,9 +1,12 @@
 import { useMemo, useRef, useState } from 'react'
 import {
   FiPlus, FiEdit2, FiTrash2, FiX, FiDownload,
-  FiXCircle, FiArrowRight, FiDollarSign, FiSmartphone,
+  FiXCircle, FiArrowRight, FiDollarSign, FiSmartphone, FiMinus, FiAlertCircle,
 } from 'react-icons/fi'
 import Modal from '../Modal.jsx'
+import UndoToast from './UndoToast.jsx'
+import AddFab from './AddFab.jsx'
+import { useUndo, withoutId } from './useUndo.js'
 import FilterChips from './FilterChips.jsx'
 import PeriodSelect from './PeriodSelect.jsx'
 import { ACC, addDocRec, updateDocRec, deleteDocRec, monthsFrom } from '../../../services/accounting.js'
@@ -73,6 +76,8 @@ export default function ExpensesTab({ expenses, reload }) {
   const [q, setQ] = useState('')
   const [editing, setEditing] = useState(null)
   const [busy, setBusy] = useState(false)
+  const savingRef = useRef(false)
+  const { toast, offerUndo, closeToast } = useUndo(reload)
   const [page, setPage] = useState(1)
   const [methodFilter, setMethodFilter] = useState('all') // all | Cash | Online
   const [period, setPeriod] = useState('all')             // all | today | YYYY-MM
@@ -104,10 +109,15 @@ export default function ExpensesTab({ expenses, reload }) {
   const pageRows = rows.slice((p - 1) * pageSize, p * pageSize)
 
   async function save(data) {
+    // A ref, not `busy`: a fast double tap lands before the re-render that
+    // would have disabled the button, and booked the expense twice.
+    if (savingRef.current) return
+    savingRef.current = true
     setBusy(true)
     if (editing?.id) await updateDocRec(ACC.EXPENSES, editing.id, data)
     else await addDocRec(ACC.EXPENSES, data)
     setEditing(null); await reload(); setBusy(false)
+    savingRef.current = false
   }
   /**
    * The rows on screen, filters and all — one line per thing bought, with the
@@ -147,6 +157,7 @@ export default function ExpensesTab({ expenses, reload }) {
   async function remove(e) {
     if (!window.confirm(`Delete this expense?\n${e.vendor} — ${itemsSummary(e)} (${inr(e.amount)})`)) return
     setBusy(true); await deleteDocRec(ACC.EXPENSES, e.id); await reload(); setBusy(false)
+    offerUndo(`Deleted · ${e.vendor || 'expense'} ${inr(e.amount)}`, () => addDocRec(ACC.EXPENSES, withoutId(e)))
   }
 
   return (
@@ -194,26 +205,57 @@ export default function ExpensesTab({ expenses, reload }) {
         </div>
       ) : mobile ? (
         // ── mobile: stacked cards ──
-        <div className="d-flex flex-column gap-2">
-          {pageRows.map((e) => (
-            <div key={e.id} style={{ border: '1px solid #f0e0e3', borderRadius: 12, padding: 12, background: '#fff' }}>
-              <div className="d-flex justify-content-between align-items-start">
-                <div>
-                  <div className="fw-bold" style={{ color: '#5b3e36' }}>{e.vendor}</div>
-                  <div className="small text-muted">{fmtDate(e.date)} · {e.method}</div>
+        // The same compact card as Orders: shop + total, then date · paid from,
+        // one plain row per item, and the edit/delete icons on the meta line.
+        <div className="cc-ocards">
+          {pageRows.map((e) => {
+            const items = (e.items || []).filter((it) => it.name || it.price)
+            return (
+              <article key={e.id} className="cc-ocard cc-ocard--expense">
+                <div className="cc-ocard__row">
+                  <button type="button" className="cc-name-link cc-ocard__name"
+                    title={`Show what was bought from ${e.vendor}`}
+                    onClick={() => { setQ(e.vendor || ''); setPage(1) }}>
+                    {e.vendor || '—'}
+                  </button>
+                  <b className="cc-ocard__amt" style={{ color: '#b23b3b' }}>{inr(e.amount)}</b>
                 </div>
-                <div className="fw-bold" style={{ color: '#b23b3b', fontSize: 18 }}>{inr(e.amount)}</div>
-              </div>
-              <div className="mt-2" style={{ color: '#7a584d' }}><ExpenseLines expense={e} /></div>
-              {Number(e.delivery) > 0 && <div className="small text-muted mt-1">+ {inr(e.delivery)} delivery</div>}
-              <div className="cc-card-actions">
-                <button className="cc-card-action" style={{ color: '#cf3e63' }} title="Edit" aria-label="Edit"
-                  onClick={() => setEditing(e)}><FiEdit2 /></button>
-                <button className="cc-card-action text-danger" title="Delete" aria-label="Delete"
-                  onClick={() => remove(e)}><FiTrash2 /></button>
-              </div>
-            </div>
-          ))}
+
+                <div className="cc-ocard__row cc-ocard__meta">
+                  <span className="cc-ocard__metatext">
+                    {fmtDate(e.date)} · {e.method}
+                    {Number(e.delivery) > 0 ? ` · incl. ${inr(e.delivery)} delivery` : ''}
+                  </span>
+                  <span className="cc-ocard__icons">
+                    <button type="button" className="cc-ocard__ico cc-ocard__ico--edit" title="Edit"
+                      aria-label="Edit" onClick={() => setEditing(e)}><FiEdit2 /></button>
+                    <button type="button" className="cc-ocard__ico cc-ocard__ico--del" title="Delete"
+                      aria-label="Delete" onClick={() => remove(e)}><FiTrash2 /></button>
+                  </span>
+                </div>
+
+                {items.length ? (
+                  <ul className="cc-ocard__items">
+                    {items.map((it, i) => {
+                      const qty = Number(it.qty) || 0
+                      const rate = Number(it.price) || 0
+                      return (
+                        <li key={i}>
+                          <span className="cc-ocard__iname">{it.name || '—'}</span>
+                          <span className="cc-ocard__iqty">{qty} × {inr(rate)}</span>
+                          {/* One item with no delivery is the total already, said at the top. */}
+                          {items.length > 1 || Number(e.delivery) > 0 ? (
+                            <b className="cc-ocard__iamt">{inr(Math.round(qty * rate))}</b>
+                          ) : null}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                ) : null}
+                {e.notes ? <p className="cc-ocard__note">{e.notes}</p> : null}
+              </article>
+            )
+          })}
         </div>
       ) : (
         // ── desktop: table ──
@@ -261,9 +303,12 @@ export default function ExpensesTab({ expenses, reload }) {
           // Shops and things bought repeat week after week — the sheet offers
           // what has been typed before instead of asking for it again.
           vendors={vendorNames} itemNames={pastItemNames}
-          onSave={save} onClose={() => setEditing(null)}
+          saving={busy} onSave={save} onClose={() => setEditing(null)}
         />
       )}
+
+      {mobile && editing === null ? <AddFab label="New expense" onClick={() => setEditing({})} /> : null}
+      <UndoToast toast={toast} onClose={closeToast} />
     </div>
   )
 }
@@ -274,7 +319,7 @@ export default function ExpensesTab({ expenses, reload }) {
  * it was paid, delivery) sits in a column beside it. A twenty-line grocery run
  * scrolls one list; the total and the Save button never move.
  */
-function ExpenseForm({ initial, vendors = [], itemNames = [], onSave, onClose }) {
+function ExpenseForm({ initial, vendors = [], itemNames = [], saving = false, onSave, onClose }) {
   const [date, setDate] = useState(initial?.date || todayIso())
   const [vendor, setVendor] = useState(initial?.vendor || '')
   const [method, setMethod] = useState(initial?.method || 'Cash')
@@ -301,9 +346,20 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], onSave, onClose })
   const total = itemsTotal + (Number(delivery) || 0)
   const named = items.filter((it) => it.name.trim() || Number(it.price) > 0)
 
+  // Same as the order sheet: what's stopping a save, shown in the footer and
+  // re-worked out as the form changes once Save has been pressed.
+  function problem() {
+    if (!date) return { field: 'date', msg: 'Pick a date.' }
+    if (total <= 0) return { field: 'items', msg: 'Add at least one item price (or a delivery charge).' }
+    return null
+  }
+  const [tried, setTried] = useState(false)
+  const err = tried ? problem() : null
+
   function submit() {
-    if (!date) return alert('Please pick a date.')
-    if (total <= 0) return alert('Add at least one item price (or a delivery charge).')
+    if (saving) return
+    setTried(true)
+    if (problem()) return
     const cleanItems = items
       .map((it) => ({ name: it.name.trim(), qty: Math.round(Number(it.qty) || 1), price: Number(it.price) || 0 }))
       .filter((it) => it.name || it.price)
@@ -327,16 +383,19 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], onSave, onClose })
       subtitle="Every thing bought on its own line — the total adds up for you."
       onClose={onClose}
       footer={<>
+        {err ? <div className="cc-sheet__error" role="alert"><FiAlertCircle /> {err.msg}</div> : null}
         <div className="cc-sheet__foottotal cc-sheet__foottotal--spend me-auto">
           <span>Total spent</span>
           <b>{inr(total)}</b>
         </div>
-        <button className="btn btn-light d-inline-flex align-items-center gap-2" onClick={onClose}>
+        <button className="btn btn-light d-inline-flex align-items-center gap-2" onClick={onClose} disabled={saving}>
           Cancel <FiXCircle />
         </button>
+        {/* Locked while saving, so a double tap can't book it twice. */}
         <button className="btn text-white d-inline-flex align-items-center gap-2"
-          style={{ background: 'var(--cc-rose,#e0617a)', fontWeight: 600 }} onClick={submit}>
-          {initial ? 'Save changes' : 'Add Expense'} <FiArrowRight />
+          style={{ background: 'var(--cc-rose,#e0617a)', fontWeight: 600 }} onClick={submit}
+          disabled={saving} aria-busy={saving || undefined}>
+          {saving ? 'Saving…' : (initial ? 'Save changes' : 'Add Expense')} {saving ? null : <FiArrowRight />}
         </button>
       </>}
     >
@@ -353,7 +412,7 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], onSave, onClose })
         <aside className="cc-sheet__side">
           <div className="cc-sheet__sidetitle">Expense details</div>
 
-          <div className="cc-field">
+          <div className={`cc-field${err?.field === 'date' ? ' cc-field--bad' : ''}`}>
             <span className="cc-field__label">Date</span>
             <input type="date" className="form-control" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
@@ -362,7 +421,7 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], onSave, onClose })
             <input className="form-control" list="cc-exp-vendors" placeholder="e.g. Blinkit, D-Mart…"
               value={vendor} onChange={(e) => setVendor(e.target.value)} spellCheck={false} />
           </div>
-          <div className="cc-field">
+          <div className="cc-field cc-field--half">
             <span className="cc-field__label">Paid from</span>
             <div className="cc-seg">
               {['Cash', 'Online'].map((m) => (
@@ -374,9 +433,9 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], onSave, onClose })
               ))}
             </div>
           </div>
-          <div className="cc-field">
-            <span className="cc-field__label">Delivery charge<i>₹</i></span>
-            <input type="number" min="0" className="form-control" placeholder="0"
+          <div className="cc-field cc-field--half">
+            <span className="cc-field__label">Delivery<i>₹</i></span>
+            <input type="number" min="0" inputMode="decimal" className="form-control" placeholder="0"
               value={delivery} onChange={(e) => setDelivery(e.target.value)} />
           </div>
           <div className="cc-field">
@@ -397,7 +456,7 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], onSave, onClose })
           </div>
         </aside>
 
-        <section className="cc-sheet__main">
+        <section className={`cc-sheet__main${err?.field === 'items' ? ' cc-sheet__main--bad' : ''}`}>
           <div className="cc-sheet__panehead">
             <span className="cc-sheet__title">Shopping list</span>
             <span className="cc-sheet__hint">Press Enter on ₹ each for the next line</span>
@@ -425,12 +484,24 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], onSave, onClose })
                   </div>
                   <div className="cc-sline__cell cc-sline__qty">
                     <span className="cc-sline__cap">Qty</span>
-                    <input type="number" min="1" className="form-control form-control-sm" aria-label="Quantity"
-                      value={it.qty} onChange={(e) => setItem(i, 'qty', e.target.value)} />
+                    {/* − / + show on a phone only, as on the order sheet. */}
+                    <div className="cc-qty">
+                      <button type="button" className="cc-qty__btn" aria-label="One less"
+                        disabled={(Number(it.qty) || 0) <= 1}
+                        onClick={() => setItem(i, 'qty', Math.max(1, (Number(it.qty) || 0) - 1))}>
+                        <FiMinus />
+                      </button>
+                      <input type="number" min="1" inputMode="numeric" className="form-control form-control-sm" aria-label="Quantity"
+                        value={it.qty} onChange={(e) => setItem(i, 'qty', e.target.value)} />
+                      <button type="button" className="cc-qty__btn" aria-label="One more"
+                        onClick={() => setItem(i, 'qty', (Number(it.qty) || 0) + 1)}>
+                        <FiPlus />
+                      </button>
+                    </div>
                   </div>
                   <div className="cc-sline__cell cc-sline__rate">
                     <span className="cc-sline__cap">₹ each</span>
-                    <input type="number" min="0" className="form-control form-control-sm" aria-label="Price each"
+                    <input type="number" min="0" inputMode="decimal" className="form-control form-control-sm" aria-label="Price each"
                       placeholder="0" value={it.price} onChange={(e) => setItem(i, 'price', e.target.value)}
                       // Enter finishes the line and opens the next one, so a long
                       // shopping trip is typed without reaching for the mouse.

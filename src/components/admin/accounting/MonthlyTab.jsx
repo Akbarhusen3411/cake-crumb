@@ -6,16 +6,6 @@ import { monthLabel, todayIso } from '../../../utils/adminDate.js'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
 import { downloadCsv } from '../../../utils/csv.js'
 
-// One label/value stat inside a mobile month card.
-function Stat({ label, value, strong, color }) {
-  return (
-    <div style={{ flex: '1 1 45%', minWidth: 110 }}>
-      <div style={{ fontSize: 11, color: '#8a8a8a' }}>{label}</div>
-      <div style={{ fontWeight: strong ? 800 : 600, color: color || '#5b3e36' }}>{value}</div>
-    </div>
-  )
-}
-
 export default function MonthlyTab({ orders, expenses, withdrawals }) {
   const mobile = useIsMobile()
   const months = useMemo(() => monthsFrom(orders, expenses, withdrawals), [orders, expenses, withdrawals])
@@ -23,6 +13,15 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
     () => months.map((m) => ({ m, s: computeSummary(orders, expenses, withdrawals, m) })),
     [months, orders, expenses, withdrawals]
   )
+  // Every month added up — the same sums as the CSV's TOTAL row, so the card,
+  // the table's last row and the file all agree. Summed from the months shown
+  // rather than recomputed, so it can only ever be the total of what's listed.
+  const all = useMemo(() => {
+    const keys = ['orderCount', 'paidCount', 'invested', 'received', 'totalExpenses', 'totalWithdrawn', 'toCollect', 'profit']
+    const t = Object.fromEntries(keys.map((k) => [k, 0]))
+    for (const { s } of rows) for (const k of keys) t[k] += Number(s[k]) || 0
+    return t
+  }, [rows])
 
   // Money as numbers, months as "YYYY-MM" so a spreadsheet sorts them, and an
   // all-months TOTAL row so the file answers "the year so far" on its own.
@@ -40,40 +39,89 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
 
   return (
     <div>
-      <div className="d-flex justify-content-end mb-2">
+      {/* The rule in one line beside the CSV button; the long version is the
+          paragraph's tooltip. Four lines of it pushed the first month off a phone. */}
+      <div className="cc-mrep__intro">
+        <p title="Money you invest or take out is your own, so it changes neither earnings nor profit. An unpaid order counts only once the customer pays — until then it sits in “To collect”.">
+          <strong>Profit = Earnings − Expenses</strong> — money received, not invoiced. Your own money in/out isn’t counted.
+        </p>
         <button className="btn btn-sm btn-light d-inline-flex align-items-center gap-1"
           onClick={exportCsv} disabled={!rows.length} title="Download this table as a spreadsheet">
           <FiDownload /> CSV
         </button>
       </div>
-      <p className="text-muted small mb-3">
-        Every month totalled automatically. <strong>Profit = Earnings − Expenses</strong>, the same
-        figure the Dashboard shows. Money you invest or take out is your own, so it changes neither
-        earnings nor profit. An unpaid order counts only once the customer pays — until then it sits
-        in “To Collect”.
-      </p>
 
       {rows.length === 0 ? (
         <div className="text-center text-muted py-4" style={{ border: '1px solid #f0e0e3', borderRadius: 12 }}>No data yet.</div>
       ) : mobile ? (
         // ── mobile: one card per month ──
-        <div className="d-flex flex-column gap-2">
-          {rows.map(({ m, s }) => (
-            <div key={m} style={{ border: '1px solid #f0e0e3', borderRadius: 12, padding: 14, background: '#fff' }}>
-              <div className="d-flex justify-content-between align-items-baseline mb-2">
-                <div className="fw-bold" style={{ color: '#cf3e63', fontFamily: 'var(--font-heading,serif)' }}>{monthLabel(m)}</div>
-                <div className="small text-muted">{s.orderCount} orders</div>
+        // Profit leads, as the answer to "how did the month go"; a bar shows how
+        // much of the earnings the expenses ate; then the three figures it's made
+        // from; the owner's own money only when there was any. Six equal
+        // label/value pairs gave the month no headline.
+        <div className="cc-mrep">
+          {/* All months at the top — on a phone this was nowhere but the CSV. */}
+          {rows.length > 1 ? (
+            <article className={`cc-mrep__card cc-mrep__card--total${all.profit < 0 ? ' cc-mrep__card--loss' : ''}`}>
+              <div className="cc-mrep__head">
+                <div className="cc-mrep__month">
+                  <b>All months</b>
+                  <small>{monthLabel(rows[rows.length - 1].m)} – {monthLabel(rows[0].m)} · {all.orderCount} orders</small>
+                </div>
+                <div className="cc-mrep__profit">
+                  <small>{all.profit < 0 ? 'Loss' : 'Profit'}</small>
+                  <b>{inr(all.profit)}</b>
+                </div>
               </div>
-              <div className="d-flex flex-wrap gap-2">
-                <Stat label="Invested" value={inr(s.invested)} color="#1b7f5e" />
-                <Stat label="Earnings" value={inr(s.received)} />
-                <Stat label="Expenses" value={inr(s.totalExpenses)} color="#b23b3b" />
-                <Stat label="Taken out" value={inr(s.totalWithdrawn)} />
-                <Stat label="To Collect" value={inr(s.toCollect)} color="#c67c17" />
-                <Stat label="Profit" value={inr(s.profit)} strong color={s.profit >= 0 ? '#1b7f5e' : '#b23b3b'} />
-              </div>
-            </div>
-          ))}
+              <dl className="cc-mrep__stats">
+                <div><dt>Earnings</dt><dd className="cc-mrep__v--earn">{inr(all.received)}</dd></div>
+                <div><dt>Expenses</dt><dd className="cc-mrep__v--exp">{inr(all.totalExpenses)}</dd></div>
+                <div><dt>To collect</dt><dd className="cc-mrep__v--due">{inr(all.toCollect)}</dd></div>
+              </dl>
+            </article>
+          ) : null}
+          {rows.map(({ m, s }) => {
+            const loss = s.profit < 0
+            const spentPct = s.received > 0
+              ? Math.min(100, Math.round((s.totalExpenses / s.received) * 100))
+              : (s.totalExpenses > 0 ? 100 : 0)
+            return (
+              <article key={m} className={`cc-mrep__card${loss ? ' cc-mrep__card--loss' : ''}`}>
+                <div className="cc-mrep__head">
+                  <div className="cc-mrep__month">
+                    <b>{monthLabel(m)}</b>
+                    <small>{s.orderCount} order{s.orderCount === 1 ? '' : 's'} · {s.paidCount} paid</small>
+                  </div>
+                  <div className="cc-mrep__profit">
+                    <small>{loss ? 'Loss' : 'Profit'}</small>
+                    <b>{inr(s.profit)}</b>
+                  </div>
+                </div>
+
+                <div className="cc-mrep__bar" role="img"
+                  aria-label={`Expenses were ${spentPct}% of earnings`}>
+                  <i style={{ width: `${spentPct}%` }} />
+                </div>
+                <div className="cc-mrep__barnote">
+                  {s.received > 0
+                    ? `${spentPct}% of earnings went on expenses`
+                    : (s.totalExpenses > 0 ? 'Expenses with no earnings yet' : 'Nothing earned or spent')}
+                </div>
+
+                <dl className="cc-mrep__stats">
+                  <div><dt>Earnings</dt><dd className="cc-mrep__v--earn">{inr(s.received)}</dd></div>
+                  <div><dt>Expenses</dt><dd className="cc-mrep__v--exp">{inr(s.totalExpenses)}</dd></div>
+                  <div><dt>To collect</dt><dd className="cc-mrep__v--due">{inr(s.toCollect)}</dd></div>
+                </dl>
+
+                {s.invested > 0 || s.totalWithdrawn > 0 ? (
+                  <div className="cc-mrep__own">
+                    Your money: <span>in {inr(s.invested)}</span> · <span>out {inr(s.totalWithdrawn)}</span>
+                  </div>
+                ) : null}
+              </article>
+            )
+          })}
         </div>
       ) : (
         // ── desktop: table ──
@@ -102,6 +150,20 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
                 </tr>
               ))}
             </tbody>
+            {rows.length > 1 ? (
+              <tfoot>
+                <tr className="cc-mrep__totalrow">
+                  <td className="text-nowrap">All months</td>
+                  <td>{all.orderCount}</td>
+                  <td className="text-nowrap" style={{ color: '#1b7f5e' }}>{inr(all.invested)}</td>
+                  <td className="text-nowrap">{inr(all.received)}</td>
+                  <td className="text-nowrap" style={{ color: '#b23b3b' }}>{inr(all.totalExpenses)}</td>
+                  <td className="text-nowrap">{inr(all.totalWithdrawn)}</td>
+                  <td className="text-nowrap" style={{ color: '#9a5a0c' }}>{inr(all.toCollect)}</td>
+                  <td className="text-nowrap" style={{ color: all.profit >= 0 ? '#1b7f5e' : '#b23b3b' }}>{inr(all.profit)}</td>
+                </tr>
+              </tfoot>
+            ) : null}
           </table>
         </div>
       )}
