@@ -8269,6 +8269,47 @@ header[style*="sticky"] {
   .cc-mitem__price:hover .cc-mitem__pen { color: var(--cc-rose-ink, #ad2f4e); }
   .cc-mitem__del:hover { background: #fdeef2; }
 }
+/* ── Compact rows (owner: the item-over-tiles layout used too much space) ──
+   From 768px each item is ONE row: name in a fixed column · its price tiles
+   (smaller, auto-filled) · "+ Size" at the end. .cc-mitem__head goes
+   display: contents so its two children join the row's grid. */
+@media (min-width: 768px) {
+  .cc-mcat__body { padding: 0.1rem 0.6rem 0.6rem; }
+  .cc-mitem {
+    display: grid;
+    grid-template-columns: minmax(130px, 190px) minmax(0, 1fr) auto;
+    grid-template-areas: "name prices add";
+    align-items: center;
+    column-gap: 0.75rem;
+    padding: 0.3rem 0.4rem;
+    border-radius: 8px;
+  }
+  .cc-mitem__head { display: contents; }
+  .cc-mitem__name { grid-area: name; font-size: 0.84rem; }
+  .cc-mitem__add { grid-area: add; height: 1.6rem; padding: 0 0.5rem; font-size: 0.7rem; }
+  /* Tiles size to their text (a flex row, not fixed columns), so a long
+     size like "Diwali pack of 10" is never cut to "Diwali…". */
+  .cc-mitem__prices {
+    grid-area: prices;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+  .cc-mitem__prices li { flex: 0 0 auto; min-width: 150px; }
+  .cc-mitem__prices li.cc-mitem__quick { flex: 1 1 100%; }
+  .cc-mitem__var { overflow: visible; text-overflow: clip; }
+  .cc-mitem__price { min-height: 2rem; padding: 0.15rem 0.5rem; gap: 0.35rem; }
+  .cc-mitem__var { font-size: 0.76rem; }
+  .cc-mitem__price b { font-size: 0.82rem; }
+  .cc-mitem__del { width: 1.9rem; }
+  .cc-mitem__del svg { width: 13px; height: 13px; }
+  .cc-mitem__pen { width: 11px; height: 11px; }
+  .cc-mcat__additem { height: 2.2rem; margin-top: 0.5rem; }
+}
+@media (min-width: 768px) and (hover: hover) {
+  .cc-mitem:hover { background: #fdf6f7; }
+}
 @media (max-width: 767.98px) {
   .cc-mmenu__cats { grid-template-columns: 1fr; }
   /* Chips run to the screen edge so a cut-off chip says "swipe for more". */
@@ -8289,8 +8330,10 @@ header[style*="sticky"] {
   .cc-mitem__pen { display: none; }
   .cc-mitem__del { width: 2rem; }
   .cc-mitem__del svg { width: 14px; height: 14px; }
-  .cc-mitem { padding: 0.45rem 0; }
-  .cc-mcat__body { padding: 0.1rem 0.6rem 0.6rem; }
+  .cc-mitem { padding: 0.35rem 0; }
+  .cc-mitem__add { height: 1.55rem; padding: 0 0.5rem; font-size: 0.68rem; }
+  .cc-mitem__price { min-height: 2.3rem; }
+  .cc-mcat__body { padding: 0.1rem 0.55rem 0.55rem; }
 }
 @media (max-width: 379.98px) {
   .cc-mmenu__new span { display: none; }
@@ -9941,8 +9984,149 @@ header[style*="sticky"] {
 .cc-ptag--sm .cc-ptag__was { padding: 0.3rem 0.4rem; font-size: 0.7rem; border-radius: 9px 0 0 9px; }
 .cc-ptag--sm .cc-ptag__now { padding: 0.25rem 0.5rem 0.25rem 0.4rem; font-size: 1.05rem; border-radius: 0 9px 9px 0; }
 
-/* Quick view "Add 10 — ₹250 ₹239": the regular price struck before the pack price. */
-.qv-was { margin-right: 0.15rem; font-weight: 600; opacity: 0.75; }
+/* ── Quick view: a "by the piece" tier (QtyBuy in ProductQuickView.jsx) ──
+   One panel: size + price · big stepper beside the live total · optional
+   pack hint · full-width Add. Prefixed with .qv-modal to outrank the
+   component's own stylesheet. Rose-ink on white/blush is 4.5:1+. */
+/* The size picker above the panel: one segment per size, label over price. */
+.qv-modal .qv-options--buy { overflow: hidden; }
+.qv-tiers {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0.35rem;
+  padding: 0.55rem 0.55rem 0;
+  background: #fff;
+}
+.qv-tier {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  min-width: 0;
+  padding: 0.45rem 0.4rem;
+  border: 1.5px solid var(--cc-border, #f0e0e4);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--cc-cocoa);
+  cursor: pointer;
+  transition: border-color var(--cc-dur) var(--cc-ease), background-color var(--cc-dur) var(--cc-ease), box-shadow var(--cc-dur) var(--cc-ease);
+}
+.qv-tier__label { font-size: 0.76rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.qv-tier__price { font-size: 0.86rem; font-weight: 800; color: var(--cc-rose-ink); font-variant-numeric: lining-nums tabular-nums; }
+.qv-tier.is-on {
+  border-color: var(--cc-rose);
+  background: var(--cc-blush-soft);
+  box-shadow: 0 4px 12px -6px rgba(207, 62, 99, 0.55);
+}
+@media (hover: hover) { .qv-tier:not(.is-on):hover { border-color: var(--cc-rose-soft); background: var(--cc-cream); } }
+.qv-tier:focus-visible { outline: 2px solid var(--cc-rose-deep); outline-offset: 2px; }
+/* Scroll stays inside the sheet on touch too (the JS lock handles wheels). */
+.qv-modal, .qv-modal .qv-info-col { overscroll-behavior: contain; }
+
+.qv-modal .qv-buy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.9rem 0.95rem 0.95rem;
+  background: linear-gradient(180deg, #fff 0%, var(--cc-cream) 100%);
+}
+.qv-modal .qv-buy + .qv-option,
+.qv-modal .qv-option + .qv-buy,
+.qv-modal .qv-buy + .qv-buy { border-top: 1px solid var(--cc-border); }
+.qv-buy__head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+.qv-buy__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--cc-cocoa);
+}
+.qv-buy__unit {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cc-rose-ink);
+  font-variant-numeric: lining-nums tabular-nums;
+  white-space: nowrap;
+}
+.qv-buy__unit small { font-size: 0.7rem; font-weight: 600; color: var(--cc-cocoa-soft); }
+.qv-buy__body { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
+.qv-buy__stepper {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 0.2rem;
+  background: #fff;
+  border: 1.5px solid var(--cc-rose-soft);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px -4px rgba(207, 62, 99, 0.35);
+}
+.qv-buy__stepper button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cc-blush-soft);
+  color: var(--cc-rose-ink);
+  cursor: pointer;
+  transition: background-color var(--cc-dur) var(--cc-ease), transform var(--cc-dur) var(--cc-ease);
+}
+.qv-buy__stepper button:hover:not(:disabled) { background: var(--cc-blush); }
+.qv-buy__stepper button:active:not(:disabled) { transform: scale(0.92); transition-duration: var(--cc-dur-fast); }
+.qv-buy__stepper button:disabled { opacity: 0.35; cursor: not-allowed; }
+.qv-buy__stepper button:focus-visible { outline: 2px solid var(--cc-rose-deep); outline-offset: 2px; }
+.qv-buy__qty {
+  min-width: 2.6rem;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--cc-cocoa);
+  font-variant-numeric: tabular-nums;
+}
+.qv-buy__total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 0;
+  line-height: 1.15;
+  text-align: right;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.qv-buy__total s { font-size: 0.8rem; font-weight: 600; color: var(--cc-cocoa-soft); }
+.qv-buy__total strong { font-size: 1.4rem; font-weight: 900; color: var(--cc-rose-ink); }
+.qv-buy__total small { margin-top: 0.15rem; font-size: 0.7rem; font-weight: 600; color: var(--cc-cocoa-soft); }
+.qv-buy__nudge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.45rem 0.65rem;
+  border: 1px dashed var(--cc-rose-soft);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--cc-rose-ink);
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.qv-buy__nudge svg { flex-shrink: 0; }
+.qv-modal .qv-buy__add {
+  width: 100%;
+  flex: none;
+  padding: 0.85rem 1rem;
+  font-size: 0.82rem;
+}
+@media (max-width: 380px) {
+  .qv-buy__stepper button { width: 34px; height: 34px; }
+  .qv-buy__qty { min-width: 2.1rem; font-size: 1.05rem; }
+  .qv-buy__total strong { font-size: 1.2rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .qv-buy__stepper button:active:not(:disabled) { transform: none; }
+}
 
 /* A pack in a preview, before 5 Nov: shown, not addable. */
 .cc-opick__soon { font-size: 0.72rem; font-weight: 700; color: var(--cc-cocoa-soft); }

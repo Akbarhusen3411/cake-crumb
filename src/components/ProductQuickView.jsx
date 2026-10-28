@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiX, FiShoppingBag, FiMinus, FiPlus, FiInfo } from 'react-icons/fi'
+import { FiX, FiShoppingBag, FiMinus, FiPlus, FiInfo, FiGift } from 'react-icons/fi'
 import { u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { describe, hasUnit } from '../data/products.js'
 import { useCart } from '../context/CartContext.jsx'
-import { piecesPrice } from '../data/offers.js'
+import { piecesPrice, packNudge } from '../data/offers.js'
 import AllergenTags from './AllergenTags.jsx'
 
 /** Show the batch-bake note at or below this many loose pieces. */
@@ -49,16 +49,66 @@ function BatchHint() {
  * A `unit` product (cookies) is the same idea with a third row: both its listed
  * prices are boxes, and the loose single is the tier the card can't show.
  */
+/**
+ * The buying panel, the same for every size: size + its price on top, a
+ * large − / + counter beside the live total (the regular price struck when a
+ * Diwali pack of 10 applies), an optional "add N more for the pack" line,
+ * then one full-width Add. Built for a 300px phone column up to desktop.
+ */
+function QtyBuy({ label, minQty, unitPrice, each = 'each', qty, setQty, price, nudge, onAdd }) {
+  return (
+    <div className="qv-buy">
+      <div className="qv-buy__head">
+        <span className="qv-buy__label">
+          {label}
+          {minQty > 1 && <span className="qv-option__min">Min {minQty}</span>}
+        </span>
+        <span className="qv-buy__unit">{inr(unitPrice)} {each && <small>{each}</small>}</span>
+      </div>
+
+      <div className="qv-buy__body">
+        <div className="qv-buy__stepper" role="group" aria-label="How many?">
+          <button type="button" onClick={() => setQty((q) => Math.max(minQty, q - 1))} disabled={qty <= minQty} aria-label="One fewer">
+            <FiMinus size={16} />
+          </button>
+          <span className="qv-buy__qty" aria-live="polite">{qty}</span>
+          <button type="button" onClick={() => setQty((q) => q + 1)} aria-label="One more">
+            <FiPlus size={16} />
+          </button>
+        </div>
+        <div className="qv-buy__total" aria-live="polite">
+          {price.packs > 0 && <s>{inr(price.regular)}</s>}
+          <strong>{inr(price.total)}</strong>
+          <small>
+            {price.packs > 0
+              ? `Diwali price · ${price.packs === 1 ? '' : `${price.packs} × `}${price.label}`
+              : `${qty} × ${inr(unitPrice)}`}
+          </small>
+        </div>
+      </div>
+
+      {nudge && (
+        <p className="qv-buy__nudge">
+          <FiGift size={13} aria-hidden /> Add {nudge.need} more for the Diwali pack — {nudge.size} for {inr(nudge.price)}
+        </p>
+      )}
+
+      <button type="button" className="qv-btn qv-btn--filled qv-buy__add" onClick={onAdd}>
+        <FiShoppingBag size={15} /> Add {qty} to cart
+      </button>
+    </div>
+  )
+}
+
 export default function ProductQuickView({ product, onClose }) {
   const { add } = useCart()
   // Applies to the base (`price`) tier only — a box is orderable on its own.
   const minQty = Math.max(1, Number(product?.minQty) || 1)
-  // Shop keys this component by product id, so opening a different product
-  // remounts it and qty re-initialises to that product's minimum.
-  const [qty, setQty] = useState(minQty)
-  // The loose-piece row keeps its own count — it is a separate cart line
-  // (`<id>-unit`) from the boxes, so sharing one stepper would be wrong.
-  const [unitQty, setUnitQty] = useState(1)
+  // Every size is chosen the same way: pick it, set how many, add. Each size
+  // keeps its own count (they're separate cart lines). Shop keys this
+  // component by product id, so a different product starts fresh.
+  const [tierIdx, setTierIdx] = useState(0)
+  const [qtyByTier, setQtyByTier] = useState({})
   // Which photo is showing, for the few products that have more than one.
   const [shot, setShot] = useState(0)
   const modalRef = useRef(null)
@@ -78,14 +128,36 @@ export default function ProductQuickView({ product, onClose }) {
   // outside the modal locks it for real; the modal's own scroll still works.
   useEffect(() => {
     if (!product) return
-    const blockOutside = (e) => {
-      if (!modalRef.current?.contains(e.target)) e.preventDefault()
+    // Outside the modal: always blocked. Inside: only an element that can
+    // still scroll that way may take it — when the modal fits (desktop) or a
+    // scroller is at its end, the wheel / swipe used to chain to the page.
+    let lastY = 0
+    const onStart = (e) => { lastY = e.touches?.[0]?.clientY ?? 0 }
+    const canScroll = (from, dy) => {
+      for (let el = from; el && el !== document.body; el = el.parentElement) {
+        const oy = getComputedStyle(el).overflowY
+        if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight + 1) {
+          if (dy > 0 && el.scrollTop + el.clientHeight < el.scrollHeight - 1) return true
+          if (dy < 0 && el.scrollTop > 0) return true
+        }
+        if (el === modalRef.current) break
+      }
+      return false
     }
-    document.addEventListener('touchmove', blockOutside, { passive: false })
-    document.addEventListener('wheel', blockOutside, { passive: false })
+    const block = (e) => {
+      if (!modalRef.current?.contains(e.target)) { e.preventDefault(); return }
+      let dy
+      if (e.type === 'wheel') dy = e.deltaY
+      else { const y = e.touches?.[0]?.clientY ?? lastY; dy = lastY - y; lastY = y }
+      if (dy !== 0 && !canScroll(e.target, dy)) e.preventDefault()
+    }
+    document.addEventListener('touchstart', onStart, { passive: true })
+    document.addEventListener('touchmove', block, { passive: false })
+    document.addEventListener('wheel', block, { passive: false })
     return () => {
-      document.removeEventListener('touchmove', blockOutside)
-      document.removeEventListener('wheel', blockOutside)
+      document.removeEventListener('touchstart', onStart)
+      document.removeEventListener('touchmove', block)
+      document.removeEventListener('wheel', block)
     }
   }, [product])
 
@@ -103,6 +175,33 @@ export default function ProductQuickView({ product, onClose }) {
     add(item, addQty)
     onClose()
   }
+
+  // The sizes this product sells, in menu order. Each builds its cart line
+  // EXACTLY as before (ids, "(tier)" names), so carts and offers still match.
+  // Name carries the TIER, never the count — add() merges by id.
+  const tiers = [
+    p.slice || hasUnit(p)
+      ? {
+          key: 'base', label: p.sizeLabel || 'Whole', unitPrice: p.price, min: minQty, pieces: perPiece,
+          line: (q) => ({ ...p, name: `${p.name} (${p.sizeLabel || 'Whole'})`, note: showBatchNote && q <= BATCH_NOTE_UPTO ? batchToastNote(q) : undefined }),
+        }
+      : { key: 'base', label: p.sizeLabel || 'Each', unitPrice: p.price, min: minQty, pieces: perPiece, line: () => p },
+    p.slice != null && {
+      key: 'slice', label: p.sliceLabel || 'Slice', unitPrice: p.slice, min: 1,
+      line: () => ({ id: p.id + '-slice', name: `${p.name} (${p.sliceLabel || 'Slice'})`, price: p.slice, img: p.img }),
+    },
+    hasUnit(p) && {
+      key: 'unit', label: p.unitLabel || 'Per piece', unitPrice: p.unit, min: 1, pieces: true, batch: true,
+      line: (q) => ({ id: p.id + '-unit', name: `${p.name} (${p.unitLabel || 'Per piece'})`, price: p.unit, img: p.img, note: q <= BATCH_NOTE_UPTO ? batchToastNote(q) : undefined }),
+    },
+  ].filter(Boolean)
+  const tier = tiers[Math.min(tierIdx, tiers.length - 1)]
+  const tqty = qtyByTier[tier.key] ?? tier.min
+  const setTqty = (fn) => setQtyByTier((m) => ({ ...m, [tier.key]: fn(m[tier.key] ?? tier.min) }))
+  // Only the loose-piece base tier can become a Diwali pack of 10.
+  const tprice = tier.key === 'base' ? piecesPrice(p, tqty) : { total: tier.unitPrice * tqty, regular: tier.unitPrice * tqty, packs: 0 }
+  const tnudge = tier.key === 'base' ? packNudge(p, tqty) : null
+  const tbatch = (tier.key === 'base' && showBatchNote) || tier.batch
 
   return (
     <div
@@ -173,171 +272,40 @@ export default function ProductQuickView({ product, onClose }) {
               Please pre-order at least 1 day in advance.
             </p>
 
-            {/* Options — each size on its own row with price + Add button */}
-            {p.slice ? (
-              <div className="qv-options">
-                <div className={`qv-option${perPiece ? ' qv-option--qty' : ''}`}>
-                  <div className="qv-option__info">
-                    <div className="qv-option__label">
-                      {p.sizeLabel || 'Whole'}
-                      {perPiece && <span className="qv-option__min">Min {minQty}</span>}
-                    </div>
-                    <div className="qv-option__price">
-                      {inr(p.price)}
-                      {perPiece && <span className="qv-option__sub">each</span>}
-                    </div>
-                  </div>
-
-                  {perPiece ? (
-                    <div className="qv-qty">
-                      <span className="qv-qty__ask">How many?</span>
-                      <div className="qv-qty__row">
-                        <div className="qv-qty__stepper">
-                          <button
-                            type="button"
-                            onClick={() => setQty((q) => Math.max(minQty, q - 1))}
-                            disabled={qty <= minQty}
-                            aria-label="One fewer"
-                          >
-                            <FiMinus size={13} />
-                          </button>
-                          <span className="qv-qty__val" aria-live="polite">{qty}</span>
-                          <button
-                            type="button"
-                            onClick={() => setQty((q) => q + 1)}
-                            aria-label="One more"
-                          >
-                            <FiPlus size={13} />
-                          </button>
-                        </div>
-                        {/* Name carries the TIER, never the count — add() merges
-                            by id, so "(2 pcs)" would go stale the moment the
-                            customer added more. The count lives in cart qty. */}
-                        <button
-                          className="qv-btn qv-btn--filled qv-qty__add"
-                          onClick={() =>
-                            addAndClose(
-                              {
-                                ...p,
-                                name: `${p.name} (${p.sizeLabel || 'Whole'})`,
-                                note: showBatchNote && qty <= BATCH_NOTE_UPTO ? batchToastNote(qty) : undefined,
-                              },
-                              qty,
-                            )
-                          }
-                        >
-                          <FiShoppingBag size={13} /> Add {qty} —{' '}
-                          {/* From 5–15 Nov every 10 pieces bill as a Diwali pack:
-                              show the regular price struck and the real one. */}
-                          {(() => {
-                            const pr = piecesPrice(p, qty)
-                            return pr.packs ? <><s className="qv-was">{inr(pr.regular)}</s> {inr(pr.total)}</> : inr(pr.total)
-                          })()}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
+            {/* Buying: pick a size (when there's more than one), then the same
+                panel for every size — how many · live total · Add. */}
+            <div className="qv-options qv-options--buy">
+              {tiers.length > 1 && (
+                <div className="qv-tiers" role="radiogroup" aria-label="Choose a size">
+                  {tiers.map((t, i) => (
                     <button
-                      className="qv-btn qv-btn--filled"
-                      onClick={() =>
-                        addAndClose({ ...p, name: `${p.name} (${p.sizeLabel || 'Whole'})` }, minQty)
-                      }
+                      key={t.key}
+                      type="button"
+                      role="radio"
+                      aria-checked={t.key === tier.key}
+                      className={`qv-tier${t.key === tier.key ? ' is-on' : ''}`}
+                      onClick={() => setTierIdx(i)}
                     >
-                      <FiShoppingBag size={13} /> Add
+                      <span className="qv-tier__label">{t.label}</span>
+                      <span className="qv-tier__price">{inr(t.unitPrice)}</span>
                     </button>
-                  )}
+                  ))}
                 </div>
-
-                {/* Brownies and blondies: the note belongs under the BASE tier,
-                    because that is where their single piece is chosen. */}
-                {showBatchNote && qty <= BATCH_NOTE_UPTO && <BatchHint />}
-
-                <div className="qv-option">
-                  <div className="qv-option__info">
-                    <div className="qv-option__label">{p.sliceLabel || 'Slice'}</div>
-                    <div className="qv-option__price">{inr(p.slice)}</div>
-                  </div>
-                  <button
-                    className="qv-btn qv-btn--outline"
-                    onClick={() =>
-                      addAndClose({
-                        id: p.id + '-slice',
-                        name: `${p.name} (${p.sliceLabel || 'Slice'})`,
-                        price: p.slice,
-                        img: p.img,
-                      })
-                    }
-                  >
-                    <FiShoppingBag size={13} /> Add
-                  </button>
-                </div>
-
-                {/* Third tier — a single loose piece (cookies). Its own stepper,
-                    because this is the tier people buy in ones and twos, and the
-                    only one that needs the batch-bake note below. */}
-                {hasUnit(p) && (
-                  <div className="qv-option qv-option--qty">
-                    <div className="qv-option__info">
-                      <div className="qv-option__label">{p.unitLabel || 'Per piece'}</div>
-                      <div className="qv-option__price">
-                        {inr(p.unit)}
-                        <span className="qv-option__sub">each</span>
-                      </div>
-                    </div>
-
-                    <div className="qv-qty">
-                      <span className="qv-qty__ask">How many?</span>
-                      <div className="qv-qty__row">
-                        <div className="qv-qty__stepper">
-                          <button
-                            type="button"
-                            onClick={() => setUnitQty((q) => Math.max(1, q - 1))}
-                            disabled={unitQty <= 1}
-                            aria-label="One fewer"
-                          >
-                            <FiMinus size={13} />
-                          </button>
-                          <span className="qv-qty__val" aria-live="polite">{unitQty}</span>
-                          <button type="button" onClick={() => setUnitQty((q) => q + 1)} aria-label="One more">
-                            <FiPlus size={13} />
-                          </button>
-                        </div>
-                        <button
-                          className="qv-btn qv-btn--filled qv-qty__add"
-                          onClick={() =>
-                            addAndClose(
-                              {
-                                id: p.id + '-unit',
-                                name: `${p.name} (${p.unitLabel || 'Per piece'})`,
-                                price: p.unit,
-                                img: p.img,
-                                note: unitQty <= BATCH_NOTE_UPTO ? batchToastNote(unitQty) : undefined,
-                              },
-                              unitQty,
-                            )
-                          }
-                        >
-                          <FiShoppingBag size={13} /> Add {unitQty} — {inr(p.unit * unitQty)}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Cookies: the note belongs under the UNIT tier — its boxes
-                    are ordinary orders, only the loose single is a small one. */}
-                {hasUnit(p) && unitQty <= BATCH_NOTE_UPTO && <BatchHint />}
-              </div>
-            ) : (
-              <div className="qv-actions">
-                <button
-                  className="qv-btn qv-btn--filled w-100"
-                  onClick={() => addAndClose(p)}
-                >
-                  <FiShoppingBag size={13} /> Add to Cart — {inr(p.price)}
-                </button>
-              </div>
-            )}
+              )}
+              <QtyBuy
+                key={tier.key}
+                label={tier.label}
+                minQty={tier.min}
+                unitPrice={tier.unitPrice}
+                each={tier.pieces ? 'each' : tiers.length > 1 ? 'each' : ''}
+                qty={tqty}
+                setQty={setTqty}
+                price={tprice}
+                nudge={tnudge}
+                onAdd={() => addAndClose(tier.line(tqty), tqty)}
+              />
+              {tbatch && tqty <= BATCH_NOTE_UPTO && <BatchHint />}
+            </div>
 
             {/* No "Save to favourites" button here. There was one, with no
                 handler and nowhere to view a saved list — it did nothing when

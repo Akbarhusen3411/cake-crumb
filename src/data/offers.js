@@ -112,24 +112,42 @@ export function pack10Line(p) {
   return { id: `${p.id}-d10`, name: `${p.name} (Diwali pack of 10)`, price: DIWALI_PACK10[p.id], img: p.img }
 }
 
-// Loose pieces of a pack product: every full 10 is priced (and carted) as a
-// pack, the rest at the per-piece price. Only on the REAL Diwali dates — a
-// ?diwali=preview tab must never produce a real order at pack prices.
-const packable = (p) => !!p && !!DIWALI_PACK10[p.id] && isPerPiece(p)
-/** { total, regular, packs } for `qty` loose pieces of `p` right now. */
+// The pack a product's BASE line rolls up into: 10 loose cupcakes / cake pops,
+// or 2 Variety boxes. Only on the REAL Diwali dates — a ?diwali=preview tab
+// must never produce a real order at pack prices.
+function packRule(p) {
+  if (!p) return null
+  if (DIWALI_PACK10[p.id] && isPerPiece(p)) return { size: 10, price: DIWALI_PACK10[p.id], line: pack10Line(p), label: 'pack of 10', unit: 'pieces' }
+  if (DIWALI_PACK2[p.id]) return { size: 2, price: DIWALI_PACK2[p.id], line: pack2Line(p), label: 'pack of 2 boxes', unit: 'boxes' }
+  return null
+}
+/** The cart line for the Diwali "2 boxes" pack (Variety). */
+export function pack2Line(p) {
+  return { id: `${p.id}-d2`, name: `${p.name.replace(/\s*\(Box of 6\)$/, '')} (Diwali 2 boxes of 6)`, price: DIWALI_PACK2[p.id], img: p.img }
+}
+/** { total, regular, packs, label } for `qty` of `p`'s base line right now. */
 export function piecesPrice(p, qty, now = offerNow()) {
   const n = Math.max(0, Number(qty) || 0)
   const regular = (Number(p?.price) || 0) * n
-  if (!OFFERS_ON || !packable(p) || !diwaliWindow(now, true).live) return { total: regular, regular, packs: 0 }
-  const packs = Math.floor(n / 10)
-  return { total: packs * DIWALI_PACK10[p.id] + (n % 10) * p.price, regular, packs }
+  const rule = packRule(p)
+  if (!OFFERS_ON || !rule || !diwaliWindow(now, true).live) return { total: regular, regular, packs: 0 }
+  const packs = Math.floor(n / rule.size)
+  return { total: packs * rule.price + (n % rule.size) * p.price, regular, packs, label: rule.label }
+}
+
+/** "Add N more for the Diwali pack" — once at least half a pack is chosen. Real dates only. */
+export function packNudge(p, qty, now = offerNow()) {
+  const rule = packRule(p)
+  if (!OFFERS_ON || !rule || !diwaliWindow(now, true).live) return null
+  const r = (Number(qty) || 0) % rule.size
+  return r && r >= rule.size / 2 ? { need: rule.size - r, price: rule.price, size: rule.size, unit: rule.unit } : null
 }
 
 /**
- * The cart's rule from 5 to 15 Nov: a per-piece line (the product's own id at
- * its per-piece price) holding 10 or more becomes pack lines + the rest — so
- * 10 Vanilla added one by one, or as "Add 10", bill as one ₹239 pack, and 12
- * as a pack + 2. Returns the SAME array when nothing changes. Called by
+ * The cart's rule from 5 to 15 Nov: a base line (the product's own id at its
+ * own price) holding a full pack becomes pack lines + the rest — 10 Vanilla
+ * (added one by one or as "Add 10") bill as one ₹239 pack, 12 as a pack + 2,
+ * and 2 Variety boxes as the ₹339 pair. Returns the SAME array when nothing changes. Called by
  * CartContext on every add / increment and on load.
  */
 export function applyDiwaliPacks(items, now = offerNow()) {
@@ -138,15 +156,16 @@ export function applyDiwaliPacks(items, now = offerNow()) {
   const packs = {}
   for (const it of items) {
     const p = shopProducts.find((x) => x.id === it.id)
-    if (packable(p) && Number(it.price) === p.price && it.qty >= 10) {
-      packs[p.id] = (packs[p.id] || 0) + Math.floor(it.qty / 10)
-      if (it.qty % 10) out.push({ ...it, qty: it.qty % 10 })
+    const rule = packRule(p)
+    if (rule && Number(it.price) === p.price && it.qty >= rule.size) {
+      packs[p.id] = (packs[p.id] || 0) + Math.floor(it.qty / rule.size)
+      if (it.qty % rule.size) out.push({ ...it, qty: it.qty % rule.size })
     } else out.push(it)
   }
   const ids = Object.keys(packs)
   if (!ids.length) return items
   for (const id of ids) {
-    const line = pack10Line(byId(id))
+    const line = packRule(byId(id)).line
     const i = out.findIndex((x) => x.id === line.id)
     if (i >= 0) out[i] = { ...out[i], qty: out[i].qty + packs[id] }
     else out.push({ ...line, qty: packs[id], minQty: 1 })
@@ -170,8 +189,7 @@ export function productDiwaliDeals(p, now = offerNow()) {
     deals.push({ kind: 'price', label: '10 pcs', was: p.price * 10, now: DIWALI_PACK10[p.id], line: pack10Line(p) })
   }
   if (DIWALI_PACK2[p.id]) {
-    deals.push({ kind: 'price', label: '2 boxes', was: p.price * 2, now: DIWALI_PACK2[p.id],
-      line: { id: `${p.id}-d2`, name: `${p.name.replace(/\s*\(Box of 6\)$/, '')} (Diwali 2 boxes of 6)`, price: DIWALI_PACK2[p.id], img: p.img } })
+    deals.push({ kind: 'price', label: '2 boxes', was: p.price * 2, now: DIWALI_PACK2[p.id], line: pack2Line(p) })
   }
   if (p.category === 'Cheesecakes' && p.slice != null) {
     const t = OFFER_RULES.diwaliTubTiers[0]
@@ -720,7 +738,7 @@ function diwaliPackTabs() {
     .map((p) => choice({ ...pack10Line(p), was: p.price * 10, pack: true }, short2(p.name)))
   const two = shopProducts
     .filter((p) => DIWALI_PACK2[p.id])
-    .map((p) => choice({ id: `${p.id}-d2`, name: `${p.name.replace(/\s*\(Box of 6\)$/, '')} (Diwali 2 boxes of 6)`, price: DIWALI_PACK2[p.id], was: p.price * 2, img: p.img, pack: true }, 'Variety × 2 boxes'))
+    .map((p) => choice({ ...pack2Line(p), was: p.price * 2, pack: true }, 'Variety × 2 boxes'))
   return [
     tab('Cupcakes × 10', ten((p) => p.category === 'Cupcakes')),
     tab('Variety × 2', two),
