@@ -1,5 +1,7 @@
 import { getDb } from '../firebase.js'
 import { ACCOUNTING_MENU } from '../data/accountingMenu.js'
+import { shopProducts } from '../data/products.js'
+import { DIWALI_PACK10, DIWALI_PACK2 } from '../data/offers.js'
 
 // Admin-only daily-accounting store. Same shape as services/orders.js:
 // Firestore when configured, always mirrored to localStorage, never throws.
@@ -221,6 +223,35 @@ export async function ensureFreeGiftMenu() {
   for (const name of FREE_GIFT_ITEMS) {
     const exists = menu.some((m) => m.category === FREE_GIFT_CAT && m.name === name)
     if (!exists) await addDocRec(ACC.MENU, { category: FREE_GIFT_CAT, name, variant: 'Free', price: 0 })
+  }
+  try { localStorage.setItem(FLAG, '1') } catch { /* ignore */ }
+}
+
+/**
+ * Add the Diwali pack prices to Menu & Prices, so a pack ordered on the site
+ * can be booked at its pack price: a "Diwali pack of 10" for every cupcake
+ * and for Chocolate, Vanilla and Red Velvet cake pops, and "Diwali 2 boxes of
+ * 6" for Variety.
+ * Names follow the menu's ("Red Velvet" under "Cupcake" / "Cake Pop"). Only
+ * ADDS missing rows (category + name + variant); bump the flag to re-run.
+ */
+export async function ensureDiwaliPackMenu() {
+  const FLAG = 'cc_acc_diwalipack_v3' // v3: + 2 Variety boxes
+  try { if (localStorage.getItem(FLAG)) return } catch { /* ignore */ }
+  const menu = await listDocs(ACC.MENU)
+  const rows = []
+  for (const p of shopProducts) {
+    const isCup = p.category === 'Cupcakes'
+    const isPop = p.group === 'Cake Pops'
+    if (!isCup && !isPop) continue
+    const category = isCup ? 'Cupcake' : 'Cake Pop'
+    const name = p.name.replace(/ (Cupcakes|Cake Pops)$/, '')
+    if (DIWALI_PACK10[p.id]) rows.push({ category, name, variant: 'Diwali pack of 10', price: DIWALI_PACK10[p.id] })
+    if (DIWALI_PACK2[p.id]) rows.push({ category, name: name.replace(/\s*\(Box of 6\)$/, ''), variant: 'Diwali 2 boxes of 6', price: DIWALI_PACK2[p.id] })
+  }
+  for (const r of rows) {
+    const exists = menu.some((m) => m.category === r.category && m.name === r.name && String(m.variant) === r.variant)
+    if (!exists) await addDocRec(ACC.MENU, r)
   }
   try { localStorage.setItem(FLAG, '1') } catch { /* ignore */ }
 }

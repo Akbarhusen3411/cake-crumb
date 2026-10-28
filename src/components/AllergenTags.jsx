@@ -25,7 +25,9 @@ const COLORS = {
 }
 
 /**
- * Compact: shows only "important" tags (eggless/vegan + contains-nuts) — for product cards.
+ * Compact: shows only "important" tags (eggless/vegan/gluten-free) — for product cards.
+ * "Contains nuts" is NOT on the cards, by the owner's choice (Oct 2026); the quick
+ * view (verbose) still lists it, and the printed menu marks nut items with N.
  * Verbose: shows everything — for the quick-view modal.
  */
 export default function AllergenTags({ allergens, verbose = false, size = 'sm' }) {
@@ -39,7 +41,7 @@ export default function AllergenTags({ allergens, verbose = false, size = 'sm' }
   // a badge that appears everywhere tells you nothing, and it would drown the
   // nut warning that actually matters. It still shows in the quick view, where
   // `verbose` lists everything.
-  const important = ['eggless', 'vegan', 'gluten-free', 'contains-nuts']
+  const important = ['eggless', 'vegan', 'gluten-free']
   const visible = verbose ? allergens : allergens.filter((a) => important.includes(a))
   if (visible.length === 0) return null
 

@@ -5,7 +5,7 @@ import { getFirebaseAuth, isFirebaseEnabled } from '../firebase.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import {
   ACC, listDocs, subscribeDocs, onCloudError,
-  seedMenuIfEmpty, ensurePerPieceMenu, ensureCakePopPrices, ensureFreeGiftMenu,
+  seedMenuIfEmpty, ensurePerPieceMenu, ensureCakePopPrices, ensureFreeGiftMenu, ensureDiwaliPackMenu,
 } from '../services/accounting.js'
 import AdminPageHead from '../components/admin/AdminPageHead.jsx'
 import DashboardTab from '../components/admin/accounting/DashboardTab.jsx'
@@ -153,6 +153,7 @@ export default function AdminAccounting() {
       await ensurePerPieceMenu() // adds "Per piece" prices for Cake Pop & Cupcakes
       await ensureCakePopPrices() // owner's Cake Pop prices + Pistachio
       await ensureFreeGiftMenu() // ₹0 "Free Gift" rows for offer gifts
+      await ensureDiwaliPackMenu() // Diwali pack-of-10 prices
       if (!active) return
       setLoading(true)
       const feeds = [

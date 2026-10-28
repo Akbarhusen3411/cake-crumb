@@ -15,6 +15,7 @@ import {
   activeOffers, cartOfferStatus, midMonthWindow, diwaliWindow, daysUntil,
 } from '../data/offers.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
+import OfferSteps, { PriceTag } from '../components/OfferSteps.jsx'
 
 // The hero says how many offers there are, so it can't go stale when one is added.
 const COUNT_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
@@ -67,6 +68,9 @@ function MidMonthChip({ now }) {
 function OfferPicker({ tabs }) {
   const [tab, setTab] = useState(0)
   const { items, add, increment, decrement } = useCart()
+  // Diwali packs are sold only on the real dates — a ?diwali=preview tab
+  // shows them but can't add one.
+  const packsOpen = diwaliWindow(undefined, true).live
   const qtyOf = (id) => items.find((it) => it.id === id)?.qty || 0
 
   return (
@@ -94,8 +98,12 @@ function OfferPicker({ tabs }) {
             <div key={line.id} className={`cc-opick__item${qty ? ' is-in' : ''}`}>
               <img src={u(line.img, 200, 200)} srcSet={srcSet(line.img)} sizes="96px" alt="" loading="lazy" />
               <span className="cc-opick__name" title={line.name}>{label}</span>
-              <span className="cc-opick__price">{inr(line.price)}</span>
-              {qty ? (
+              {line.was > line.price
+                ? <PriceTag was={line.was} now={line.price} small flag={null} />
+                : <span className="cc-opick__price">{inr(line.price)}</span>}
+              {line.pack && !packsOpen && !qty ? (
+                <span className="cc-opick__soon">From 5 Nov</span>
+              ) : qty ? (
                 <span className="cc-opick__stepper">
                   <button type="button" onClick={() => decrement(line.id)} aria-label={`One fewer ${line.name}`}><FiMinus size={12} /></button>
                   <strong aria-live="polite">{qty}</strong>
@@ -219,8 +227,9 @@ function OfferCard({ offer: o, index, status, subtotal, startOpen }) {
       <div className="cc-orow__body">
         <span className="cc-orow__tag">{o.tag}</span>
         <h3 className="cc-orow__name">{o.name}</h3>
-        {/* Same BUY / FREE pair as the Home tiles, so the deal reads the same
-            on both pages. */}
+        {/* Diwali offers say their deal as steps or price tags; the everyday
+            ones keep the BUY / FREE pair. Same on Home, so both pages read alike. */}
+        {o.steps || o.prices ? <OfferSteps offer={o} /> : (
         <p className="cc-offer-deal">
           <span className="cc-offer-deal__row">
             <span className="cc-offer-deal__label">Buy</span>
@@ -230,10 +239,11 @@ function OfferCard({ offer: o, index, status, subtotal, startOpen }) {
             </span>
           </span>
           <span className="cc-offer-deal__row cc-offer-deal__row--get">
-            <span className="cc-offer-deal__label"><FiGift size={12} aria-hidden /> Free</span>
+            <span className="cc-offer-deal__label"><FiGift size={12} aria-hidden /> {o.getLabel || 'Free'}</span>
             <span className="cc-offer-deal__text">{o.get || o.gift}</span>
           </span>
         </p>
+        )}
         <OfferStatus offer={o} status={status} subtotal={subtotal} />
         <div className="cc-orow__actions">
           {picker ? (
@@ -251,7 +261,7 @@ function OfferCard({ offer: o, index, status, subtotal, startOpen }) {
               {o.cta.label} <FiArrowRight size={14} />
             </Link>
           )}
-          {picker && (
+          {picker && !o.deal && (
             <Link to={o.cta.to} className="cc-orow__link">
               Or browse the shop <FiArrowRight size={13} />
             </Link>

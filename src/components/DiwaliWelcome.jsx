@@ -3,29 +3,27 @@ import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { FiArrowRight, FiGift, FiX } from 'react-icons/fi'
 import { offerNow, activeOffers } from '../data/offers.js'
-import { localIso } from '../utils/adminDate.js'
 import { isDiwaliPreview } from '../data/festivals.js'
 
 /**
  * Diwali & New Year welcome — a full-screen greeting shown before the site,
- * 5–15 November only, once a day per device. "Step into the sweetness" (or ×, Esc)
- * fades it away.
+ * 5–15 November only, on EVERY visit (each page load — the owner's choice,
+ * not once a day). While the Diwali offers run its button reads "Step in for
+ * sweet Diwali offers" and opens /offers; ×, Esc and "just browse" fade it
+ * away onto the page that was opened.
  *
  * - The window is WINDOW below; change it there. It reads the visitor's own
  *   clock through offerNow(), so `?testdate=2026-11-08` works on the dev server.
- * - "Once a day" is the date ("2026-11-08") in localStorage. Storage blocked →
- *   not shown, so it can never appear on every page.
+ * - Moving between pages doesn't bring it back (it's mounted once, in App);
+ *   a reload or a new visit does.
  * - Never over Cart, Checkout, the order confirmation or admin.
  * - The quotes are our own lines, not attributed to anyone (see MidMonthPopup).
  * - The card is frosted glass over drifting colour blobs; its parts float in
  *   one after another. All motion stops under prefers-reduced-motion.
  * - Body scroll isn't locked (CLAUDE.md, Navbar); the backdrop is opaque.
- *
- * On the dev server, `?welcome=again` forgets that it was seen today.
  */
 
 const WINDOW = { month: 11, fromDay: 5, toDay: 15 } // 5–15 November, inclusive
-const SEEN_KEY = 'cc_diwali_welcome_v1'
 const HIDDEN_ON = ['/cart', '/checkout', '/confirm-order', '/admin']
 const LEAVE_MS = 450
 const LOGO_BASE = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
@@ -59,20 +57,6 @@ function inWindow(now) {
   return now.getMonth() + 1 === WINDOW.month && d >= WINDOW.fromDay && d <= WINDOW.toDay
 }
 
-function seenToday(key) {
-  try {
-    if (import.meta.env.DEV && new URLSearchParams(window.location.search).get('welcome') === 'again') {
-      localStorage.removeItem(SEEN_KEY)
-    }
-    return localStorage.getItem(SEEN_KEY) === key
-  } catch {
-    return true
-  }
-}
-
-function markSeen(key) {
-  try { localStorage.setItem(SEEN_KEY, key) } catch { /* storage blocked */ }
-}
 
 export default function DiwaliWelcome() {
   const { pathname } = useLocation()
@@ -83,7 +67,9 @@ export default function DiwaliWelcome() {
   const [preview] = useState(isDiwaliPreview)
   const [open, setOpen] = useState(() => {
     const now = offerNow()
-    return allowedHere && (preview || (inWindow(now) && !seenToday(localIso(now))))
+    // Every time the site is opened (each page load) from 5 to 15 Nov — the
+    // owner wants it on every visit, not once a day.
+    return allowedHere && (preview || inWindow(now))
   })
   const [leaving, setLeaving] = useState(false)
   const [quote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)])
@@ -91,7 +77,6 @@ export default function DiwaliWelcome() {
 
   useEffect(() => {
     if (!open) return undefined
-    if (!preview) markSeen(localIso(offerNow()))
     dialogRef.current?.focus()
     const onKey = (e) => { if (e.key === 'Escape') setLeaving(true) }
     document.addEventListener('keydown', onKey)
@@ -106,12 +91,13 @@ export default function DiwaliWelcome() {
 
   if (!open || !allowedHere) return null
   const enter = () => setLeaving(true)
-  const offers = activeOffers().filter((o) => o.season === 'diwali')
-  // A tag closes the greeting and opens that offer's card.
-  const goTo = (id) => {
+  // The main button always lands on the Home page (the owner's choice); the ×
+  // and Esc just close it on the page that was opened.
+  const goHome = () => {
     setLeaving(true)
-    navigate(`/offers#${id}`)
+    if (pathname !== '/') navigate('/')
   }
+  const offers = activeOffers().filter((o) => o.season === 'diwali')
 
   return createPortal(
     <div className={`cc-diwali${leaving ? ' cc-diwali--leaving' : ''}`}>
@@ -164,65 +150,60 @@ export default function DiwaliWelcome() {
           <FiX size={18} />
         </button>
 
-        {/* The site's lockup, stacked: mark, wordmark, tagline (as Logo.jsx). */}
-        <div className="cc-diwali__brand">
-          <img
-            src={LOGO_SRC}
-            srcSet={`${LOGO_BASE}/logo_final-400.webp 400w, ${LOGO_BASE}/logo_final-800.webp 800w`}
-            sizes="200px"
-            width={400}
-            height={278}
-            alt=""
-            className="cc-diwali__logo"
-          />
-          <span className="cc-diwali__word">
-            CAKE<span className="cc-diwali__amp">&amp;</span>CRUMB
+        {/* Left (or top): the greeting. */}
+        <div className="cc-diwali__main">
+          {/* The site's lockup, stacked: mark, wordmark, tagline (as Logo.jsx). */}
+          <div className="cc-diwali__brand">
+            <img
+              src={LOGO_SRC}
+              srcSet={`${LOGO_BASE}/logo_final-400.webp 400w, ${LOGO_BASE}/logo_final-800.webp 800w`}
+              sizes="200px"
+              width={400}
+              height={278}
+              alt=""
+              className="cc-diwali__logo"
+            />
+            <span className="cc-diwali__word">
+              CAKE<span className="cc-diwali__amp">&amp;</span>CRUMB
+            </span>
+            <span className="cc-diwali__tagline">The gourmet chocolate and berry boutique!</span>
+          </div>
+
+          <span className="cc-diwali__rule" aria-hidden>
+            <span className="cc-diwali__diyas"><span>🪔</span><span>🪔</span><span>🪔</span></span>
           </span>
-          <span className="cc-diwali__tagline">The gourmet chocolate and berry boutique!</span>
+
+          <h2 id="cc-diwali-title" className="cc-diwali__title">
+            Happy Diwali
+            <span className="cc-diwali__script">&amp; a Happy New Year</span>
+          </h2>
+
+          <blockquote className="cc-diwali__quote">
+            <span className="cc-diwali__qmark" aria-hidden>“</span>
+            <p id="cc-diwali-quote">{quote}</p>
+            <footer>— with love, from our kitchen to yours</footer>
+          </blockquote>
+
+          <p className="cc-diwali__sweet">
+            We can’t wait to sweeten <span className="cc-diwali__keep">your day!<span className="cc-diwali__heart" aria-hidden> ♥</span></span>
+          </p>
+
+          {/* One button, which enters the website on the Home page (the owner's choice). While
+              the Diwali offers run it says so; the offers themselves live on
+              /offers, Home and the Shop. */}
+          {offers.length > 0 ? (
+            <>
+              <button type="button" className="btn-rose cc-diwali__enter" onClick={goHome}>
+                <FiGift aria-hidden /> Step in for sweet Diwali offers <FiArrowRight aria-hidden />
+              </button>
+            </>
+          ) : (
+            <button type="button" className="btn-rose cc-diwali__enter" onClick={goHome}>
+              Step into the sweetness <FiArrowRight aria-hidden />
+            </button>
+          )}
         </div>
 
-        <span className="cc-diwali__rule" aria-hidden>
-          <span className="cc-diwali__diyas"><span>🪔</span><span>🪔</span><span>🪔</span></span>
-        </span>
-
-        <h2 id="cc-diwali-title" className="cc-diwali__title">
-          Happy Diwali
-          <span className="cc-diwali__script">&amp; a Happy New Year</span>
-        </h2>
-
-        <blockquote className="cc-diwali__quote">
-          <span className="cc-diwali__qmark" aria-hidden>“</span>
-          <p id="cc-diwali-quote">{quote}</p>
-          <footer>— with love, from our kitchen to yours</footer>
-        </blockquote>
-
-        <p className="cc-diwali__sweet">
-          We can’t wait to sweeten <span className="cc-diwali__keep">your day!<span className="cc-diwali__heart" aria-hidden> ♥</span></span>
-        </p>
-
-        {/* The Diwali offers running now, as tags — each opens its card on
-            /offers. Read from activeOffers(), so they appear only while the
-            offers do (or under ?diwali=preview). */}
-        {offers.length > 0 && (
-          <div className="cc-diwali__offers">
-            <span className="cc-diwali__offers-label">
-              <FiGift aria-hidden /> Diwali offers · free gifts
-            </span>
-            <div className="cc-diwali__tags">
-              {offers.map((o) => (
-                <button key={o.id} type="button" className="cc-diwali__tag" onClick={() => goTo(o.id)}>
-                  <span className="cc-diwali__tag-buy">{o.buy}</span>
-                  <FiArrowRight aria-hidden className="cc-diwali__tag-arrow" />
-                  <span className="cc-diwali__tag-get">{o.get || o.gift} free</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <button type="button" className="btn-rose cc-diwali__enter" onClick={enter}>
-          Step into the sweetness <FiArrowRight aria-hidden />
-        </button>
       </div>
     </div>,
     document.body,

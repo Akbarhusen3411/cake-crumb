@@ -51,7 +51,7 @@ export default function OffersTicker() {
           <span key={o.id} className="cc-ticker__text">
             <strong>{o.name}</strong>
             <span className="cc-ticker__sep" aria-hidden> · </span>
-            {(o.giftShort || o.gift).toLowerCase()} free
+            {o.tickerText || `${(o.giftShort || o.gift).toLowerCase()} free`}
             {o.id === 'mid-month' && <span className="cc-ticker__until"> until {until}</span>}
           </span>
         </span>

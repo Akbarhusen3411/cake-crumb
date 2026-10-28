@@ -8,7 +8,7 @@ import { FaWhatsapp } from 'react-icons/fa'
 import { useCart } from '../context/CartContext.jsx'
 import { inr } from '../data/format.js'
 import OfferGift from '../components/OfferGift.jsx'
-import { OFFERS_ON, cartOfferStatus } from '../data/offers.js'
+import { OFFERS_ON, cartOfferStatus, diwaliWindow, isDiwaliPackId } from '../data/offers.js'
 import { u } from '../data/images.js'
 import { COUNTRY_CODES, DEFAULT_COUNTRY } from '../data/countries.js'
 import { deliveryFee, isBulkOrder, depositAmount, DEPOSIT_PCT } from '../data/shopConfig.js'
@@ -232,7 +232,10 @@ export default function Checkout() {
     ? (form.payment === 'upi' || form.payment === 'deposit')
     : (form.payment === 'upi' || form.payment === 'cod')
 
-  const isFormValid = isDetailsValid && isPaymentValid && subtotal > 0
+  // A Diwali pack carries its Diwali price, so it can't be ordered once 5–15
+  // Nov is over (a cart saved during Diwali, or a preview tab). Real calendar.
+  const expiredPacks = !diwaliWindow(undefined, true).live && items.some((it) => isDiwaliPackId(it.id))
+  const isFormValid = isDetailsValid && isPaymentValid && subtotal > 0 && !expiredPacks
 
   // Keep the selected payment method consistent with the order size. When a cart
   // crosses into "bulk", a stale 'cod' choice becomes invalid → switch to the
@@ -1128,6 +1131,11 @@ export default function Checkout() {
                   </div>
                 )}
 
+                {expiredPacks && (
+                  <div className="cc-infonote mb-2" role="alert">
+                    Diwali packs were available 5–15 Nov only — please remove them from your cart to place the order.
+                  </div>
+                )}
                 <button type="submit" className="cc-place-order-btn" disabled={!isFormValid}>
                   <FiCheckCircle size={18} /> Place Order
                 </button>

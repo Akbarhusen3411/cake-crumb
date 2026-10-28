@@ -36,7 +36,7 @@ export default function HeroOffers() {
             <span className="cc-hero-sticker__name">
               {o.id === 'mid-month' || o.season ? 'Limited time · ' : ''}{o.name}
             </span>
-            <span className="cc-hero-sticker__gift">Free: {(o.giftShort || o.gift).toLowerCase()}</span>
+            <span className="cc-hero-sticker__gift">{o.tickerText || `Free: ${(o.giftShort || o.gift).toLowerCase()}`}</span>
           </span>
           <FiArrowRight size={14} className="cc-hero-sticker__go" aria-hidden />
         </Link>

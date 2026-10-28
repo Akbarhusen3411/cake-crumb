@@ -52,6 +52,92 @@ export const OFFER_RULES = {
   ],
 }
 
+// ── Diwali price packs (5–15 Nov) ──
+// Unlike every other offer these MOVE A PRICE — but only as their own cart
+// lines at their own price ("Red Velvet Cupcakes (Diwali pack of 10)" ₹279),
+// exactly like a product tier. No total is recomputed anywhere, so the
+// five-places rule isn't engaged: cart, checkout, receipt, invoice and the
+// UPI amount just add up the lines as always. `was` is the same pieces at
+// the per-piece price, shown struck through.
+//   • Packs of 10 — the owner's prices, by product id. (A "box of 8 for the
+//     box-of-6 price" was tried and dropped: it undercut the packs of 10.)
+// Pack lines can only be ADDED inside the real window (never in a preview),
+// and Checkout refuses an order still holding one after it closes.
+// 10 at the per-piece price, then a round-ish Diwali price ending in 9:
+//   ₹25 cupcakes   250 → 239   (Vanilla, Sprinkle)
+//   ₹28 cupcakes   280 → 269   (Chocolate, Nutella, Strawberry)
+//   ₹30 cupcakes   300 → 279   (Red Velvet, Biscoff)
+//   ₹35 cupcake    350 → 329   (Pistachio)
+//   ₹15 cake pops  150 → 139   (Chocolate, Vanilla, Red Velvet)
+// 239 / 279 / 329 / 139 are the owner's figures; 269 follows the same step.
+export const DIWALI_PACK10 = {
+  'cup-vanilla': 239,
+  'cup-sprinkle': 239,
+  'cup-chocolate': 269,
+  'cup-nutella': 269,
+  'cup-strawberry': 269,
+  'cup-redvelvet': 279,
+  'cup-biscoff': 279,
+  'cup-pistachio': 329,
+  'bk-cakepop-chocolate': 139,
+  'bk-cakepop-vanilla': 139,
+  'bk-cakepop-redvelvet': 139,
+}
+// Two boxes of the box-only Variety Cupcakes (₹180 each): 360 → 339, the
+// owner's figure. Box-only products by id → the price of TWO boxes.
+export const DIWALI_PACK2 = {
+  'cup-variety': 339,
+}
+
+/** Is this cart line a Diwali pack? (ids end -d2 / -d10; -d8 was the dropped
+ *  box of 8, still matched so an old cart line is caught.) */
+export const isDiwaliPackId = (id) => /-d(2|8|10)$/.test(String(id || ''))
+
+// The packs as the cards show them: one row per pack with its regular and
+// Diwali price. Worked out from products.js, so a price change follows.
+const byId = (id) => shopProducts.find((p) => p.id === id)
+function diwaliPackPrices() {
+  const ten = (id) => ({ was: byId(id).price * 10, now: DIWALI_PACK10[id] })
+  // The cheapest 10-cupcake pack leads ("from"); every flavour has one.
+  const cup10 = Object.keys(DIWALI_PACK10).filter((id) => id.startsWith('cup-'))
+    .reduce((a, id) => (!a || DIWALI_PACK10[id] < DIWALI_PACK10[a] ? id : a), null)
+  return [
+    cup10 && { label: '10 cupcakes', note: 'every flavour · from', ...ten(cup10) },
+    { label: '2 Variety boxes', note: '12 cupcakes, all different', was: byId('cup-variety').price * 2, now: DIWALI_PACK2['cup-variety'] },
+    { label: '10 cake pops', note: 'Chocolate, Vanilla or Red Velvet', ...ten('bk-cakepop-chocolate') },
+  ].filter(Boolean)
+}
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
+
+/**
+ * The Diwali deals one product takes part in, for its Shop card — [] outside
+ * the window. `price` deals carry a ready cart line (built exactly as the
+ * /offers picker builds it); `gift` deals are one line of text linking to the
+ * offer. Display follows diwaliWindow() (so a preview shows them); ADDING a
+ * pack is gated on the real calendar by the caller.
+ */
+export function productDiwaliDeals(p, now = offerNow()) {
+  if (!OFFERS_ON || !p || !diwaliWindow(now).live) return []
+  const deals = []
+  if (DIWALI_PACK10[p.id]) {
+    deals.push({ kind: 'price', label: '10 pcs', was: p.price * 10, now: DIWALI_PACK10[p.id],
+      line: { id: `${p.id}-d10`, name: `${p.name} (Diwali pack of 10)`, price: DIWALI_PACK10[p.id], img: p.img } })
+  }
+  if (DIWALI_PACK2[p.id]) {
+    deals.push({ kind: 'price', label: '2 boxes', was: p.price * 2, now: DIWALI_PACK2[p.id],
+      line: { id: `${p.id}-d2`, name: `${p.name.replace(/\s*\(Box of 6\)$/, '')} (Diwali 2 boxes of 6)`, price: DIWALI_PACK2[p.id], img: p.img } })
+  }
+  if (p.category === 'Cheesecakes' && p.slice != null) {
+    const t = OFFER_RULES.diwaliTubTiers[0]
+    deals.push({ kind: 'gift', offer: 'diwali-tubs', text: `Buy ${t.min} tubs → ${t.gift} free` })
+  }
+  if (p.category === 'Sponge Cakes') {
+    const t = OFFER_RULES.diwaliSpongeTiers[0]
+    deals.push({ kind: 'gift', offer: 'diwali-sponge', text: `Whole cake → ${t.gift} free` })
+  }
+  return deals
+}
+
 /** 13 → "13th", 21 → "21st". */
 export const ordinal = (n) => {
   const t = n % 100
@@ -69,6 +155,9 @@ export const OFFERS = [
   {
     id: 'diwali-tubs',
     season: 'diwali',
+    // The cards show these rows instead of a sentence: "2 tubs → 3 cake pops free".
+    steps: OFFER_RULES.diwaliTubTiers.map((t) => ({ buy: plural(t.min, 'tub', 'tubs'), get: t.gift })),
+    stepsHead: 'Cheesecake tubs · mix any flavours',
     buy: 'Any 2 cheesecake tubs',
     buyNote: '3 tubs → 4 cake pops · 4 → 2 cupcakes + 2 cake pops · 6 → a free tub',
     get: '3 cake pops',
@@ -84,6 +173,8 @@ export const OFFERS = [
   {
     id: 'diwali-sponge',
     season: 'diwali',
+    steps: OFFER_RULES.diwaliSpongeTiers.map((t) => ({ buy: plural(t.min, 'whole cake', 'whole cakes'), get: t.gift })),
+    stepsHead: 'Whole sponge cake · any flavour',
     buy: 'A whole sponge cake',
     buyNote: 'Buy 2 for a free sponge tub + 3 cake pops',
     get: '4 cake pops',
@@ -95,6 +186,24 @@ export const OFFERS = [
     image: img.rcCakeYellowRose,
     alt: 'A whole sponge cake with yellow buttercream roses',
     cta: { label: 'Shop sponge cakes', to: '/shop?category=Sponge%20Cakes' },
+  },
+  {
+    id: 'diwali-packs',
+    season: 'diwali',
+    prices: diwaliPackPrices(),
+    deal: true, // a price, not a free gift: label "Deal", no cart gift
+    buy: 'Diwali packs — cupcakes & cake pops',
+    buyNote: `Cupcakes from ${inr(239)} · cake pops ${inr(139)} · 2 Variety boxes ${inr(339)}`,
+    get: `Packs from ${inr(139)}`,
+    getLabel: 'Deal',
+    name: 'Diwali Sweet Packs',
+    tag: 'Diwali · 5 – 15 Nov',
+    condition: 'Diwali-only packs at a special price — 10 cupcakes of any flavour, 10 Chocolate, Vanilla or Red Velvet cake pops, or 2 Variety boxes of 6.',
+    gift: 'Diwali pack prices',
+    tickerText: `10 cupcakes from ${inr(239)} · 10 cake pops ${inr(139)}`,
+    image: img.rcOwnCupcakesSix,
+    alt: 'Six assorted cupcakes',
+    cta: { label: 'Choose a pack', to: '/offers#diwali-packs' },
   },
   // ── Everyday (only while EVERYDAY_ON) ──
   {
@@ -556,6 +665,23 @@ function spongeTabs() {
     .map((p) => choice({ id: p.id, name: `${p.name} (${p.sizeLabel})`, price: p.price, img: p.img }, p.name.replace(/ Sponge Cake$/, ''))))]
 }
 
+// Diwali packs: each line carries `was` (struck through) and `pack`, which
+// the picker uses to allow adding only inside the real window.
+const short2 = (name) => name.replace(/ (Cupcakes|Cake Pops)$/, '')
+function diwaliPackTabs() {
+  const ten = (test) => shopProducts
+    .filter((p) => DIWALI_PACK10[p.id] && test(p))
+    .map((p) => choice({ id: `${p.id}-d10`, name: `${p.name} (Diwali pack of 10)`, price: DIWALI_PACK10[p.id], was: p.price * 10, img: p.img, pack: true }, short2(p.name)))
+  const two = shopProducts
+    .filter((p) => DIWALI_PACK2[p.id])
+    .map((p) => choice({ id: `${p.id}-d2`, name: `${p.name.replace(/\s*\(Box of 6\)$/, '')} (Diwali 2 boxes of 6)`, price: DIWALI_PACK2[p.id], was: p.price * 2, img: p.img, pack: true }, 'Variety × 2 boxes'))
+  return [
+    tab('Cupcakes × 10', ten((p) => p.category === 'Cupcakes')),
+    tab('Variety × 2', two),
+    tab('Cake pops × 10', ten((p) => p.group === 'Cake Pops')),
+  ]
+}
+
 /** Offer id → { label, tabs } for the offers that qualify on particular items. */
 export const OFFER_PICKERS = {
   'gift-pair': { label: 'Choose your boxes', tabs: giftBoxTabs() },
@@ -565,4 +691,5 @@ export const OFFER_PICKERS = {
   'cookie-dozen': { label: 'Choose your cookies', tabs: cookieDozenTabs() },
   'diwali-tubs': { label: 'Choose your tubs', tabs: tubLoverTabs() },
   'diwali-sponge': { label: 'Choose your sponge cake', tabs: spongeTabs() },
+  'diwali-packs': { label: 'Choose your pack', tabs: diwaliPackTabs() },
 }
