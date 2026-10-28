@@ -191,6 +191,7 @@ table.menu tr.grp td {
 .gift p { font-size: 3.8mm; line-height: 1.4; color: var(--cc-text); }
 .gift .gift__free { color: var(--cc-rose-ink); margin-top: 1.5mm; font-weight: 600; }
 .gift__price { font-weight: 700; font-size: 8mm; color: var(--cc-rose-ink); margin-top: 3mm; }
+.gift .gift__adv { color: var(--cc-cocoa-soft); margin-top: 1.5mm; font-size: 3.4mm; }
 
 /* ── site footer (cream) ── */
 .foot {

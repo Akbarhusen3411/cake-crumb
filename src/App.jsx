@@ -10,6 +10,7 @@ import FestivalBanner from './components/FestivalBanner.jsx'
 import BackToTop from './components/BackToTop.jsx'
 import ScrollReveal from './components/ScrollReveal.jsx'
 import MidMonthPopup from './components/MidMonthPopup.jsx'
+import DiwaliWelcome from './components/DiwaliWelcome.jsx'
 import Home from './pages/Home.jsx'
 import PageFallback from './components/skeletons/PageFallback.jsx'
 import ErrorBoundary, { clearChunkReloadGuard } from './components/ErrorBoundary.jsx'
@@ -112,6 +113,8 @@ function App() {
         {!isAdmin && <BackToTop />}
         {/* 13th–20th only, once a month; skips cart/checkout itself. */}
         {!isAdmin && <MidMonthPopup />}
+        {/* 5–15 November, once a day; shown before the site. */}
+        {!isAdmin && <DiwaliWelcome />}
       </div>
     </CartProvider>
   )

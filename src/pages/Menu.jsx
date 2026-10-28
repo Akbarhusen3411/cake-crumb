@@ -6,6 +6,7 @@ import { img, u, srcSet } from '../data/images.js'
 import { shopProducts, EXTRA_TIERS } from '../data/products.js'
 import { menuCardPhoto } from '../data/productImages.js'
 import { inr } from '../data/format.js'
+import { DEPOSIT_PCT, depositAmount } from '../data/shopConfig.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { useJsonLd } from '../hooks/useJsonLd.js'
 
@@ -140,7 +141,8 @@ const CARDS = [
     // The photo is a 1:1 shot with lettering in its corners; the usual frame
     // (as tall as the rows, a 21:9 band on a phone) cut through it.
     square: true,
-    note: () => '♥ Birthday — a cake and fresh flowers in one box, with a free dessert cup.',
+    // The advance line reads shopConfig, so a price or deposit change follows.
+    note: () => `♥ Cake and fresh flowers in one box, with a free dessert cup. Book with a ${Math.round(DEPOSIT_PCT * 100)}% advance (${inr(depositAmount(shopProducts.find((p) => p.id === 'sg-birthday-box')?.price || 0))}).`,
   },
   {
     // Platters had no card at all, so Pancakes and Crêpe Rolls appeared

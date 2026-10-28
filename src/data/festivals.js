@@ -68,10 +68,10 @@ export const FESTIVALS = [
     // No truffles here — the bakery doesn't sell them (CLAUDE.md, Customer-facing
     // copy). Diwali moves between mid-October and mid-November; check the range
     // each year (8 Nov in 2026).
-    message: 'Happy Diwali! Order festive gift boxes a day ahead — see our offers.',
-    cta: 'See offers',
-    to: '/offers',
-    range: { fromMonth: 10, fromDay: 25, toMonth: 11, toDay: 10 },
+    message: 'Happy Diwali! Order festive cakes and gift boxes a day ahead.',
+    cta: 'Shop now',
+    to: '/shop',
+    range: { fromMonth: 11, fromDay: 5, toMonth: 11, toDay: 15 }, // matches DiwaliWelcome
   },
   {
     id: 'christmas',
@@ -85,6 +85,20 @@ export const FESTIVALS = [
     range: { fromMonth: 12, fromDay: 10, toMonth: 12, toDay: 25 },
   },
 ]
+
+/**
+ * `?diwali=preview` in the URL shows the Diwali banner and welcome screen on
+ * any date — on the live site too, so the owner can check it before 5 Nov.
+ * Safe to leave public: it only shows a greeting. It never touches the offer
+ * clock (offerNow), so it can't unlock a gift; that stays dev-only.
+ */
+export function isDiwaliPreview() {
+  try {
+    return new URLSearchParams(window.location.search).get('diwali') === 'preview'
+  } catch {
+    return false
+  }
+}
 
 /**
  * Returns the active festival for the given date, or null if none.

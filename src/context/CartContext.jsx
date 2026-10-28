@@ -19,7 +19,9 @@ const CartContext = createContext(null)
 // `bk-cakesickle-*` into eight flavour+shape ids. No customer can hold a v3
 // cart from before those landed, because v3 ships for the first time with them.
 // Bump to v4 only if a price or id changes AFTER this build is live.
-const STORAGE_KEY = 'cc_cart_v3'
+//
+// v4 (Oct 2026): Birthday Gift Box ₹1,400 → ₹1,500.
+const STORAGE_KEY = 'cc_cart_v4'
 
 // Smallest quantity this line may sit at. Products carry `minQty` (cupcakes are
 // per-piece with a minimum of 2 — the bakery won't bake a single one); anything

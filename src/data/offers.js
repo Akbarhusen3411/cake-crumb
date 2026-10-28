@@ -15,7 +15,7 @@ import { inr } from './format.js'
 
 // Master switch: false hides the Home band, the cart gift card and the receipt
 // line, and /offers says there are none running. Nothing else needs touching.
-export const OFFERS_ON = true
+export const OFFERS_ON = false
 
 export const OFFER_RULES = {
   // Day-of-month window, inclusive: on from 00:00 on the 13th to 23:59 on the

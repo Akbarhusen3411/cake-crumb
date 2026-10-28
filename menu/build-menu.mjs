@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url'
 import { shopProducts } from '../src/data/products.js'
 import { FSSAI, UDYAM } from '../src/data/certifications.js'
 import { inr } from '../src/data/format.js'
+import { DEPOSIT_PCT, depositAmount } from '../src/data/shopConfig.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 
@@ -202,6 +203,7 @@ const pBakes = `
       <p>A birthday cake and fresh flowers, packed together in one gift box.</p>
       <p class="gift__free">&#9829; A dessert cup comes free with it</p>
       <div class="gift__price">${rs(gift.price)}</div>
+      <p class="gift__adv">Book with a ${Math.round(DEPOSIT_PCT * 100)}% advance of ${rs(depositAmount(gift.price))} &middot; balance on delivery or pickup</p>
     </div>
   </div>` : ''}`
 

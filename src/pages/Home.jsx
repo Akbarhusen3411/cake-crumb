@@ -16,6 +16,7 @@ import OffersBand from '../components/OffersBand.jsx'
 import HeroOffers from '../components/HeroOffers.jsx'
 import OffersTicker from '../components/OffersTicker.jsx'
 import { OFFERS_ON } from '../data/offers.js'
+import { DEPOSIT_PCT, depositAmount } from '../data/shopConfig.js'
 
 // The Home band quotes this product's price from the catalogue, never its own copy.
 const GIFT_BOX = shopProducts.find((p) => p.id === 'sg-birthday-box')
@@ -189,13 +190,21 @@ export default function Home() {
                 <span className="cc-infochip"><FiClock aria-hidden /> Order a day ahead</span>
                 <span className="cc-infochip"><FiHeart aria-hidden /> Free dessert cup</span>
               </div>
-              <div className="cc-home-gift__price">{inr(GIFT_BOX.price)}</div>
-              <Link
-                to={`/shop?category=${encodeURIComponent(GIFT_BOX.category)}&product=${GIFT_BOX.id}`}
-                className="btn-rose cc-home-gift__btn"
-              >
-                <FiGift size={16} /> Order the Birthday Gift Box
-              </Link>
+              {/* Price, advance and button read as one buying panel (boxed on a phone). */}
+              <div className="cc-home-gift__buy">
+                <div className="cc-home-gift__price">{inr(GIFT_BOX.price)}</div>
+                <p className="cc-home-gift__adv">
+                  <strong>Book with a {Math.round(DEPOSIT_PCT * 100)}% advance of {inr(depositAmount(GIFT_BOX.price))}</strong>
+                  <span className="cc-home-gift__sep"> · </span>
+                  <span className="cc-home-gift__bal">balance on delivery or pickup</span>
+                </p>
+                <Link
+                  to={`/shop?category=${encodeURIComponent(GIFT_BOX.category)}&product=${GIFT_BOX.id}`}
+                  className="btn-rose cc-home-gift__btn"
+                >
+                  <FiGift size={16} /> Order the Birthday Gift Box
+                </Link>
+              </div>
             </div>
           </div>
         </div>
