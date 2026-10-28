@@ -553,8 +553,6 @@
 .cc-bankchip--on { border-color: #bfe3cd; background: #eafaf0; color: #1b7f5e; }
 .cc-bankchip:hover { filter: brightness(0.98); }
 .cc-bankchip:focus-visible { outline: 2px solid var(--cc-rose, #e0617a); outline-offset: 1px; }
-/* On a stacked card there's room for the longer wording. */
-.cc-bankchip--card { margin-top: 0.5rem; padding: 2px 12px; font-size: 12px; white-space: normal; }
 
 /* A standing note above a list — said once, quietly, and never again. */
 .cc-acc-note {

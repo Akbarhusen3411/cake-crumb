@@ -14,9 +14,6 @@ export function normalizePhone(raw) {
   return /^[6-9]\d{9}$/.test(d) ? d : null
 }
 
-/** "98765 43210" for display. */
-export const formatPhone = (p) => (p && p.length === 10 ? `${p.slice(0, 5)} ${p.slice(5)}` : p || '')
-
 /**
  * The reminder text. `orders` are this customer's unpaid orders, each
  * { orderNo, date (display), total (display) }; `owed` is their sum, already

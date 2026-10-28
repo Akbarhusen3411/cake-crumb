@@ -986,17 +986,6 @@ input.cc-input:focus, select.cc-input:focus, textarea.cc-input:focus {
   75%      { transform: translateY(-6px) rotate(0.3deg); }
 }
 
-/* Respect users who prefer no motion */
-
-.filter-label {
-  color: var(--cc-rose);
-  font-weight: 700;
-  font-size: 0.8rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 0.6rem;
-}
-
 .qty-btn {
   border: none;
   background: var(--cc-blush);
@@ -2018,26 +2007,6 @@ html, body { overflow-x: hidden; }
 .cc-footer {
   background: #fff;
   color: var(--cc-cocoa);
-}
-.cc-footer__social {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #fff;
-  color: var(--cc-rose);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  box-shadow: 0 4px 12px rgba(207, 62, 99, 0.10);
-  transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
-}
-.cc-footer__social:hover,
-.cc-footer__social:focus-visible {
-  background: var(--cc-rose);
-  color: #fff;
-  transform: translateY(-2px);
-  box-shadow: 0 10px 18px rgba(207, 62, 99, 0.30);
 }
 
 /* ─── Desktop footer (cc-footer-d) — matches mockup layout ─────────────────
