@@ -99,9 +99,9 @@ export default function RefundPolicy() {
                 receive the order.
               </li>
               <li>
-                Refunds go back the way they came — UPI to the paying UPI ID, bank
-                transfer to the sending account — normally within <strong>24 hours</strong>,
-                and always within 5 working days.
+                Refunds go back the way they came — UPI to the paying UPI ID; a cash
+                payment is refunded in cash or by UPI, whichever you prefer — normally
+                within <strong>24 hours</strong>, and always within 5 working days.
               </li>
               <li>
                 Orders at or above {inr(BULK_ORDER_MIN)} take a <strong>{depositPct}% advance</strong>.

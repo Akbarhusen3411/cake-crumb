@@ -6,7 +6,7 @@ import {
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 import PageHero from '../components/PageHero.jsx'
-import { img, u } from '../data/images.js'
+import { img, u, srcSet } from '../data/images.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { useJsonLd } from '../hooks/useJsonLd.js'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
@@ -31,7 +31,7 @@ const SECTIONS = [
       },
       {
         q: 'Which products contain nuts?',
-        a: 'Pistachio, Almond, Nutella, Coconut, Hazelnut, and Dubai-style products contain nuts. We bake everything in the same kitchen, so even nut-free items may carry trace amounts. Customers with severe allergies should let us know in advance.',
+        a: 'Pistachio, Almond, Nutella, Coconut, Hazelnut and Dubai-style products, and our Macarons (made with almond), contain nuts. We bake everything in the same kitchen, so even nut-free items may carry trace amounts. Customers with severe allergies should let us know in advance.',
       },
       {
         q: 'Do you offer gluten-free options?',
@@ -169,7 +169,7 @@ const SECTIONS = [
       },
       {
         q: 'How long will it stay fresh?',
-        a: 'Cheesecakes: 3 days refrigerated. Milk cakes: 2 days refrigerated. Cookies: 4–5 days at room temperature. Drinks/mojitos: consume same day.',
+        a: 'Cheesecakes: 3 days refrigerated. Milk cakes: 2 days refrigerated. Cookies and brownies: 3–4 days at room temperature, in an airtight container. Drinks/mojitos: consume same day.',
       },
       {
         q: 'Can I freeze it?',
@@ -290,6 +290,8 @@ export default function FAQ() {
         text="Everything you need to know about ordering, allergens, delivery, customization, and storage. Still stuck? WhatsApp us anytime."
         cta={null}
         image={u(img.cheesecakeQuartet, 1000, 750)}
+        imageSrcSet={srcSet(img.cheesecakeQuartet)}
+        imageSizes="(min-width: 992px) 540px, 100vw"
         imageAlt="Assorted cheesecakes"
       />
 

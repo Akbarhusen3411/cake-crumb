@@ -72,7 +72,7 @@ export default function About() {
   return (
     <>
       {/* ───── HERO — soft warm-pink, split: text left, pink drip cake right ───── */}
-      <section className="cc-about-hero">
+      <section className="cc-about-hero" data-no-reveal>
         <div className="container py-5">
           <div className="row g-4 g-lg-5 align-items-center">
             <div className="col-lg-6 text-center text-lg-start">

@@ -12,7 +12,7 @@ import { useCart } from '../context/CartContext.jsx'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
 import {
   OFFER_RULES, OFFER_PICKERS, EVERYDAY_ON, TIERED, ordinal,
-  activeOffers, cartOfferStatus, midMonthWindow, diwaliWindow, daysUntil,
+  activeOffers, cartOfferStatus, midMonthWindow, diwaliWindow, daysUntil, OFFERS_ON, DIWALI_DATES,
 } from '../data/offers.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
 import OfferSteps, { PriceTag } from '../components/OfferSteps.jsx'
@@ -103,7 +103,7 @@ function OfferPicker({ tabs }) {
                 ? <PriceTag was={line.was} now={line.price} small flag={null} />
                 : <span className="cc-opick__price">{inr(line.price)}</span>}
               {line.pack && !packsOpen && packSoon === line.id ? (
-                <span className="cc-opick__soon" role="status">Opens 5 Nov</span>
+                <span className="cc-opick__soon" role="status">{DIWALI_DATES.opens}</span>
               ) : qty ? (
                 <span className="cc-opick__stepper">
                   <button type="button" onClick={() => decrement(line.id)} aria-label={`One fewer ${line.name}`}><FiMinus size={12} /></button>
@@ -308,6 +308,13 @@ export default function Offers() {
   const now = useOfferClock()
   const offers = activeOffers(now)
   const live = offers.length > 0
+  // Nothing running, but Diwali is coming: say when, rather than a flat "no
+  // offers" on a page whose description promises them. Read from
+  // OFFER_RULES.diwali, so a date change follows. Up to 30 days ahead.
+  const dw = diwaliWindow(now, true)
+  const diwaliIn = !live && OFFERS_ON ? daysUntil(dw.from, now) : -1
+  const diwaliSoon = diwaliIn > 0 && diwaliIn <= 30
+  const fmtDay = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
   // A priced deal (the Diwali packs) is running beside the free gifts, so the
   // copy can't say "you pay the menu price, gifts on us" for everything.
   const hasDeals = offers.some((o) => o.deal)
@@ -328,7 +335,7 @@ export default function Offers() {
   return (
     <div className="cc-offers">
       {/* ───── HERO ───── */}
-      <section className="cc-offers-hero">
+      <section className="cc-offers-hero" data-no-reveal>
         <div className="cc-offers-confetti" aria-hidden>
           {Array.from({ length: 14 }).map((_, i) => <span key={i} />)}
         </div>
@@ -340,7 +347,9 @@ export default function Offers() {
               ? hasDeals
                 ? `${countWord(offers.length)} ways to treat yourself: free treats added to your order, and special Diwali pack prices on cupcakes and cake pops.`
                 : `${countWord(offers.length)} ways to get something free with your order. You pay the menu price — the extra treats are on the house.`
-              : 'There are no offers running just now. Every cake is still baked to order, and we’d love to make yours.'}
+              : diwaliSoon
+                ? `Our Diwali offers start on ${fmtDay(dw.from)} — ${diwaliIn === 1 ? 'tomorrow' : `in ${diwaliIn} days`} — and run to ${fmtDay(dw.to)}: free treats with cheesecake tubs and whole cakes, and special pack prices on cupcakes and cake pops.`
+                : 'There are no offers running just now. Every cake is still baked to order, and we’d love to make yours.'}
           </p>
           {live && (
             <div className="cc-offers-hero__meta"><SeasonChip now={now} /></div>

@@ -149,7 +149,10 @@ export default function Checkout() {
   const [errors, setErrors] = useState({})
   const [touched, setTouched] = useState({})
 
-  const minDeliveryDate = useMemo(() => getMinDeliveryDate(), [])
+  // Worked out every render (cheap), and placeOrder() re-checks it: a page
+  // left open overnight kept yesterday's "tomorrow" and allowed a same-day date.
+  const [, setRecheck] = useState(0)
+  const minDeliveryDate = getMinDeliveryDate()
 
   function validateField(key, value) {
     const validator = VALIDATORS[key]
@@ -226,6 +229,12 @@ export default function Checkout() {
       form.deliveryDate && form.deliveryDate >= minDeliveryDate
     )
   }, [form, minDeliveryDate, selectedCountry])
+  // 'loading': the pincode lookup hasn't answered yet, so the fee is unknown.
+  // Ordering now saved ₹0 delivery for a customer 40 km away.
+  const deliveryPending = form.deliveryMethod === 'delivery' && deliveryCalc === 'loading'
+  // No fee could be worked out (lookup failed): the summary says "Confirmed on
+  // WhatsApp", so the receipt, the order and both emails must not say FREE.
+  const deliveryTbc = form.deliveryMethod === 'delivery' && deliveryCalc !== 'done'
 
   // Valid payment choices depend on order size: a bulk order allows full UPI or a
   // 50% deposit (no plain COD); a normal order allows full UPI or COD.
@@ -237,7 +246,7 @@ export default function Checkout() {
   // Nov is over (a cart saved during Diwali, or a preview tab). Real calendar.
   // Also: a lone cupcake left under its minimum (cartProblems / CartIssues).
   const cartBlocked = cartProblems(items).any
-  const isFormValid = isDetailsValid && isPaymentValid && subtotal > 0 && !cartBlocked
+  const isFormValid = isDetailsValid && isPaymentValid && subtotal > 0 && !cartBlocked && !deliveryPending
 
   // Keep the selected payment method consistent with the order size. When a cart
   // crosses into "bulk", a stale 'cod' choice becomes invalid → switch to the
@@ -306,7 +315,9 @@ export default function Checkout() {
         ? '*Delivery:* FREE (pickup)'
         : totals.delivery > 0
           ? `*Delivery:* ${inr(totals.delivery)}`
-          : '*Delivery:* FREE',
+          : deliveryTbc
+            ? '*Delivery:* to be confirmed on WhatsApp'
+            : '*Delivery:* FREE',
       `*💰 Total: ${inr(totals.total)}*`,
       // The gift the cart promised, so the bakery packs the right one. Free —
       // it is not in the total above and never will be (see data/offers.js).
@@ -333,6 +344,16 @@ export default function Checkout() {
   function placeOrder(e) {
     e.preventDefault()
     if (!isFormValid) return
+    // Re-check at the moment of ordering — nothing redraws this page as the
+    // clock ticks, so a form finished at 23:58 on 15 Nov could still send a
+    // Diwali pack price at 00:01, and a tab left open overnight a same-day date.
+    if (cartProblems(items).any || form.deliveryDate < getMinDeliveryDate()) {
+      setTouched((t) => ({ ...t, deliveryDate: true }))
+      setRecheck((n) => n + 1)
+      const target = cartProblems(items).any ? 'checkout-issues' : 'checkout-details'
+      document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
 
     // Reuse the id reserved for the UPI pay screen (so it matches what the
     // customer saw / what's in the UPI note); COD orders generate one here.
@@ -383,6 +404,9 @@ export default function Checkout() {
       // Distance is stored for the bakery's reference only (shown in the admin
       // dashboard, never to the customer). null for pickup / unknown.
       deliveryKm: form.deliveryMethod === 'delivery' ? deliveryKm : null,
+      // The fee couldn't be worked out — the bakery quotes it on WhatsApp. The
+      // emails read this so they don't promise free delivery.
+      ...(deliveryTbc ? { deliveryTbc: true } : {}),
       notes: form.notes,
       source: 'checkout',
     }
@@ -440,7 +464,7 @@ export default function Checkout() {
             <FiCheckCircle size={40} />
           </span>
           <h1 className="section-title">Order Placed!</h1>
-          <p className="mt-2">Thank you for your sweet order. We'll start baking right away.</p>
+          <p className="mt-2">Thank you for your sweet order. We'll confirm your date on WhatsApp and bake it fresh for you.</p>
           <div
             className="d-inline-flex flex-column align-items-center mt-3 mb-3 px-4 py-3"
             style={{ background: '#fff', border: '1px solid var(--cc-border)', borderRadius: 12 }}
@@ -451,7 +475,7 @@ export default function Checkout() {
             </strong>
             {placedDeliveryDate && (
               <div className="mt-2" style={{ fontSize: '0.85rem', color: 'var(--cc-cocoa-soft)' }}>
-                <FiCalendar size={13} /> Delivery: <strong style={{ color: 'var(--cc-cocoa)' }}>{formatDateForDisplay(placedDeliveryDate)}</strong>
+                <FiCalendar size={13} /> {form.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery'}: <strong style={{ color: 'var(--cc-cocoa)' }}>{formatDateForDisplay(placedDeliveryDate)}</strong>
               </div>
             )}
           </div>
@@ -502,7 +526,7 @@ export default function Checkout() {
             {form.payment === 'upi'
               ? "We'll verify your UPI payment in our account and confirm on WhatsApp. Tip: reply with a screenshot of your payment to help us match it faster."
               : form.payment === 'deposit'
-                ? "We'll verify your advance payment and confirm on WhatsApp. The balance is paid on delivery/pickup. Tip: reply with a screenshot to help us match it faster."
+                ? `We'll verify your advance payment and confirm on WhatsApp. The balance is paid on ${form.deliveryMethod === 'pickup' ? 'pickup' : 'delivery'}. Tip: reply with a screenshot to help us match it faster.`
                 : form.deliveryMethod === 'pickup'
                   ? 'Pay in cash when you collect — please bring the exact amount.'
                   : 'Cash on Delivery — please keep the exact amount ready.'}
@@ -553,7 +577,7 @@ export default function Checkout() {
         <div className="cc-notice mb-4" role="note">
           <span className="cc-notice__icon"><FiAlertCircle size={16} /></span>
           <div>
-            <strong>Pre-order required.</strong> All orders are handcrafted to order — please choose a delivery date <strong>at least 1 day from today</strong>.
+            <strong>Pre-order required.</strong> All orders are handcrafted to order — please choose a {form.deliveryMethod === 'pickup' ? 'pickup' : 'delivery'} date <strong>at least 1 day from today</strong>.
           </div>
         </div>
 
@@ -735,7 +759,7 @@ export default function Checkout() {
                   </div>
                   <div className="col-12">
                     <label className="cc-field-label" htmlFor="delivery-date">
-                      <FiCalendar size={13} /> Preferred Delivery Date *
+                      <FiCalendar size={13} /> Preferred {form.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery'} Date *
                     </label>
                     <input
                       id="delivery-date"
@@ -1194,7 +1218,7 @@ export default function Checkout() {
               }}
             >
               <FiCheckCircle size={17} />
-              {isFormValid ? 'Place Order' : cartBlocked ? 'Fix your cart' : 'Complete your details'}
+              {isFormValid ? 'Place Order' : cartBlocked ? 'Fix your cart' : deliveryPending ? 'Working out delivery…' : 'Complete your details'}
             </button>
           </div>
         </form>

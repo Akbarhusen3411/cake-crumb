@@ -9,6 +9,8 @@ import { useLayoutEffect } from 'react'
  * opens animates straight away, staggered, so the page "builds" on arrival.
  *
  * - An element can choose its own motion with data-reveal="up|down|left|right|zoom";
+ *   Every page's hero carries data-no-reveal: fading in the first screen held
+ *   back the Home photo (the LCP) by about a second.
  *   anything already carrying data-reveal is left as authored. data-no-reveal on
  *   an ancestor opts a whole block out.
  * - Only the OUTERMOST match animates — a card's own heading doesn't animate a

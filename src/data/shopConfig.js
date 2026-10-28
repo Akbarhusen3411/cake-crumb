@@ -78,6 +78,11 @@ export function deliveryFee(method = 'delivery', distanceKm = null) {
 // There is still no server/auth (see CLAUDE.md), so the deposit is enforced the
 // same way UPI already is: the customer *claims* they paid and the bakery
 // verifies the credit in its bank (admin dashboard) before confirming.
+// Cupcakes: floral or extra decoration, on top of the cupcake price. Not a
+// cart line — the customer asks in the order notes and the bakery adds it.
+// Quoted by Shop's cupcake note and the Menu card, through inr().
+export const DECORATION_EXTRA = 20
+
 export const BULK_ORDER_MIN = 1000 // subtotal ≥ this ⇒ bulk order (deposit required)
 export const DEPOSIT_PCT = 0.5     // bulk deposit = 50% of the order total
 

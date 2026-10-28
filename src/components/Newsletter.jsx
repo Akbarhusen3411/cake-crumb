@@ -54,7 +54,7 @@ export default function Newsletter({ compact = false }) {
       )}
       {!compact && (
         <p style={{ fontSize: '0.85rem', color: 'var(--cc-cocoa-soft)', margin: '0 0 0.7rem' }}>
-          New flavours, festival specials, and treat-of-the-week — no spam, ever.
+          New flavours and festival specials, now and then — no spam, ever.
         </p>
       )}
       <div className="newsletter-form">

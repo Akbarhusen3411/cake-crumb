@@ -121,10 +121,15 @@ export default function ExpensesTab({ expenses, reload }) {
     if (savingRef.current) return
     savingRef.current = true
     setBusy(true)
-    if (editing?.id) await updateDocRec(ACC.EXPENSES, editing.id, data)
-    else await addDocRec(ACC.EXPENSES, data)
-    setEditing(null); await reload(); setBusy(false)
-    savingRef.current = false
+    try {
+      if (editing?.id) await updateDocRec(ACC.EXPENSES, editing.id, data)
+      else await addDocRec(ACC.EXPENSES, data)
+      setEditing(null)
+    } finally {
+      setBusy(false)
+      savingRef.current = false
+    }
+    reload() // not awaited — see OrdersTab
   }
   /**
    * The rows on screen, filters and all — one line per thing bought, with the

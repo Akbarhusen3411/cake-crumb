@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { applyDiwaliPacks } from '../data/offerRules.js'
+import { applyDiwaliPacks, unpackExpiredPacks } from '../data/offerRules.js'
 
 const CartContext = createContext(null)
 // v2: lines gained `minQty`, and the cupcake ids changed meaning — `cup-vanilla`
@@ -93,6 +93,11 @@ export function CartProvider({ children }) {
     )
   }
 
+  // After Diwali: pack lines back to the same pieces at the regular price.
+  function unpackPacks() {
+    setItems((prev) => unpackExpiredPacks(prev))
+  }
+
   function clear() {
     setItems([])
   }
@@ -111,7 +116,7 @@ export function CartProvider({ children }) {
     // Kept as 0 so any consumer of `total` matches the subtotal shown at checkout.
     const delivery = 0
     const total = subtotal
-    return { items, count, subtotal, delivery, total, add, remove, increment, decrement, clear, toast }
+    return { items, count, subtotal, delivery, total, add, remove, increment, decrement, clear, unpackPacks, toast }
   }, [items, toast])
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>

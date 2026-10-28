@@ -2,7 +2,7 @@
 // `imageSrcSet` / `imageSizes` serve a right-sized photo. All optional.
 export default function PageHero({ eyebrow, title, text, cta, image, imageAlt = '', className = '', imageSrcSet, imageSizes }) {
   return (
-    <section className={`fade-bg ${className}`.trim()} style={{ overflow: 'hidden' }}>
+    <section className={`fade-bg ${className}`.trim()} style={{ overflow: 'hidden' }} data-no-reveal>
       <div className="container py-5">
         <div className="row align-items-center g-4 g-lg-5">
           <div className="col-lg-6 text-center text-lg-start">

@@ -117,7 +117,7 @@ export default function Contact() {
   return (
     <>
       {/* ───── HERO — matches About/Menu/Shop/Reviews/Gallery ───── */}
-      <section className="cc-contact-hero">
+      <section className="cc-contact-hero" data-no-reveal>
         <div className="container py-4 py-md-5">
           <div className="row g-4 g-lg-5 align-items-center">
             <div className="col-lg-6 text-center text-lg-start">

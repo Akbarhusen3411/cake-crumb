@@ -45,7 +45,7 @@ const gallery = [
   { id: img.rcCakeBlueberryLavender, alt: 'Blueberry lavender layer cake', cat: 'Cakes' },
   { id: img.rcCupNutella, alt: 'Nutella dessert cups', cat: 'Dessert Cups' },
   { id: img.rcCakeCoffeeCaramel, alt: 'Coffee caramel birthday cake', cat: 'Cakes' },
-  { id: img.rcMilkcakeTresRose, alt: 'Trés léches with rose & pistachio', cat: 'Milk Cakes' },
+  { id: img.rcMilkcakeTresRose, alt: 'Tres leches with rose & pistachio', cat: 'Milk Cakes' },
   { id: img.rcTrufflesChocolateHearts, alt: 'Chocolate heart truffles', cat: 'Chocolates' },
   { id: img.rcCupcakesFloralMothersDay, alt: 'Floral buttercream cupcake gift box', cat: 'Cupcakes' },
   { id: img.rcCupcakesRainbow, alt: 'Rainbow sprinkle cupcakes', cat: 'Cupcakes' },
@@ -69,7 +69,7 @@ export default function Gallery() {
   return (
     <>
       {/* ───── HERO — matches About/Menu/Shop/Reviews ───── */}
-      <section className="cc-gallery-hero">
+      <section className="cc-gallery-hero" data-no-reveal>
         <div className="container py-4 py-md-5">
           <div className="row g-4 g-lg-5 align-items-center">
             <div className="col-lg-6 text-center text-lg-start">

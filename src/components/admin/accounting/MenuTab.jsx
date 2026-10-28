@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { FiPlus, FiTrash2, FiChevronDown, FiSearch, FiX, FiEdit2, FiCheck, FiMoreHorizontal } from 'react-icons/fi'
 import Modal from '../Modal.jsx'
 import SearchableSelect from '../SearchableSelect.jsx'
@@ -13,6 +13,7 @@ export default function MenuTab({ menu, reload }) {
   const [q, setQ] = useState('')
   const [editing, setEditing] = useState(null)
   const [busy, setBusy] = useState(false)
+  const savingRef = useRef(false)
   const [open, setOpen] = useState('') // the one manually-expanded category
 
   const categories = useMemo(() => [...new Set(menu.map((m) => m.category).filter(Boolean))].sort(), [menu])
@@ -47,11 +48,20 @@ export default function MenuTab({ menu, reload }) {
   // Filtering still opens everything that matched — that's the point of it.
   const toggle = (c) => setOpen((p) => (p === c ? '' : c))
 
+  // Locked like the other forms: a double tap on Save made two price rows.
   async function save(data) {
+    if (savingRef.current) return
+    savingRef.current = true
     setBusy(true)
-    if (editing?.id) await updateDocRec(ACC.MENU, editing.id, data)
-    else await addDocRec(ACC.MENU, data)
-    setEditing(null); await reload(); setBusy(false)
+    try {
+      if (editing?.id) await updateDocRec(ACC.MENU, editing.id, data)
+      else await addDocRec(ACC.MENU, data)
+      setEditing(null)
+    } finally {
+      setBusy(false)
+      savingRef.current = false
+    }
+    reload()
   }
   // Just the price, from the tile itself — the full form was a whole sheet to
   // change one number.
@@ -156,7 +166,7 @@ export default function MenuTab({ menu, reload }) {
       {busy ? <div className="text-muted small mt-2">Saving…</div> : null}
 
       {editing !== null && (
-        <MenuItemForm initial={editing} categories={categories} onSave={save} onClose={() => setEditing(null)} />
+        <MenuItemForm initial={editing} categories={categories} saving={busy} onSave={save} onClose={() => setEditing(null)} />
       )}
     </div>
   )
@@ -225,7 +235,7 @@ function PriceTile({ m, name, onQuickSave, onFull, onDelete }) {
 
 // `initial` may be a saved row (has an id → editing) or just a prefill —
 // { category } from "Add an item to …", { category, name } from "+ Size".
-function MenuItemForm({ initial, categories, onSave, onClose }) {
+function MenuItemForm({ initial, categories, saving, onSave, onClose }) {
   const editing = !!initial?.id
   const [f, setF] = useState({
     category: initial?.category || '',
@@ -245,7 +255,7 @@ function MenuItemForm({ initial, categories, onSave, onClose }) {
       onClose={onClose}
       footer={<>
         <button className="btn btn-light" onClick={onClose}>Cancel</button>
-        <button className="btn text-white" style={{ background: 'var(--cc-rose,#e0617a)' }} onClick={submit}>Save</button>
+        <button className="btn text-white" style={{ background: 'var(--cc-rose,#e0617a)' }} onClick={submit} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
       </>}
     >
       <div className="row g-3">

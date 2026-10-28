@@ -223,11 +223,16 @@ export default function Navbar() {
           <div className="mobile-menu__inner">
           {/* Brand block — icon + wordmark + tagline + heart divider + quote */}
           <div className="mobile-menu__header">
+            {/* The 400px variant (47 KB) — the full one was 124 KB for a mark
+                shown 64px tall, fetched on every page though the menu starts
+                closed; hence lazy too. */}
             <img
-              src={asset('logo-icon.png')}
+              src={asset('logo-icon-400.webp')}
               alt=""
               aria-hidden="true"
               className="mobile-menu__logo"
+              loading="lazy"
+              decoding="async"
             />
             <div className="mobile-menu__wordmark">
               CAKE<span className="mobile-menu__amp">&amp;</span>CRUMB

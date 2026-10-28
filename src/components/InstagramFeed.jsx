@@ -1,5 +1,5 @@
 import { FiInstagram, FiExternalLink } from 'react-icons/fi'
-import { img, u } from '../data/images.js'
+import { img, u, srcSet } from '../data/images.js'
 
 // SnapWidget embed ID. Sign up at https://snapwidget.com → create a free
 // "Instagram Hashtag/Profile" widget pointing at @cake_and_crumb_1, then put
@@ -77,7 +77,9 @@ export default function InstagramFeed() {
                   className="ig-tile"
                   aria-label="Cake & Crumb on Instagram"
                 >
-                  <img src={u(id, 400, 400)} alt="" loading="lazy" />
+                  {/* srcSet + sizes: without them each ~120px tile fetched the full
+                      900–1600px photo — 1.2 MB for nine squares on Home. */}
+                  <img src={u(id, 400, 400)} srcSet={srcSet(id)} sizes="(min-width: 992px) 122px, 33vw" alt="" loading="lazy" decoding="async" />
                   <span className="ig-tile__hover">
                     <FiInstagram size={22} />
                   </span>

@@ -6,7 +6,7 @@ import {
   FiSearch, FiMessageCircle, FiClock, FiStar, FiArrowRight,
 } from 'react-icons/fi'
 import { TbLeaf, TbCake } from 'react-icons/tb'
-import { featured, shopProducts } from '../data/products.js'
+import { featured, shopProducts, featuredCartLine } from '../data/products.js'
 import { img, u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { useCart } from '../context/CartContext.jsx'
@@ -36,7 +36,7 @@ export default function Home() {
   return (
     <>
       {/* ───── HERO — professional width, split: text left, rounded-card image right ───── */}
-      <section className="cc-home-hero">
+      <section className="cc-home-hero" data-no-reveal>
         <div className="container py-5">
           <div className="row g-4 g-lg-5 align-items-center">
             <div className="col-lg-6 text-center text-lg-start">
@@ -157,7 +157,7 @@ export default function Home() {
                     <div className="cc-treat-card__price">{inr(p.price)}</div>
                     <button
                       className="btn-rose justify-content-center w-100 cc-treat-card__btn"
-                      onClick={() => add(p)}
+                      onClick={() => add(featuredCartLine(p))}
                     >
                       <FiShoppingBag size={12} /> Add to Cart
                     </button>

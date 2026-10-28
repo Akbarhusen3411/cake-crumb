@@ -47,40 +47,96 @@ function reportCloudError(op, coll, err) {
 }
 
 // ── Saves that survive a weak connection ──
-// A new record gets its REAL Firestore id up front (doc(collection()).id) and
-// is kept locally with `_pending: true` until the cloud confirms it. Reads
-// merge pending rows back in (a cloud read used to overwrite the local copy,
-// so an order saved while offline vanished at the next sync), and every live
-// subscription re-sends them — with setDoc on the SAME id, so a retry can
-// never make a duplicate. Writes give up waiting after SAVE_TIMEOUT_MS: the
-// Firestore promise only settles on a server ack, which left "Saving…"
-// spinning forever at the counter on poor signal.
+// Every change made here — a new record, an edit, a delete — is kept on this
+// device as PENDING until OUR OWN write call to Firestore resolves, and only
+// that clears it:
+//  - a new or edited row carries `_pending: <nonce>` in localStorage;
+//  - a delete leaves a tombstone (cc_<coll>_deleted_v1).
+// Reads always let a pending row win over the cloud copy (and drop tombstoned
+// ids), and every live snapshot re-sends whatever is still pending (setDoc on
+// the SAME id, so a retry can't make a duplicate).
+//
+// Why our own promise and not the snapshot: Firestore's live listener shows a
+// write the moment it's QUEUED (latency compensation), long before the server
+// has it — and with the default memory cache that queue dies with the tab.
+// Clearing the mark on sight of the doc (the first version of this) lost
+// every save made on a weak signal if the page closed before the server
+// acknowledged it.
+//
+// Writes give up waiting after SAVE_TIMEOUT_MS (a Firestore promise settles
+// only on a server ack, which left "Saving…" spinning at the counter); the
+// row simply stays pending and is re-sent.
 const SAVE_TIMEOUT_MS = 12000
 const withTimeout = (p, ms = SAVE_TIMEOUT_MS) =>
   Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout — slow or no connection; will retry')), ms))])
+/** A record as it may be written to the cloud: no id, no sync bookkeeping. */
+const cloudData = ({ id, _pending, ...rest }) => rest // eslint-disable-line no-unused-vars
 const stripPending = ({ _pending, ...rest }) => rest // eslint-disable-line no-unused-vars
+const newNonce = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 
-/** Cloud rows + this device's still-pending rows that the cloud doesn't have yet. */
-function mergePending(coll, cloud) {
-  const ids = new Set(cloud.map((r) => r.id))
-  const pending = readLocal(coll).filter((r) => r._pending && !ids.has(r.id))
-  return pending.length ? [...pending, ...cloud] : cloud
+const deadKey = (coll) => `cc_${coll}_deleted_v1`
+function readDead(coll) {
+  try { return JSON.parse(localStorage.getItem(deadKey(coll)) || '[]') } catch { return [] }
+}
+function writeDead(coll, ids) {
+  try { localStorage.setItem(deadKey(coll), JSON.stringify([...new Set(ids)])) } catch { /* ignore */ }
 }
 
-/** Re-send pending rows (same id → idempotent). Clears the flag on success. */
-async function flushPending(db, coll, cloudIds) {
-  const pending = readLocal(coll).filter((r) => r._pending && !cloudIds.has(r.id))
-  if (!pending.length) return
-  const { doc, setDoc } = await import('firebase/firestore')
-  for (const r of pending) {
-    try {
-      const { id, ...data } = stripPending(r)
-      await withTimeout(setDoc(doc(db, coll, id), data))
-      writeLocal(coll, readLocal(coll).map((x) => (x.id === id ? stripPending(x) : x)))
-    } catch (err) {
-      reportCloudError('retry save', coll, err)
-      return // still offline — try again on the next snapshot
+/** Clear a row's pending mark — only if it is still the SAME change (nonce). */
+function markSaved(coll, id, nonce) {
+  writeLocal(coll, readLocal(coll).map((x) => (x.id === id && x._pending === nonce ? stripPending(x) : x)))
+}
+
+/** Cloud rows, with this device's pending changes on top and its pending deletes taken out. */
+function mergePending(coll, cloudRows) {
+  // A `_pending` field that reached the cloud (an old undo could store one) is
+  // bookkeeping, not data — never let it mark a row pending on this device.
+  const cloud = cloudRows.map(stripPending)
+  const local = readLocal(coll)
+  const pending = new Map(local.filter((r) => r._pending && !isLocalId(r.id)).map((r) => [r.id, r]))
+  const dead = new Set(readDead(coll))
+  if (!pending.size && !dead.size) return cloud
+  const ids = new Set(cloud.map((r) => r.id))
+  const fresh = [...pending.values()].filter((r) => !ids.has(r.id) && !dead.has(r.id))
+  return [...fresh, ...cloud.filter((r) => !dead.has(r.id)).map((r) => pending.get(r.id) || r)]
+}
+
+const inFlight = new Map() // `${coll}/${id}` → nonce being sent right now
+async function sendRow(db, coll, row) {
+  const key = `${coll}/${row.id}`
+  const nonce = row._pending
+  if (inFlight.get(key) === nonce) return // already on its way
+  inFlight.set(key, nonce)
+  try {
+    const { doc, setDoc } = await import('firebase/firestore')
+    await withTimeout(setDoc(doc(db, coll, row.id), cloudData(row)))
+    markSaved(coll, row.id, nonce)
+  } finally {
+    if (inFlight.get(key) === nonce) inFlight.delete(key)
+  }
+}
+
+const flushing = new Set()
+/** Re-send everything still pending for a collection. Stops at the first failure (still offline). */
+async function flushPending(db, coll) {
+  if (flushing.has(coll)) return
+  flushing.add(coll)
+  try {
+    const { doc, deleteDoc } = await import('firebase/firestore')
+    for (const id of readDead(coll)) {
+      await withTimeout(deleteDoc(doc(db, coll, id)))
+      writeDead(coll, readDead(coll).filter((x) => x !== id))
     }
+    const ids = readLocal(coll).filter((r) => r._pending && !isLocalId(r.id)).map((r) => r.id)
+    for (const id of ids) {
+      // Re-read each time: the owner may have edited or deleted it meanwhile.
+      const row = readLocal(coll).find((r) => r.id === id && r._pending)
+      if (row) await sendRow(db, coll, row)
+    }
+  } catch (err) {
+    reportCloudError('retry save', coll, err)
+  } finally {
+    flushing.delete(coll)
   }
 }
 
@@ -90,7 +146,7 @@ export async function listDocs(coll) {
   if (!db) return readLocal(coll)
   try {
     const { collection, getDocs } = await import('firebase/firestore')
-    const snap = await getDocs(collection(db, coll))
+    const snap = await withTimeout(getDocs(collection(db, coll)))
     const arr = mergePending(coll, snap.docs.map((d) => ({ id: d.id, ...d.data() })))
     writeLocal(coll, arr)
     return arr
@@ -118,11 +174,10 @@ export function subscribeDocs(coll, onData) {
       unsub = onSnapshot(
         collection(db, coll),
         (snap) => {
-          const cloud = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-          const arr = mergePending(coll, cloud)
+          const arr = mergePending(coll, snap.docs.map((d) => ({ id: d.id, ...d.data() })))
           writeLocal(coll, arr)
           onData(arr)
-          flushPending(db, coll, new Set(cloud.map((r) => r.id)))
+          flushPending(db, coll)
         },
         (err) => { reportCloudError('live read', coll, err); onData(readLocal(coll)) }
       )
@@ -136,35 +191,32 @@ export function subscribeDocs(coll, onData) {
 
 /** Add a record. Returns the saved record with its id. */
 export async function addDocRec(coll, data) {
-  const rec = { ...data, createdAt: new Date().toISOString() }
+  // cloudData() drops an `id` / `_pending` a caller passed along (an undone
+  // delete re-adds the old row) — that bookkeeping must never reach the cloud.
+  const rec = { ...cloudData(data), createdAt: new Date().toISOString() }
   const db = await getDb()
-  if (!db) {
+  let fs = null
+  if (db) {
+    try { fs = await import('firebase/firestore') } catch (err) { reportCloudError('save', coll, err) }
+  } else if (isFirebaseEnabled) {
     // Config present but the SDK didn't load: this save is on this device
     // only — say so instead of looking saved.
-    if (isFirebaseEnabled) reportCloudError('save', coll, new Error('cloud not reachable — saved on this device only'))
+    reportCloudError('save', coll, new Error('cloud not reachable — saved on this device only'))
+  }
+  if (!fs) {
     const r = { id: newLocalId(), ...rec }
     const l = readLocal(coll); l.unshift(r); writeLocal(coll, l)
     return r
   }
-  let fs
-  try {
-    fs = await import('firebase/firestore')
-  } catch (err) {
-    reportCloudError('save', coll, err)
-    const r = { id: newLocalId(), ...rec }
-    const l = readLocal(coll); l.unshift(r); writeLocal(coll, l)
-    return r
-  }
-  const { collection, doc, setDoc } = fs
-  const ref = doc(collection(db, coll))
+  const ref = fs.doc(fs.collection(db, coll))
   const r = { id: ref.id, ...rec }
-  const l = readLocal(coll); l.unshift({ ...r, _pending: true }); writeLocal(coll, l)
+  const row = { ...r, _pending: newNonce() }
+  const l = readLocal(coll); l.unshift(row); writeLocal(coll, l)
   try {
-    await withTimeout(setDoc(ref, rec))
-    writeLocal(coll, readLocal(coll).map((x) => (x.id === ref.id ? stripPending(x) : x)))
+    await sendRow(db, coll, row)
   } catch (err) {
-    // Kept as pending: it stays on screen, survives the next sync and is
-    // re-sent with the same id as soon as a live read succeeds.
+    // Kept as pending: it stays on screen, survives a reload and is re-sent
+    // with the same id on the next live read.
     reportCloudError('save', coll, err)
   }
   return r
@@ -172,18 +224,22 @@ export async function addDocRec(coll, data) {
 
 /** Update a record by id. */
 export async function updateDocRec(coll, id, data) {
+  const patch = cloudData(data)
+  const nonce = newNonce()
+  const cloudRow = !isLocalId(id)
   const l = readLocal(coll)
   const i = l.findIndex((x) => x.id === id)
-  if (i >= 0) { l[i] = { ...l[i], ...data }; writeLocal(coll, l) }
+  if (i >= 0) { l[i] = { ...l[i], ...patch, ...(cloudRow ? { _pending: nonce } : {}) }; writeLocal(coll, l) }
   const db = await getDb()
-  if (!db && isFirebaseEnabled && !isLocalId(id)) reportCloudError('update', coll, new Error('cloud not reachable — changed on this device only'))
-  if (!db || isLocalId(id)) return
+  if (!db && isFirebaseEnabled && cloudRow) reportCloudError('update', coll, new Error('cloud not reachable — changed on this device only'))
+  if (!db || !cloudRow) return
   try {
     const { doc, updateDoc } = await import('firebase/firestore')
-    await withTimeout(updateDoc(doc(db, coll, id), data))
+    await withTimeout(updateDoc(doc(db, coll, id), patch))
+    markSaved(coll, id, nonce)
   } catch (err) {
-    // Swallowing this used to make the edit look saved: the localStorage write
-    // above kept it on screen, then the next read from the cloud reverted it.
+    // Stays pending: the whole row is re-sent on the next live read, so a
+    // reload no longer reverts the edit to the cloud's old copy.
     reportCloudError('update', coll, err)
   }
 }
@@ -194,35 +250,49 @@ export async function deleteDocRec(coll, id) {
   const db = await getDb()
   if (!db && isFirebaseEnabled && !isLocalId(id)) reportCloudError('delete', coll, new Error('cloud not reachable — deleted on this device only'))
   if (!db || isLocalId(id)) return
+  writeDead(coll, [...readDead(coll), id]) // until the cloud confirms
   try {
     const { doc, deleteDoc } = await import('firebase/firestore')
     await withTimeout(deleteDoc(doc(db, coll, id)))
+    writeDead(coll, readDead(coll).filter((x) => x !== id))
   } catch (err) {
     reportCloudError('delete', coll, err)
   }
 }
 
-/** Seed the 207-item menu once, if the menu collection is empty. */
+/**
+ * Seed the 207-item menu once, if the menu collection is empty.
+ * "Empty" must come from the SERVER: on a weak signal a read could fall back
+ * to an empty device copy, and the seed batch then committed on top of the
+ * real menu once the connection came back — 207 duplicate rows. No answer from
+ * the server → skip; the next healthy unlock decides.
+ */
 export async function seedMenuIfEmpty() {
-  const existing = await listDocs(ACC.MENU)
-  if (existing.length > 0) return existing
   const db = await getDb()
   if (!db) {
+    const existing = readLocal(ACC.MENU)
+    if (existing.length > 0) return existing
     const seeded = ACCOUNTING_MENU.map((m, i) => ({ id: `seed-${i}`, ...m }))
     writeLocal(ACC.MENU, seeded)
     return seeded
   }
+  let fs
   try {
-    const { collection, doc, writeBatch } = await import('firebase/firestore')
-    const batch = writeBatch(db) // 207 < 500 batch limit
-    ACCOUNTING_MENU.forEach((m) => batch.set(doc(collection(db, ACC.MENU)), m))
-    await batch.commit()
+    fs = await import('firebase/firestore')
+    const snap = await withTimeout(fs.getDocsFromServer(fs.collection(db, ACC.MENU)))
+    if (!snap.empty) return await listDocs(ACC.MENU)
+  } catch (err) {
+    reportCloudError('read menu', ACC.MENU, err)
+    return readLocal(ACC.MENU)
+  }
+  try {
+    const batch = fs.writeBatch(db) // 207 < 500 batch limit
+    ACCOUNTING_MENU.forEach((m) => batch.set(fs.doc(fs.collection(db, ACC.MENU)), m))
+    await withTimeout(batch.commit())
     return await listDocs(ACC.MENU)
   } catch (err) {
     reportCloudError('seed menu', ACC.MENU, err)
-    const seeded = ACCOUNTING_MENU.map((m, i) => ({ id: `seed-${i}`, ...m }))
-    writeLocal(ACC.MENU, seeded)
-    return seeded
+    return readLocal(ACC.MENU)
   }
 }
 
@@ -239,18 +309,33 @@ export const isPerPieceVariant = (v) => /per\s*piece/i.test(v || '')
 // the cloud mark too, so the first device to unlock after this change closes
 // the door for every other one. No cloud (localStorage-only build) → the
 // local flag alone, as before.
+// Every importer's flag, so a pre-marker book can be stamped in one go.
+const IMPORTER_FLAGS = ['cc_acc_perpiece_v1', 'cc_acc_cakepop_v2', 'cc_acc_freegift_v1', 'cc_acc_diwalipack_v4']
 async function alreadyRan(flag) {
   let local = false
   try { local = !!localStorage.getItem(flag) } catch { /* ignore */ }
   const db = await getDb()
   if (!db) return local
   try {
-    const { doc, getDoc, setDoc } = await import('firebase/firestore')
+    const { doc, getDoc, setDoc, getDocsFromServer, query, collection, limit } = await import('firebase/firestore')
     const ref = doc(db, 'acc_settings', 'main')
-    const snap = await getDoc(ref)
+    const snap = await withTimeout(getDoc(ref))
     if (snap.exists() && snap.data()?.migrations?.[flag]) {
       try { localStorage.setItem(flag, '1') } catch { /* ignore */ }
       return true
+    }
+    // A book with a menu but NO migrations record predates the cloud marks:
+    // the owner's devices ran every importer of this release long ago. A new
+    // phone unlocking first must not run them again (re-adding deleted rows,
+    // writing old prices over edited ones) — stamp them all as done instead.
+    if (!snap.data()?.migrations) {
+      const menu = await withTimeout(getDocsFromServer(query(collection(db, ACC.MENU), limit(1))))
+      if (!menu.empty) {
+        const now = new Date().toISOString()
+        await setDoc(ref, { migrations: Object.fromEntries(IMPORTER_FLAGS.map((f) => [f, now])) }, { merge: true })
+        try { localStorage.setItem(flag, '1') } catch { /* ignore */ }
+        return true
+      }
     }
     if (local) await setDoc(ref, { migrations: { [flag]: new Date().toISOString() } }, { merge: true })
     return local
@@ -400,7 +485,8 @@ export async function ensureCakePopPrices() {
 
 /** Delete every doc in a collection. Returns { deleted } or { error }. */
 export async function clearCollection(coll) {
-  writeLocal(coll, [])
+  writeLocal(coll, []) // pending rows go too — a later re-send would undo the wipe
+  writeDead(coll, [])
   const db = await getDb()
   if (!db) return { deleted: 0, localOnly: true }
   try {

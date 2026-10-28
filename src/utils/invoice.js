@@ -132,11 +132,14 @@ export function buildWebsiteInvoice(o) {
   const deposit = Number(p.depositAmount) || 0
   const balance = Number(p.balanceDue) || 0
 
+  // Nothing is delivered on a self-pickup, so the bill must not say "on
+  // delivery" there (same rule as paymentLabel() in AdminOrders.jsx).
+  const onWhat = o?.deliveryMethod === 'pickup' ? 'pickup' : 'delivery'
   const method = p.method === 'deposit'
     // Same split payment either way; only the tense differs, and an unpaid
     // advance shouldn't read as one already handed over.
-    ? (p.paid ? 'UPI advance + cash on delivery' : 'Advance then cash on delivery')
-    : ({ upi: 'UPI', cod: 'Cash on delivery' }[p.method] || 'Cash on delivery')
+    ? (p.paid ? `UPI advance + cash on ${onWhat}` : `Advance then cash on ${onWhat}`)
+    : ({ upi: 'UPI' }[p.method] || `Cash on ${onWhat}`)
 
   // `deposit` alone doesn't mean money arrived. A Checkout deposit order has the
   // advance paid (as claimed) and is genuinely part paid; a ChatBot one only has
@@ -173,8 +176,8 @@ export function buildWebsiteInvoice(o) {
     methodLabel: method,
     balanceNote: p.method === 'deposit' && balance > 0
       ? (p.paid
-        ? `Advance ${inr(deposit)} received · ${inr(balance)} due on delivery`
-        : `Advance ${inr(deposit)} due before baking · ${inr(balance)} on delivery`)
+        ? `Advance ${inr(deposit)} received · ${inr(balance)} due on ${onWhat}`
+        : `Advance ${inr(deposit)} due before baking · ${inr(balance)} on ${onWhat}`)
       : '',
     fulfilment: [fulfilment, o?.deliveryDate].filter(Boolean).join(' · '),
     notes: o?.notes,

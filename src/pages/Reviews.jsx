@@ -14,7 +14,7 @@ import { reviewCooldownMs, markReviewSubmitted, isHoneypotTripped, HONEYPOT_STYL
 import ReviewCardSkeleton from '../components/skeletons/ReviewCardSkeleton.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { useJsonLd } from '../hooks/useJsonLd.js'
-import { img, u } from '../data/images.js'
+import { img, u, srcSet } from '../data/images.js'
 import { shopProducts } from '../data/products.js'
 
 const ITEMS_BY_CATEGORY = shopProducts.reduce((acc, p) => {
@@ -305,7 +305,7 @@ export default function Reviews() {
   return (
     <>
       {/* ───── HERO ───── */}
-      <section className="cc-reviews-hero">
+      <section className="cc-reviews-hero" data-no-reveal>
         <div className="container py-4 py-md-5">
           <div className="row g-4 g-lg-5 align-items-center">
             <div className="col-lg-6 text-center text-lg-start">
@@ -518,6 +518,11 @@ export default function Reviews() {
                   <article key={r.id} className="cc-review-card">
                     <img
                       src={imgSrc}
+                      // A catalogue photo has small variants — the 400w one, not
+                      // a 1290×1596 original, for a 110px square. (A customer's
+                      // own photo is a data URL, already shrunk on upload.)
+                      srcSet={r.photo ? undefined : srcSet(thumb)}
+                      sizes={r.photo ? undefined : '110px'}
                       alt=""
                       className="cc-review-card__img"
                       loading="lazy"

@@ -6,7 +6,7 @@ import { img, u, srcSet } from '../data/images.js'
 import { shopProducts, EXTRA_TIERS } from '../data/products.js'
 import { menuCardPhoto } from '../data/productImages.js'
 import { inr } from '../data/format.js'
-import { DEPOSIT_PCT, depositAmount } from '../data/shopConfig.js'
+import { DEPOSIT_PCT, depositAmount, DECORATION_EXTRA } from '../data/shopConfig.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { useJsonLd } from '../hooks/useJsonLd.js'
 
@@ -97,7 +97,7 @@ const CARDS = [
     // would drop it silently. It gets a sentence here and a card in the shop.
     // Kept to two lines, like every note on this page, so the cards match.
     note: () =>
-      `♥ By the piece from ${inr(cheapest(inCategory('Cupcakes')))} (min. 2), or a variety box for ${inr(BY_ID['cup-variety'].price)}. ₹20 extra for floral decoration.`,
+      `♥ By the piece from ${inr(cheapest(inCategory('Cupcakes')))} (min. 2), or a variety box for ${inr(BY_ID['cup-variety'].price)}. ${inr(DECORATION_EXTRA)} extra for floral decoration (add it to your order notes).`,
   },
   {
     title: 'Cookies',
@@ -231,7 +231,7 @@ export default function Menu() {
   return (
     <>
       {/* ───── HERO — soft warm-pink, split: text left, pink cake image right ───── */}
-      <section className="cc-menu-hero">
+      <section className="cc-menu-hero" data-no-reveal>
         <div className="container py-5">
           <div className="row g-4 g-lg-5 align-items-center">
             <div className="col-lg-6 text-center text-lg-start">

@@ -73,6 +73,12 @@ const mentionsEggless = (q) => /\begg/i.test(q)
  */
 export default function SearchOverlay({ open, onClose }) {
   const [query, setQuery] = useState('')
+  // The closed overlay is only hidden, so its "Popular treats" list was
+  // rendered on every page and downloaded 12 thumbnails (250–400 KB) at high
+  // priority beside the hero. Render the list once it has been opened, and
+  // keep it after, so closing still fades out with its content.
+  const [everOpened, setEverOpened] = useState(false)
+  if (open && !everOpened) setEverOpened(true)
   const panelRef = useRef(null)
   // The results scroller — read by the scroll lock and the arrow keys.
   const listRef = useRef(null)
@@ -200,7 +206,7 @@ export default function SearchOverlay({ open, onClose }) {
         </div>
 
         <div className="cc-search-overlay__results" ref={listRef}>
-          {results.length === 0 ? (
+          {!everOpened ? null : results.length === 0 ? (
             <div className="cc-search-overlay__empty">
               <p>No products match "{query}".</p>
               {/* Strict matching means "eggless cheesecake" finds nothing —
@@ -209,7 +215,7 @@ export default function SearchOverlay({ open, onClose }) {
                   eggless", which is the opposite of true. */}
               {mentionsEggless(query) && (
                 <p className="cc-search-overlay__aside">
-                  Only drinks are eggless as standard — but <strong>most cakes and
+                  Only a few things are eggless as standard — but <strong>most cakes and
                   bakes can be made eggless on request</strong>. Add it to your order
                   notes at checkout, or ask us on WhatsApp.
                 </p>

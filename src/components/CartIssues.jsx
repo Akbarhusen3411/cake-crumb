@@ -1,6 +1,6 @@
 import { FiAlertCircle } from 'react-icons/fi'
 import { useCart } from '../context/CartContext.jsx'
-import { cartProblems } from '../data/offerRules.js'
+import { cartProblems, DIWALI_DATES } from '../data/offerRules.js'
 
 /**
  * Anything in the cart that can't be ordered as it stands, with a one-tap fix,
@@ -11,7 +11,7 @@ import { cartProblems } from '../data/offerRules.js'
  * Renders nothing when the cart is fine. `id` lets Checkout scroll to it.
  */
 export default function CartIssues({ id }) {
-  const { items, remove, increment } = useCart()
+  const { items, remove, increment, unpackPacks } = useCart()
   const { expired, belowMin } = cartProblems(items)
   if (!expired.length && !belowMin.length) return null
   return (
@@ -20,11 +20,16 @@ export default function CartIssues({ id }) {
         <div className="cc-cart-issue">
           <FiAlertCircle aria-hidden />
           <span>
-            <strong>Diwali packs were 5–15 Nov only.</strong> Remove them to place your order — the regular sizes are still in the shop.
+            <strong>Diwali packs were {DIWALI_DATES.short} only.</strong> Switch them to the regular price (you keep the same items) or remove them.
           </span>
-          <button type="button" className="cc-cart-issue__btn" onClick={() => expired.forEach((it) => remove(it.id))}>
-            Remove {expired.length === 1 ? 'pack' : 'packs'}
-          </button>
+          <span className="cc-cart-issue__btns">
+            <button type="button" className="cc-cart-issue__btn" onClick={unpackPacks}>
+              Switch to regular price
+            </button>
+            <button type="button" className="cc-cart-issue__btn cc-cart-issue__btn--ghost" onClick={() => expired.forEach((it) => remove(it.id))}>
+              Remove {expired.length === 1 ? 'pack' : 'packs'}
+            </button>
+          </span>
         </div>
       )}
       {belowMin.map((it) => (

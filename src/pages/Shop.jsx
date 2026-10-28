@@ -9,9 +9,10 @@ import HeartDivider from '../components/HeartDivider.jsx'
 import { shopProducts, lowestPrice, isPerPiece, cardPrice, priceLabel, describe, EXTRA_TIERS } from '../data/products.js'
 import { img, u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
+import { DECORATION_EXTRA } from '../data/shopConfig.js'
 import OfferGift from '../components/OfferGift.jsx'
 import { PriceTag } from '../components/OfferSteps.jsx'
-import { productDiwaliDeals, diwaliWindow } from '../data/offerRules.js'
+import { productDiwaliDeals, diwaliWindow, DIWALI_DATES } from '../data/offerRules.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
 import { useCart } from '../context/CartContext.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
@@ -98,7 +99,7 @@ function Radio({ checked, onChange, label, name }) {
 export default function Shop() {
   usePageMeta({
     title: 'Shop',
-    description: 'Order from our full menu — cheesecakes, milk cakes, cookies, cupcakes, dessert cups and drinks. UPI / Cash on Delivery.',
+    description: 'Order from our full menu — cheesecakes, milk cakes, cookies, cupcakes, dessert cups and drinks. Pay by UPI or cash.',
   })
   useJsonLd('shop-products', {
     '@context': 'https://schema.org',
@@ -297,7 +298,7 @@ export default function Shop() {
   return (
     <>
       {/* ───── HERO ───── */}
-      <section className="cc-shop-hero">
+      <section className="cc-shop-hero" data-no-reveal>
         <div className="container py-4 py-md-5">
           <div className="row g-4 g-lg-5 align-items-center">
             <div className="col-lg-6 text-center text-lg-start">
@@ -315,7 +316,7 @@ export default function Shop() {
                   photos link to an enquiry.) */}
               <p className="cc-shop-hero__lede">
                 Cheesecakes, milk cakes, sponge cakes, cookies, cupcakes, bakes,
-                dessert cups and drinks — every one of them baked after you order it.
+                dessert cups and drinks — every one of them made after you order it.
               </p>
             </div>
             <div className="col-lg-6">
@@ -426,7 +427,7 @@ export default function Shop() {
                   per-piece category needs one — see CLAUDE.md. */}
               {category === 'Cupcakes' && (
                 <p className="cc-shop-note">
-                  <FiHeart size={12} /> Cupcakes come as a box of 6, or buy them by the piece (minimum 2) — tap any cupcake to choose how many. Add ₹20 for floral or additional decoration.
+                  <FiHeart size={12} /> Cupcakes come as a box of 6, or buy them by the piece (minimum 2) — tap any cupcake to choose how many. Floral or extra decoration is {inr(DECORATION_EXTRA)} more — mention it in your order notes.
                 </p>
               )}
 
@@ -535,7 +536,7 @@ export default function Shop() {
                                 <span className="cc-card-deal__label">{d.label}</span>
                                 <PriceTag was={d.was} now={d.now} small flag={null} />
                                 {packSoon === d.line.id ? (
-                                  <span className="cc-card-deal__soon" role="status">Opens 5 Nov</span>
+                                  <span className="cc-card-deal__soon" role="status">{DIWALI_DATES.opens}</span>
                                 ) : (
                                   <button
                                     type="button"

@@ -36,7 +36,12 @@ export const FESTIVALS = [
     accent: '#fff',
     message: 'Holi hai! Colorful cupcake boxes & rainbow jelly cups.',
     cta: 'See Specials',
-    range: { fromMonth: 3, fromDay: 10, toMonth: 3, toDay: 16 },
+    // Holi follows the lunar calendar — the week before it, per year (Holi:
+    // 22 Mar 2027, 11 Mar 2028). A year not listed shows no Holi banner.
+    years: {
+      2027: { fromMonth: 3, fromDay: 16, toMonth: 3, toDay: 22 },
+      2028: { fromMonth: 3, fromDay: 5, toMonth: 3, toDay: 11 },
+    },
   },
   {
     id: 'eid',
@@ -48,7 +53,13 @@ export const FESTIVALS = [
     // No "saffron treats" — not sold.
     message: 'Eid Mubarak! Order Dubai cheesecake & milk cakes early.',
     cta: 'Order Now',
-    range: { fromMonth: 4, fromDay: 1, toMonth: 4, toDay: 15 }, // Eid varies — adjust yearly
+    // Eid ul-Fitr moves ~11 days earlier each year and depends on the moon —
+    // about 10 Mar 2027 and 27 Feb 2028; confirm nearer the time. The week
+    // before, so customers order ahead. A year not listed shows no banner.
+    years: {
+      2027: { fromMonth: 3, fromDay: 4, toMonth: 3, toDay: 11 },
+      2028: { fromMonth: 2, fromDay: 21, toMonth: 2, toDay: 28 },
+    },
   },
   {
     id: 'rakshabandhan',
@@ -59,8 +70,12 @@ export const FESTIVALS = [
     accent: '#fff',
     // No hampers — not sold.
     message: 'Sweet treats for your sibling — cupcake boxes, cheesecakes & more.',
-    cta: 'Order Hampers',
-    range: { fromMonth: 8, fromDay: 5, toMonth: 8, toDay: 20 },
+    cta: 'Order Now',
+    // Raksha Bandhan is the Shravan full moon — 17 Aug 2027, 5 Aug 2028.
+    years: {
+      2027: { fromMonth: 8, fromDay: 11, toMonth: 8, toDay: 17 },
+      2028: { fromMonth: 7, fromDay: 30, toMonth: 8, toDay: 5 },
+    },
   },
   {
     id: 'diwali',
@@ -123,7 +138,11 @@ export function getActiveFestival(now = new Date()) {
   const m = now.getMonth() + 1
   const d = now.getDate()
   for (const f of FESTIVALS) {
-    const { fromMonth, fromDay, toMonth, toDay } = f.range
+    // A moving festival lists its dates per year; with none for this year it
+    // stays hidden rather than showing last year's week.
+    const range = f.years ? f.years[now.getFullYear()] : f.range
+    if (!range) continue
+    const { fromMonth, fromDay, toMonth, toDay } = range
     const wrapsYear = toMonth < fromMonth || (toMonth === fromMonth && toDay < fromDay)
     if (wrapsYear) {
       // active if (m,d) >= (fromMonth, fromDay) OR (m,d) <= (toMonth, toDay)

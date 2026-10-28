@@ -87,7 +87,7 @@ export const PRODUCT_IMAGES = {
   // ───── MILK CAKES ─────
   // The bakery's own bento-tub photos, shot Aug 2026. One flavour per tub, so
   // these are the real thing rather than a stand-in from another category.
-  'Trés Léches Milk Cake':                'milkcake-tres-leches-bento.jpeg',
+  'Tres Leches Milk Cake':                'milkcake-tres-leches-bento.jpeg',
   'Rose Milk Cake':                       'milkcake-rose-bento.jpeg',
   'Mango Milk Cake':                      'milkcake-mango-bento.jpeg',
   'Biscoff Milk Cake':                    'milkcake-biscoff-bento.jpeg',

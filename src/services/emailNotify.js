@@ -24,7 +24,10 @@ function buildParams(order) {
   const t = order.totals || {}
   const itemsText = (order.items || [])
     .map((i) => `• ${i.name} × ${i.qty} = ${inr((i.price || 0) * (i.qty || 1))}`)
-    .join('\n')
+    .join('\n') +
+    // The free gift, as on the WhatsApp receipt — in the items text so no new
+    // {{placeholder}} is needed (that would mean editing the live templates).
+    (order.offerGift ? `\n🎁 Free gift: ${order.offerGift.gift} — free (${order.offerGift.name})` : '')
 
   return {
     order_id: order.orderId || '',
@@ -35,7 +38,11 @@ function buildParams(order) {
     customer_address: [c.address, c.city, c.pincode].filter(Boolean).join(', '),
     items: itemsText,
     subtotal: inr(t.subtotal || 0),
-    delivery: t.delivery === 0 ? 'FREE' : inr(t.delivery || 0),
+    // deliveryTbc: the fee couldn't be worked out, the bakery confirms it on
+    // WhatsApp — the email must not put "free delivery" in writing.
+    delivery: order.deliveryMethod === 'pickup'
+      ? 'FREE (pickup)'
+      : order.deliveryTbc ? 'To be confirmed on WhatsApp' : t.delivery === 0 ? 'FREE' : inr(t.delivery || 0),
     total: inr(t.total || 0),
     // Same wording rule as the admin dashboard: a self-pickup order has no
     // delivery, so it must not say money is collected on one.

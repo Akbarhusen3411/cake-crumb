@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { FiArrowRight, FiGift, FiX } from 'react-icons/fi'
-import { offerNow, diwaliWindow, OFFERS_ON } from '../data/offerRules.js'
+import { offerNow, diwaliWindow, OFFERS_ON, OFFER_RULES } from '../data/offerRules.js'
 import { useDialogFocus } from '../hooks/useDialogFocus.js'
 import { isDiwaliPreview } from '../data/festivals.js'
 
@@ -25,7 +25,9 @@ import { isDiwaliPreview } from '../data/festivals.js'
  * - Body scroll isn't locked (CLAUDE.md, Navbar); the backdrop is opaque.
  */
 
-const WINDOW = { month: 11, fromDay: 5, toDay: 15 } // 5–15 November, inclusive
+// The same days as the Diwali offers — read from OFFER_RULES.diwali, so the
+// two can't drift apart (5–15 November, inclusive, in 2026).
+const WINDOW = OFFER_RULES.diwali
 const VISIT_KEY = 'cc_diwali_welcome_visit' // sessionStorage: shown this visit
 const seenThisVisit = () => { try { return sessionStorage.getItem(VISIT_KEY) === '1' } catch { return false } }
 const markVisit = () => { try { sessionStorage.setItem(VISIT_KEY, '1') } catch { /* storage blocked */ } }

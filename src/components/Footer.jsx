@@ -215,7 +215,7 @@ export default function Footer() {
           <span className="tag-badge">Stay Sweet</span>
           <h3 className="cc-footer-m__news-head">Sweet news in your inbox</h3>
           <p className="cc-footer-m__news-sub">
-            Festival specials &amp; treat-of-the-week — never spam.
+            New flavours &amp; festival specials — never spam.
           </p>
           <Newsletter compact />
         </div>

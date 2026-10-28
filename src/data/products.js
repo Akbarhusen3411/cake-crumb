@@ -21,12 +21,30 @@ const A_BAKED   = ['contains-egg', 'contains-dairy', 'contains-gluten', 'eggless
 const A_NUTS    = [...A_BAKED, 'contains-nuts']
 
 // Featured cards on Home — visually distinctive picks across categories.
+// `shopId` + `tier` name the shop product and size each card sells, so its
+// Add to Cart puts in the SAME line the Shop would (featuredCartLine below).
+// With its own 'feat-N' id the card's line never merged with the Shop's, and
+// two Red Velvet boxes from Home missed the Diwali pack (₹360 vs ₹349).
 export const featured = [
-  { id: 'feat-1', name: 'Blueberry Cheesecake', price: 410, category: 'Cheesecakes', allergens: A_BAKED },
-  { id: 'feat-2', name: 'Red Velvet Cupcakes (Box of 6)', price: 180, category: 'Cupcakes', allergens: A_BAKED },
-  { id: 'feat-3', name: 'Triple Choc Cookies (Box of 6)', price: 340, category: 'Cookies', allergens: A_BAKED },
-  { id: 'feat-4', name: 'Pistachio Milk Cake (Bento)', price: 520, category: 'Milk Cakes', allergens: A_NUTS },
+  { id: 'feat-1', name: 'Blueberry Cheesecake', price: 410, category: 'Cheesecakes', allergens: A_BAKED, shopId: 'cc-blueberry', tier: 'base' },
+  { id: 'feat-2', name: 'Red Velvet Cupcakes (Box of 6)', price: 180, category: 'Cupcakes', allergens: A_BAKED, shopId: 'cup-redvelvet', tier: 'slice' },
+  { id: 'feat-3', name: 'Triple Choc Cookies (Box of 6)', price: 340, category: 'Cookies', allergens: A_BAKED, shopId: 'ck-triple', tier: 'base' },
+  { id: 'feat-4', name: 'Pistachio Milk Cake (Bento)', price: 520, category: 'Milk Cakes', allergens: A_NUTS, shopId: 'mc-pistachio', tier: 'base' },
 ].map(withPhoto)
+
+/**
+ * The cart line a Home featured card adds — built exactly as the quick view
+ * builds that size (id, "(tier)" name, price), with the card's photo. Falls
+ * back to the card itself if its shop product is gone.
+ */
+export function featuredCartLine(card) {
+  const p = shopProducts.find((x) => x.id === card.shopId)
+  if (!p) return card
+  if (card.tier === 'slice') {
+    return { id: `${p.id}-slice`, name: `${p.name} (${p.sliceLabel || 'Slice'})`, price: p.slice, img: card.img || p.img }
+  }
+  return { ...p, name: `${p.name} (${p.sizeLabel || 'Whole'})`, img: card.img || p.img }
+}
 
 // Flat list for /shop — full PDF menu, every item orderable.
 // `slice` field gives a second price option (rendered as a second add-to-cart button).
@@ -64,7 +82,7 @@ export const shopProducts = [
   { id: 'cc-dubai', name: 'Dubai Cheesecake', price: 500, slice: 170, category: 'Cheesecakes', sizeLabel: 'Banto 4"', sliceLabel: 'Tub', badge: 'Special', group: 'Premium' },
 
   // ───── MILK CAKES — Bento / Tub ─────
-  { id: 'mc-tres', name: 'Trés Léches Milk Cake', price: 420, slice: 120, category: 'Milk Cakes', sizeLabel: 'Bento', sliceLabel: 'Tub' },
+  { id: 'mc-tres', name: 'Tres Leches Milk Cake', desc: 'Sponge soaked in three milks (the classic tres leches) and finished with fresh cream — whole, or a single-serve tub.', price: 420, slice: 120, category: 'Milk Cakes', sizeLabel: 'Bento', sliceLabel: 'Tub' },
   { id: 'mc-rose', name: 'Rose Milk Cake', price: 420, slice: 120, category: 'Milk Cakes', sizeLabel: 'Bento', sliceLabel: 'Tub' },
   { id: 'mc-mango', name: 'Mango Milk Cake', price: 440, slice: 120, category: 'Milk Cakes', sizeLabel: 'Bento', sliceLabel: 'Tub' },
   { id: 'mc-biscoff', name: 'Biscoff Milk Cake', price: 480, slice: 130, category: 'Milk Cakes', sizeLabel: 'Bento', sliceLabel: 'Tub' },
@@ -206,7 +224,7 @@ export const shopProducts = [
   { id: 'dc-custard-mango', name: 'Mango Custard Cup', price: 80, category: 'Dessert Cups', sizeLabel: '150ml' },
   { id: 'dc-trifle', name: 'Trifle Cup', price: 100, category: 'Dessert Cups', sizeLabel: '150ml' },
   { id: 'dc-jelly', name: 'Jelly Cup', price: 50, category: 'Dessert Cups', sizeLabel: '150ml' },
-  { id: 'dc-grass', name: 'Milk Pudding (Ghas) Cup', price: 40, category: 'Dessert Cups', sizeLabel: '150ml' },
+  { id: 'dc-grass', name: 'Milk Pudding (Ghas) Cup', desc: 'A chilled milk pudding set with grass jelly (ghas), ready to spoon.', price: 40, category: 'Dessert Cups', sizeLabel: '150ml' },
 
   // ───── DRINKS — Mojitos ─────
   { id: 'dr-virginmojito', name: 'Virgin Mojito', price: 180, category: 'Drinks', group: 'Mojitos' },
@@ -361,10 +379,19 @@ export function describe(p) {
   const name = p.name.toLowerCase()
 
   switch (p.category) {
-    case 'Cheesecakes':
-      return `A baked ${f} cheesecake on a buttery biscuit base${two ? ' — whole, or a single-serve tub' : ''}.`
+    case 'Cheesecakes': {
+      // Brackets and the word "cheesecake"/"slice" left in the flavour made
+      // "a baked chocolate cheesecake (milk & dark) cheesecake".
+      if (/slice/.test(name)) return 'A slice of baked cheesecake on a buttery biscuit base, dipped and finished by hand.'
+      const shade = name.match(/\(([^)]*&[^)]*)\)/)?.[1] // "(Milk & Dark)" → "milk & dark"
+      const cf = lower(flavourOf(p).replace(/\s*\([^)]*\)/g, '').replace(/\s*cheesecake.*$/i, '').trim())
+      const what = shade ? `${shade.toLowerCase().replace('&', 'and')} ${cf}` : cf
+      const size = two ? ' — whole, or a single-serve tub' : /\(whole\)/.test(name) ? ' — the whole cake' : ''
+      return `A baked ${what} cheesecake on a buttery biscuit base${size}.`
+    }
     case 'Milk Cakes':
-      return `Sponge soaked in sweetened milk and finished with ${f} cream${two ? ' — whole, or a single-serve tub' : ''}.`
+      // "Turkish (Caramel)" → "Turkish caramel"
+      return `Sponge soaked in sweetened milk and finished with ${f.replace(/[()]/g, '')} cream${two ? ' — whole, or a single-serve tub' : ''}.`
     case 'Sponge Cakes':
       return `A light ${f} sponge layered with fresh cream${two ? ' — a whole bento cake, or a tub for one' : ''}.`
     case 'Cookies':
@@ -388,13 +415,20 @@ export function describe(p) {
       }
       // `group` is 'Hot Coffee' / 'Iced Coffee' and says it outright; the name
       // doesn't (a "Caramel Macchiato" is hot, a "Strawberry Silk Latte" iced).
+      // "(Iced)" / "(Hot)" in the name repeats what the sentence says.
       return /hot/i.test(p.group || '')
-        ? `${p.name} — pulled fresh and served hot.`
-        : `${p.name} — brewed fresh and served over ice.`
+        ? `${p.name.replace(/\s*\((hot|iced)\)/i, '')} — pulled fresh and served hot.`
+        : `${p.name.replace(/\s*\((hot|iced)\)/i, '')} — brewed fresh and served over ice.`
     case 'Bakes':
       if (/brownie box|dipping box/.test(name)) return `${p.name} — a sharing box with a warm dip on the side.`
       if (/brownie/.test(name)) return `A dense, fudgy ${f} brownie${two ? ' — one piece or a box of six' : ''}.`
-      if (/blondie/.test(name)) return `A chewy white-chocolate blondie with ${f}${two ? ' — one piece or a box of six' : ''}.`
+      if (/blondie/.test(name)) {
+        // "Classic" and "White Chocolate" aren't things to put IN a blondie.
+        const tail = two ? ' — one piece or a box of six' : ''
+        if (/classic/.test(name)) return `A chewy, classic white-chocolate blondie${tail}.`
+        if (/white choc/.test(name)) return `A chewy blondie loaded with white chocolate${tail}.`
+        return `A chewy white-chocolate blondie with ${f}${tail}.`
+      }
       if (/cakesicle/.test(name)) {
         // "Chocolate Cakesicle (Heart)" → flavour "chocolate", shape "heart".
         const flav = lower(p.name.replace(/\s*cakesicle.*$/i, '').trim()) || 'vanilla'
@@ -432,7 +466,9 @@ function attachAllergens(p) {
   const isMojito = /mojito|lagoon/.test(name)
   const isShake = /milkshake|shake/.test(name)
   const isCoffee = /coffee/.test(name)
-  const hasNuts = /pistach|almond|nutella|hazelnut|coconut|dubai/.test(name)
+  // Macarons are almond-flour shells — "macaron" is on this list because the
+  // name never says almond, and they went out with no nut warning.
+  const hasNuts = /pistach|almond|nutella|hazelnut|coconut|dubai|macaron/.test(name)
 
   let tags = []
   switch (p.category) {
@@ -444,11 +480,23 @@ function attachAllergens(p) {
     case 'Bakes':
     case 'Platters':
     case 'Special Gifts':
+      if (/covered strawberr/.test(name)) {
+        // Fresh fruit dipped in chocolate — no flour, no egg. Chocolate carries
+        // milk, so dairy is declared. (It was getting the bakes' egg + gluten.)
+        tags = ['eggless', 'contains-dairy']
+        break
+      }
       tags = ['contains-egg', 'contains-dairy', 'contains-gluten', 'eggless-option']
+      // Macaron shells are whipped egg white — "can be made eggless" isn't
+      // something to promise without the owner saying so.
+      if (/macaron/.test(name)) tags = tags.filter((t) => t !== 'eggless-option')
       if (hasNuts) tags.push('contains-nuts')
       break
     case 'Dessert Cups':
-      if (/jelly|grass/.test(name)) tags = ['eggless']
+      // Jelly and the grass-jelly pudding are set, not baked: no egg. The
+      // product is named "(Ghas)", which the old /grass/ never matched, so it
+      // was tagged contains-egg. A milk pudding declares its milk.
+      if (/jelly|grass|ghas/.test(name)) tags = /milk/.test(name) ? ['eggless', 'contains-dairy'] : ['eggless']
       else tags = ['contains-egg', 'contains-dairy', 'eggless-option']
       break
     case 'Drinks':

@@ -14,12 +14,15 @@ import { deliveryFee, isBulkOrder, depositAmount, DEPOSIT_PCT, BAKERY_ADDRESS, M
 import { kmFromBakeryByPincode } from '../services/delivery.js'
 import { WHATSAPP_PHONE } from './WhatsAppButton.jsx'
 import { useCart } from '../context/CartContext.jsx'
-import { chatbotPacks, cartOfferStatus, giftRecord, activeOffers, packHint } from '../data/offers.js'
+import { localIso } from '../utils/adminDate.js'
+import { chatbotPacks, cartOfferStatus, giftRecord, activeOffers, packHint, DIWALI_DATES } from '../data/offers.js'
 import {
   MENU_DATA, ORDER_ITEMS, MENU_CATEGORIES, ORDER_CATEGORIES, getItemCat,
 } from '../data/chatbotMenu.js'
 
 const WHATSAPP_NUMBER = WHATSAPP_PHONE
+// "919173183440" → "+91 91731 83440", the way every page writes it.
+const PHONE_PRETTY = `+${WHATSAPP_PHONE.slice(0, 2)} ${WHATSAPP_PHONE.slice(2, 7)} ${WHATSAPP_PHONE.slice(7)}`
 // Where a self-pickup customer collects from. Same wording as AdminOrders' own
 // pickup message, so the bot and the bakery's WhatsApp reply name one place.
 const PICKUP_LOCATION = BAKERY_ADDRESS.full
@@ -50,7 +53,7 @@ const CAT_IMAGES = {
     { src: 'products/cheesecake-nutella.jpeg',              label: 'Nutella' },
   ],
   'milk-cakes': [
-    { src: 'products/milkcake-tres-leche-dish.jpeg',      label: 'Trés Léches' },
+    { src: 'products/milkcake-tres-leche-dish.jpeg',      label: 'Tres Leches' },
     { src: 'products/milkcake-rose-pistachio-domes.jpeg', label: 'Rose' },
     { src: 'products/milkcake-rose-pistachio.jpeg',       label: 'Pistachio' },
   ],
@@ -130,7 +133,7 @@ const mainOptions = () =>
 
 /** The Diwali offers as one chat message: gift steps and pack prices. */
 function offersMessage() {
-  const lines = ['🪔 *Diwali offers · 5–15 Nov*']
+  const lines = [`🪔 *Diwali offers · ${DIWALI_DATES.short}*`]
   for (const o of diwaliOffers()) {
     lines.push('', `*${o.name}*${o.stepsHead ? ` — ${o.stepsHead.toLowerCase()}` : ''}`)
     if (o.steps) o.steps.forEach((st) => lines.push(`• ${st.buy} → ${st.get} *free*`))
@@ -310,7 +313,7 @@ function OrderSummaryCard({ data }) {
         <div className="flex justify-between text-[12px]">
           <span className="text-chocolate-light/70">{pickup ? 'Pickup' : 'Delivery'}</span>
           <span className={`font-bold ${delivery === 0 ? 'text-berry' : ''}`} style={delivery !== 0 ? { color: '#5b3e36' } : undefined}>
-            {delivery === 0 ? 'FREE' : inr(delivery)}
+            {delivery > 0 ? inr(delivery) : data.deliveryTbc ? 'Confirmed on WhatsApp' : 'FREE'}
           </span>
         </div>
       </div>
@@ -396,17 +399,19 @@ function CartPreviewCard({ items, subtotal, gift }) {
 }
 
 // ─── Delivery date picker (native date input + optional time slot) ───
+// localIso(), not toISOString(): UTC is still "yesterday" in India until
+// 05:30, so the picker offered TODAY overnight (the bug Checkout had).
 function nextDayISO() {
   const d = new Date()
   d.setDate(d.getDate() + 1)
-  return d.toISOString().slice(0, 10)
+  return localIso(d)
 }
 function formatPickedDate(iso) {
   const d = new Date(iso + 'T00:00:00')
   if (isNaN(d.getTime())) return iso
   return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
 }
-function DatePickerWidget({ onPick }) {
+function DatePickerWidget({ onPick, pickup = false }) {
   const [date, setDate] = useState('')
   const [slot, setSlot] = useState('')
   const min = nextDayISO()
@@ -418,12 +423,13 @@ function DatePickerWidget({ onPick }) {
     >
       <div className="px-3.5 py-2.5 bg-gradient-to-r from-gold/15 via-cream/80 to-soft-pink/40 border-b border-gold/10 flex items-center gap-2">
         <FiCalendar size={13} className="text-berry" />
-        <p className="text-[11px] font-semibold text-chocolate tracking-wide">Pick your delivery date</p>
+        <p className="text-[11px] font-semibold text-chocolate tracking-wide">Pick your {pickup ? 'pickup' : 'delivery'} date</p>
       </div>
       <div className="p-3 flex flex-col gap-2.5">
         <input
           type="date"
           min={min}
+          aria-label="Date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
           className="w-full rounded-xl border border-cream-dark px-3 py-2 text-[13px] outline-none focus:border-berry"
@@ -443,8 +449,8 @@ function DatePickerWidget({ onPick }) {
         </div>
         <button
           type="button"
-          disabled={!date}
-          onClick={() => onPick(formatPickedDate(date) + (slot ? ` · ${slot}` : ''))}
+          disabled={!date || date < min}
+          onClick={() => { if (date && date >= nextDayISO()) onPick(formatPickedDate(date) + (slot ? ` · ${slot}` : '')) }}
           className="w-full h-9 rounded-xl text-white text-[12.5px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform disabled:opacity-50"
           style={{ background: 'linear-gradient(to right,#e0617a,#cf3e63)' }}
         >
@@ -803,6 +809,8 @@ export default function ChatBot() {
       orderId,
       items: items.map(([name, { qty, price }]) => ({ name, qty, price, id: name.toLowerCase().replace(/\s+/g, '-') })),
       totals: { subtotal, delivery: fee, total },
+      // Pincode lookup failed → the fee is quoted on WhatsApp (see Checkout).
+      ...(!isPickup && deliveryKm == null ? { deliveryTbc: true } : {}),
       customer: {
         name: orderInfo.name,
         phone: orderInfo.phone,
@@ -894,7 +902,7 @@ export default function ChatBot() {
       `*Subtotal:* ${inr(subtotal)}\n` +
       (isPickup
         ? `*Pickup:* FREE\n`
-        : `*Delivery:* ${fee === 0 ? 'FREE (far areas confirmed by us)' : inr(fee)}\n`) +
+        : `*Delivery:* ${fee > 0 ? inr(fee) : deliveryKm == null ? 'to be confirmed on WhatsApp' : 'FREE'}\n`) +
       `*💰 Total: ${inr(total)}*\n` +
       advanceLine +
       // Same line the website's receipt carries, so the customer is told too.
@@ -904,7 +912,11 @@ export default function ChatBot() {
       `Please confirm my order. Thank you! 🙏`
 
     const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`
-    const win = window.open(waUrl, '_blank', 'noopener,noreferrer')
+    // No 'noopener' in the features: with it, window.open() returns null by
+    // spec, so EVERY order looked blocked and customers sent it twice. The
+    // opener is cut by hand instead, which is what noopener did.
+    const win = window.open(waUrl, '_blank')
+    if (win) { try { win.opener = null } catch { /* cross-origin already */ } }
     // Report back so the caller can offer a manual link if the pop-up was blocked.
     return { url: waUrl, opened: !!win }
   }
@@ -1028,7 +1040,7 @@ export default function ChatBot() {
         const { url, opened } = sendOrderToWhatsApp()
         setLastWaUrl(url)
         if (opened) {
-          await addBotMessage('✅ *Order sent to WhatsApp!*\n\nOur team will confirm your order within minutes.\n\n⚠️ *Cancellation:* You can cancel within 30 minutes. After that, cancellation is not available.')
+          await addBotMessage('✅ *Order sent to WhatsApp!*\n\nWe will confirm your order on WhatsApp — usually within a few hours.\n\n⚠️ *Cancellation:* You can cancel within 30 minutes. After that, cancellation is not available.')
         } else {
           await addBotMessage('✅ *Your order is ready!*\n\nYour browser blocked the WhatsApp pop-up — tap *Open WhatsApp to Send* below to deliver it to us. 👇')
         }
@@ -1077,7 +1089,7 @@ export default function ChatBot() {
       case 'user_cancel': {
         setOptions([])
         if (lastOrderTime && Date.now() - lastOrderTime > 30 * 60 * 1000) {
-          await addBotMessage('⏰ Sorry! The 30-minute cancellation window has expired. This order can no longer be cancelled.\n\nFor help, contact: +91 91731 83440')
+          await addBotMessage(`⏰ Sorry! The 30-minute cancellation window has expired. This order can no longer be cancelled.\n\nFor help, contact: ${PHONE_PRETTY}`)
           setOptions([{ label: '🏠 Main Menu', action: 'home' }])
         } else {
           const cancelRequest =
@@ -1095,7 +1107,7 @@ export default function ChatBot() {
       case 'whatsapp':
         setOptions([])
         window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Cake & Crumb! I'd like to place an order.")}`, '_blank', 'noopener,noreferrer')
-        await addBotMessage('WhatsApp opened! Our team typically replies within minutes. 😊')
+        await addBotMessage('WhatsApp opened! We usually reply within a few hours. 😊')
         setOptions([{ label: '🏠 Main Menu', action: 'home' }])
         break
       case 'delivery':
@@ -1106,7 +1118,7 @@ export default function ChatBot() {
         // bakery-side only (see the delivery notes in CLAUDE.md).
         await addBotMessage(
           '*Delivery Information*\n\n' +
-          '📍 *Area:* All Gujarat districts\n' +
+          '📍 *Area:* Vaso, Kheda and the surrounding districts of Gujarat\n' +
           '⏰ *Notice:* Please order 24 hours in advance\n' +
           '🚚 *Home delivery:* the charge is worked out from your pincode and shown in your order summary before you send it — many nearby areas are free\n' +
           `🛍️ *Self-pickup:* always free — collect from ${PICKUP_LOCATION}\n` +
@@ -1121,12 +1133,12 @@ export default function ChatBot() {
         break
       case 'location':
         setOptions([])
-        await addBotMessage(`*Our Location*\n\n📍 ${BAKERY_ADDRESS.full}\n🗺️ ${MAP_LINK}\n🏠 Home bakery — we deliver across Gujarat!`)
+        await addBotMessage(`*Our Location*\n\n📍 ${BAKERY_ADDRESS.full}\n🗺️ ${MAP_LINK}\n🏠 Home bakery — we deliver around Vaso, Kheda and nearby districts, or collect for free.`)
         setOptions([{ label: '🛒 Place Order', action: 'order' }, { label: '🏠 Main Menu', action: 'home' }])
         break
       case 'contact':
         setOptions([])
-        await addBotMessage('*Contact Us*\n\n📱 *WhatsApp:* +91 91731 83440\n📞 *Call:* +91 91731 83440\n📷 *Instagram:* @cake_and_crumb_1')
+        await addBotMessage(`*Contact Us*\n\n📱 *WhatsApp:* ${PHONE_PRETTY}\n📞 *Call:* ${PHONE_PRETTY}\n📷 *Instagram:* @cake_and_crumb_1`)
         setOptions([{ label: '💬 Open WhatsApp', action: 'whatsapp' }, { label: '🏠 Main Menu', action: 'home' }])
         break
       default:
@@ -1155,6 +1167,7 @@ export default function ChatBot() {
           gift: chatGift(pricedEntries(), subtotal),
           subtotal,
           delivery: fee,
+          deliveryTbc: deliveryMethod !== 'pickup' && deliveryKm == null,
           total,
           bulk: isBulkOrder(subtotal),
           deposit: depositAmount(total),
@@ -1252,8 +1265,11 @@ export default function ChatBot() {
       return
     }
     if (orderStep === 'date') {
-      // Typing a date still works, but the date-picker widget is the primary path.
-      await submitDate(text)
+      // Typed text used to be saved as the date as-is — "kal", "today", a past
+      // date. The picker is the only way in, so the bakery always gets a real
+      // date that is at least tomorrow.
+      setShowDatePicker(true)
+      await addBotMessage('Please choose the date with the calendar above 👆 — orders need at least a day.')
       return
     }
 
@@ -1531,7 +1547,7 @@ export default function ChatBot() {
 
             {showDatePicker && (
               <div className="flex justify-start">
-                <DatePickerWidget onPick={(d) => submitDate(d)} />
+                <DatePickerWidget pickup={deliveryMethod === 'pickup'} onPick={(d) => submitDate(d)} />
               </div>
             )}
 

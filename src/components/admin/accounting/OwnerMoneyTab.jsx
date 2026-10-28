@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { FiArrowDownLeft, FiArrowUpRight, FiEdit2, FiTrash2 } from 'react-icons/fi'
 import Modal from '../Modal.jsx'
 import UndoToast from './UndoToast.jsx'
@@ -38,6 +38,7 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
   const [period, setPeriod] = useState('all') // all | today | YYYY-MM
   const [editing, setEditing] = useState(null) // row, or { direction } for new
   const [busy, setBusy] = useState(false)
+  const savingRef = useRef(false)
   const { toast, offerUndo, closeToast } = useUndo(reload)
   const [page, setPage] = useState(1)
   const mobile = useIsMobile()
@@ -71,11 +72,21 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
   const p = Math.min(page, pageCount)
   const pageRows = rows.slice((p - 1) * pageSize, p * pageSize)
 
+  // A ref, not `busy`: a fast double tap lands before the re-render that
+  // disables Save, and booked the money twice.
   async function save(data) {
+    if (savingRef.current) return
+    savingRef.current = true
     setBusy(true)
-    if (editing?.id) await updateDocRec(ACC.WITHDRAWALS, editing.id, data)
-    else await addDocRec(ACC.WITHDRAWALS, data)
-    setEditing(null); await reload(); setBusy(false)
+    try {
+      if (editing?.id) await updateDocRec(ACC.WITHDRAWALS, editing.id, data)
+      else await addDocRec(ACC.WITHDRAWALS, data)
+      setEditing(null)
+    } finally {
+      setBusy(false)
+      savingRef.current = false
+    }
+    reload()
   }
   async function remove(w) {
     const what = dirOf(w) === IN ? 'money you put in' : 'money you took out'
@@ -213,7 +224,7 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
 
       {editing !== null && (
         <OwnerMoneyForm initial={editing.id ? editing : null} direction={dirOf(editing)}
-          onSave={save} onClose={() => setEditing(null)} />
+          saving={busy} onSave={save} onClose={() => setEditing(null)} />
       )}
 
       <UndoToast toast={toast} onClose={closeToast} />
@@ -221,7 +232,7 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
   )
 }
 
-function OwnerMoneyForm({ initial, direction, onSave, onClose }) {
+function OwnerMoneyForm({ initial, direction, saving, onSave, onClose }) {
   const isIn = direction === IN
   const [f, setF] = useState({
     date: initial?.date || todayIso(),
@@ -246,8 +257,8 @@ function OwnerMoneyForm({ initial, direction, onSave, onClose }) {
         : 'Money taken out for personal / home use — it is not a business cost.'}
       onClose={onClose}
       footer={<>
-        <button className="btn btn-light" onClick={onClose}>Cancel</button>
-        <button className="btn text-white" style={{ background: isIn ? IN_INK : OUT_INK }} onClick={submit}>Save</button>
+        <button className="btn btn-light" onClick={onClose} disabled={saving}>Cancel</button>
+        <button className="btn text-white" style={{ background: isIn ? IN_INK : OUT_INK }} onClick={submit} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
       </>}
     >
       <div className="row g-3">

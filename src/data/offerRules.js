@@ -46,6 +46,18 @@ export const OFFER_RULES = {
   ],
 }
 
+// The Diwali dates and pack prices AS WORDS, for copy — worked out from
+// OFFER_RULES.diwali and the pack tables, so a date or price change can't
+// leave "5 – 15 Nov" or "₹239" behind in a sentence. (Filled in below the
+// pack tables.)
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const DM = MONTHS[OFFER_RULES.diwali.month - 1]
+export const DIWALI_DATES = {
+  range: `${OFFER_RULES.diwali.fromDay} – ${OFFER_RULES.diwali.toDay} ${DM}`,   // "5 – 15 Nov"
+  short: `${OFFER_RULES.diwali.fromDay}–${OFFER_RULES.diwali.toDay} ${DM}`,     // "5–15 Nov"
+  opens: `Opens ${OFFER_RULES.diwali.fromDay} ${DM}`,                           // "Opens 5 Nov"
+}
+
 // ── Diwali price packs (5–15 Nov) ──
 // Unlike every other offer these MOVE A PRICE — but only as their own cart
 // lines at their own price ("Red Velvet Cupcakes (Diwali pack of 10)" ₹289),
@@ -88,6 +100,15 @@ export const DIWALI_PACK2 = {
 export const isDiwaliPackId = (id) => /-d(2|8|10)$/.test(String(id || ''))
 
 const byId = (id) => shopProducts.find((p) => p.id === id)
+
+/** Lowest pack prices, for copy: { cupcakes10, cakePops10, variety2, from }. */
+export const DIWALI_FROM = (() => {
+  const lo = (pred) => Math.min(...Object.entries(DIWALI_PACK10).filter(([id]) => pred(id)).map(([, v]) => v))
+  const cupcakes10 = lo((id) => id.startsWith('cup-'))
+  const cakePops10 = lo((id) => id.startsWith('bk-cakepop'))
+  const variety2 = DIWALI_PACK2['cup-variety']
+  return { cupcakes10, cakePops10, variety2, from: Math.min(cupcakes10, cakePops10, variety2) }
+})()
 
 /** The cart line for one Diwali pack of 10 — the one shape every add path uses. */
 export function pack10Line(p) {
@@ -213,6 +234,37 @@ export function boxesPrice(p, n, now = offerNow()) {
  *    beside a pack of the same product (11 cupcakes = a pack + 1 is fine).
  * Cart and Checkout show it (CartIssues.jsx); Checkout refuses to place it.
  */
+/**
+ * After 5–15 Nov: turn each Diwali pack line back into the same pieces at the
+ * regular price — 10 loose cupcakes / cake pops, or 2 boxes — merged into any
+ * line of that size already in the cart. "Remove packs" used to delete them,
+ * so a cart of 12 Vanilla saved during Diwali came back as 2.
+ * A pack whose product no longer exists is dropped. Same array if no pack.
+ */
+export function unpackExpiredPacks(items = [], now = offerNow()) {
+  if (diwaliWindow(now, true).live || !items.some((it) => isDiwaliPackId(it.id))) return items
+  let out = items.filter((it) => !isDiwaliPackId(it.id))
+  for (const it of items) {
+    const m = String(it.id).match(/^(.*)-d(2|8|10)$/)
+    if (!m) continue
+    const p = byId(m[1])
+    if (!p) continue
+    const packs = Math.max(1, Number(it.qty) || 1)
+    let line, per
+    if (m[2] === '2') {
+      // 2 boxes of 6: the box line (Variety is box-only, sold as the product itself)
+      line = p.slice != null ? boxLine(p) : { id: p.id, name: p.name, price: p.price, img: p.img, qty: 0, minQty: 1 }
+      per = 2
+    } else {
+      line = baseLine(p)
+      per = Number(m[2]) // 10 pieces (or the retired box of 8)
+    }
+    const have = out.find((x) => x.id === line.id)?.qty || 0
+    out = setQty(out, line, have + per * packs)
+  }
+  return out
+}
+
 export function cartProblems(items = [], now = offerNow()) {
   const live = diwaliWindow(now, true).live
   const expired = live ? [] : items.filter((it) => isDiwaliPackId(it.id))

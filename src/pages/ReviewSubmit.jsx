@@ -48,7 +48,6 @@ export default function ReviewSubmit() {
   })
   const [form, setForm] = useState({
     name: '',
-    email: '',
     rating: 5,
     title: '',
     text: '',
@@ -189,17 +188,6 @@ export default function ReviewSubmit() {
                 maxLength={60}
               />
             </div>
-            <div className="col-md-6">
-              <input
-                className="cc-input"
-                placeholder="Email (optional)"
-                aria-label="Email (optional)"
-                type="email"
-                value={form.email}
-                onChange={(e) => update('email', e.target.value)}
-                maxLength={120}
-              />
-            </div>
             <div className="col-12">
               <label className="cc-field-label" htmlFor="review-order-item">
                 What did you order?
@@ -322,8 +310,7 @@ export default function ReviewSubmit() {
               marginBottom: 0,
             }}
           >
-            By submitting you agree to let us share your name and review publicly. We'll
-            never share your email.
+            By submitting you agree to let us share your name and review publicly.
           </p>
         </form>
       </div>

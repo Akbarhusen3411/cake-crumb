@@ -231,6 +231,9 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
     if (savingRef.current) return
     savingRef.current = true
     setBusy(true)
+    // try/finally: a throw, or a reload() waiting on a weak signal, used to
+    // leave the lock set — the next Save then did nothing at all.
+    try {
     if (editing && editing.id) {
       // An existing number is never regenerated — it's this order's identity,
       // even if the date or the customer name is being corrected. Rows from
@@ -243,9 +246,11 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
       await addDocRec(ACC.ORDERS, { ...data, orderNo: nextOrderNo(orders, data.date, data.customer) })
     }
     setEditing(null)
-    await reload()
-    setBusy(false)
-    savingRef.current = false
+    } finally {
+      setBusy(false)
+      savingRef.current = false
+    }
+    reload() // not awaited — the live list updates itself; this covers no-cloud builds
   }
   // Each of these moves money with one tap, so each offers an Undo for a few
   // seconds. Undo writes the old value back rather than toggling a second time.

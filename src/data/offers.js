@@ -13,7 +13,7 @@ import { img } from './images.js'
 import { shopProducts } from './products.js'
 import { inr } from './format.js'
 import {
-  OFFERS_ON, EVERYDAY_ON, OFFER_RULES, DIWALI_PACK10, DIWALI_PACK2,
+  OFFERS_ON, EVERYDAY_ON, OFFER_RULES, DIWALI_PACK10, DIWALI_PACK2, DIWALI_DATES, DIWALI_FROM,
   ordinal, offerNow, diwaliWindow, midMonthWindow, pack10Line, pack2Line,
 } from './offerRules.js'
 
@@ -55,7 +55,7 @@ export const OFFERS = [
     buyNote: '3 tubs → 4 cake pops · 4 → 2 cupcakes + 2 cake pops · 6 → a free tub',
     get: '3 cake pops',
     name: 'Diwali Tub Treat',
-    tag: 'Diwali · 5 – 15 Nov',
+    tag: `Diwali · ${DIWALI_DATES.range}`,
     condition: 'Order cheesecake tubs, any flavours mixed: 2 tubs get 3 cake pops, 3 get 4 cake pops, 4 get 2 cupcakes + 2 cake pops, and 6 get a 7th tub free.',
     gift: '3 cake pops, up to a free tub with 6',
     giftShort: 'up to a 7th tub',
@@ -72,7 +72,7 @@ export const OFFERS = [
     buyNote: 'Buy 2 for a free sponge tub + 3 cake pops',
     get: '4 cake pops',
     name: 'Diwali Cake Treat',
-    tag: 'Diwali · 5 – 15 Nov',
+    tag: `Diwali · ${DIWALI_DATES.range}`,
     condition: 'Order a whole sponge cake (Bento), any flavour, for 4 free cake pops — or two whole sponge cakes for a free sponge cake tub + 3 cake pops.',
     gift: '4 cake pops, or a sponge tub + 3 cake pops with 2',
     giftShort: 'up to a sponge tub + 3 cake pops',
@@ -86,14 +86,14 @@ export const OFFERS = [
     prices: diwaliPackPrices(),
     deal: true, // a price, not a free gift: label "Deal", no cart gift
     buy: 'Diwali packs — cupcakes & cake pops',
-    buyNote: `Cupcakes from ${inr(239)} · cake pops ${inr(139)} · 2 Variety boxes ${inr(339)}`,
-    get: `Packs from ${inr(139)}`,
+    buyNote: `Cupcakes from ${inr(DIWALI_FROM.cupcakes10)} · cake pops ${inr(DIWALI_FROM.cakePops10)} · 2 Variety boxes ${inr(DIWALI_FROM.variety2)}`,
+    get: `Packs from ${inr(DIWALI_FROM.from)}`,
     getLabel: 'Deal',
     name: 'Diwali Sweet Packs',
-    tag: 'Diwali · 5 – 15 Nov',
+    tag: `Diwali · ${DIWALI_DATES.range}`,
     condition: 'Diwali-only packs at a special price — 10 cupcakes of any flavour, 10 Chocolate, Vanilla or Red Velvet cake pops, or 2 Variety boxes of 6.',
     gift: 'Diwali pack prices',
-    tickerText: `10 cupcakes from ${inr(239)} · 10 cake pops ${inr(139)}`,
+    tickerText: `10 cupcakes from ${inr(DIWALI_FROM.cupcakes10)} · 10 cake pops ${inr(DIWALI_FROM.cakePops10)}`,
     image: img.rcOwnCupcakesSix,
     alt: 'Six assorted cupcakes',
     cta: { label: 'Choose a pack', to: '/offers#diwali-packs' },
