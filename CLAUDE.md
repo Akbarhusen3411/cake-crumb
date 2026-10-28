@@ -154,7 +154,7 @@ The bakery's **manual daily bookkeeping** (walk-ins, expenses, owner's cash) —
 
 **Data & sync**
 
-- `services/accounting.js` mirrors `orders.js`. Four admin-only collections: `acc_orders`, `acc_expenses`, `acc_withdrawals`, `acc_menu`. Orders and expenses are **itemized bills** (`items: [...]` + `amount`); `orderTotal()`/`orderQty()` sum lines and fall back to legacy `qty`/`unitPrice`. Summaries read `amount`/`orderTotal()`. **A new collection needs a rule** (`allow read, write: if request.auth != null`) or writes fall back to localStorage silently.
+- `services/accounting.js` mirrors `orders.js`. Four admin-only collections: `acc_orders`, `acc_expenses`, `acc_withdrawals`, `acc_menu`. Orders and expenses are **itemized bills** (`items: [...]` + `amount`); `orderTotal()`/`orderQty()` sum lines and fall back to legacy `qty`/`unitPrice`. Summaries read `amount`/`orderTotal()`. **A new collection needs a rule** (`allow read, write: if isAdmin();` in `firestore.rules`, then paste it into the console — `request.auth != null` was the hole the admin lock closed) or writes fall back to localStorage silently.
 - **A broken Firestore looks like a healthy one** — every helper falls back to `localStorage`, so one device shows stale rows and a failed write *looks* saved until the next cloud read reverts it. Failures route through `reportCloudError()` → `onCloudError(cb)` → a "Not saved to the cloud" banner; keep new cloud calls on that path. **Saves survive a weak connection and a closed tab**: a new or edited row carries `_pending: <nonce>` in localStorage, a delete leaves a tombstone (`cc_<coll>_deleted_v1`), and **only OUR write promise resolving clears them** (`markSaved(coll, id, nonce)` — a newer edit keeps its own mark). `mergePending()` lets a pending row beat the cloud copy and drops tombstoned ids; every snapshot runs `flushPending()` (deletes, then `setDoc` of each pending row on its own id — re-read per row, one flush per collection, `inFlight` stops double sends); every read/write has a 12 s `withTimeout()`. **Never clear the mark on sight of the doc in a snapshot** — Firestore's listener shows a write the moment it's *queued*, and with the default memory cache that queue dies with the tab (the first version did this and lost offline saves). `cloudData()` strips `id`/`_pending` from anything written, and cloud rows' own `_pending` is ignored (an old undo stored one). The fake-Firestore test harness that proves this lives only in a session scratchpad — re-create it before changing this layer. When cloud and local diverge, **read Firestore directly** (`getDocs`, no fallback) before diagnosing.
 - **Live** — `subscribeDocs()` (`onSnapshot`) for all four. Without Firebase it delivers `localStorage` once, which is why tabs still call `reload()` after a save — keep those.
 - **`acc_*` rules have no `hasOnly`**, so new fields are free (unlike `reviews`).
@@ -280,7 +280,7 @@ The bakery's **manual daily bookkeeping** (walk-ins, expenses, owner's cash) —
 - **Devtools "mobile view" can't test this** — it keeps the desktop print engine.
 - The frame needs all three: a **`<base href>`** (`srcdoc`'s base is `about:srcdoc`), the invoice wrapped in **`.cc-invoice-overlay`** (print hides `body > *:not(.cc-invoice-overlay)`), and printing **after `fonts.ready`**. Removed after 60s — tearing down when `print()` returns cancels async dialogs.
 - The `@media print` **`html, body` overflow reset with `!important`** outranks the modal's inline scroll lock and `overflow-x: clip` — keep it.
-- **`@page { size: A4 landscape; margin: 0 }` is at the TOP LEVEL of `index.css`**, not inside `@media print` (there it was dropped: portrait with headers). `margin: 0` suppresses the browser header/footer; **date/title/URL/page number are one group**.
+- **`@page { size: A4 landscape; margin: 0 }` is at the TOP LEVEL of `src/admin.css`** (moved from `index.css` with the admin styles), not inside `@media print` (there it was dropped: portrait with headers). `margin: 0` suppresses the browser header/footer; **date/title/URL/page number are one group**.
 - **Chrome's dialog overrides `@page` and remembers it.** A portrait-with-headers printout isn't proof the CSS broke — check the built CSS, then More settings.
 - The modal is `createPortal`'d onto `document.body` so print can `display: none` `#root`; hiding the app in place prints blank pages.
 
@@ -304,7 +304,7 @@ The bakery's **manual daily bookkeeping** (walk-ins, expenses, owner's cash) —
 
 Checkout asks **Home Delivery** or **Self-Pickup**. Pricing lives in `shopConfig.js` as `DELIVERY = { freeRadiusKm, slabs, origin }` + `deliveryFee(method, distanceKm)`. Pickup free; delivery within `freeRadiusKm` (10 km) free; beyond, the first slab with `maxKm` ≥ distance (10–20 km ₹80 · 20–35 ₹150 · 35–50 ₹250 · 50–75 ₹350 · 75–100 ₹450 · 100+ ₹550 — read the live values). **Slabs, not per-km**: a pincode's geocoded point is approximate. `distanceKm === null` → free. `DELIVERY.origin` is the pin of the bakery's Google Maps listing (Plus Code MQ84+58; was MQ84+2GQ, ~60m off, until Oct 2026) — the footer map, Maps links and JSON-LD `geo` read it too.
 
-**The km is never shown to the customer.** `services/delivery.js` geocodes the pincode via Nominatim and Haversines from `origin`. Customer sees only the **amount** (or "…") — no distance, no "within 10 km". `deliveryKm` is stored on the private `orders` doc, shown **only in admin**, kept out of `tracking` and the receipt. Nominatim failure → null → free.
+**The km is never shown to the customer.** `services/delivery.js` geocodes the pincode via Nominatim and Haversines from `origin`. Customer sees only the **amount** (or "…") — no distance, no "within 10 km". `deliveryKm` is stored on the private `orders` doc, shown **only in admin**, kept out of `tracking` and the receipt. Nominatim failure → null → no fee charged, and every surface says so honestly: the summary shows "Confirmed on WhatsApp" and the receipt, the order (`deliveryTbc`) and both emails say "to be confirmed" (see *Checkout*).
 
 **ChatBot:** name → phone → *email (optional)* → **delivery/pickup** → address → **pincode** → date. **Pickup skips address and pincode** (`deliveryMethod: 'pickup'`, `deliveryKm: null`). Delivery uses the same `kmFromBakeryByPincode`. Review renders an `OrderSummaryCard`. **Cart** shows "Calculated at checkout". Change knobs in `shopConfig.js` only — don't hard-code a fee or print the word "flat".
 
@@ -357,77 +357,19 @@ No coupon field, promo code or percentage off. **Explicitly deferred by the owne
 
 ### Print posters — `pamphlet/`
 
-Two designs, each in A2 (420 × 594 mm) and A4 — the ad in A5 too — English only, editable HTML plus exports. Not in the app or Vite build; `pamphlet/README.md` lists every file. (`offers/` was deleted Oct 2026.) The **priced** print piece is `menu/`; posters stay unpriced.
-
-- **`ad-a2.html`** — retail ad (emblem, "Easy as 1·2·3" gift tag, product cards, hero photo, feature band, one order panel with three QRs), recommended for walls. **`poster-a2.html`** — calmer menu board (13 photos, names-only menu) for counters.
-- **No prices printed.** `poster-a2`/`-a4` carry a "Prices?" QR (`qr/menu.svg` → `/menu`), so the `/menu` URL is load-bearing for paper in circulation. **The ads no longer have that tile** (owner's choice; customers ask on WhatsApp).
-- **The A4s are copies, not derived.** `ad-a4.html` / `poster-a4.html` = the A2 file with `zoom: 0.5` on `.page` plus an **"A4 readability"** block at the end (larger type, re-placed blocks; sizes and `top` still in **A2 mm**, printed = half). Edits go into each size by hand. `poster-a4` has two photo rows (8 of 13); `ad-a4` a smaller emblem and larger card photos.
-- **The ad's gift tag says how to order, not the promises** ("Made to order / Eggless / Custom designs" are in the brown band). No second circle beside the emblem (a round seal was rejected).
-- **Facts checked against the catalogue:** cheesecake card tag is **"Banto & tubs"**. No card photo may show chocolates (none sold); the heart-box shot appears only as an unlabelled decorative circle (owner's choice).
-- **Contact details, address and flavour names are hand-copied**, as in `cards/`.
-- **Laid out in millimetres.** `ad-a2` places nearly every block `position: absolute` from the top — a taller section means moving those below. Re-render and look.
-- **`poster-a2` is two stacks that must not meet**: masthead → photos → menu → promises flow from the top; brown band, occasions row and closing strip are pinned to the bottom. The photo rows (`grid-template-rows` on `.mosaic`) are the slack — retune after any change above and check the promises→band gap.
-- **The masthead is one centred group**: logo beside the name, centred between the corner ribbons. Stacked logo and name-centred-alone were both rejected.
-- **`?bleed`** gives a 3 mm bleed; **`?png`** drops the grey surround. PDFs/PNGs come from headless Chrome like the cards (commands in README); `*-share.pdf` is the PNG wrapped with `jspdf`, for phones. A4 bleed is 6 A2-mm (`--b: 6mm`).
-- **`ad-a4.html` and `ad-a5.html` are TWO pages each** — a second `.page` (`.page--back`) is a photo back, so their PDFs are front then back; `ad-a2` has no back. `?png` = front, **`?png&side=back`** = back (`png/*-back*`). Don't split the back into its own file again (owner had it merged).
-  - **The A5 is a third hand-kept copy**: `ad-a4.html` with `zoom: 0.35238` (148 / 420), 8.51 A2-mm bleed, and an **"A5 readability"** block at the very end (larger type, ~19 mm QRs, no occasions row on the front, no sub-lines in the brown band). **The two backs must stay identical in content** — back edits go into both. Only the A5 takes `?side=front` / `?side=back` when *printed* (makes `ad-a5-front.pdf`).
-  - **A5 screenshots need a crop**: page is 559.37 × 793.7 CSS px, window `560,794`, PNG cut to 1748 × 2480 (300 dpi).
-  - **All three fronts feature the birthday gift box** in a **square** frame (lettering in its corners). A4/A5 name it on a banner under the photo; A2 uses a sticker over its bottom-left and drops the two small circles that covered "Happy Birthday". Wording: *Cake · flowers · free dessert cup* (the cup is free, not part of the box). A plain phone photo was tried as hero; the owner went back to the styled one.
-  - **Outlines are shadows OUTSIDE the box.** Hero ring 3 mm, banner 2 mm, so a 5 mm gap was none (frame is 156 mm tall for that); round photos' ring 2.2 mm, names 6 mm below. Leave room for the ring.
-  - **The back is five absolutely-placed bands** — masthead (logo, name, tagline, "A little taste of what we bake") · dessert-tub hero + four tiles · "Pick your favourite" round photos · one wide + three tall · closing panel. Photos are copies in `img/bNN.jpg`, source name in a comment beside each (gaps = spares deleted Oct 2026).
-  - **Every name on the back is the owner's wording — don't re-derive from a filename.** `dessertcup-rose-cream` is **Strawberry**; the dark hearts are **"Heart cake"**, not chocolates; the assorted-tubs shot isn't milk cake. The same filenames sit on differently-named site products — unresolved.
-  - **No photo twice on the back.** The wide tile is two cake-pop photos (`.tile--duo`).
-  - **The back carries NO contact details** — no number, pills or QR (an order panel was removed; the front says it). Closing panel: "Turn over to order", two photos, four occasion icons.
-  - **The closing panel's three columns must add to the 392 mm inside the margins**, or the middle overflows and pushes the occasions grid off the edge — hence `minmax(0, 1fr)`.
-  - **A shared front image opens WhatsApp on many Android phones** (galleries scan QRs) — expected. The back has no code.
-- **Phone sharpness.** A4s also export `png/*-hd.png`/`.jpg` at 600 dpi (scale factor 5); share PDFs use the full-resolution image. `qr/google-hd.png` is Google's QR enlarged 4× nearest-neighbour (at 456 px viewers blurred it). WhatsApp blur is its photo compression: send **as a Document**.
-- **Verify a rebuild wrote the files.** A bash `for` loop with backslashed Windows paths once wrote to literal `pamphlet$n.pdf` names and left real PDFs stale. Drive Chrome from Node (`execFileSync`, no shell) and check each output's mtime.
-- **Owner's wording:** "Homemade cakes & desserts", never "homemade bakery"; Gujarati town spelling **વસો**, not વાસો. A Gujarati back was built, then removed.
+A2/A4/A5 ad and menu-board posters, hand-kept HTML + headless-Chrome exports. **Editing rules live in `pamphlet/README.md`** (layout in mm, the A4/A5 copies, the two-page backs, bleed, exports). Never-break rules: **no prices printed** (the "Prices?" QR → `/menu`, so that URL is load-bearing for paper in circulation), contact details and flavour names are **hand-copied**, and verify each export's mtime after a rebuild.
 
 ### Print cards — `cards/`
 
-A 3.5 × 2 in visiting card, an A7 thank-you card and an A5 contact card: editable HTML, print-ready PDFs (one page per side, exact size) and 600 dpi PNGs (contact card 300 dpi). Not in the app or Vite build; `cards/README.md` lists every file.
-
-- **Every contact detail is hand-copied** (phone, email, Instagram, full address). Changing `BAKERY_ADDRESS` or the number stales both HTML files and every export.
-- **Own theme** — "pink paper" (dusty pink, maroon Cormorant Garamond, gold-edged watercolour corners) in `card.css`, matched to an owner reference. Only the wordmark is the site's (Playfair bold, larger italic `&`, Allura tagline, as `Logo.jsx`). `img/logo-print.png` is a saturation/contrast-boosted copy of `public/logo_final.png`; redo if the logo changes.
-- **Real units.** Visiting card `3.5in × 2in`. Thank-you card is a 105 × 149 mm canvas shrunk to A7 with `zoom: 0.7048`, so CSS sizes are ~1.42× printed.
-- **Bleed**: `visiting-card.html?bleed` adds 0.125 in all round (3.75 × 2.25 in) → `visiting-card-bleed.pdf`. Bleed box sized directly (`width: 3.75in` + transparent border); `box-sizing: content-box` pushed it 0.2 in off-centre. `.waves--bleed` and wave paths reach past the trim.
-- **Regenerating** — headless Chrome: `chrome --headless=new --virtual-time-budget=6000 --no-pdf-header-footer --print-to-pdf=<out> file:///…/cards/<card>.html[?bleed]`. PNGs: `--force-device-scale-factor=6.25` (600 dpi) on a window the card's CSS-pixel size, cropped exactly. Check a PDF's size from its `MediaBox`.
-- **QR codes** from the `qrcode` npm package (**not** a project dependency — install in a scratch dir). **Level H** (the icon badge doesn't stop scanning), written as filled `<path>` rects (stroked rendered as stripes). Decode a regenerated one (jsQR) before trusting it. The review QR opens `MAP_LINK` (listing), predating `GOOGLE_REVIEW_LINK` — regenerating from that would open the review box directly. `qr/website.svg` is **off the visiting card by owner's choice** until product photos match names. **`menu/` loads `whatsapp.svg`, `instagram.svg`, `reviews.svg` from here by relative path** — renaming one breaks the menu; a regenerated code needs a menu rebuild.
-- **`contact-card.html` — a third look**: A5, one side, real mm (no `zoom`), matched to an owner-supplied image: blush paper, rose-gold double frame, rose icons. Re-tints `card.css` variables in its own `<style>`; loads `../public/logo_final.png`, not `logo-print.png`.
-  - **Wrong on the supplied image, don't put back:** `90816 68490` as a second number (it's the UPI number), "Kheda, Nadiad", "GPay · PhonePe · Paytm", and a QR encoding nothing.
-  - **Hand-copied rules**: the ₹1,000 / 50% advance line mirrors `BULK_ORDER_MIN` / `DEPOSIT_PCT`; the 30-minute cancellation mirrors `/faq`. Delivery says "charges by distance".
-  - **Wordmark is the site's lockup** (a thin Cormorant one was replaced; a "Contact Us" heading removed).
-  - **Corner ribbons are `poster-a4.html`'s mirrored pair**, smaller, each with a script quote; they run to the page edge. The right quote ("Life is short, eat the cake!") is a placeholder, not the owner's.
-  - **The bottom is tight** — anything added above the QR row pushes the thank-you line into the corner roses.
-  - `?png` drops the surround (window `560,794`, scale 3.125, crop 1748 × 2480). Uses `qr/whatsapp.svg`.
-- **Owner decisions:** no founder names, no FSSAI/Udyam numbers on the cards (added, then removed).
+Visiting, thank-you and A5 contact cards. **Editing rules live in `cards/README.md`.** Every contact detail is hand-copied (changing `BAKERY_ADDRESS` or the number stales them); QR codes are level H and must be decoded after regenerating; **`menu/` loads `cards/qr/*.svg` by relative path** — don't rename them.
 
 ### Printed menu — `menu/`
 
-Seven-page A4: cover · Cheesecakes · Cakes & Cookies · Cupcakes & Treats · Bakes & Gifts · Drinks · Order & Contact. Not in the app or Vite build.
-
-- **Generated, unlike every other print piece.** `build-menu.mjs` reads `products.js`, `certifications.js` and `inr()` → `menu-a4.html`; `export-menu.mjs` renders `menu-a4.pdf`, `png/menu-page-N.png` (300 dpi, plus `-small.jpg`) and `menu-a4-share.pdf` (JPEG pages) via headless Chrome with `execFileSync`, printing `ok`/`STALE` per output. Rebuild after any price change: `node menu/build-menu.mjs && node menu/export-menu.mjs`. **Never hand-edit `menu-a4.html`.**
-- **Prices from `products.js`, not `menu/menu.pdf`** (the owner's older menu, kept as source; its prices differ). Every price via `inr()`.
-- **Deliberately gone from the old menu:** `90816 68490` as a second number, and "GPay · PhonePe · Paytm" — it says "UPI (any app) · Cash".
-- **Size wording:** cheesecakes **Banto / Tub**, milk & sponge cakes **Bento / Tub**, size guide at each page's foot ("whole cake, 450–500 g" · "Tub — single serve"). The Bento weight is unconfirmed.
-- **Theme follows the website**: blush paper, rose double border, Playfair bold cocoa titles with heart divider, Lato item names, bold rose prices, blush pill badges, ♡ note boxes. **Every section heading is a band** (`.sub`: bold rose-ink Playfair on blush, rose left bar). Cover is a side-by-side masthead (large logo left, wordmark + tagline + "Our Menu" right); stacked and the black header wordmark were rejected.
-- **Pages fill themselves** — an in-page `fit()` tunes row padding (`--rp`), photo height (`--ph`) and gift band (`--gs`). Big changes can still overflow — check the PNGs.
-- **Hand-kept:** cover contents page numbers, contact panel (number, handle, email, `BAKERY_ADDRESS`), the ₹1,000 / 50% line, and QRs (`../cards/qr/*.svg`). Cover shows FSSAI and Udyam numbers (owner's request here).
-- `menu-a4.pdf` is ~26 MB; send the share PDF on phones.
+Seven-page A4 menu **generated from `products.js`** (prices via `inr()`, nut **N** marks from allergen tags). **Rebuild after any price, name or allergen change:** `node menu/build-menu.mjs && node menu/export-menu.mjs` (prints `ok`/`STALE` per file). **Never hand-edit `menu-a4.html`.** Details in `menu/README.md`.
 
 ### Social media — `social/`
 
-Facebook artwork and the Google-review poster. Not in the app or Vite build. Every image is HTML rendered by headless Chrome via `execFileSync`.
-
-- **`facebook-cover-tagline.html`** — 820 × 312 CSS px at 2× → 1640 × 624. **Phones crop to 16:9, keeping only x 132–688**, so name, number and the inner two photos sit there. Tagline under the name (owner's request); it's the widest line, so logo and type were shrunk. Export command in a comment at the top.
-- **`posts/post.html?n=1…6`** — six launch posts, 540 × 675 at 2× → 1080 × 1350. `node social/posts/export.cjs` renders all, `ok`/`STALE` per file. Footer brand carries the tagline; cupcake photo is `cupcakes-box-pink-purple` everywhere (owner choices).
-  - **No prices in images or `posts/captions.txt`** (one "from ₹…" reads as the whole range's price). Only ₹ left: the ₹1,000 / 50% advance *rule* in post 6.
-  - Post 5 shows the Birthday Gift Box **whole** (`.photo--whole`: `contain` over a blurred copy) — `cover` cut its lettering.
-- **`review-poster.html`** — A4, real mm. `node social/export-review-poster.cjs [<path to jsqr>]` writes `review-poster.pdf`, `png/review-poster.png` (300 dpi) and `google-review-qr-g.png`, then **decodes both QRs** and fails loudly if either doesn't return the review link. `jsqr` isn't a project dependency.
-  - **`google-review-qr.svg` encodes `GOOGLE_REVIEW_LINK`** (unlike `cards/qr/reviews.svg` → `MAP_LINK`). Level **H** lets the G badge cover its centre — keep the badge ≤ ~22% of the code's width.
-- **The Facebook page:** "No hours available" (see *Timing*), the one public number, and the site's copy rules apply to captions and replies.
-- Contact details hand-copied into every file.
+Facebook cover/posts and the Google-review poster (HTML → headless Chrome). **Details in `social/README.md`.** No prices in images or captions; the review QR encodes `GOOGLE_REVIEW_LINK` and the export script decodes it before passing.
 
 ### Offers on the site — `/offers`, Home, and the cart
 
@@ -455,7 +397,7 @@ Ten offers in **`data/offers.js`** — three Diwali, seven everyday — the sing
 - **Mid-Month is date-driven by the visitor's clock** — 00:00 on the 13th to 23:59 on the 20th, monthly, no redeploy. Outside the window it's *hidden* everywhere (Home, `/offers`, cart). Time is read through **`offerNow()`**, re-rendered via **`useOfferClock()`** (every minute + tab focus). **`?testdate=YYYY-MM-DD[THH:MM]` works on the dev server only** (gated on `import.meta.env.DEV`) — keep it so.
 - **`cartOfferStatus(items, subtotal, now)`** decides the gift: one per order, the **biggest by menu value** (`GIFT_VALUE`, tier values for Tub Lover), ties by `RANK`. Returns a `nudge` only when the next gift is close. Classifies lines by the **"(tier)" bracket in the name, then the id suffix** — an *exact* id match first, since `lo-dipped-slice` merely ends in `-slice`.
 - **Picker lines must be built exactly as Shop/QuickView build them** (`<id>-slice` + "(tier)" name + tier price), or one box becomes two cart lines.
-- The gift shows in Cart, Checkout and the Shop sidebar (`OfferGift`); Checkout writes **`🎁 Free gift: …`** into the receipt. **Not** stored on the order (would need a rules change). Book it at **₹0** in accounting.
+- The gift shows in Cart, Checkout and the Shop sidebar (`OfferGift`); Checkout writes **`🎁 Free gift: …`** into the receipt. It is **stored on the order as `offerGift`** (no rules change — `orders` has no `hasOnly`) and listed in both emails. Book it at **₹0** in accounting.
 - **Home**: hero stickers over the photo (`HeroOffers`), a light rotating pill under the hero (`OffersTicker` — a dark marquee was rejected), then tiles (`OffersBand`). In the window Mid-Month is a double-width spotlight; outside, six tiles three across. **Below 576px stickers and ticker are hidden** and tiles become a stacked thumbnail list.
 - **Every offer states its deal as BUY / FREE** (`.cc-offer-deal`) on Home and `/offers`. Each entry has short **`buy`** / **`buyNote`** / **`get`** (`get` falls back to `gift`); `condition` and `gift` stay the full cart/receipt wording. A new offer needs all three.
 - **The phone CSS for these tiles sits AFTER the base `.cc-offer-card` rules** (before, same-specificity base rules won). Rebuilding that block once dropped the band header's phone rules.
@@ -482,7 +424,7 @@ Pre-fill from `cc_customer_v1` / `cc_customer_draft_v1` was removed (stale data)
 
 **Every sitemap page has its own HTML file** (`scripts/prerender-routes.js`, last step of `predeploy`). Without it GitHub Pages served 404.html with **HTTP 404 for every route but Home** — Google dropped them and shared links previewed as Home. It writes `dist/<route>.html` (Pages serves `/shop` from `shop.html` with 200, no redirect), a copy of `index.html` with that page's `<title>`, description, canonical, og:* and twitter:* **read from its `usePageMeta({ title: '…', description: '…' })`** — keep those as plain single-quoted strings or the script falls back to Home's tags (it warns, never fails). Non-Home copies drop the hero preload. **A new public route needs a `PAGES` entry there** (plus the three things below). `/cart`, `/checkout`, unknown URLs still 404 — fine, they're not indexed.
 
-**The ChatBot is deferred, not routed** — `DeferredChatBot.jsx` mounts it at first idle (`requestIdleCallback`, 2.5s backstop) or first interaction (the launcher lives inside it). This took the eager chunk from **116 kB to 67 kB** (31.2 → 17.3 kB gz). `Suspense fallback={null}` on purpose.
+**The ChatBot is deferred, not routed** — `DeferredChatBot.jsx` mounts it at first idle (`requestIdleCallback`, 2.5s backstop) or first interaction (the launcher lives inside it). It keeps the ChatBot (the largest component) out of the entry chunk; with the later offers split and lazy pop-ups the entry was **~109 KB (29.2 KB gz) in Oct 2026** — re-measure with a build rather than quoting it. `Suspense fallback={null}` on purpose.
 
 **Seasonal and offer pieces load on demand too** (Oct 2026, ~4 KB gz off the entry chunk): `DiwaliWelcome` is fetched only while `diwaliWindow(offerNow()).live`, `MidMonthPopup` only while `OFFERS_ON && EVERYDAY_ON`, and Home's `HeroOffers` / `OffersTicker` / `OffersBand` only while `offersLive()` — each still decides for itself whether to show. **Eager code imports `data/offerRules.js`, never `offers.js`** (see *Offers on the site*).
 
@@ -695,7 +637,8 @@ One wording on Home, footer, cart, FAQ and `/contact`: **order a day ahead; orde
 | `cc_diwali_welcome_visit` | `DiwaliWelcome.jsx` | **sessionStorage**; welcome already shown this visit |
 | `cc_chunk_reloaded` | `ErrorBoundary.jsx` | **sessionStorage**; one-shot stale-chunk reload guard |
 | `cc_acc_orders_v1` … | `accounting.js` `lsKey()` | Mirror per accounting collection |
-| `cc_acc_perpiece_v1`, `cc_acc_cakepop_v2`, `cc_acc_freegift_v1`, `cc_acc_diwalipack_v4` | `accounting.js` | One-time menu migrations — bump the suffix to re-run |
+| `cc_acc_perpiece_v1`, `cc_acc_cakepop_v2`, `cc_acc_freegift_v1`, `cc_acc_diwalipack_v4` | `accounting.js` | Fast path only — the real "ran" mark is `acc_settings/main.migrations` (once per book). Bump the suffix to re-run; add new flags to `IMPORTER_FLAGS` |
+| `cc_acc_*_deleted_v1` | `accounting.js` | Deletes not yet confirmed by Firestore (tombstones) — re-sent on the next live read |
 | `cc_acc_excel_v7`, `cc_acc_taken` | — | Dead; nothing reads them |
 | `cc_acc_unlocked` | `AdminAccounting.jsx` | **sessionStorage**; accounting PIN unlocked for this tab |
 | `cc_acc_tab` | `AdminAccounting.jsx` | **sessionStorage**; last open accounting tab |

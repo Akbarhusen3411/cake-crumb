@@ -172,3 +172,36 @@ on the front (the back's closing panel shows the same four) and no sub-lines in 
 Screenshots use `--window-size=560,794` (A5 is a fraction of a pixel smaller) and are cropped to the
 exact pixel size; `?png` is the front, `?png&side=back` the back. When *printing*, `?side=front` or
 `?side=back` gives that side alone (it combines with `?bleed`) — that is how the front-only PDFs are made.
+
+---
+
+## Editing notes (moved from CLAUDE.md, Oct 2026)
+
+The working rules for this folder, kept here so the project-wide CLAUDE.md stays short. CLAUDE.md keeps a short pointer and the never-break rules.
+
+Two designs, each in A2 (420 × 594 mm) and A4 — the ad in A5 too — English only, editable HTML plus exports. Not in the app or Vite build; `pamphlet/README.md` lists every file. (`offers/` was deleted Oct 2026.) The **priced** print piece is `menu/`; posters stay unpriced.
+
+- **`ad-a2.html`** — retail ad (emblem, "Easy as 1·2·3" gift tag, product cards, hero photo, feature band, one order panel with three QRs), recommended for walls. **`poster-a2.html`** — calmer menu board (13 photos, names-only menu) for counters.
+- **No prices printed.** `poster-a2`/`-a4` carry a "Prices?" QR (`qr/menu.svg` → `/menu`), so the `/menu` URL is load-bearing for paper in circulation. **The ads no longer have that tile** (owner's choice; customers ask on WhatsApp).
+- **The A4s are copies, not derived.** `ad-a4.html` / `poster-a4.html` = the A2 file with `zoom: 0.5` on `.page` plus an **"A4 readability"** block at the end (larger type, re-placed blocks; sizes and `top` still in **A2 mm**, printed = half). Edits go into each size by hand. `poster-a4` has two photo rows (8 of 13); `ad-a4` a smaller emblem and larger card photos.
+- **The ad's gift tag says how to order, not the promises** ("Made to order / Eggless / Custom designs" are in the brown band). No second circle beside the emblem (a round seal was rejected).
+- **Facts checked against the catalogue:** cheesecake card tag is **"Banto & tubs"**. No card photo may show chocolates (none sold); the heart-box shot appears only as an unlabelled decorative circle (owner's choice).
+- **Contact details, address and flavour names are hand-copied**, as in `cards/`.
+- **Laid out in millimetres.** `ad-a2` places nearly every block `position: absolute` from the top — a taller section means moving those below. Re-render and look.
+- **`poster-a2` is two stacks that must not meet**: masthead → photos → menu → promises flow from the top; brown band, occasions row and closing strip are pinned to the bottom. The photo rows (`grid-template-rows` on `.mosaic`) are the slack — retune after any change above and check the promises→band gap.
+- **The masthead is one centred group**: logo beside the name, centred between the corner ribbons. Stacked logo and name-centred-alone were both rejected.
+- **`?bleed`** gives a 3 mm bleed; **`?png`** drops the grey surround. PDFs/PNGs come from headless Chrome like the cards (commands in README); `*-share.pdf` is the PNG wrapped with `jspdf`, for phones. A4 bleed is 6 A2-mm (`--b: 6mm`).
+- **`ad-a4.html` and `ad-a5.html` are TWO pages each** — a second `.page` (`.page--back`) is a photo back, so their PDFs are front then back; `ad-a2` has no back. `?png` = front, **`?png&side=back`** = back (`png/*-back*`). Don't split the back into its own file again (owner had it merged).
+  - **The A5 is a third hand-kept copy**: `ad-a4.html` with `zoom: 0.35238` (148 / 420), 8.51 A2-mm bleed, and an **"A5 readability"** block at the very end (larger type, ~19 mm QRs, no occasions row on the front, no sub-lines in the brown band). **The two backs must stay identical in content** — back edits go into both. Only the A5 takes `?side=front` / `?side=back` when *printed* (makes `ad-a5-front.pdf`).
+  - **A5 screenshots need a crop**: page is 559.37 × 793.7 CSS px, window `560,794`, PNG cut to 1748 × 2480 (300 dpi).
+  - **All three fronts feature the birthday gift box** in a **square** frame (lettering in its corners). A4/A5 name it on a banner under the photo; A2 uses a sticker over its bottom-left and drops the two small circles that covered "Happy Birthday". Wording: *Cake · flowers · free dessert cup* (the cup is free, not part of the box). A plain phone photo was tried as hero; the owner went back to the styled one.
+  - **Outlines are shadows OUTSIDE the box.** Hero ring 3 mm, banner 2 mm, so a 5 mm gap was none (frame is 156 mm tall for that); round photos' ring 2.2 mm, names 6 mm below. Leave room for the ring.
+  - **The back is five absolutely-placed bands** — masthead (logo, name, tagline, "A little taste of what we bake") · dessert-tub hero + four tiles · "Pick your favourite" round photos · one wide + three tall · closing panel. Photos are copies in `img/bNN.jpg`, source name in a comment beside each (gaps = spares deleted Oct 2026).
+  - **Every name on the back is the owner's wording — don't re-derive from a filename.** `dessertcup-rose-cream` is **Strawberry**; the dark hearts are **"Heart cake"**, not chocolates; the assorted-tubs shot isn't milk cake. The same filenames sit on differently-named site products — unresolved.
+  - **No photo twice on the back.** The wide tile is two cake-pop photos (`.tile--duo`).
+  - **The back carries NO contact details** — no number, pills or QR (an order panel was removed; the front says it). Closing panel: "Turn over to order", two photos, four occasion icons.
+  - **The closing panel's three columns must add to the 392 mm inside the margins**, or the middle overflows and pushes the occasions grid off the edge — hence `minmax(0, 1fr)`.
+  - **A shared front image opens WhatsApp on many Android phones** (galleries scan QRs) — expected. The back has no code.
+- **Phone sharpness.** A4s also export `png/*-hd.png`/`.jpg` at 600 dpi (scale factor 5); share PDFs use the full-resolution image. `qr/google-hd.png` is Google's QR enlarged 4× nearest-neighbour (at 456 px viewers blurred it). WhatsApp blur is its photo compression: send **as a Document**.
+- **Verify a rebuild wrote the files.** A bash `for` loop with backslashed Windows paths once wrote to literal `pamphlet$n.pdf` names and left real PDFs stale. Drive Chrome from Node (`execFileSync`, no shell) and check each output's mtime.
+- **Owner's wording:** "Homemade cakes & desserts", never "homemade bakery"; Gujarati town spelling **વસો**, not વાસો. A Gujarati back was built, then removed.

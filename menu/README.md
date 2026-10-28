@@ -59,3 +59,20 @@ big change look through the PNGs to make sure nothing overflows.
 - The old menu's second number (90816 68490) is the UPI number and was left off on purpose, as was
   "GPay · PhonePe · Paytm" — the menu says "UPI (any app) · Cash".
 - The Birthday Gift Box is a cake and flowers; the dessert cup is a free extra.
+
+---
+
+## Editing notes (moved from CLAUDE.md, Oct 2026)
+
+The working rules for this folder, kept here so the project-wide CLAUDE.md stays short. CLAUDE.md keeps a short pointer and the never-break rules.
+
+Seven-page A4: cover · Cheesecakes · Cakes & Cookies · Cupcakes & Treats · Bakes & Gifts · Drinks · Order & Contact. Not in the app or Vite build.
+
+- **Generated, unlike every other print piece.** `build-menu.mjs` reads `products.js`, `certifications.js` and `inr()` → `menu-a4.html`; `export-menu.mjs` renders `menu-a4.pdf`, `png/menu-page-N.png` (300 dpi, plus `-small.jpg`) and `menu-a4-share.pdf` (JPEG pages) via headless Chrome with `execFileSync`, printing `ok`/`STALE` per output. Rebuild after any price change: `node menu/build-menu.mjs && node menu/export-menu.mjs`. **Never hand-edit `menu-a4.html`.**
+- **Prices from `products.js`, not `menu/menu.pdf`** (the owner's older menu, kept as source; its prices differ). Every price via `inr()`.
+- **Deliberately gone from the old menu:** `90816 68490` as a second number, and "GPay · PhonePe · Paytm" — it says "UPI (any app) · Cash".
+- **Size wording:** cheesecakes **Banto / Tub**, milk & sponge cakes **Bento / Tub**, size guide at each page's foot ("whole cake, 450–500 g" · "Tub — single serve"). The Bento weight is unconfirmed.
+- **Theme follows the website**: blush paper, rose double border, Playfair bold cocoa titles with heart divider, Lato item names, bold rose prices, blush pill badges, ♡ note boxes. **Every section heading is a band** (`.sub`: bold rose-ink Playfair on blush, rose left bar). Cover is a side-by-side masthead (large logo left, wordmark + tagline + "Our Menu" right); stacked and the black header wordmark were rejected.
+- **Pages fill themselves** — an in-page `fit()` tunes row padding (`--rp`), photo height (`--ph`) and gift band (`--gs`). Big changes can still overflow — check the PNGs.
+- **Hand-kept:** cover contents page numbers, contact panel (number, handle, email, `BAKERY_ADDRESS`), the ₹1,000 / 50% line, and QRs (`../cards/qr/*.svg`). Cover shows FSSAI and Udyam numbers (owner's request here).
+- `menu-a4.pdf` is ~26 MB; send the share PDF on phones.

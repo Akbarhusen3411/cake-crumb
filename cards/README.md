@@ -57,3 +57,26 @@ more: 50% advance by UPI") and the 30-minute cancellation line repeat the websit
 those change on the site, change them here and re-make the PDF and PNG.
 
 Opening `contact-card.html?png` shows the card alone, with no grey surround, for a screenshot.
+
+---
+
+## Editing notes (moved from CLAUDE.md, Oct 2026)
+
+The working rules for this folder, kept here so the project-wide CLAUDE.md stays short. CLAUDE.md keeps a short pointer and the never-break rules.
+
+A 3.5 × 2 in visiting card, an A7 thank-you card and an A5 contact card: editable HTML, print-ready PDFs (one page per side, exact size) and 600 dpi PNGs (contact card 300 dpi). Not in the app or Vite build; `cards/README.md` lists every file.
+
+- **Every contact detail is hand-copied** (phone, email, Instagram, full address). Changing `BAKERY_ADDRESS` or the number stales both HTML files and every export.
+- **Own theme** — "pink paper" (dusty pink, maroon Cormorant Garamond, gold-edged watercolour corners) in `card.css`, matched to an owner reference. Only the wordmark is the site's (Playfair bold, larger italic `&`, Allura tagline, as `Logo.jsx`). `img/logo-print.png` is a saturation/contrast-boosted copy of `public/logo_final.png`; redo if the logo changes.
+- **Real units.** Visiting card `3.5in × 2in`. Thank-you card is a 105 × 149 mm canvas shrunk to A7 with `zoom: 0.7048`, so CSS sizes are ~1.42× printed.
+- **Bleed**: `visiting-card.html?bleed` adds 0.125 in all round (3.75 × 2.25 in) → `visiting-card-bleed.pdf`. Bleed box sized directly (`width: 3.75in` + transparent border); `box-sizing: content-box` pushed it 0.2 in off-centre. `.waves--bleed` and wave paths reach past the trim.
+- **Regenerating** — headless Chrome: `chrome --headless=new --virtual-time-budget=6000 --no-pdf-header-footer --print-to-pdf=<out> file:///…/cards/<card>.html[?bleed]`. PNGs: `--force-device-scale-factor=6.25` (600 dpi) on a window the card's CSS-pixel size, cropped exactly. Check a PDF's size from its `MediaBox`.
+- **QR codes** from the `qrcode` npm package (**not** a project dependency — install in a scratch dir). **Level H** (the icon badge doesn't stop scanning), written as filled `<path>` rects (stroked rendered as stripes). Decode a regenerated one (jsQR) before trusting it. The review QR opens `MAP_LINK` (listing), predating `GOOGLE_REVIEW_LINK` — regenerating from that would open the review box directly. `qr/website.svg` is **off the visiting card by owner's choice** until product photos match names. **`menu/` loads `whatsapp.svg`, `instagram.svg`, `reviews.svg` from here by relative path** — renaming one breaks the menu; a regenerated code needs a menu rebuild.
+- **`contact-card.html` — a third look**: A5, one side, real mm (no `zoom`), matched to an owner-supplied image: blush paper, rose-gold double frame, rose icons. Re-tints `card.css` variables in its own `<style>`; loads `../public/logo_final.png`, not `logo-print.png`.
+  - **Wrong on the supplied image, don't put back:** `90816 68490` as a second number (it's the UPI number), "Kheda, Nadiad", "GPay · PhonePe · Paytm", and a QR encoding nothing.
+  - **Hand-copied rules**: the ₹1,000 / 50% advance line mirrors `BULK_ORDER_MIN` / `DEPOSIT_PCT`; the 30-minute cancellation mirrors `/faq`. Delivery says "charges by distance".
+  - **Wordmark is the site's lockup** (a thin Cormorant one was replaced; a "Contact Us" heading removed).
+  - **Corner ribbons are `poster-a4.html`'s mirrored pair**, smaller, each with a script quote; they run to the page edge. The right quote ("Life is short, eat the cake!") is a placeholder, not the owner's.
+  - **The bottom is tight** — anything added above the QR row pushes the thank-you line into the corner roses.
+  - `?png` drops the surround (window `560,794`, scale 3.125, crop 1748 × 2480). Uses `qr/whatsapp.svg`.
+- **Owner decisions:** no founder names, no FSSAI/Udyam numbers on the cards (added, then removed).
