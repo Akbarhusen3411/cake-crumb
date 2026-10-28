@@ -8,7 +8,8 @@ import { FaWhatsapp } from 'react-icons/fa'
 import { useCart } from '../context/CartContext.jsx'
 import { inr } from '../data/format.js'
 import OfferGift from '../components/OfferGift.jsx'
-import { OFFERS_ON, cartOfferStatus, diwaliWindow, isDiwaliPackId } from '../data/offers.js'
+import { OFFERS_ON, cartOfferStatus, giftRecord, cartProblems } from '../data/offers.js'
+import CartIssues from '../components/CartIssues.jsx'
 import { u } from '../data/images.js'
 import { COUNTRY_CODES, DEFAULT_COUNTRY } from '../data/countries.js'
 import { deliveryFee, isBulkOrder, depositAmount, DEPOSIT_PCT } from '../data/shopConfig.js'
@@ -234,8 +235,9 @@ export default function Checkout() {
 
   // A Diwali pack carries its Diwali price, so it can't be ordered once 5–15
   // Nov is over (a cart saved during Diwali, or a preview tab). Real calendar.
-  const expiredPacks = !diwaliWindow(undefined, true).live && items.some((it) => isDiwaliPackId(it.id))
-  const isFormValid = isDetailsValid && isPaymentValid && subtotal > 0 && !expiredPacks
+  // Also: a lone cupcake left under its minimum (cartProblems / CartIssues).
+  const cartBlocked = cartProblems(items).any
+  const isFormValid = isDetailsValid && isPaymentValid && subtotal > 0 && !cartBlocked
 
   // Keep the selected payment method consistent with the order size. When a cart
   // crosses into "bulk", a stale 'cod' choice becomes invalid → switch to the
@@ -349,6 +351,8 @@ export default function Checkout() {
       orderId: id,
       items: snapshotItems,
       totals: snapshotTotals,
+      // Same rule as the receipt's "🎁 Free gift" line (real calendar).
+      offerGift: OFFERS_ON ? giftRecord(cartOfferStatus(snapshotItems, subtotal, undefined, { real: true }).offer) : null,
       customer: {
         name: form.name,
         // store with country code so admin emails / WhatsApp messages
@@ -1131,11 +1135,7 @@ export default function Checkout() {
                   </div>
                 )}
 
-                {expiredPacks && (
-                  <div className="cc-infonote mb-2" role="alert">
-                    Diwali packs were available 5–15 Nov only — please remove them from your cart to place the order.
-                  </div>
-                )}
+                <CartIssues id="checkout-issues" />
                 <button type="submit" className="cc-place-order-btn" disabled={!isFormValid}>
                   <FiCheckCircle size={18} /> Place Order
                 </button>
@@ -1187,12 +1187,14 @@ export default function Checkout() {
               onClick={(e) => {
                 if (isFormValid) return // let it submit
                 e.preventDefault()
-                const target = !isDetailsValid ? 'checkout-details' : 'checkout-payment'
+                // A cart problem blocks first — say so and go to it, rather than
+                // "Complete your details" on a form that is already complete.
+                const target = cartBlocked ? 'checkout-issues' : !isDetailsValid ? 'checkout-details' : 'checkout-payment'
                 document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }}
             >
               <FiCheckCircle size={17} />
-              {isFormValid ? 'Place Order' : 'Complete your details'}
+              {isFormValid ? 'Place Order' : cartBlocked ? 'Fix your cart' : 'Complete your details'}
             </button>
           </div>
         </form>

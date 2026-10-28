@@ -10,7 +10,8 @@ export const FESTIVALS = [
     bg: 'linear-gradient(90deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
     fg: '#fff',
     accent: '#ffd700',
-    message: 'Ring in 2027 sweetly! Pre-order your celebration cake.',
+    // No year in the text — "Ring in 2027" would be wrong every year after.
+    message: 'Ring in the New Year sweetly! Pre-order your celebration cake.',
     cta: 'Order Now',
     range: { fromMonth: 12, fromDay: 26, toMonth: 1, toDay: 4 }, // wraps year boundary
   },
@@ -21,7 +22,8 @@ export const FESTIVALS = [
     bg: 'linear-gradient(90deg, #cf3e63 0%, #e0617a 50%, #ec8a99 100%)',
     fg: '#fff',
     accent: '#fff6f2',
-    message: 'Sweeten Valentine\'s Day — heart-shaped cheesecakes & truffle boxes.',
+    // No truffles — not sold (CLAUDE.md, Customer-facing copy).
+    message: 'Sweeten Valentine\'s Day — cheesecakes, cupcakes & cake pops for someone sweet.',
     cta: 'Shop Now',
     range: { fromMonth: 2, fromDay: 7, toMonth: 2, toDay: 14 },
   },
@@ -43,7 +45,8 @@ export const FESTIVALS = [
     bg: 'linear-gradient(90deg, #064e3b 0%, #047857 50%, #d4af37 100%)',
     fg: '#fff',
     accent: '#d4af37',
-    message: 'Eid Mubarak! Order Dubai cheesecake & saffron treats early.',
+    // No "saffron treats" — not sold.
+    message: 'Eid Mubarak! Order Dubai cheesecake & milk cakes early.',
     cta: 'Order Now',
     range: { fromMonth: 4, fromDay: 1, toMonth: 4, toDay: 15 }, // Eid varies — adjust yearly
   },
@@ -54,7 +57,8 @@ export const FESTIVALS = [
     bg: 'linear-gradient(90deg, #b45309 0%, #d97706 50%, #f59e0b 100%)',
     fg: '#fff',
     accent: '#fff',
-    message: 'Sweet treats for your sibling — order rakhi-day cake hampers.',
+    // No hampers — not sold.
+    message: 'Sweet treats for your sibling — cupcake boxes, cheesecakes & more.',
     cta: 'Order Hampers',
     range: { fromMonth: 8, fromDay: 5, toMonth: 8, toDay: 20 },
   },
@@ -80,7 +84,8 @@ export const FESTIVALS = [
     bg: 'linear-gradient(90deg, #7f1d1d 0%, #991b1b 50%, #15803d 100%)',
     fg: '#fff',
     accent: '#fbbf24',
-    message: 'Merry Christmas! Yule logs, plum cakes & festive cookie boxes.',
+    // No yule logs or plum cakes — not sold.
+    message: 'Merry Christmas! Cupcake boxes, cookies & cheesecakes for the season.',
     cta: 'Shop Christmas',
     range: { fromMonth: 12, fromDay: 10, toMonth: 12, toDay: 25 },
   },

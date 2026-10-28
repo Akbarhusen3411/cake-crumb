@@ -2,20 +2,22 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { FiArrowRight, FiGift, FiX } from 'react-icons/fi'
-import { offerNow, activeOffers } from '../data/offers.js'
+import { offerNow, diwaliWindow, OFFERS_ON } from '../data/offerRules.js'
+import { useDialogFocus } from '../hooks/useDialogFocus.js'
 import { isDiwaliPreview } from '../data/festivals.js'
 
 /**
  * Diwali & New Year welcome — a full-screen greeting shown before the site,
- * 5–15 November only, on EVERY visit (each page load — the owner's choice,
- * not once a day). While the Diwali offers run its button reads "Step in for
- * sweet Diwali offers" and opens /offers; ×, Esc and "just browse" fade it
- * away onto the page that was opened.
+ * 5–15 November only, ONCE PER VISIT (owner's choice, Oct 2026): it greets a
+ * visitor when they open the site, and a reload or moving between pages in
+ * that visit (sessionStorage, VISIT_KEY) doesn't bring it back — a full-screen
+ * greeting on every load is what search engines call an intrusive
+ * interstitial. A new visit (new tab, browser reopened) shows it again.
+ * The one button closes it onto the Home page; × and Esc onto the page that
+ * was opened.
  *
  * - The window is WINDOW below; change it there. It reads the visitor's own
  *   clock through offerNow(), so `?testdate=2026-11-08` works on the dev server.
- * - Moving between pages doesn't bring it back (it's mounted once, in App);
- *   a reload or a new visit does.
  * - Never over Cart, Checkout, the order confirmation or admin.
  * - The quotes are our own lines, not attributed to anyone (see MidMonthPopup).
  * - The card is frosted glass over drifting colour blobs; its parts float in
@@ -24,6 +26,9 @@ import { isDiwaliPreview } from '../data/festivals.js'
  */
 
 const WINDOW = { month: 11, fromDay: 5, toDay: 15 } // 5–15 November, inclusive
+const VISIT_KEY = 'cc_diwali_welcome_visit' // sessionStorage: shown this visit
+const seenThisVisit = () => { try { return sessionStorage.getItem(VISIT_KEY) === '1' } catch { return false } }
+const markVisit = () => { try { sessionStorage.setItem(VISIT_KEY, '1') } catch { /* storage blocked */ } }
 const HIDDEN_ON = ['/cart', '/checkout', '/confirm-order', '/admin']
 const LEAVE_MS = 450
 const LOGO_BASE = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
@@ -67,17 +72,32 @@ export default function DiwaliWelcome() {
   const [preview] = useState(isDiwaliPreview)
   const [open, setOpen] = useState(() => {
     const now = offerNow()
-    // Every time the site is opened (each page load) from 5 to 15 Nov — the
-    // owner wants it on every visit, not once a day.
-    return allowedHere && (preview || inWindow(now))
+    // Once per visit from 5 to 15 Nov (a preview shows it every time).
+    return allowedHere && (preview || (inWindow(now) && !seenThisVisit()))
   })
   const [leaving, setLeaving] = useState(false)
   const [quote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)])
   const dialogRef = useRef(null)
 
+  // Focus in, Tab kept inside, focus returned on close (useDialogFocus); the
+  // page behind is `inert` while the greeting is up, so neither Tab nor a
+  // screen reader can wander onto it — aria-modal alone doesn't stop that.
+  // Order matters: React runs cleanups in declaration order, so #root must be
+  // un-inerted (this effect) BEFORE useDialogFocus hands focus back into it.
   useEffect(() => {
     if (!open) return undefined
-    dialogRef.current?.focus()
+    const root = document.getElementById('root')
+    root?.setAttribute('inert', '')
+    return () => root?.removeAttribute('inert')
+  }, [open])
+  useDialogFocus(dialogRef, open)
+
+  useEffect(() => {
+    if (open && !preview) markVisit()
+  }, [open, preview])
+
+  useEffect(() => {
+    if (!open) return undefined
     const onKey = (e) => { if (e.key === 'Escape') setLeaving(true) }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
@@ -97,7 +117,9 @@ export default function DiwaliWelcome() {
     setLeaving(true)
     if (pathname !== '/') navigate('/')
   }
-  const offers = activeOffers().filter((o) => o.season === 'diwali')
+  // While the Diwali offers run, the button says so (offerRules.js — the
+  // offer list itself isn't needed here).
+  const offers = OFFERS_ON && diwaliWindow(offerNow()).live ? [true] : []
 
   return createPortal(
     <div className={`cc-diwali${leaving ? ' cc-diwali--leaving' : ''}`}>
@@ -157,7 +179,9 @@ export default function DiwaliWelcome() {
             <img
               src={LOGO_SRC}
               srcSet={`${LOGO_BASE}/logo_final-400.webp 400w, ${LOGO_BASE}/logo_final-800.webp 800w`}
-              sizes="200px"
+              // Its real widths (84 / 110 / 120px tall at 400:278), so a phone
+              // picks the 46 KB 400w file, not the 156 KB 800w one.
+              sizes="(min-width: 1200px) 173px, (min-width: 768px) 158px, 121px"
               width={400}
               height={278}
               alt=""

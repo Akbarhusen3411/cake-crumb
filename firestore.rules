@@ -1,0 +1,96 @@
+// Cake & Crumb — Firestore security rules, complete and ready to paste.
+// Firebase console → Firestore Database → Rules → replace everything → Publish.
+// Kept in sync with FIREBASE_SETUP.md (section 3) and ACCOUNTING_SETUP.md.
+// Not deployed by any script: the console is the only place rules go live.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // The ONE admin: the bakery's own account. "Signed in" alone is not
+    // enough — Firebase lets anyone create an Email/Password account with the
+    // public web config, and every "request.auth != null" rule would have let
+    // that stranger read every order (names, phones, addresses) and the books.
+    // Also turn sign-up off in the console (section 6, step 5).
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'cakeandcrumb.in@gmail.com';
+    }
+
+    match /reviews/{review} {
+      allow read: if true;
+      // NOTE: there is deliberately no `email` clause here. The field was
+      // removed from addReview() because this collection is world-readable, so
+      // every address written to it was harvestable. Two leftover `email is
+      // string` lines survived that removal and contradicted the hasOnly list
+      // above — a create with an email failed hasOnly, one without failed the
+      // `is string` check, so NO review could ever be written. Don't re-add it.
+      allow create: if
+        request.resource.data.keys().hasOnly(
+          ['name','rating','title','text','orderItem','photo','createdAt']
+        ) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 &&
+        request.resource.data.name.size() < 100 &&
+        request.resource.data.text is string &&
+        request.resource.data.text.size() > 0 &&
+        request.resource.data.text.size() < 2000 &&
+        request.resource.data.rating is number &&
+        request.resource.data.rating >= 1 &&
+        request.resource.data.rating <= 5 &&
+        request.resource.data.title is string &&
+        request.resource.data.title.size() < 150 &&
+        request.resource.data.orderItem is string &&
+        request.resource.data.orderItem.size() < 200 &&
+        request.resource.data.photo is string &&
+        request.resource.data.photo.size() < 1000000;
+      allow update: if false;
+      // Deletes require a signed-in admin (same Firebase Auth account as the
+      // orders dashboard). The Reviews page moderation UI is gated by real auth
+      // now — there is no hardcoded password anymore.
+      allow delete: if isAdmin();
+    }
+
+    match /orders/{order} {
+      // Customer can write their own order.
+      allow create: if
+        request.resource.data.orderId is string &&
+        request.resource.data.orderId.size() > 4 &&
+        request.resource.data.totals.total is number &&
+        request.resource.data.totals.total > 0 &&
+        request.resource.data.totals.total < 200000;
+      // Admin dashboard (/admin/orders) reads + updates orders, but ONLY when a
+      // Firebase-authenticated admin is signed in. Customer PII stays private —
+      // anonymous visitors can create an order but cannot read any.
+      allow read, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /tracking/{orderId} {
+      // Public, PII-FREE order status mirror so customers can track an order
+      // from any device. Holds only orderId, status, items, totals, dates —
+      // never name/phone/email/address. Anyone may read; the customer creates
+      // it when ordering; only the signed-in admin updates the status.
+      allow read: if true;
+      allow create: if
+        request.resource.data.orderId is string &&
+        request.resource.data.orderId.size() > 4;
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /newsletter/{subscription} {
+      // Anyone can subscribe; nobody reads/edits via the browser.
+      allow create: if
+        request.resource.data.email is string &&
+        request.resource.data.email.matches('^[^@]+@[^@]+\\.[^@]+$') &&
+        request.resource.data.email.size() < 250;
+      allow read, update, delete: if false;
+    }
+
+    // ── Daily accounting (admin only — ACCOUNTING_SETUP.md) ──
+    match /acc_orders/{doc}      { allow read, write: if isAdmin(); }
+    match /acc_expenses/{doc}    { allow read, write: if isAdmin(); }
+    match /acc_withdrawals/{doc} { allow read, write: if isAdmin(); }
+    match /acc_menu/{doc}        { allow read, write: if isAdmin(); }
+    match /acc_settings/{doc}    { allow read, write: if isAdmin(); }
+  }
+}

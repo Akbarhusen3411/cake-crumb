@@ -43,7 +43,13 @@ function buildParams(order) {
       order.payment?.method === 'upi'
         ? 'UPI / QR — paid in full (verify in bank)'
         : order.payment?.method === 'deposit'
-          ? `Advance ${inr(order.payment?.depositAmount || 0)} paid (verify in bank) + ${inr(order.payment?.balanceDue || 0)} cash on ${order.deliveryMethod === 'pickup' ? 'pickup' : 'delivery'}`
+          // Branch on `paid`, never on the method: a ChatBot deposit order has
+          // paid NOTHING yet (the bot can't take money) — same rule as
+          // paymentLabel() on /admin/orders. Both emails use this text, so it
+          // reads true to the bakery and to the customer.
+          ? order.payment?.paid
+            ? `Advance ${inr(order.payment?.depositAmount || 0)} paid (verify in bank) + ${inr(order.payment?.balanceDue || 0)} cash on ${order.deliveryMethod === 'pickup' ? 'pickup' : 'delivery'}`
+            : `Advance ${inr(order.payment?.depositAmount || 0)} to pay before baking — NOT received yet, arranged on WhatsApp + ${inr(order.payment?.balanceDue || 0)} cash on ${order.deliveryMethod === 'pickup' ? 'pickup' : 'delivery'}`
           : order.deliveryMethod === 'pickup' ? 'Cash on Pickup' : 'Cash on Delivery',
     utr: '—', // UTR system removed; bakery verifies the credit in its bank
     delivery_date: order.deliveryDate || '—',

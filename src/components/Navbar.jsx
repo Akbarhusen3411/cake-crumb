@@ -10,7 +10,7 @@ import SearchOverlay from './SearchOverlay.jsx'
 import { asset } from '../data/images.js'
 import { useCart } from '../context/CartContext.jsx'
 import { WHATSAPP_PHONE } from './WhatsAppButton.jsx'
-import { offersLive } from '../data/offers.js'
+import { offersLive } from '../data/offerRules.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
 
 // Order is the browsing journey, not the sitemap: look at what's on offer
@@ -31,7 +31,7 @@ const links = [
 // the Home page. Mobile only, by the owner's choice: the desktop bar is already
 // tight on small laptops. Only while an offer is running (offersLive), so it
 // comes and goes with Diwali by itself.
-const offerLinks = [...links.slice(0, 3), { to: '/offers', label: 'Offers', icon: FiGift, tag: 'Free gifts' }, ...links.slice(3)]
+const offerLinks = [...links.slice(0, 3), { to: '/offers', label: 'Offers', icon: FiGift, tag: 'Gifts & deals' }, ...links.slice(3)]
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)

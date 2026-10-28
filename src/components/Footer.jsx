@@ -10,6 +10,8 @@ import CertBadges from './CertBadges.jsx'
 import { asset } from '../data/images.js'
 import { buildWhatsAppLink } from './WhatsAppButton.jsx'
 import { BAKERY_ADDRESS, MAP_LINK, MAP_EMBED } from '../data/shopConfig.js'
+import { offersLive } from '../data/offerRules.js'
+import { useOfferClock } from '../hooks/useOfferClock.js'
 
 const QUICK_LINKS = [
   { to: '/',        label: 'Home' },
@@ -92,6 +94,11 @@ function FooterMap({ className }) {
 export const COPYRIGHT = (year) => `© ${year} Cake & Crumb`
 
 export default function Footer() {
+  // /offers only while an offer runs — outside a window that page just says
+  // "no offers running" (the phone menu and Home already hide it the same way).
+  const showOffers = offersLive(useOfferClock())
+  const quickLinks = showOffers ? QUICK_LINKS : QUICK_LINKS.filter((l) => l.to !== '/offers')
+  const mobileQuickLinks = showOffers ? MOBILE_QUICK_LINKS : MOBILE_QUICK_LINKS.filter((l) => l.to !== '/offers')
   const year = new Date().getFullYear()
   const waHref = buildWhatsAppLink()
 
@@ -133,7 +140,7 @@ export default function Footer() {
 
         {/* Inline link row, dot-separated */}
         <nav className="cc-footer-m__links" aria-label="Footer">
-          {MOBILE_QUICK_LINKS.map((l, i) => (
+          {mobileQuickLinks.map((l, i) => (
             <Fragment key={l.to}>
               {i > 0 && <span className="cc-footer-m__sep" aria-hidden>·</span>}
               <Link to={l.to} className="cc-footer-m__link">{l.label}</Link>
@@ -264,7 +271,7 @@ export default function Footer() {
             <div className="cc-footer-d__col cc-footer-d__col--links">
               <h6 className="cc-footer-d__heading">Quick Links</h6>
               <ul className="cc-footer-d__links">
-                {QUICK_LINKS.map((l) => (
+                {quickLinks.map((l) => (
                   <li key={l.to}>
                     <Link to={l.to}>{l.label}</Link>
                   </li>

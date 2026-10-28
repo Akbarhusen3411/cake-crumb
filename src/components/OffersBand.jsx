@@ -30,6 +30,8 @@ export default function OffersBand() {
   const now = useOfferClock()
   const offers = activeOffers(now)
   if (!offers.length) return null
+  // The Diwali packs are a price, not a free gift — say so when they run.
+  const hasDeals = offers.some((o) => o.deal)
   const mid = midMonthWindow(now)
   const midShown = offers.some((o) => o.id === 'mid-month')
   // Two offers sit side by side, three (Diwali on its own) three across.
@@ -47,7 +49,9 @@ export default function OffersBand() {
             <span className="eyebrow">Offers</span>
             <h2 id="home-offers-title" className="section-title mt-3">Something Extra, On Us</h2>
             <p className="cc-home-offers__lede">
-              Menu prices, with free treats added to your order. No codes — we pack the gift in when we confirm.
+              {hasDeals
+                ? 'Free treats added to your order, plus special Diwali pack prices. No codes — pack prices are in your cart, and we pack the gift in when we confirm.'
+                : 'Menu prices, with free treats added to your order. No codes — we pack the gift in when we confirm.'}
             </p>
           </div>
           <Link to="/offers" className="btn-rose cc-home-offers__all">

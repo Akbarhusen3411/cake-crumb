@@ -14,6 +14,7 @@ import { deliveryFee, isBulkOrder, depositAmount, DEPOSIT_PCT, BAKERY_ADDRESS, M
 import { kmFromBakeryByPincode } from '../services/delivery.js'
 import { WHATSAPP_PHONE } from './WhatsAppButton.jsx'
 import { useCart } from '../context/CartContext.jsx'
+import { chatbotPacks, cartOfferStatus, giftRecord, activeOffers, packHint } from '../data/offers.js'
 import {
   MENU_DATA, ORDER_ITEMS, MENU_CATEGORIES, ORDER_CATEGORIES, getItemCat,
 } from '../data/chatbotMenu.js'
@@ -121,6 +122,28 @@ const MAIN_OPTIONS = [
   { label: '📞 Contact Us', action: 'contact' },
 ]
 
+// The main menu, with "🎁 Diwali Offers" first while they run (5–15 Nov, or a
+// preview — the offers text only describes; prices still follow the real date).
+const diwaliOffers = () => activeOffers().filter((o) => o.season === 'diwali')
+const mainOptions = () =>
+  diwaliOffers().length ? [{ label: '🎁 Diwali Offers', action: 'offers' }, ...MAIN_OPTIONS] : MAIN_OPTIONS
+
+/** The Diwali offers as one chat message: gift steps and pack prices. */
+function offersMessage() {
+  const lines = ['🪔 *Diwali offers · 5–15 Nov*']
+  for (const o of diwaliOffers()) {
+    lines.push('', `*${o.name}*${o.stepsHead ? ` — ${o.stepsHead.toLowerCase()}` : ''}`)
+    if (o.steps) o.steps.forEach((st) => lines.push(`• ${st.buy} → ${st.get} *free*`))
+    if (o.prices) o.prices.forEach((pr) => lines.push(`• ${pr.label}${pr.note ? ` (${pr.note})` : ''}: *${inr(pr.now)}* (was ${inr(pr.was)})`))
+  }
+  lines.push('', '🎁 Free gifts are added when we confirm your order on WhatsApp. Pack prices are already in your total — add 10 pieces and the price drops by itself.')
+  return lines.join('\n')
+}
+
+/** The gift a bot cart earns (real calendar), as stored on the order. */
+const chatGift = (entries, subtotal) =>
+  giftRecord(cartOfferStatus(entries.map(([name, { qty, price }]) => ({ id: '', name, qty, price })), subtotal, undefined, { real: true }).offer)
+
 // Above this many buttons, lay them out two-per-row instead of one long column.
 // Tuned so the 9-category menu/order lists go grid but MAIN_OPTIONS (5, with longer
 // labels like "⏰ Delivery Info") keeps its roomier single column.
@@ -224,8 +247,22 @@ function PriceCard({ cat }) {
 }
 
 // ─── Order summary card (chat-styled version of the website checkout summary) ───
+// A Diwali pack line's regular price, struck, before its pack price.
+const Was = ({ it }) => (it.was > it.price ? <s className="mr-1 font-semibold text-chocolate-light/60">{inr(it.was * it.qty)}</s> : null)
+
+// "🎁 Free gift" line on the review and summary cards.
+function GiftNote({ gift }) {
+  if (!gift) return null
+  return (
+    <div className="mx-3 mb-2 flex items-start gap-2 rounded-lg px-2.5 py-1.5 text-[11.5px] leading-snug" style={{ background: '#fdeef1', border: '1px dashed #d7a7ae', color: '#ad2f4e' }}>
+      <span aria-hidden>🎁</span>
+      <span><strong>Free gift: {gift.gift}</strong> · {gift.name} — added when we confirm on WhatsApp</span>
+    </div>
+  )
+}
+
 function OrderSummaryCard({ data }) {
-  const { items, subtotal, delivery, total, bulk, deposit, info, pickup } = data
+  const { items, subtotal, delivery, total, bulk, deposit, info, pickup, gift } = data
   return (
     <div
       className="flex-1 min-w-0 rounded-2xl rounded-tl-sm shadow-md overflow-hidden border border-gold/15"
@@ -259,7 +296,7 @@ function OrderSummaryCard({ data }) {
                 <span className="text-chocolate-light/70">{inr(it.price)}</span>
               </p>
             </div>
-            <span className="text-[12.5px] font-bold shrink-0" style={{ color: '#5b3e36' }}>{inr(it.price * it.qty)}</span>
+            <span className="text-[12.5px] font-bold shrink-0" style={{ color: '#5b3e36' }}><Was it={it} />{inr(it.price * it.qty)}</span>
           </div>
         ))}
       </div>
@@ -284,6 +321,7 @@ function OrderSummaryCard({ data }) {
         <span className="text-[13px] font-bold" style={{ fontFamily: "'Playfair Display',serif", color: '#5b3e36' }}>Total</span>
         <span className="text-[18px] font-extrabold" style={{ color: '#cf3e63' }}>{inr(total)}</span>
       </div>
+      <GiftNote gift={gift} />
 
       {bulk && (
         <div
@@ -308,7 +346,7 @@ function OrderSummaryCard({ data }) {
 }
 
 // ─── Cart preview card (pre-address review — items + subtotal, no delivery yet) ───
-function CartPreviewCard({ items, subtotal }) {
+function CartPreviewCard({ items, subtotal, gift }) {
   return (
     <div
       className="flex-1 min-w-0 rounded-2xl rounded-tl-sm shadow-md overflow-hidden border border-gold/15"
@@ -340,7 +378,7 @@ function CartPreviewCard({ items, subtotal }) {
                 <span className="text-chocolate-light/70">{inr(it.price)} each</span>
               </p>
             </div>
-            <span className="text-[12.5px] font-bold shrink-0" style={{ color: '#5b3e36' }}>{inr(it.price * it.qty)}</span>
+            <span className="text-[12.5px] font-bold shrink-0" style={{ color: '#5b3e36' }}><Was it={it} />{inr(it.price * it.qty)}</span>
           </div>
         ))}
       </div>
@@ -352,6 +390,7 @@ function CartPreviewCard({ items, subtotal }) {
         </div>
         <p className="text-[10.5px] mt-1.5 text-chocolate-light/70">🚚 Delivery is added after you enter your address.</p>
       </div>
+      <GiftNote gift={gift} />
     </div>
   )
 }
@@ -417,6 +456,13 @@ function DatePickerWidget({ onPick }) {
 }
 
 // ─── Order item selector ───
+// "🎁 Diwali: 10 for ₹239" under an item that rolls up into a pack (real dates).
+function PackHint({ name, price }) {
+  const h = packHint(name, price)
+  if (!h) return null
+  return <span className="block text-[10px] font-bold text-berry mt-0.5">🎁 Diwali: {h.size} {h.unit} for {inr(h.price)}</span>
+}
+
 function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
   // Running count across the whole order (cart is the full name→qty map).
   const cartCount = Object.values(cart).reduce((sum, q) => sum + (q || 0), 0)
@@ -457,11 +503,12 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
                           </span>
                           <span className="text-[13px] font-bold text-berry shrink-0">{inr(v.price)}</span>
                         </div>
+                        <PackHint name={v.name} price={v.price} />
                         {q > 0 ? (
                           <div className="flex items-center justify-between">
                             <button
                               onClick={() => onUpdate(v.name, v.price, q - 1 < min ? 0 : q - 1)}
-                              aria-label={`Remove one ${v.label}`}
+                              aria-label={`Remove one ${item.name} — ${v.label}`}
                               className="w-7 h-7 rounded-lg bg-white border border-berry/40 flex items-center justify-center text-berry active:scale-90 transition-transform"
                             >
                               <FiMinus size={14} />
@@ -469,7 +516,7 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
                             <span className="text-[14px] font-extrabold text-chocolate">{q}</span>
                             <button
                               onClick={() => onUpdate(v.name, v.price, q + 1)}
-                              aria-label={`Add one ${v.label}`}
+                              aria-label={`Add one ${item.name} — ${v.label}`}
                               className="w-7 h-7 rounded-lg bg-berry flex items-center justify-center text-white active:scale-90 transition-transform"
                             >
                               <FiPlus size={14} />
@@ -479,7 +526,7 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
                           <button
                             onClick={() => onUpdate(v.name, v.price, min)}
                             className="w-full h-7 rounded-lg bg-berry/10 border border-berry/30 flex items-center justify-center text-berry active:scale-95 transition-transform"
-                            aria-label={min > 1 ? `Add ${min} ${v.label}` : `Add ${v.label}`}
+                            aria-label={min > 1 ? `Add ${min} ${item.name} — ${v.label}` : `Add ${item.name} — ${v.label}`}
                           >
                             <FiPlus size={16} />
                           </button>
@@ -498,6 +545,7 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
               <div className="flex-1 min-w-0 pr-2">
                 <p className="text-[12.5px] font-medium text-chocolate truncate leading-tight">{item.name}</p>
                 <p className="text-[11px] text-berry font-bold mt-0.5">{inr(item.price)}</p>
+                <PackHint name={item.name} price={item.price} />
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 {qty > 0 && (
@@ -642,8 +690,11 @@ export default function ChatBot() {
     })
   }
 
+  // The cart as it will be charged: from 5–15 Nov full packs roll up to their
+  // Diwali price (10 cupcakes / cake pops, 2 Variety boxes), as on the website.
+  const pricedEntries = () => chatbotPacks(Object.entries(orderCart).filter(([, v]) => v.qty > 0))
   const getCartTotal = () =>
-    Object.values(orderCart).reduce((sum, item) => sum + item.price * item.qty, 0)
+    pricedEntries().reduce((sum, [, item]) => sum + item.price * item.qty, 0)
 
   const updateCartItem = (name, price, qty) => {
     setOrderCart((prev) => {
@@ -659,7 +710,7 @@ export default function ChatBot() {
     setActiveOrderCat(null)
     setOrderStep(null)
     await addBotMessage('What would you like to do?')
-    setOptions(MAIN_OPTIONS)
+    setOptions(mainOptions())
   }
 
   const showCategoryMenu = async () => {
@@ -720,8 +771,9 @@ export default function ChatBot() {
   }
 
   const sendOrderToWhatsApp = () => {
-    const items = Object.entries(orderCart).filter(([, v]) => v.qty > 0)
+    const items = pricedEntries()
     const subtotal = getCartTotal()
+    const gift = chatGift(items, subtotal)
     // Distance-based delivery from the pincode in the address (geocoded at the date
     // step and stored in deliveryKm) — matches the website checkout so the same
     // address costs the same here. null (no pincode / lookup failed) → free.
@@ -770,6 +822,8 @@ export default function ChatBot() {
       deliveryMethod,
       // Bakery-side only, and meaningless for a pickup — nothing was geocoded.
       deliveryKm: isPickup ? null : deliveryKm,
+      // The offer gift this order earns (real calendar), stored for the bakery.
+      offerGift: gift,
       notes: '',
       source: 'chatbot',
     }
@@ -802,8 +856,8 @@ export default function ChatBot() {
     if (orderInfo.email) sendCustomerConfirmation(orderData)
 
     const grouped = {}
-    items.forEach(([name, { qty, price }]) => {
-      const cat = getItemCat(name) || '📦 Other'
+    items.forEach(([name, { qty, price, cat: from }]) => {
+      const cat = getItemCat(from || name) || '📦 Other'
       if (!grouped[cat]) grouped[cat] = []
       grouped[cat].push({ name, qty, price })
     })
@@ -821,7 +875,7 @@ export default function ChatBot() {
     // bakery will request a 50% advance on WhatsApp before baking (keeps big COD
     // orders from being a no-show fraud risk — mirrors the checkout deposit rule).
     const advanceLine = bulk
-      ? `*💳 Advance:* ${inr(advance)} (${Math.round(DEPOSIT_PCT * 100)}%) requested before baking · balance on delivery\n`
+      ? `*💳 Advance:* ${inr(advance)} (${Math.round(DEPOSIT_PCT * 100)}%) requested before baking · balance on ${isPickup ? 'pickup' : 'delivery'}\n`
       : ''
 
     const msg =
@@ -843,6 +897,8 @@ export default function ChatBot() {
         : `*Delivery:* ${fee === 0 ? 'FREE (far areas confirmed by us)' : inr(fee)}\n`) +
       `*💰 Total: ${inr(total)}*\n` +
       advanceLine +
+      // Same line the website's receipt carries, so the customer is told too.
+      (gift ? `*🎁 Free gift:* ${gift.gift} — free (${gift.name})\n` : '') +
       `\n━━━━━━━━━━━━━━━━━━━━\n\n` +
       `⚠️ *Cancel window:* 30 min from order time.\n\n` +
       `Please confirm my order. Thank you! 🙏`
@@ -935,8 +991,9 @@ export default function ChatBot() {
           {
             from: 'bot',
             cartPreview: {
-              items: cartItems.map(([name, { qty, price }]) => ({ name, qty, price })),
+              items: pricedEntries().map(([name, { qty, price, was }]) => ({ name, qty, price, was })),
               subtotal: getCartTotal(),
+              gift: chatGift(pricedEntries(), getCartTotal()),
             },
           },
         ])
@@ -1057,6 +1114,11 @@ export default function ChatBot() {
         )
         setOptions([{ label: '🛒 Place Order', action: 'order' }, { label: '🏠 Main Menu', action: 'home' }])
         break
+      case 'offers':
+        setOptions([])
+        await addBotMessage(offersMessage())
+        setOptions([{ label: '🛒 Place Order', action: 'order' }, { label: '🏠 Main Menu', action: 'home' }])
+        break
       case 'location':
         setOptions([])
         await addBotMessage(`*Our Location*\n\n📍 ${BAKERY_ADDRESS.full}\n🗺️ ${MAP_LINK}\n🏠 Home bakery — we deliver across Gujarat!`)
@@ -1083,15 +1145,14 @@ export default function ChatBot() {
     // pickup never reaches that step and is free regardless.
     const fee = deliveryFee(deliveryMethod, deliveryKm)
     const total = subtotal + fee
-    const summaryItems = Object.entries(orderCart)
-      .filter(([, v]) => v.qty > 0)
-      .map(([name, { qty, price }]) => ({ name, qty, price }))
+    const summaryItems = pricedEntries().map(([name, { qty, price, was }]) => ({ name, qty, price, was }))
     setMessages((prev) => [
       ...prev,
       {
         from: 'bot',
         summary: {
           items: summaryItems,
+          gift: chatGift(pricedEntries(), subtotal),
           subtotal,
           delivery: fee,
           total,
@@ -1111,7 +1172,7 @@ export default function ChatBot() {
     scrollToBottom()
     // Large-order advance notice — mirrors the website's bulk banner.
     if (isBulkOrder(subtotal)) {
-      await addBotMessage(`💳 *This is a larger order.* We'll request a *${Math.round(DEPOSIT_PCT * 100)}% advance* (${inr(depositAmount(total))}) on WhatsApp before baking — the balance is paid on delivery.`)
+      await addBotMessage(`💳 *This is a larger order.* We'll request a *${Math.round(DEPOSIT_PCT * 100)}% advance* (${inr(depositAmount(total))}) on WhatsApp before baking — the balance is paid on ${deliveryMethod === 'pickup' ? 'pickup' : 'delivery'}.`)
     }
     await addBotMessage(`Ready to send this ${deliveryMethod === 'pickup' ? 'pickup ' : ''}order to our bakery on WhatsApp? 🎂`)
     setOptions([
@@ -1237,7 +1298,7 @@ export default function ChatBot() {
       const init = async () => {
         const initialMessages = getInitialMessages()
         for (const msg of initialMessages) await addBotMessage(msg.text, msg.delay)
-        setOptions(MAIN_OPTIONS)
+        setOptions(mainOptions())
       }
       init()
     }
@@ -1408,7 +1469,7 @@ export default function ChatBot() {
                     </div>
                   )}
                   {msg.cartPreview ? (
-                    <CartPreviewCard items={msg.cartPreview.items} subtotal={msg.cartPreview.subtotal} />
+                    <CartPreviewCard items={msg.cartPreview.items} subtotal={msg.cartPreview.subtotal} gift={msg.cartPreview.gift} />
                   ) : msg.summary ? (
                     <OrderSummaryCard data={msg.summary} />
                   ) : msg.menu ? (

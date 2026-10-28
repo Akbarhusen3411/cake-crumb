@@ -28,6 +28,16 @@ customers across devices, hook it up to Firebase Firestore — takes about 5 min
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // The ONE admin: the bakery's own account. "Signed in" alone is not
+    // enough — Firebase lets anyone create an Email/Password account with the
+    // public web config, and every "request.auth != null" rule would have let
+    // that stranger read every order (names, phones, addresses) and the books.
+    // Also turn sign-up off in the console (section 6, step 5).
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'cakeandcrumb.in@gmail.com';
+    }
+
     match /reviews/{review} {
       allow read: if true;
       // NOTE: there is deliberately no `email` clause here. The field was
@@ -59,7 +69,7 @@ service cloud.firestore {
       // Deletes require a signed-in admin (same Firebase Auth account as the
       // orders dashboard). The Reviews page moderation UI is gated by real auth
       // now — there is no hardcoded password anymore.
-      allow delete: if request.auth != null;
+      allow delete: if isAdmin();
     }
 
     match /orders/{order} {
@@ -73,7 +83,7 @@ service cloud.firestore {
       // Admin dashboard (/admin/orders) reads + updates orders, but ONLY when a
       // Firebase-authenticated admin is signed in. Customer PII stays private —
       // anonymous visitors can create an order but cannot read any.
-      allow read, update: if request.auth != null;
+      allow read, update: if isAdmin();
       allow delete: if false;
     }
 
@@ -86,7 +96,7 @@ service cloud.firestore {
       allow create: if
         request.resource.data.orderId is string &&
         request.resource.data.orderId.size() > 4;
-      allow update: if request.auth != null;
+      allow update: if isAdmin();
       allow delete: if false;
     }
 
@@ -145,7 +155,7 @@ the orders dashboard (section 6), so there is no hardcoded password in the code 
 
 The `/admin/orders` page lists every order with Confirm / Cancel buttons. To keep
 customer data private, it requires a Firebase-authenticated admin login (the
-`allow read, update: if request.auth != null;` rule above enforces this).
+`allow read, update: if isAdmin();` rule above enforces this — and `isAdmin()` only lets in `cakeandcrumb.in@gmail.com`).
 
 1. **Enable Email/Password sign-in.** Firebase console → **Build → Authentication
    → Get started** (first time only) → **Sign-in method** tab → click
@@ -153,7 +163,7 @@ customer data private, it requires a Firebase-authenticated admin login (the
 2. **Create your admin account.** Authentication → **Users** tab → **Add user** →
    enter an email + a password you'll remember → **Add user**. This is the login
    you'll use on the dashboard. (Add more users the same way for multiple staff.)
-3. **Publish the orders rule** from section 3 (`allow read, update: if request.auth != null;`).
+3. **Publish the rules** from section 3 (the whole block, or `firestore.rules` in the project root — the same text plus the accounting collections).
 4. **Test.** Visit `/admin/orders`, sign in with that account — all orders appear,
    from every device. Tap **Confirm**/**Cancel** to update status and message the
    customer on WhatsApp.
@@ -163,6 +173,17 @@ Notes:
   is needed for GitHub Pages.
 - The login is real auth — there's no hardcoded password in the code.
 - To revoke access, delete or disable the user in Authentication → Users.
+
+5. **Lock it down — do this once, it matters.** By default Firebase lets
+   ANYONE create an Email/Password account using the public web config, and a
+   rule that only checks "signed in" would treat that stranger as admin.
+   - Authentication → **Settings** → **User actions** → **untick "Enable create
+     (sign-up)"** → Save. Only you can add users now (the Users tab still works).
+   - Authentication → **Users**: delete any account you don't recognise.
+   - Rules: `isAdmin()` in section 3 checks the email is
+     `cakeandcrumb.in@gmail.com`. **If you ever sign in with a different
+     admin email, change it there first**, or every admin page will say it
+     can't read anything.
 
 ## 7. Turning on App Check enforcement — the order matters
 

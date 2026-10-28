@@ -7,6 +7,7 @@ import { usePageMeta } from '../hooks/usePageMeta.js'
 import RelatedProducts from '../components/RelatedProducts.jsx'
 import { inr } from '../data/format.js'
 import OfferGift from '../components/OfferGift.jsx'
+import CartIssues from '../components/CartIssues.jsx'
 import { isBulkOrder, BULK_ORDER_MIN, DEPOSIT_PCT } from '../data/shopConfig.js'
 import { u } from '../data/images.js'
 
@@ -178,6 +179,7 @@ export default function Cart() {
                 allow a day; you choose the date at checkout.
               </p>
               <OfferGift items={items} subtotal={subtotal} />
+              <CartIssues />
               <hr style={{ borderColor: 'var(--cc-border)' }} />
               <div className="d-flex justify-content-between mb-3" style={{ fontSize: '1.05rem' }}>
                 <span style={{ color: 'var(--cc-cocoa)' }}>Estimated total</span>
@@ -200,7 +202,7 @@ export default function Cart() {
                 <span>
                   {isBulkOrder(subtotal)
                     ? `Orders from ${inr(BULK_ORDER_MIN)} take a ${Math.round(DEPOSIT_PCT * 100)}% advance by UPI — or pay in full`
-                    : 'Pay by UPI now, or Cash on Delivery'}
+                    : 'Pay by UPI now, or cash on delivery or pickup'}
                 </span>
               </div>
             </div>

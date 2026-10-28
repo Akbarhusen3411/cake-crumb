@@ -4,8 +4,9 @@ import { u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { describe, hasUnit } from '../data/products.js'
 import { useCart } from '../context/CartContext.jsx'
-import { piecesPrice, packNudge } from '../data/offers.js'
+import { piecesPrice, packNudge, boxesPrice } from '../data/offerRules.js'
 import AllergenTags from './AllergenTags.jsx'
+import { useDialogFocus } from '../hooks/useDialogFocus.js'
 
 /** Show the batch-bake note at or below this many loose pieces. */
 const BATCH_NOTE_UPTO = 3
@@ -71,14 +72,14 @@ function QtyBuy({ label, minQty, unitPrice, each = 'each', qty, setQty, price, n
           <button type="button" onClick={() => setQty((q) => Math.max(minQty, q - 1))} disabled={qty <= minQty} aria-label="One fewer">
             <FiMinus size={16} />
           </button>
-          <span className="qv-buy__qty" aria-live="polite">{qty}</span>
+          <span className="qv-buy__qty">{qty}</span>
           <button type="button" onClick={() => setQty((q) => q + 1)} aria-label="One more">
             <FiPlus size={16} />
           </button>
         </div>
         <div className="qv-buy__total" aria-live="polite">
-          {price.packs > 0 && <s>{inr(price.regular)}</s>}
-          <strong>{inr(price.total)}</strong>
+          {price.packs > 0 && <s><span className="visually-hidden">Regular price </span>{inr(price.regular)}</s>}
+          <strong>{price.packs > 0 && <span className="visually-hidden">Diwali price </span>}{inr(price.total)}</strong>
           <small>
             {price.packs > 0
               ? `Diwali price · ${price.packs === 1 ? '' : `${price.packs} × `}${price.label}`
@@ -112,6 +113,8 @@ export default function ProductQuickView({ product, onClose }) {
   // Which photo is showing, for the few products that have more than one.
   const [shot, setShot] = useState(0)
   const modalRef = useRef(null)
+  // Focus into the sheet on open, Tab kept inside, back to the Shop card on close.
+  useDialogFocus(modalRef, !!product)
 
   useEffect(() => {
     if (!product) return
@@ -199,20 +202,27 @@ export default function ProductQuickView({ product, onClose }) {
   const tqty = qtyByTier[tier.key] ?? tier.min
   const setTqty = (fn) => setQtyByTier((m) => ({ ...m, [tier.key]: fn(m[tier.key] ?? tier.min) }))
   // Only the loose-piece base tier can become a Diwali pack of 10.
-  const tprice = tier.key === 'base' ? piecesPrice(p, tqty) : { total: tier.unitPrice * tqty, regular: tier.unitPrice * tqty, packs: 0 }
+  // Boxes of 6 count towards the Diwali pack too (2 Vanilla boxes → ₹289).
+  const tprice = tier.key === 'base' ? piecesPrice(p, tqty)
+    : tier.key === 'slice' ? boxesPrice(p, tqty)
+    : { total: tier.unitPrice * tqty, regular: tier.unitPrice * tqty, packs: 0 }
   const tnudge = tier.key === 'base' ? packNudge(p, tqty) : null
   const tbatch = (tier.key === 'base' && showBatchNote) || tier.batch
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={p.name}
-      onClick={onClose}
-      className="qv-backdrop"
-    >
-      <div ref={modalRef} onClick={(e) => e.stopPropagation()} className="qv-modal">
+    <div onClick={onClose} className="qv-backdrop">
+      {/* The dialog is the SHEET, not the click-to-close backdrop. */}
+      <div
+        ref={modalRef}
+        onClick={(e) => e.stopPropagation()}
+        className="qv-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={p.name}
+        tabIndex={-1}
+      >
         <button
+          type="button"
           onClick={onClose}
           aria-label="Close"
           className="qv-close"
@@ -276,13 +286,29 @@ export default function ProductQuickView({ product, onClose }) {
                 panel for every size — how many · live total · Add. */}
             <div className="qv-options qv-options--buy">
               {tiers.length > 1 && (
-                <div className="qv-tiers" role="radiogroup" aria-label="Choose a size">
+                <div
+                  className="qv-tiers"
+                  role="radiogroup"
+                  aria-label="Choose a size"
+                  onKeyDown={(e) => {
+                    // A radio group is ONE Tab stop; arrows (and Home/End) move
+                    // the choice, as with native radios.
+                    const cur = tiers.indexOf(tier)
+                    const to = { ArrowRight: cur + 1, ArrowDown: cur + 1, ArrowLeft: cur - 1, ArrowUp: cur - 1, Home: 0, End: tiers.length - 1 }[e.key]
+                    if (to == null) return
+                    e.preventDefault()
+                    const next = (to + tiers.length) % tiers.length
+                    setTierIdx(next)
+                    e.currentTarget.querySelectorAll('[role="radio"]')[next]?.focus()
+                  }}
+                >
                   {tiers.map((t, i) => (
                     <button
                       key={t.key}
                       type="button"
                       role="radio"
                       aria-checked={t.key === tier.key}
+                      tabIndex={t.key === tier.key ? 0 : -1}
                       className={`qv-tier${t.key === tier.key ? ' is-on' : ''}`}
                       onClick={() => setTierIdx(i)}
                     >

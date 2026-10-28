@@ -1,3 +1,4 @@
+import '../admin.css' // admin-only styles, shipped with this lazy page
 import { useEffect, useState } from 'react'
 import {
   FiXCircle, FiLock, FiChevronDown, FiAlertTriangle, FiFileText, FiClipboard,
@@ -9,7 +10,7 @@ import {
 
 const PICKUP_LOCATION = `Cake & Crumb, ${BAKERY_ADDRESS.full}`
 const REVIEW_LINK = 'https://akbarhusen3411.github.io/cake-crumb/review'
-import { getFirebaseAuth, isFirebaseEnabled } from '../firebase.js'
+import { getFirebaseAuth, isFirebaseEnabled, firebaseUnavailableMessage } from '../firebase.js'
 import { inr } from '../data/format.js'
 import { isBulkOrder, BAKERY_ADDRESS, MAP_LINK } from '../data/shopConfig.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
@@ -209,6 +210,8 @@ export default function AdminOrders() {
   const [expandedId, setExpandedId] = useState(null)
   const [filter, setFilter] = useState('all')
   const [feedError, setFeedError] = useState('')
+  // A status change whose save failed AFTER the customer was messaged.
+  const [actionError, setActionError] = useState('')
   const [invoiceOf, setInvoiceOf] = useState(null)
 
   const isAdmin = !!user
@@ -252,10 +255,19 @@ export default function AdminOrders() {
     return () => { active = false; unsub() }
   }, [isAdmin])
 
+  // getAllOrders() falls back to this device's own local copies on a cloud
+  // error. Those have no firebaseId, so every button on them would do nothing
+  // — keep the list we had and say the refresh failed instead.
   async function refresh() {
     setLoading(true)
     const list = await getAllOrders()
-    setOrders(list)
+    const fellBack = isFirebaseEnabled && list.length > 0 && list.every((x) => !x.firebaseId)
+    if (fellBack) {
+      setFeedError('Could not refresh orders from the cloud — showing the last list. Check your connection and try again.')
+    } else {
+      setOrders(list)
+      setFeedError('')
+    }
     setLoading(false)
   }
 
@@ -265,7 +277,7 @@ export default function AdminOrders() {
     setSigningIn(true)
     try {
       const auth = await getFirebaseAuth()
-      if (!auth) throw new Error('Firebase is not configured.')
+      if (!auth) throw new Error(firebaseUnavailableMessage())
       const { signInWithEmailAndPassword } = await import('firebase/auth')
       await signInWithEmailAndPassword(auth, email.trim(), pwd)
       setPwd('')
@@ -308,7 +320,16 @@ export default function AdminOrders() {
     // Persist the status change in the background; the live listener refreshes the badge.
     const key = order.firebaseId || order.orderId
     setBusyId(key)
+    setActionError('')
     Promise.resolve(updateOrderStatus(order.firebaseId, order.orderId, status))
+      .then((ok) => {
+        // The WhatsApp message has already gone, so a failed save must be said
+        // out loud — otherwise the badge stays "Placed" and /track-order never
+        // moves while the owner believes it's done.
+        if (!ok) {
+          setActionError(`Order ${order.orderId}: the status was NOT saved (the customer was already messaged). Check your connection and tap the button again.`)
+        }
+      })
       .finally(() => setBusyId(null))
   }
 
@@ -392,6 +413,12 @@ export default function AdminOrders() {
         })}
       </div>
 
+      {actionError && (
+        <div role="alert" style={{ background: '#fff7ed', color: '#8a4b08', border: '1px solid #fcd9b6', borderRadius: 10, padding: '0.7rem 0.9rem', fontSize: '0.85rem', marginBottom: '0.8rem' }}>
+          ⚠ {actionError} <button onClick={() => setActionError('')} style={{ marginLeft: 8, textDecoration: 'underline', background: 'none', border: 'none', color: '#8a4b08', cursor: 'pointer' }}>Dismiss</button>
+        </div>
+      )}
+
       {feedError && (
         <div style={{ background: '#f8d7da', color: '#a32530', border: '1px solid #f1aeb5', borderRadius: 10, padding: '0.7rem 0.9rem', fontSize: '0.85rem', marginBottom: '0.8rem' }}>
           ⚠ {feedError} <button onClick={refresh} style={{ marginLeft: 8, textDecoration: 'underline', background: 'none', border: 'none', color: '#a32530', cursor: 'pointer' }}>Retry</button>
@@ -465,9 +492,10 @@ export default function AdminOrders() {
                     ))}
                   </ul>
 
-                  {/* The offer gift this order earned (worked out from its items and
-                      the time it was placed) — pack it, and book it at ₹0 under
-                      "Free Gift" in accounting. */}
+                  {/* The offer gift this order earned — saved on the order when it
+                      was placed (older orders: worked out from items and time) —
+                      pack it, and book it at ₹0 under "Free Gift" in accounting.
+                      None on a cancelled order. */}
                   {(() => {
                     const gift = orderGift(o)
                     return gift ? (
@@ -555,7 +583,7 @@ export default function AdminOrders() {
                           </strong>{' '}
                           "Paid" here is the customer's claim, not proof.
                           {o.payment?.method === 'deposit' && (
-                            <> Collect the <strong>{inr(o.payment?.balanceDue || 0)}</strong> balance on delivery.</>
+                            <> Collect the <strong>{inr(o.payment?.balanceDue || 0)}</strong> balance on {o.deliveryMethod === 'pickup' ? 'pickup' : 'delivery'}.</>
                           )}
                         </span>
                       </div>

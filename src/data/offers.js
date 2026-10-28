@@ -10,88 +10,16 @@
 // and cake pops — the bakery doesn't bake a single one.
 
 import { img } from './images.js'
-import { shopProducts, isPerPiece } from './products.js'
+import { shopProducts } from './products.js'
 import { inr } from './format.js'
-import { isDiwaliPreview } from './festivals.js'
+import {
+  OFFERS_ON, EVERYDAY_ON, OFFER_RULES, DIWALI_PACK10, DIWALI_PACK2,
+  ordinal, offerNow, diwaliWindow, midMonthWindow, pack10Line, pack2Line,
+} from './offerRules.js'
 
-// Master switch: false hides the Home band, the cart gift card and the receipt
-// line, and /offers says there are none running. Nothing else needs touching.
-export const OFFERS_ON = true
-
-// The seven everyday offers (Mid-Month, Gift Box Pair, Cheesecake Lover, Tub
-// Lover, Tub & Sip, Cookie Dozen, Big Basket). Off since 28 Oct 2026 by the
-// owner's choice; true brings them all back. Seasonal offers (Diwali) run on
-// their own dates either way.
-export const EVERYDAY_ON = false
-
-export const OFFER_RULES = {
-  // Day-of-month window, inclusive: on from 00:00 on the 13th to 23:59 on the
-  // 20th, by the visitor's own clock. Outside it the offer is hidden entirely.
-  midMonth: { fromDay: 13, toDay: 20, min: 499 },
-  bigBasketMin: 1500, // subtotal, before delivery
-  // Tub Lover: the gift grows with the number of cheesecake tubs. Each
-  // tier's value (menu price of the gift) decides it against other offers.
-  tubTiers: [
-    { min: 2, gift: '3 cake pops', value: 45 },
-    { min: 5, gift: '5 cake pops', value: 75 },
-  ],
-  // Diwali: on from 00:00 on 5 Nov to 23:59 on 15 Nov, by the visitor's clock
-  // — the same days as the Diwali banner and welcome screen (festivals.js,
-  // DiwaliWelcome.jsx); change all three together. Values are menu value
-  // (₹15 a cake pop, ~₹25 a cupcake, ₹100–120 a tub) and decide the gift.
-  diwali: { month: 11, fromDay: 5, toDay: 15 },
-  diwaliTubTiers: [
-    { min: 2, gift: '3 cake pops', value: 45 },
-    { min: 3, gift: '4 cake pops', value: 60 },
-    { min: 4, gift: '2 cupcakes + 2 cake pops', value: 80 },
-    { min: 6, gift: '1 extra cheesecake tub', value: 120 },
-  ],
-  diwaliSpongeTiers: [
-    { min: 1, gift: '4 cake pops', value: 60 },
-    { min: 2, gift: '1 sponge cake tub + 3 cake pops', value: 145 },
-  ],
-}
-
-// ── Diwali price packs (5–15 Nov) ──
-// Unlike every other offer these MOVE A PRICE — but only as their own cart
-// lines at their own price ("Red Velvet Cupcakes (Diwali pack of 10)" ₹289),
-// exactly like a product tier. No total is recomputed anywhere, so the
-// five-places rule isn't engaged: cart, checkout, receipt, invoice and the
-// UPI amount just add up the lines as always. `was` is the same pieces at
-// the per-piece price, shown struck through.
-//   • Packs of 10 — the owner's prices, by product id. (A "box of 8 for the
-//     box-of-6 price" was tried and dropped: it undercut the packs of 10.)
-// Pack lines can only be ADDED inside the real window (never in a preview),
-// and Checkout refuses an order still holding one after it closes.
-// 10 at the per-piece price, then a round-ish Diwali price ending in 9:
-//   ₹25 cupcakes   250 → 239   (Vanilla, Sprinkle)
-//   ₹28 cupcakes   280 → 269   (Chocolate, Nutella, Strawberry)
-//   ₹30 cupcakes   300 → 289   (Red Velvet, Biscoff — was 279 until 28 Oct)
-//   ₹35 cupcake    350 → 329   (Pistachio)
-//   ₹15 cake pops  150 → 139   (Chocolate, Vanilla, Red Velvet)
-// 239 / 289 / 329 / 139 are the owner's figures; 269 follows the same step.
-export const DIWALI_PACK10 = {
-  'cup-vanilla': 239,
-  'cup-sprinkle': 239,
-  'cup-chocolate': 269,
-  'cup-nutella': 269,
-  'cup-strawberry': 269,
-  'cup-redvelvet': 289,
-  'cup-biscoff': 289,
-  'cup-pistachio': 329,
-  'bk-cakepop-chocolate': 139,
-  'bk-cakepop-vanilla': 139,
-  'bk-cakepop-redvelvet': 139,
-}
-// Two boxes of the box-only Variety Cupcakes (₹180 each): 360 → 339, the
-// owner's figure. Box-only products by id → the price of TWO boxes.
-export const DIWALI_PACK2 = {
-  'cup-variety': 339,
-}
-
-/** Is this cart line a Diwali pack? (ids end -d2 / -d10; -d8 was the dropped
- *  box of 8, still matched so an old cart line is caught.) */
-export const isDiwaliPackId = (id) => /-d(2|8|10)$/.test(String(id || ''))
+// The rules half (dates, pack prices, roll-up, clock) lives in offerRules.js;
+// everything there is re-exported so old imports keep working.
+export * from './offerRules.js'
 
 // The packs as the cards show them: one row per pack with its regular and
 // Diwali price. Worked out from products.js, so a price change follows.
@@ -107,107 +35,8 @@ function diwaliPackPrices() {
     { label: '10 cake pops', note: 'Chocolate, Vanilla or Red Velvet', ...ten('bk-cakepop-chocolate') },
   ].filter(Boolean)
 }
-/** The cart line for one Diwali pack of 10 — the one shape every add path uses. */
-export function pack10Line(p) {
-  return { id: `${p.id}-d10`, name: `${p.name} (Diwali pack of 10)`, price: DIWALI_PACK10[p.id], img: p.img }
-}
-
-// The pack a product's BASE line rolls up into: 10 loose cupcakes / cake pops,
-// or 2 Variety boxes. Only on the REAL Diwali dates — a ?diwali=preview tab
-// must never produce a real order at pack prices.
-function packRule(p) {
-  if (!p) return null
-  if (DIWALI_PACK10[p.id] && isPerPiece(p)) return { size: 10, price: DIWALI_PACK10[p.id], line: pack10Line(p), label: 'pack of 10', unit: 'pieces' }
-  if (DIWALI_PACK2[p.id]) return { size: 2, price: DIWALI_PACK2[p.id], line: pack2Line(p), label: 'pack of 2 boxes', unit: 'boxes' }
-  return null
-}
-/** The cart line for the Diwali "2 boxes" pack (Variety). */
-export function pack2Line(p) {
-  return { id: `${p.id}-d2`, name: `${p.name.replace(/\s*\(Box of 6\)$/, '')} (Diwali 2 boxes of 6)`, price: DIWALI_PACK2[p.id], img: p.img }
-}
-/** { total, regular, packs, label } for `qty` of `p`'s base line right now. */
-export function piecesPrice(p, qty, now = offerNow()) {
-  const n = Math.max(0, Number(qty) || 0)
-  const regular = (Number(p?.price) || 0) * n
-  const rule = packRule(p)
-  if (!OFFERS_ON || !rule || !diwaliWindow(now, true).live) return { total: regular, regular, packs: 0 }
-  const packs = Math.floor(n / rule.size)
-  return { total: packs * rule.price + (n % rule.size) * p.price, regular, packs, label: rule.label }
-}
-
-/** "Add N more for the Diwali pack" — once at least half a pack is chosen. Real dates only. */
-export function packNudge(p, qty, now = offerNow()) {
-  const rule = packRule(p)
-  if (!OFFERS_ON || !rule || !diwaliWindow(now, true).live) return null
-  const r = (Number(qty) || 0) % rule.size
-  return r && r >= rule.size / 2 ? { need: rule.size - r, price: rule.price, size: rule.size, unit: rule.unit } : null
-}
-
-/**
- * The cart's rule from 5 to 15 Nov: a base line (the product's own id at its
- * own price) holding a full pack becomes pack lines + the rest — 10 Vanilla
- * (added one by one or as "Add 10") bill as one ₹239 pack, 12 as a pack + 2,
- * and 2 Variety boxes as the ₹339 pair. Returns the SAME array when nothing changes. Called by
- * CartContext on every add / increment and on load.
- */
-export function applyDiwaliPacks(items, now = offerNow()) {
-  if (!OFFERS_ON || !Array.isArray(items) || !diwaliWindow(now, true).live) return items
-  const out = []
-  const packs = {}
-  for (const it of items) {
-    const p = shopProducts.find((x) => x.id === it.id)
-    const rule = packRule(p)
-    if (rule && Number(it.price) === p.price && it.qty >= rule.size) {
-      packs[p.id] = (packs[p.id] || 0) + Math.floor(it.qty / rule.size)
-      if (it.qty % rule.size) out.push({ ...it, qty: it.qty % rule.size })
-    } else out.push(it)
-  }
-  const ids = Object.keys(packs)
-  if (!ids.length) return items
-  for (const id of ids) {
-    const line = packRule(byId(id)).line
-    const i = out.findIndex((x) => x.id === line.id)
-    if (i >= 0) out[i] = { ...out[i], qty: out[i].qty + packs[id] }
-    else out.push({ ...line, qty: packs[id], minQty: 1 })
-  }
-  return out
-}
-
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
 
-/**
- * The Diwali deals one product takes part in, for its Shop card — [] outside
- * the window. `price` deals carry a ready cart line (built exactly as the
- * /offers picker builds it); `gift` deals are one line of text linking to the
- * offer. Display follows diwaliWindow() (so a preview shows them); ADDING a
- * pack is gated on the real calendar by the caller.
- */
-export function productDiwaliDeals(p, now = offerNow()) {
-  if (!OFFERS_ON || !p || !diwaliWindow(now).live) return []
-  const deals = []
-  if (DIWALI_PACK10[p.id]) {
-    deals.push({ kind: 'price', label: '10 pcs', was: p.price * 10, now: DIWALI_PACK10[p.id], line: pack10Line(p) })
-  }
-  if (DIWALI_PACK2[p.id]) {
-    deals.push({ kind: 'price', label: '2 boxes', was: p.price * 2, now: DIWALI_PACK2[p.id], line: pack2Line(p) })
-  }
-  if (p.category === 'Cheesecakes' && p.slice != null) {
-    const t = OFFER_RULES.diwaliTubTiers[0]
-    deals.push({ kind: 'gift', offer: 'diwali-tubs', text: `Buy ${t.min} tubs → ${t.gift} free` })
-  }
-  if (p.category === 'Sponge Cakes') {
-    const t = OFFER_RULES.diwaliSpongeTiers[0]
-    deals.push({ kind: 'gift', offer: 'diwali-sponge', text: `Whole cake → ${t.gift} free` })
-  }
-  return deals
-}
-
-/** 13 → "13th", 21 → "21st". */
-export const ordinal = (n) => {
-  const t = n % 100
-  if (t >= 11 && t <= 13) return `${n}th`
-  return `${n}${{ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th'}`
-}
 const MID_FROM = ordinal(OFFER_RULES.midMonth.fromDay)
 const MID_TO = ordinal(OFFER_RULES.midMonth.toDay)
 
@@ -229,7 +58,7 @@ export const OFFERS = [
     tag: 'Diwali · 5 – 15 Nov',
     condition: 'Order cheesecake tubs, any flavours mixed: 2 tubs get 3 cake pops, 3 get 4 cake pops, 4 get 2 cupcakes + 2 cake pops, and 6 get a 7th tub free.',
     gift: '3 cake pops, up to a free tub with 6',
-    giftShort: 'up to a free tub',
+    giftShort: 'up to a 7th tub',
     image: img.cheesecakeStrawberryCups,
     alt: 'Strawberry cheesecake in single-serve tubs',
     cta: { label: 'Shop cheesecake tubs', to: '/shop?category=Cheesecakes' },
@@ -361,34 +190,6 @@ export const OFFERS = [
 
 export const offerById = (id) => OFFERS.find((o) => o.id === id)
 
-// ── The clock every offer reads ───────────────────────────────────────────────
-// Normally just `new Date()`. On the DEV server only, `?testdate=2026-10-15`
-// (or a full `2026-10-20T23:58`) pretends it is that moment for this tab, so
-// the Mid-Month switch-over can be checked before it happens; `?testdate=off`
-// clears it. It is compiled out of the production build — on the live site a
-// customer must not be able to fake a date and unlock a gift.
-const TESTDATE_KEY = 'cc_offer_testdate'
-
-export function offerNow() {
-  if (!import.meta.env?.DEV) return new Date()
-  try {
-    const param = new URLSearchParams(window.location.search).get('testdate')
-    if (param === 'off') sessionStorage.removeItem(TESTDATE_KEY)
-    else if (param) sessionStorage.setItem(TESTDATE_KEY, param)
-    const stored = sessionStorage.getItem(TESTDATE_KEY)
-    if (!stored) return new Date()
-    // A bare date keeps today's time of day, so countdowns still read sensibly.
-    const real = new Date()
-    const [d, t] = stored.split('T')
-    const [y, m, day] = d.split('-').map(Number)
-    const [hh, mm] = t ? t.split(':').map(Number) : [real.getHours(), real.getMinutes()]
-    const fake = new Date(y, m - 1, day, hh, mm)
-    return Number.isNaN(fake.getTime()) ? real : fake
-  } catch {
-    return new Date()
-  }
-}
-
 /** The offers running right now: Diwali ones in their window, then the everyday ones (if on), Mid-Month only in its window. */
 export function activeOffers(now = offerNow()) {
   if (!OFFERS_ON) return []
@@ -397,46 +198,6 @@ export function activeOffers(now = offerNow()) {
   return OFFERS.filter((o) =>
     o.season === 'diwali' ? diwaliLive : EVERYDAY_ON && (o.id !== 'mid-month' || midLive),
   )
-}
-
-/** Is any offer running now? Gates every offer surface, so none shows empty. */
-export const offersLive = (now = offerNow()) => activeOffers(now).length > 0
-
-/**
- * { live, from, to } — this year's Diwali window. Dates are local. Under
- * ?diwali=preview it reads as live on any date, unless `real` (Checkout's
- * receipt) asks for the true calendar.
- */
-export function diwaliWindow(now = offerNow(), real = false) {
-  const { month, fromDay, toDay } = OFFER_RULES.diwali
-  const from = new Date(now.getFullYear(), month - 1, fromDay)
-  const to = new Date(now.getFullYear(), month - 1, toDay)
-  const d = now.getDate()
-  const inside = now.getMonth() + 1 === month && d >= fromDay && d <= toDay
-  return { live: inside || (!real && isDiwaliPreview()), from, to }
-}
-
-/** "2026-10" — which month's window it is; what the pop-up remembers it showed. */
-export function midMonthKey(now = offerNow()) {
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-}
-
-// ── Mid-month window ──────────────────────────────────────────────────────────
-
-/** { live, from, to } — this month's window if it's running or still to come, else next month's. Dates are local. */
-export function midMonthWindow(now = offerNow()) {
-  const { fromDay, toDay } = OFFER_RULES.midMonth
-  const day = now.getDate()
-  const monthOffset = day > toDay ? 1 : 0
-  const from = new Date(now.getFullYear(), now.getMonth() + monthOffset, fromDay)
-  const to = new Date(now.getFullYear(), now.getMonth() + monthOffset, toDay)
-  return { live: day >= fromDay && day <= toDay, from, to }
-}
-
-/** Whole days from today to `date` (local midnight to local midnight). */
-export function daysUntil(date, now = offerNow()) {
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  return Math.round((new Date(date.getFullYear(), date.getMonth(), date.getDate()) - today) / 86400000)
 }
 
 // ── Which offer does this cart earn? ──────────────────────────────────────────
@@ -531,7 +292,7 @@ export function tubTier(tubs) {
  * `earned` maps every offer id to true/false, and `counts` carries what each
  * was measured on, for the per-card status on /offers.
  */
-export function cartOfferStatus(items = [], subtotal = 0, now = offerNow(), { real = false } = {}) {
+export function cartOfferStatus(items = [], subtotal = 0, now = offerNow(), { real = false, everyday = EVERYDAY_ON } = {}) {
   const counts = { boxes: 0, banto: 0, tubs: 0, drinks: 0, dozens: 0, sponge: 0 }
   for (const it of items) {
     const info = lineInfo(it)
@@ -545,7 +306,7 @@ export function cartOfferStatus(items = [], subtotal = 0, now = offerNow(), { re
   const mid = midMonthWindow(now)
   const diwali = diwaliWindow(now, real)
   const has = items.length > 0
-  const every = OFFERS_ON && EVERYDAY_ON
+  const every = OFFERS_ON && everyday
   const fest = OFFERS_ON && diwali.live
   // The tier each tiered offer reaches right now (null = not yet).
   const tiers = Object.fromEntries(
@@ -642,12 +403,28 @@ export function cartOfferStatus(items = [], subtotal = 0, now = offerNow(), { re
  * re-works it out; the result is the same as the receipt's line for website
  * orders, and also covers ChatBot orders, whose receipt has no gift line.
  */
+// The day the seven everyday offers were switched off — an order placed
+// before it was judged with them ON, whatever the switch says today.
+const EVERYDAY_OFF_FROM = new Date(2026, 9, 28)
+
+/** The small, stored form of a gift: what /admin/orders shows and packs. */
+export const giftRecord = (offer) => (offer ? { id: offer.id, name: offer.name, gift: offer.gift } : null)
+
+/**
+ * The gift a SAVED order earned, for /admin/orders. Orders placed since
+ * 28 Oct 2026 carry it (`offerGift`, written when the order was placed, from
+ * the same rule as the receipt) — today's switches can't change it. Older
+ * orders are worked out from their items and time, with the everyday offers
+ * as they were then. A cancelled order packs nothing.
+ */
 export function orderGift(order) {
-  const when = order?.createdAt ? new Date(order.createdAt) : null
-  if (!OFFERS_ON || !when || Number.isNaN(when.getTime())) return null
+  if (!order || order.status === 'cancelled') return null
+  if ('offerGift' in order) return order.offerGift || null
+  const when = order.createdAt ? new Date(order.createdAt) : null
+  if (!when || Number.isNaN(when.getTime())) return null
   const items = Array.isArray(order.items) ? order.items : []
   const subtotal = Number(order.totals?.subtotal) || items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 1), 0)
-  return cartOfferStatus(items, subtotal, when, { real: true }).offer
+  return giftRecord(cartOfferStatus(items, subtotal, when, { real: true, everyday: when < EVERYDAY_OFF_FROM }).offer)
 }
 
 // ── Quick-add choices for the offer cards on /offers ──────────────────────────

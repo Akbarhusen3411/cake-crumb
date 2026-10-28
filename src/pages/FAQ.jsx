@@ -39,7 +39,7 @@ const SECTIONS = [
       },
       {
         q: 'Are your products vegan?',
-        a: 'Most are not — they typically contain dairy and/or eggs. Jelly cups and Grass cups are vegan-friendly. We can craft vegan-friendly custom orders on request.',
+        a: 'Most are not — our cakes and desserts contain dairy and/or eggs (the Milk Pudding cup is made with milk). Our mojitos and black coffees are vegan-friendly, and we can talk through a vegan-friendly custom order on WhatsApp.',
       },
     ],
   },
@@ -50,7 +50,7 @@ const SECTIONS = [
     questions: [
       {
         q: 'What areas do you deliver to?',
-        a: 'We deliver across Vaso, Kheda, and surrounding Gujarat districts. Delivery charges depend on distance — we confirm the exact rate on WhatsApp once you share your address.',
+        a: 'We deliver across Vaso, Kheda, and surrounding Gujarat districts. The charge depends on distance — enter your pincode at checkout and it is added to your total, and we confirm it on WhatsApp.',
       },
       {
         q: 'Is there a delivery fee?',

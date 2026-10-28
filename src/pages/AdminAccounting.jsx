@@ -1,7 +1,8 @@
+import '../admin.css' // admin-only styles, shipped with this lazy page
 import { useEffect, useRef, useState } from 'react'
 import { FiAlertTriangle, FiLock, FiDollarSign } from 'react-icons/fi'
 import PinGate from '../components/admin/accounting/PinGate.jsx'
-import { getFirebaseAuth, isFirebaseEnabled } from '../firebase.js'
+import { getFirebaseAuth, isFirebaseEnabled, firebaseUnavailableMessage } from '../firebase.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import {
   ACC, listDocs, subscribeDocs, onCloudError,
@@ -176,7 +177,7 @@ export default function AdminAccounting() {
     setPwdError(''); setSigningIn(true)
     try {
       const auth = await getFirebaseAuth()
-      if (!auth) throw new Error('Firebase is not configured.')
+      if (!auth) throw new Error(firebaseUnavailableMessage())
       const { signInWithEmailAndPassword } = await import('firebase/auth')
       await signInWithEmailAndPassword(auth, email.trim(), pwd)
       setPwd('')
@@ -264,9 +265,11 @@ export default function AdminAccounting() {
         <div className="alert alert-warning d-flex align-items-start gap-2 py-2 px-3" style={{ borderRadius: 12 }}>
           <FiAlertTriangle className="flex-shrink-0 mt-1" />
           <div className="small">
-            <strong>Not saved to the cloud.</strong> This change is only on this device, so other
-            devices won’t see it. Check the Firestore rules for the <code>acc_*</code> collections
-            (see <code>ACCOUNTING_SETUP.md</code>), then refresh.
+            <strong>Not saved to the cloud yet.</strong> The entry is kept on this device and a new
+            one uploads by itself when the connection is back — keep this page open until this
+            note stops coming back. Other devices won’t see it until then. If it keeps happening on
+            a good connection, check the Firestore rules for the <code>acc_*</code> collections
+            (see <code>ACCOUNTING_SETUP.md</code>).
             <div className="text-muted mt-1" style={{ fontSize: '0.78rem' }}>{cloudError}</div>
           </div>
           <button type="button" className="btn-close ms-auto" onClick={() => setCloudError('')} aria-label="Dismiss" />

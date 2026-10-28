@@ -9,7 +9,7 @@ import { FaGoogle } from 'react-icons/fa'
 import { GOOGLE_REVIEW_LINK } from '../data/shopConfig.js'
 import HeartDivider from '../components/HeartDivider.jsx'
 import { addReview, deleteReview, getReviews, summarize, timeAgo } from '../services/reviews.js'
-import { isFirebaseEnabled, getFirebaseAuth } from '../firebase.js'
+import { isFirebaseEnabled, getFirebaseAuth, firebaseUnavailableMessage } from '../firebase.js'
 import { reviewCooldownMs, markReviewSubmitted, isHoneypotTripped, HONEYPOT_STYLE } from '../utils/reviewGuard.js'
 import ReviewCardSkeleton from '../components/skeletons/ReviewCardSkeleton.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
@@ -174,7 +174,7 @@ export default function Reviews() {
     setSigningIn(true)
     try {
       const auth = await getFirebaseAuth()
-      if (!auth) throw new Error('Firebase is not configured.')
+      if (!auth) throw new Error(firebaseUnavailableMessage())
       const { signInWithEmailAndPassword } = await import('firebase/auth')
       await signInWithEmailAndPassword(auth, email.trim(), pwd)
       setPwd('')

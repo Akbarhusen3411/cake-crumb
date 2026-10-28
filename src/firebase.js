@@ -12,6 +12,17 @@ const firebaseConfig = {
 export const isFirebaseEnabled =
   !!firebaseConfig.apiKey && !!firebaseConfig.projectId
 
+/**
+ * What to tell a person when getFirebaseAuth()/getDb() came back null. With
+ * the config present, null means the SDK failed to LOAD (connection, or a
+ * stale dev server) — "not configured" sent the owner hunting through .env
+ * once when .env was fine. Calling again retries (failures aren't memoised).
+ */
+export const firebaseUnavailableMessage = () =>
+  isFirebaseEnabled
+    ? 'Couldn’t load the sign-in system — check your internet connection and try again. If it keeps happening, reload the page.'
+    : 'Firebase is not configured.'
+
 // reCAPTCHA Enterprise key ID for Firebase App Check. Public by design — it
 // ships in the bundle exactly like the Firebase config above.
 //
@@ -51,6 +62,10 @@ async function getFirebaseApp() {
         return app
       } catch (err) {
         console.error('[firebase] init failed:', err)
+        // Don't memoise a failure: a chunk that failed to load (weak signal,
+        // or a stale dev server answering "504 Outdated Optimize Dep") must be
+        // retried on the next call, not stuck as "no Firebase" until a reload.
+        _appPromise = null
         return null
       }
     })()

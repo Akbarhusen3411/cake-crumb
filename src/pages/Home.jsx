@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import {
@@ -12,10 +13,12 @@ import { useCart } from '../context/CartContext.jsx'
 import HeartDivider from '../components/HeartDivider.jsx'
 import CertBadges from '../components/CertBadges.jsx'
 import InstagramFeed from '../components/InstagramFeed.jsx'
-import OffersBand from '../components/OffersBand.jsx'
-import HeroOffers from '../components/HeroOffers.jsx'
-import OffersTicker from '../components/OffersTicker.jsx'
-import { offersLive } from '../data/offers.js'
+// The offer sections pull in the whole offer list (offers.js); loaded on
+// demand and only while an offer runs, so the first download stays small.
+const OffersBand = lazy(() => import('../components/OffersBand.jsx'))
+const HeroOffers = lazy(() => import('../components/HeroOffers.jsx'))
+const OffersTicker = lazy(() => import('../components/OffersTicker.jsx'))
+import { offersLive } from '../data/offerRules.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
 import { DEPOSIT_PCT, depositAmount } from '../data/shopConfig.js'
 
@@ -85,7 +88,7 @@ export default function Home() {
                   className="cc-home-hero__img"
                   fetchPriority="high"
                 />
-                <HeroOffers />
+                {offersOn && <Suspense fallback={null}><HeroOffers /></Suspense>}
               </div>
             </div>
           </div>
@@ -94,8 +97,12 @@ export default function Home() {
 
       {/* ───── OFFERS ───── straight after the hero, so a visitor sees them
           before scrolling; renders nothing while no offer is running. */}
-      <OffersTicker />
-      <OffersBand />
+      {offersOn && (
+        <Suspense fallback={null}>
+          <OffersTicker />
+          <OffersBand />
+        </Suspense>
+      )}
 
       {/* ───── FEATURE STRIP — 3 cells with vertical dividers ───── */}
       <section className="cc-home-features">
@@ -263,7 +270,7 @@ export default function Home() {
 
           <ul className="cc-infocard cc-home-how__facts">
             <li><FiClock aria-hidden /> <span>Order a day ahead — order late and it's ready the next day</span></li>
-            <li><FiShoppingBag aria-hidden /> <span>UPI or Cash on Delivery</span></li>
+            <li><FiShoppingBag aria-hidden /> <span>UPI, or cash on delivery or pickup</span></li>
             <li><FiHeart aria-hidden /> <span>Delivery charge shown at checkout</span></li>
           </ul>
 

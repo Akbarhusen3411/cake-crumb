@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { applyDiwaliPacks } from '../data/offers.js'
+import { applyDiwaliPacks } from '../data/offerRules.js'
 
 const CartContext = createContext(null)
 // v2: lines gained `minQty`, and the cupcake ids changed meaning — `cup-vanilla`

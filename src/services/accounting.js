@@ -1,7 +1,7 @@
-import { getDb } from '../firebase.js'
+import { getDb, isFirebaseEnabled } from '../firebase.js'
 import { ACCOUNTING_MENU } from '../data/accountingMenu.js'
 import { shopProducts } from '../data/products.js'
-import { DIWALI_PACK10, DIWALI_PACK2 } from '../data/offers.js'
+import { DIWALI_PACK10, DIWALI_PACK2 } from '../data/offerRules.js'
 
 // Admin-only daily-accounting store. Same shape as services/orders.js:
 // Firestore when configured, always mirrored to localStorage, never throws.
@@ -46,6 +46,44 @@ function reportCloudError(op, coll, err) {
   try { cloudErrorHandler?.(`${op} ${coll} — ${errText(err)}`) } catch { /* ignore */ }
 }
 
+// ── Saves that survive a weak connection ──
+// A new record gets its REAL Firestore id up front (doc(collection()).id) and
+// is kept locally with `_pending: true` until the cloud confirms it. Reads
+// merge pending rows back in (a cloud read used to overwrite the local copy,
+// so an order saved while offline vanished at the next sync), and every live
+// subscription re-sends them — with setDoc on the SAME id, so a retry can
+// never make a duplicate. Writes give up waiting after SAVE_TIMEOUT_MS: the
+// Firestore promise only settles on a server ack, which left "Saving…"
+// spinning forever at the counter on poor signal.
+const SAVE_TIMEOUT_MS = 12000
+const withTimeout = (p, ms = SAVE_TIMEOUT_MS) =>
+  Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout — slow or no connection; will retry')), ms))])
+const stripPending = ({ _pending, ...rest }) => rest // eslint-disable-line no-unused-vars
+
+/** Cloud rows + this device's still-pending rows that the cloud doesn't have yet. */
+function mergePending(coll, cloud) {
+  const ids = new Set(cloud.map((r) => r.id))
+  const pending = readLocal(coll).filter((r) => r._pending && !ids.has(r.id))
+  return pending.length ? [...pending, ...cloud] : cloud
+}
+
+/** Re-send pending rows (same id → idempotent). Clears the flag on success. */
+async function flushPending(db, coll, cloudIds) {
+  const pending = readLocal(coll).filter((r) => r._pending && !cloudIds.has(r.id))
+  if (!pending.length) return
+  const { doc, setDoc } = await import('firebase/firestore')
+  for (const r of pending) {
+    try {
+      const { id, ...data } = stripPending(r)
+      await withTimeout(setDoc(doc(db, coll, id), data))
+      writeLocal(coll, readLocal(coll).map((x) => (x.id === id ? stripPending(x) : x)))
+    } catch (err) {
+      reportCloudError('retry save', coll, err)
+      return // still offline — try again on the next snapshot
+    }
+  }
+}
+
 /** List every doc in a collection (Firestore → localStorage fallback/mirror). */
 export async function listDocs(coll) {
   const db = await getDb()
@@ -53,7 +91,7 @@ export async function listDocs(coll) {
   try {
     const { collection, getDocs } = await import('firebase/firestore')
     const snap = await getDocs(collection(db, coll))
-    const arr = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+    const arr = mergePending(coll, snap.docs.map((d) => ({ id: d.id, ...d.data() })))
     writeLocal(coll, arr)
     return arr
   } catch (err) {
@@ -80,9 +118,11 @@ export function subscribeDocs(coll, onData) {
       unsub = onSnapshot(
         collection(db, coll),
         (snap) => {
-          const arr = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+          const cloud = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+          const arr = mergePending(coll, cloud)
           writeLocal(coll, arr)
           onData(arr)
+          flushPending(db, coll, new Set(cloud.map((r) => r.id)))
         },
         (err) => { reportCloudError('live read', coll, err); onData(readLocal(coll)) }
       )
@@ -99,22 +139,35 @@ export async function addDocRec(coll, data) {
   const rec = { ...data, createdAt: new Date().toISOString() }
   const db = await getDb()
   if (!db) {
+    // Config present but the SDK didn't load: this save is on this device
+    // only — say so instead of looking saved.
+    if (isFirebaseEnabled) reportCloudError('save', coll, new Error('cloud not reachable — saved on this device only'))
     const r = { id: newLocalId(), ...rec }
     const l = readLocal(coll); l.unshift(r); writeLocal(coll, l)
     return r
   }
+  let fs
   try {
-    const { collection, addDoc } = await import('firebase/firestore')
-    const ref = await addDoc(collection(db, coll), rec)
-    const r = { id: ref.id, ...rec }
-    const l = readLocal(coll); l.unshift(r); writeLocal(coll, l)
-    return r
+    fs = await import('firebase/firestore')
   } catch (err) {
     reportCloudError('save', coll, err)
     const r = { id: newLocalId(), ...rec }
     const l = readLocal(coll); l.unshift(r); writeLocal(coll, l)
     return r
   }
+  const { collection, doc, setDoc } = fs
+  const ref = doc(collection(db, coll))
+  const r = { id: ref.id, ...rec }
+  const l = readLocal(coll); l.unshift({ ...r, _pending: true }); writeLocal(coll, l)
+  try {
+    await withTimeout(setDoc(ref, rec))
+    writeLocal(coll, readLocal(coll).map((x) => (x.id === ref.id ? stripPending(x) : x)))
+  } catch (err) {
+    // Kept as pending: it stays on screen, survives the next sync and is
+    // re-sent with the same id as soon as a live read succeeds.
+    reportCloudError('save', coll, err)
+  }
+  return r
 }
 
 /** Update a record by id. */
@@ -123,10 +176,11 @@ export async function updateDocRec(coll, id, data) {
   const i = l.findIndex((x) => x.id === id)
   if (i >= 0) { l[i] = { ...l[i], ...data }; writeLocal(coll, l) }
   const db = await getDb()
+  if (!db && isFirebaseEnabled && !isLocalId(id)) reportCloudError('update', coll, new Error('cloud not reachable — changed on this device only'))
   if (!db || isLocalId(id)) return
   try {
     const { doc, updateDoc } = await import('firebase/firestore')
-    await updateDoc(doc(db, coll, id), data)
+    await withTimeout(updateDoc(doc(db, coll, id), data))
   } catch (err) {
     // Swallowing this used to make the edit look saved: the localStorage write
     // above kept it on screen, then the next read from the cloud reverted it.
@@ -138,10 +192,11 @@ export async function updateDocRec(coll, id, data) {
 export async function deleteDocRec(coll, id) {
   writeLocal(coll, readLocal(coll).filter((x) => x.id !== id))
   const db = await getDb()
+  if (!db && isFirebaseEnabled && !isLocalId(id)) reportCloudError('delete', coll, new Error('cloud not reachable — deleted on this device only'))
   if (!db || isLocalId(id)) return
   try {
     const { doc, deleteDoc } = await import('firebase/firestore')
-    await deleteDoc(doc(db, coll, id))
+    await withTimeout(deleteDoc(doc(db, coll, id)))
   } catch (err) {
     reportCloudError('delete', coll, err)
   }
@@ -175,13 +230,56 @@ export async function seedMenuIfEmpty() {
 export const PER_PIECE_CATS = ['Cake Pop', 'Cupcake']
 export const isPerPieceVariant = (v) => /per\s*piece/i.test(v || '')
 
+// ── "Run once" for the menu importers — recorded in the CLOUD ──
+// A per-device localStorage flag alone let a new phone, a second browser or a
+// cleared cache run an importer AGAIN: re-adding rows the owner had deleted,
+// and (the price fixers) writing old prices over the owner's own edits. The
+// mark now lives in acc_settings/main.migrations, so it runs once per BOOK.
+// The local flag stays as a fast path; a device that already has it stamps
+// the cloud mark too, so the first device to unlock after this change closes
+// the door for every other one. No cloud (localStorage-only build) → the
+// local flag alone, as before.
+async function alreadyRan(flag) {
+  let local = false
+  try { local = !!localStorage.getItem(flag) } catch { /* ignore */ }
+  const db = await getDb()
+  if (!db) return local
+  try {
+    const { doc, getDoc, setDoc } = await import('firebase/firestore')
+    const ref = doc(db, 'acc_settings', 'main')
+    const snap = await getDoc(ref)
+    if (snap.exists() && snap.data()?.migrations?.[flag]) {
+      try { localStorage.setItem(flag, '1') } catch { /* ignore */ }
+      return true
+    }
+    if (local) await setDoc(ref, { migrations: { [flag]: new Date().toISOString() } }, { merge: true })
+    return local
+  } catch (err) {
+    reportCloudError('read', 'acc_settings', err)
+    // Can't tell whether the book already ran it — skip rather than risk
+    // overwriting the owner's prices. It will run on a later, healthy unlock.
+    return true
+  }
+}
+async function markRan(flag) {
+  try { localStorage.setItem(flag, '1') } catch { /* ignore */ }
+  const db = await getDb()
+  if (!db) return
+  try {
+    const { doc, setDoc } = await import('firebase/firestore')
+    await setDoc(doc(db, 'acc_settings', 'main'), { migrations: { [flag]: new Date().toISOString() } }, { merge: true })
+  } catch (err) {
+    reportCloudError('write', 'acc_settings', err)
+  }
+}
+
 /**
  * Ensure Cake Pop & Cupcake items each have a "Per piece" price (box-of-6 ÷ 6),
  * so the owner can sell any number of pieces. Idempotent; runs once per browser.
  */
 export async function ensurePerPieceMenu() {
   const FLAG = 'cc_acc_perpiece_v1'
-  try { if (localStorage.getItem(FLAG)) return [] } catch { /* ignore */ }
+  if (await alreadyRan(FLAG)) return []
   const menu = await listDocs(ACC.MENU)
   const byItem = {}
   for (const m of menu) {
@@ -197,7 +295,7 @@ export async function ensurePerPieceMenu() {
     if (perPiece > 0) additions.push({ category: rows[0].category, name: rows[0].name, variant: 'Per piece', price: perPiece })
   }
   for (const a of additions) await addDocRec(ACC.MENU, a)
-  try { localStorage.setItem(FLAG, '1') } catch { /* ignore */ }
+  await markRan(FLAG)
   return additions
 }
 
@@ -218,13 +316,13 @@ const FREE_GIFT_ITEMS = ['Cake Pop', 'Cupcake', 'Cheesecake Tub', 'Sponge Cake T
  */
 export async function ensureFreeGiftMenu() {
   const FLAG = 'cc_acc_freegift_v1'
-  try { if (localStorage.getItem(FLAG)) return } catch { /* ignore */ }
+  if (await alreadyRan(FLAG)) return
   const menu = await listDocs(ACC.MENU)
   for (const name of FREE_GIFT_ITEMS) {
     const exists = menu.some((m) => m.category === FREE_GIFT_CAT && m.name === name)
     if (!exists) await addDocRec(ACC.MENU, { category: FREE_GIFT_CAT, name, variant: 'Free', price: 0 })
   }
-  try { localStorage.setItem(FLAG, '1') } catch { /* ignore */ }
+  await markRan(FLAG)
 }
 
 /**
@@ -238,7 +336,7 @@ export async function ensureFreeGiftMenu() {
  */
 export async function ensureDiwaliPackMenu() {
   const FLAG = 'cc_acc_diwalipack_v4' // v4: Red Velvet & Biscoff 10-pack ₹279 → ₹289
-  try { if (localStorage.getItem(FLAG)) return } catch { /* ignore */ }
+  if (await alreadyRan(FLAG)) return
   const menu = await listDocs(ACC.MENU)
   const rows = []
   for (const p of shopProducts) {
@@ -257,7 +355,7 @@ export async function ensureDiwaliPackMenu() {
     if (!existing) await addDocRec(ACC.MENU, r)
     else if (Number(existing.price) !== r.price) await updateDocRec(ACC.MENU, existing.id, { price: r.price })
   }
-  try { localStorage.setItem(FLAG, '1') } catch { /* ignore */ }
+  await markRan(FLAG)
 }
 
 /**
@@ -266,7 +364,7 @@ export async function ensureDiwaliPackMenu() {
  */
 export async function ensureCakePopPrices() {
   const FLAG = 'cc_acc_cakepop_v2'
-  try { if (localStorage.getItem(FLAG)) return } catch { /* ignore */ }
+  if (await alreadyRan(FLAG)) return
   const menu = await listDocs(ACC.MENU)
   const SPEC = {
     Vanilla:      { 'Per piece': 15, 6: 90, 12: 180 },
@@ -286,7 +384,7 @@ export async function ensureCakePopPrices() {
       }
     }
   }
-  try { localStorage.setItem(FLAG, '1') } catch { /* ignore */ }
+  await markRan(FLAG)
 }
 
 // ── The Excel importer is RETIRED. ──

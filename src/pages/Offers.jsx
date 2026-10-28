@@ -302,12 +302,15 @@ function BasketBar({ status, count, subtotal }) {
 export default function Offers() {
   usePageMeta({
     title: 'Offers',
-    description: 'Free cake pops, cupcakes and tubs added to your Cake & Crumb order when an offer is running. Menu prices, gifts on us.',
+    description: 'Free cake pops and tubs with your Cake & Crumb order, and special-price Diwali packs of cupcakes and cake pops — whenever an offer is running.',
   })
   const { items, count, subtotal } = useCart()
   const now = useOfferClock()
   const offers = activeOffers(now)
   const live = offers.length > 0
+  // A priced deal (the Diwali packs) is running beside the free gifts, so the
+  // copy can't say "you pay the menu price, gifts on us" for everything.
+  const hasDeals = offers.some((o) => o.deal)
   const status = cartOfferStatus(items, subtotal, now)
   const { hash } = useLocation()
   const target = hash.slice(1)
@@ -334,7 +337,9 @@ export default function Offers() {
           <h1 className="cc-offers-hero__title">A Little Extra,<br />On Us</h1>
           <p className="cc-offers-hero__lede">
             {live
-              ? `${countWord(offers.length)} ways to get something free with your order. You pay the menu price — the extra treats are on the house.`
+              ? hasDeals
+                ? `${countWord(offers.length)} ways to treat yourself: free treats added to your order, and special Diwali pack prices on cupcakes and cake pops.`
+                : `${countWord(offers.length)} ways to get something free with your order. You pay the menu price — the extra treats are on the house.`
               : 'There are no offers running just now. Every cake is still baked to order, and we’d love to make yours.'}
           </p>
           {live && (
@@ -356,7 +361,7 @@ export default function Offers() {
             <div className="container py-4 py-md-5">
               <div className="text-center mb-4 mb-md-5">
                 <span className="eyebrow">The Offers</span>
-                <h2 className="section-title mt-3">Pick Your Free Treat</h2>
+                <h2 className="section-title mt-3">{hasDeals ? 'Pick Your Treat' : 'Pick Your Free Treat'}</h2>
               </div>
               <div className="cc-orows">
                 {offers.map((o, i) => (
@@ -387,7 +392,10 @@ export default function Offers() {
                 <li>
                   <span className="cc-offers-steps__icon"><FiShoppingBag size={20} /></span>
                   <h3>Order as usual</h3>
-                  <p>On the website, through our chat, or straight on WhatsApp. Your total is the menu price.</p>
+                  <p>
+                    On the website, through our chat, or straight on WhatsApp.
+                    {hasDeals ? ' Diwali pack prices are already in your cart total.' : ' Your total is the menu price.'}
+                  </p>
                 </li>
                 <li>
                   <span className="cc-offers-steps__icon"><FiMessageCircle size={20} /></span>
@@ -413,11 +421,19 @@ export default function Offers() {
               <ul className="cc-offers-terms__list">
                 <li>
                   <FiGift aria-hidden />
-                  <span><strong>One gift per order</strong>Offers don’t combine — if your order fits more than one, you get the bigger gift.</span>
+                  <span>
+                    <strong>One gift per order</strong>
+                    Gifts don’t combine — if your order fits more than one, you get the bigger gift.
+                    {hasDeals ? ' A Diwali pack price and a free gift can go together.' : ''}
+                  </span>
                 </li>
                 <li>
                   <FiMessageCircle aria-hidden />
-                  <span><strong>Not in your cart total</strong>The gift is added when we confirm your order on WhatsApp.</span>
+                  <span>
+                    <strong>{hasDeals ? 'Gifts aren’t in your cart total' : 'Not in your cart total'}</strong>
+                    The gift is added when we confirm your order on WhatsApp.
+                    {hasDeals ? ' Pack prices are — what you see in the cart is what you pay.' : ''}
+                  </span>
                 </li>
                 {status.diwali.live && (
                   <li>

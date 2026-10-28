@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FiX } from 'react-icons/fi'
 import { FESTIVALS, getActiveFestival, isDiwaliPreview } from '../data/festivals.js'
-import { offerNow } from '../data/offers.js' // honours ?testdate on the dev server
+import { offerNow } from '../data/offerRules.js' // honours ?testdate on the dev server
 
 const DISMISS_KEY = 'cc_festival_dismissed_v1'
 

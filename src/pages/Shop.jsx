@@ -11,7 +11,7 @@ import { img, u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
 import OfferGift from '../components/OfferGift.jsx'
 import { PriceTag } from '../components/OfferSteps.jsx'
-import { productDiwaliDeals, diwaliWindow } from '../data/offers.js'
+import { productDiwaliDeals, diwaliWindow } from '../data/offerRules.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
 import { useCart } from '../context/CartContext.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
@@ -733,7 +733,7 @@ export default function Shop() {
             {[
               { Icon: FiHeart,          title: 'Handcrafted with Love', text: 'Made in small batches with care.' },
               { Icon: TbToolsKitchen2,  title: 'Made to Order',    text: 'Every treat is made to order just for you.' },
-              { Icon: FiShield,         title: 'Safe & Secure',    text: 'Secure checkout and careful packaging always.' },
+              { Icon: FiShield,         title: 'Packed with Care', text: 'Every order is boxed carefully for pickup or delivery.' },
             ].map((it, i) => (
               <div key={i} className="feature-cell text-center cc-shop-promise__cell">
                 <span className="cc-features-card__icon cc-features-card__icon--lg">

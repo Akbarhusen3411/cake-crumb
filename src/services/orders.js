@@ -73,6 +73,12 @@ export async function saveOrder(input) {
     // Straight-line km from the bakery — bakery-side reference only. Deliberately
     // NOT copied into the public `tracking` mirror below (kept PII/detail-free).
     deliveryKm: input.deliveryKm == null ? null : Number(input.deliveryKm),
+    // The offer gift the receipt promised ({ id, name, gift } or null), saved so
+    // /admin/orders packs exactly that, whatever the offer switches say later.
+    // Bakery-side; not copied into the public tracking mirror.
+    offerGift: input.offerGift && input.offerGift.gift
+      ? { id: String(input.offerGift.id || ''), name: String(input.offerGift.name || ''), gift: String(input.offerGift.gift) }
+      : null,
     status: 'placed',
   }
 

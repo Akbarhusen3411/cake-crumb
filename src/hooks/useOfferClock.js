@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { offerNow } from '../data/offers.js'
+import { offerNow } from '../data/offerRules.js'
 
 /**
  * The current time for offers, refreshed every minute and whenever the tab

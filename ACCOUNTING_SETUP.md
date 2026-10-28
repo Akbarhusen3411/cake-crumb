@@ -13,14 +13,16 @@ existing `match /databases/{database}/documents { … }` block (alongside
 
 ```
 // ── Daily accounting (admin only) ──
-match /acc_orders/{doc}      { allow read, write: if request.auth != null; }
-match /acc_expenses/{doc}    { allow read, write: if request.auth != null; }
-match /acc_withdrawals/{doc} { allow read, write: if request.auth != null; }
-match /acc_menu/{doc}        { allow read, write: if request.auth != null; }
-match /acc_settings/{doc}    { allow read, write: if request.auth != null; }
+match /acc_orders/{doc}      { allow read, write: if isAdmin(); }
+match /acc_expenses/{doc}    { allow read, write: if isAdmin(); }
+match /acc_withdrawals/{doc} { allow read, write: if isAdmin(); }
+match /acc_menu/{doc}        { allow read, write: if isAdmin(); }
+match /acc_settings/{doc}    { allow read, write: if isAdmin(); }
 ```
 
-Same protection as the `orders` collection — sign-in required, never public.
+Same protection as the `orders` collection — only the bakery's own account
+(`isAdmin()`, defined at the top of the rules in `FIREBASE_SETUP.md` section 3),
+never public. The whole set, ready to paste, is `firestore.rules` in the project root.
 Until these are published, saving falls back to this browser's local storage only
 — the app never errors, but the page shows a **"Not saved to the cloud"** warning
 and other devices will not see the entry. `acc_settings` is required, not
