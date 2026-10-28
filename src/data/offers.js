@@ -12,6 +12,7 @@
 import { img } from './images.js'
 import { shopProducts } from './products.js'
 import { inr } from './format.js'
+import { isDiwaliPreview } from './festivals.js'
 
 // Master switch: false hides the Home band, the cart gift card and the receipt
 // line, and /offers says there are none running. Nothing else needs touching.
@@ -228,13 +229,18 @@ export function activeOffers(now = offerNow()) {
 /** Is any offer running now? Gates every offer surface, so none shows empty. */
 export const offersLive = (now = offerNow()) => activeOffers(now).length > 0
 
-/** { live, from, to } — this year's Diwali window. Dates are local. */
-export function diwaliWindow(now = offerNow()) {
+/**
+ * { live, from, to } — this year's Diwali window. Dates are local. Under
+ * ?diwali=preview it reads as live on any date, unless `real` (Checkout's
+ * receipt) asks for the true calendar.
+ */
+export function diwaliWindow(now = offerNow(), real = false) {
   const { month, fromDay, toDay } = OFFER_RULES.diwali
   const from = new Date(now.getFullYear(), month - 1, fromDay)
   const to = new Date(now.getFullYear(), month - 1, toDay)
   const d = now.getDate()
-  return { live: now.getMonth() + 1 === month && d >= fromDay && d <= toDay, from, to }
+  const inside = now.getMonth() + 1 === month && d >= fromDay && d <= toDay
+  return { live: inside || (!real && isDiwaliPreview()), from, to }
 }
 
 /** "2026-10" — which month's window it is; what the pop-up remembers it showed. */
@@ -284,16 +290,21 @@ const BOX_GROUPS = ['Brownies', 'Blondies']
 // A cart line is { id, name, price, qty }. Its tier is the bracket at the end
 // of its name — "Vanilla Cupcakes (Box of 6)" — which every add path writes.
 // The id suffix (-slice / -unit) and the product's own labels are the fallback.
-function lineInfo(item) {
+function lineInfo(raw) {
+  // Saved orders and ChatBot lines may lack an id; never let that throw.
+  const item = { ...raw, id: String(raw?.id || ''), name: String(raw?.name || '') }
   // An exact id match is the base tier, even when the id itself ends in
   // "-slice" ('lo-dipped-slice' is a product, not the tub tier of 'lo-dipped').
   const exact = shopProducts.find((p) => p.id === item.id)
   const suffix = exact ? null : item.id.match(/-(slice|unit)$/)?.[1]
   const baseId = suffix ? item.id.slice(0, -(suffix.length + 1)) : item.id
   const bare = item.name.replace(/\s*\([^)]*\)\s*$/, '')
+  // The ChatBot names a tier with a dash instead: "Strawberry Cheesecake — Tub".
+  const dashed = item.name.match(/^(.*?)\s+—\s+(.+)$/)
   const product =
-    exact || shopProducts.find((p) => p.id === baseId) || shopProducts.find((p) => p.name === bare)
-  const bracket = item.name.match(/\(([^)]*)\)\s*$/)?.[1]
+    exact || shopProducts.find((p) => p.id === baseId) || shopProducts.find((p) => p.name === bare) ||
+    (dashed && shopProducts.find((p) => p.name === dashed[1]))
+  const bracket = item.name.match(/\(([^)]*)\)\s*$/)?.[1] || dashed?.[2]
   const isSlice = suffix === 'slice'
   const suffixLabel = isSlice
     ? product?.sliceLabel
@@ -347,7 +358,7 @@ export function tubTier(tubs) {
  * `earned` maps every offer id to true/false, and `counts` carries what each
  * was measured on, for the per-card status on /offers.
  */
-export function cartOfferStatus(items = [], subtotal = 0, now = offerNow()) {
+export function cartOfferStatus(items = [], subtotal = 0, now = offerNow(), { real = false } = {}) {
   const counts = { boxes: 0, banto: 0, tubs: 0, drinks: 0, dozens: 0, sponge: 0 }
   for (const it of items) {
     const info = lineInfo(it)
@@ -359,7 +370,7 @@ export function cartOfferStatus(items = [], subtotal = 0, now = offerNow()) {
     if (isWholeSponge(info)) counts.sponge += it.qty
   }
   const mid = midMonthWindow(now)
-  const diwali = diwaliWindow(now)
+  const diwali = diwaliWindow(now, real)
   const has = items.length > 0
   const every = OFFERS_ON && EVERYDAY_ON
   const fest = OFFERS_ON && diwali.live
@@ -448,6 +459,22 @@ export function cartOfferStatus(items = [], subtotal = 0, now = offerNow()) {
   // A tiered offer's gift is the tier actually reached.
   const offer = !bestId ? null : TIERED[bestId] ? withGift(bestId, tiers[bestId].gift) : offerById(bestId)
   return { offer, nudge, earned, counts, mid, diwali, tubTier: tier, tiers }
+}
+
+/**
+ * The gift a SAVED order earned — for /admin/orders, so the bakery packs it
+ * without hunting through the WhatsApp receipt. Judged on the order's own
+ * items and the time it was placed, on the real calendar (never a preview).
+ * The gift isn't stored on the order (that would need a rules change), so this
+ * re-works it out; the result is the same as the receipt's line for website
+ * orders, and also covers ChatBot orders, whose receipt has no gift line.
+ */
+export function orderGift(order) {
+  const when = order?.createdAt ? new Date(order.createdAt) : null
+  if (!OFFERS_ON || !when || Number.isNaN(when.getTime())) return null
+  const items = Array.isArray(order.items) ? order.items : []
+  const subtotal = Number(order.totals?.subtotal) || items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 1), 0)
+  return cartOfferStatus(items, subtotal, when, { real: true }).offer
 }
 
 // ── Quick-add choices for the offer cards on /offers ──────────────────────────

@@ -670,6 +670,7 @@ One wording on Home, footer, cart, FAQ and `/contact`: **order a day ahead; orde
 | `cc_acc_last_backup_v1` | `accounting.js` | Mirror of `acc_settings/main.lastBackupAt` |
 | `cc_midmonth_popup_v1` | `MidMonthPopup.jsx` | Month key ("2026-10") the pop-up last showed in |
 | `cc_offer_testdate` | `data/offers.js` | **sessionStorage, dev server only**; the `?testdate=` override |
+| `cc_diwali_preview` | `data/festivals.js` | **sessionStorage**; `?diwali=preview` for this tab (live site too) |
 
 ### Festival banner
 
@@ -682,7 +683,7 @@ One wording on Home, footer, cart, FAQ and `/contact`: **order a day ahead; orde
 - **Removed by the owner:** "Saal Mubarak · Nutan Varshabhinandan", and the first dark-brown/gold theme. The 8 quotes are our own lines, unattributed.
 - **Focus goes to the dialog (`tabIndex={-1}`), not the button** — focusing the button drew Chrome's focus ring on open, which read as a heavy double border.
 - Sized for phone (base) → 768 → 1200, short screens (`max-height: 760px`) and **landscape phones (`max-height: 560px`: two columns, no lights)**. Fits without scrolling from 320×640 up. Every animation is off under `prefers-reduced-motion`; `@supports not (backdrop-filter…)` falls back to a solid card.
-- **`?diwali=preview` shows banner + welcome on any date, on the LIVE site too** (`isDiwaliPreview()` in `festivals.js`) — ignores "seen today" and a closed banner, and writes neither. Safe in production because it **never touches `offerNow()`**: `?testdate=` can unlock a gift, so it stays dev-only. Dev also has `?welcome=again`.
+- **`?diwali=preview` shows the whole season on any date — banner, welcome AND the Diwali offers — on the LIVE site too** (`isDiwaliPreview()` in `festivals.js`). It **sticks for the tab** (`sessionStorage['cc_diwali_preview']`) so /offers and /cart keep it; `?diwali=off` ends it. Ignores "seen today" and a closed banner, and writes neither. **Safe in production because the receipt reads the real calendar**: `diwaliWindow(now, real)` and `cartOfferStatus(…, { real: true })` in `Checkout.jsx`, so a preview tab outside 5–15 Nov sees a gift in the cart but sends none on WhatsApp. It never touches `offerNow()`; `?testdate=` stays dev-only. Dev also has `?welcome=again`.
 
 ## Environment
 

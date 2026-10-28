@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useLocation } from 'react-router-dom'
-import { FiArrowRight, FiX } from 'react-icons/fi'
-import { offerNow } from '../data/offers.js'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { FiArrowRight, FiGift, FiX } from 'react-icons/fi'
+import { offerNow, activeOffers } from '../data/offers.js'
 import { localIso } from '../utils/adminDate.js'
 import { isDiwaliPreview } from '../data/festivals.js'
 
@@ -76,6 +76,7 @@ function markSeen(key) {
 
 export default function DiwaliWelcome() {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const allowedHere = !HIDDEN_ON.some((r) => pathname === r || pathname.startsWith(r + '/'))
   // Decided on the first render, so the greeting is what the visitor sees first.
   // ?diwali=preview shows it on any date and every time (see festivals.js).
@@ -105,6 +106,12 @@ export default function DiwaliWelcome() {
 
   if (!open || !allowedHere) return null
   const enter = () => setLeaving(true)
+  const offers = activeOffers().filter((o) => o.season === 'diwali')
+  // A tag closes the greeting and opens that offer's card.
+  const goTo = (id) => {
+    setLeaving(true)
+    navigate(`/offers#${id}`)
+  }
 
   return createPortal(
     <div className={`cc-diwali${leaving ? ' cc-diwali--leaving' : ''}`}>
@@ -192,6 +199,26 @@ export default function DiwaliWelcome() {
         <p className="cc-diwali__sweet">
           We can’t wait to sweeten <span className="cc-diwali__keep">your day!<span className="cc-diwali__heart" aria-hidden> ♥</span></span>
         </p>
+
+        {/* The Diwali offers running now, as tags — each opens its card on
+            /offers. Read from activeOffers(), so they appear only while the
+            offers do (or under ?diwali=preview). */}
+        {offers.length > 0 && (
+          <div className="cc-diwali__offers">
+            <span className="cc-diwali__offers-label">
+              <FiGift aria-hidden /> Diwali offers · free gifts
+            </span>
+            <div className="cc-diwali__tags">
+              {offers.map((o) => (
+                <button key={o.id} type="button" className="cc-diwali__tag" onClick={() => goTo(o.id)}>
+                  <span className="cc-diwali__tag-buy">{o.buy}</span>
+                  <FiArrowRight aria-hidden className="cc-diwali__tag-arrow" />
+                  <span className="cc-diwali__tag-get">{o.get || o.gift} free</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <button type="button" className="btn-rose cc-diwali__enter" onClick={enter}>
           Step into the sweetness <FiArrowRight aria-hidden />

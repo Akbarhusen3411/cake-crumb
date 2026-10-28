@@ -261,7 +261,8 @@ export default function Checkout() {
   const [placedDeliveryDate, setPlacedDeliveryDate] = useState('')
 
   function buildOrderMessage(id, snapshotItems, totals, deliveryDate) {
-    const gift = OFFERS_ON ? cartOfferStatus(snapshotItems, totals.subtotal).offer : null
+    // `real`: a ?diwali=preview tab must not put a gift on a real order outside 5–15 Nov.
+    const gift = OFFERS_ON ? cartOfferStatus(snapshotItems, totals.subtotal, undefined, { real: true }).offer : null
     const isPickup = form.deliveryMethod === 'pickup'
     // Deposit figures derived from the passed totals so the success-page re-send
     // (which runs after the cart is cleared) still shows the right numbers.

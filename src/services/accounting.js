@@ -199,6 +199,32 @@ export async function ensurePerPieceMenu() {
   return additions
 }
 
+// ── Free gifts (offers) ──
+// Offer gifts are booked on the order like any item, at ₹0, so the counter
+// stock and the order history show what went out. This is the ONE category
+// allowed a ₹0 rate — everywhere else ₹0 means a size was never picked, and
+// OrderForm refuses it.
+export const FREE_GIFT_CAT = 'Free Gift'
+export const isFreeGiftLine = (l) => String(l?.category || '').trim() === FREE_GIFT_CAT
+const FREE_GIFT_ITEMS = ['Cake Pop', 'Cupcake', 'Cheesecake Tub', 'Sponge Cake Tub']
+
+/**
+ * Add the ₹0 "Free Gift" rows (one variant each, "Free") to Menu & Prices if
+ * they're missing. Only ADDS, and matches on category + name, so a second
+ * device or a re-run can't duplicate or overwrite one (same shape as the
+ * importers above). Bump the flag's suffix to run it again.
+ */
+export async function ensureFreeGiftMenu() {
+  const FLAG = 'cc_acc_freegift_v1'
+  try { if (localStorage.getItem(FLAG)) return } catch { /* ignore */ }
+  const menu = await listDocs(ACC.MENU)
+  for (const name of FREE_GIFT_ITEMS) {
+    const exists = menu.some((m) => m.category === FREE_GIFT_CAT && m.name === name)
+    if (!exists) await addDocRec(ACC.MENU, { category: FREE_GIFT_CAT, name, variant: 'Free', price: 0 })
+  }
+  try { localStorage.setItem(FLAG, '1') } catch { /* ignore */ }
+}
+
 /**
  * Set the owner's Cake Pop prices (per piece / box of 6 / box of 12) and add
  * Pistachio. Idempotent; only writes when a price is missing or different.

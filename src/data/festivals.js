@@ -87,14 +87,24 @@ export const FESTIVALS = [
 ]
 
 /**
- * `?diwali=preview` in the URL shows the Diwali banner and welcome screen on
- * any date — on the live site too, so the owner can check it before 5 Nov.
- * Safe to leave public: it only shows a greeting. It never touches the offer
- * clock (offerNow), so it can't unlock a gift; that stays dev-only.
+ * `?diwali=preview` shows the whole Diwali season on any date — banner,
+ * welcome screen AND the Diwali offers — on the live site too, so the owner
+ * can check it before 5 Nov. It sticks for that browser tab (sessionStorage),
+ * so moving to /offers or /cart keeps it; `?diwali=off` or closing the tab
+ * ends it.
+ *
+ * Safe to leave public: the offers only LOOK live. Checkout reads the real
+ * date (`cartOfferStatus(..., { real: true })`), so an order placed in preview
+ * outside 5–15 Nov carries no gift line in its WhatsApp receipt. It never
+ * touches offerNow(); `?testdate=` stays dev-only.
  */
+const PREVIEW_KEY = 'cc_diwali_preview'
 export function isDiwaliPreview() {
   try {
-    return new URLSearchParams(window.location.search).get('diwali') === 'preview'
+    const param = new URLSearchParams(window.location.search).get('diwali')
+    if (param === 'preview') sessionStorage.setItem(PREVIEW_KEY, '1')
+    else if (param === 'off') sessionStorage.removeItem(PREVIEW_KEY)
+    return sessionStorage.getItem(PREVIEW_KEY) === '1'
   } catch {
     return false
   }

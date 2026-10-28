@@ -16,6 +16,7 @@ import { usePageMeta } from '../hooks/usePageMeta.js'
 import AdminPageHead from '../components/admin/AdminPageHead.jsx'
 import InvoiceModal from '../components/admin/InvoiceModal.jsx'
 import { buildWebsiteInvoice, pendingQuote } from '../utils/invoice.js'
+import { orderGift } from '../data/offers.js'
 
 // Human-readable payment summary for an order card.
 function paymentLabel(o) {
@@ -463,6 +464,19 @@ export default function AdminOrders() {
                       <li key={i}>{it.name} × {it.qty} = {inr((it.price || 0) * (it.qty || 1))}</li>
                     ))}
                   </ul>
+
+                  {/* The offer gift this order earned (worked out from its items and
+                      the time it was placed) — pack it, and book it at ₹0 under
+                      "Free Gift" in accounting. */}
+                  {(() => {
+                    const gift = orderGift(o)
+                    return gift ? (
+                      <div className="cc-admin-gift">
+                        <span aria-hidden>🎁</span>
+                        <span><strong>Free gift to pack: {gift.gift}</strong> · {gift.name}</span>
+                      </div>
+                    ) : null
+                  })()}
 
                   <div style={{ fontSize: '0.84rem', color: 'var(--cc-cocoa)' }}>
                     <strong>Total: {inr(o.totals?.total || 0)}</strong>

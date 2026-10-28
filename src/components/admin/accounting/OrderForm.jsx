@@ -7,7 +7,7 @@ import Modal from '../Modal.jsx'
 import SearchableSelect from '../SearchableSelect.jsx'
 import { inr } from '../../../data/format.js'
 import { todayIso } from '../../../utils/adminDate.js'
-import { isPerPieceVariant } from '../../../services/accounting.js'
+import { isPerPieceVariant, isFreeGiftLine } from '../../../services/accounting.js'
 import { variantLabel, sortVariants } from '../../../utils/orderItems.js'
 import { normalizePhone } from '../../../utils/customerPhone.js'
 
@@ -132,7 +132,8 @@ const OrderLine = memo(function OrderLine({
   const rate = Number(line.unitPrice) || 0
   // Flagged on the row rather than only at save: a named item with no rate is
   // the one mistake that books an order worth ₹0.
-  const unpriced = !!line.item && rate <= 0
+  // A "Free Gift" line (offer gifts) is meant to be ₹0.
+  const unpriced = !!line.item && rate <= 0 && !isFreeGiftLine(line)
 
   return (
     <div className={`cc-sline${short ? ' cc-sline--short' : ''}${unpriced ? ' cc-sline--noprice' : ''}`}>
@@ -300,7 +301,7 @@ export default function OrderForm({ menu = [], customers = [], phones = {}, init
     // The rate can't be typed on the row any more, so a line with none is a
     // size that was never picked (or an item that isn't on the menu) — saving it
     // would book an order worth ₹0.
-    const unpriced = clean.find((l) => l.unitPrice <= 0)
+    const unpriced = clean.find((l) => l.unitPrice <= 0 && !isFreeGiftLine(l))
     if (unpriced) {
       return { field: 'items', msg: `${unpriced.item} has no rate — pick its size, or add it in Menu & Prices first.` }
     }
