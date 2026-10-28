@@ -9941,6 +9941,9 @@ header[style*="sticky"] {
 .cc-ptag--sm .cc-ptag__was { padding: 0.3rem 0.4rem; font-size: 0.7rem; border-radius: 9px 0 0 9px; }
 .cc-ptag--sm .cc-ptag__now { padding: 0.25rem 0.5rem 0.25rem 0.4rem; font-size: 1.05rem; border-radius: 0 9px 9px 0; }
 
+/* Quick view "Add 10 — ₹250 ₹239": the regular price struck before the pack price. */
+.qv-was { margin-right: 0.15rem; font-weight: 600; opacity: 0.75; }
+
 /* A pack in a preview, before 5 Nov: shown, not addable. */
 .cc-opick__soon { font-size: 0.72rem; font-weight: 700; color: var(--cc-cocoa-soft); }
 .cc-opick__price { font-size: 0.78rem; color: var(--cc-rose-deep); font-variant-numeric: lining-nums tabular-nums; }

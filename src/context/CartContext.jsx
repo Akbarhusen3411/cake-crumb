@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { applyDiwaliPacks } from '../data/offers.js'
 
 const CartContext = createContext(null)
 // v2: lines gained `minQty`, and the cupcake ids changed meaning — `cup-vanilla`
@@ -34,7 +35,7 @@ function loadInitial() {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
+    return Array.isArray(parsed) ? applyDiwaliPacks(parsed) : []
   } catch {
     return []
   }
@@ -57,12 +58,14 @@ export function CartProvider({ children }) {
   function add(product, qty) {
     const min = minQtyOf(product)
     const addQty = qty == null ? min : Math.max(1, Number(qty) || 1)
+    // applyDiwaliPacks: from 5–15 Nov every 10 loose cupcakes / cake pops
+    // become one Diwali pack line at the pack price (see data/offers.js).
     setItems((prev) => {
       const found = prev.find((p) => p.id === product.id)
       if (found) {
-        return prev.map((p) => (p.id === product.id ? { ...p, qty: p.qty + addQty } : p))
+        return applyDiwaliPacks(prev.map((p) => (p.id === product.id ? { ...p, qty: p.qty + addQty } : p)))
       }
-      return [...prev, { id: product.id, name: product.name, price: Number(product.price) || 0, img: product.img, qty: addQty, minQty: min }]
+      return applyDiwaliPacks([...prev, { id: product.id, name: product.name, price: Number(product.price) || 0, img: product.img, qty: addQty, minQty: min }])
     })
     // `product.note` is an optional one-line aside for the toast — today the
     // batch-bake message on a small order of loose pieces. It is deliberately
@@ -76,7 +79,7 @@ export function CartProvider({ children }) {
   }
 
   function increment(id) {
-    setItems((prev) => prev.map((p) => (p.id === id ? { ...p, qty: p.qty + 1 } : p)))
+    setItems((prev) => applyDiwaliPacks(prev.map((p) => (p.id === id ? { ...p, qty: p.qty + 1 } : p))))
   }
 
   // Falling below a line's minimum drops it from the cart, which is the same

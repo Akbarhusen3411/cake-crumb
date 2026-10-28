@@ -10,7 +10,7 @@
 // and cake pops — the bakery doesn't bake a single one.
 
 import { img } from './images.js'
-import { shopProducts } from './products.js'
+import { shopProducts, isPerPiece } from './products.js'
 import { inr } from './format.js'
 import { isDiwaliPreview } from './festivals.js'
 
@@ -107,6 +107,53 @@ function diwaliPackPrices() {
     { label: '10 cake pops', note: 'Chocolate, Vanilla or Red Velvet', ...ten('bk-cakepop-chocolate') },
   ].filter(Boolean)
 }
+/** The cart line for one Diwali pack of 10 — the one shape every add path uses. */
+export function pack10Line(p) {
+  return { id: `${p.id}-d10`, name: `${p.name} (Diwali pack of 10)`, price: DIWALI_PACK10[p.id], img: p.img }
+}
+
+// Loose pieces of a pack product: every full 10 is priced (and carted) as a
+// pack, the rest at the per-piece price. Only on the REAL Diwali dates — a
+// ?diwali=preview tab must never produce a real order at pack prices.
+const packable = (p) => !!p && !!DIWALI_PACK10[p.id] && isPerPiece(p)
+/** { total, regular, packs } for `qty` loose pieces of `p` right now. */
+export function piecesPrice(p, qty, now = offerNow()) {
+  const n = Math.max(0, Number(qty) || 0)
+  const regular = (Number(p?.price) || 0) * n
+  if (!OFFERS_ON || !packable(p) || !diwaliWindow(now, true).live) return { total: regular, regular, packs: 0 }
+  const packs = Math.floor(n / 10)
+  return { total: packs * DIWALI_PACK10[p.id] + (n % 10) * p.price, regular, packs }
+}
+
+/**
+ * The cart's rule from 5 to 15 Nov: a per-piece line (the product's own id at
+ * its per-piece price) holding 10 or more becomes pack lines + the rest — so
+ * 10 Vanilla added one by one, or as "Add 10", bill as one ₹239 pack, and 12
+ * as a pack + 2. Returns the SAME array when nothing changes. Called by
+ * CartContext on every add / increment and on load.
+ */
+export function applyDiwaliPacks(items, now = offerNow()) {
+  if (!OFFERS_ON || !Array.isArray(items) || !diwaliWindow(now, true).live) return items
+  const out = []
+  const packs = {}
+  for (const it of items) {
+    const p = shopProducts.find((x) => x.id === it.id)
+    if (packable(p) && Number(it.price) === p.price && it.qty >= 10) {
+      packs[p.id] = (packs[p.id] || 0) + Math.floor(it.qty / 10)
+      if (it.qty % 10) out.push({ ...it, qty: it.qty % 10 })
+    } else out.push(it)
+  }
+  const ids = Object.keys(packs)
+  if (!ids.length) return items
+  for (const id of ids) {
+    const line = pack10Line(byId(id))
+    const i = out.findIndex((x) => x.id === line.id)
+    if (i >= 0) out[i] = { ...out[i], qty: out[i].qty + packs[id] }
+    else out.push({ ...line, qty: packs[id], minQty: 1 })
+  }
+  return out
+}
+
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
 
 /**
@@ -120,8 +167,7 @@ export function productDiwaliDeals(p, now = offerNow()) {
   if (!OFFERS_ON || !p || !diwaliWindow(now).live) return []
   const deals = []
   if (DIWALI_PACK10[p.id]) {
-    deals.push({ kind: 'price', label: '10 pcs', was: p.price * 10, now: DIWALI_PACK10[p.id],
-      line: { id: `${p.id}-d10`, name: `${p.name} (Diwali pack of 10)`, price: DIWALI_PACK10[p.id], img: p.img } })
+    deals.push({ kind: 'price', label: '10 pcs', was: p.price * 10, now: DIWALI_PACK10[p.id], line: pack10Line(p) })
   }
   if (DIWALI_PACK2[p.id]) {
     deals.push({ kind: 'price', label: '2 boxes', was: p.price * 2, now: DIWALI_PACK2[p.id],
@@ -671,7 +717,7 @@ const short2 = (name) => name.replace(/ (Cupcakes|Cake Pops)$/, '')
 function diwaliPackTabs() {
   const ten = (test) => shopProducts
     .filter((p) => DIWALI_PACK10[p.id] && test(p))
-    .map((p) => choice({ id: `${p.id}-d10`, name: `${p.name} (Diwali pack of 10)`, price: DIWALI_PACK10[p.id], was: p.price * 10, img: p.img, pack: true }, short2(p.name)))
+    .map((p) => choice({ ...pack10Line(p), was: p.price * 10, pack: true }, short2(p.name)))
   const two = shopProducts
     .filter((p) => DIWALI_PACK2[p.id])
     .map((p) => choice({ id: `${p.id}-d2`, name: `${p.name.replace(/\s*\(Box of 6\)$/, '')} (Diwali 2 boxes of 6)`, price: DIWALI_PACK2[p.id], was: p.price * 2, img: p.img, pack: true }, 'Variety × 2 boxes'))

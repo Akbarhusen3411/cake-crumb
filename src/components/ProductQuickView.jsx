@@ -4,6 +4,7 @@ import { u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { describe, hasUnit } from '../data/products.js'
 import { useCart } from '../context/CartContext.jsx'
+import { piecesPrice } from '../data/offers.js'
 import AllergenTags from './AllergenTags.jsx'
 
 /** Show the batch-bake note at or below this many loose pieces. */
@@ -225,7 +226,13 @@ export default function ProductQuickView({ product, onClose }) {
                             )
                           }
                         >
-                          <FiShoppingBag size={13} /> Add {qty} — {inr(p.price * qty)}
+                          <FiShoppingBag size={13} /> Add {qty} —{' '}
+                          {/* From 5–15 Nov every 10 pieces bill as a Diwali pack:
+                              show the regular price struck and the real one. */}
+                          {(() => {
+                            const pr = piecesPrice(p, qty)
+                            return pr.packs ? <><s className="qv-was">{inr(pr.regular)}</s> {inr(pr.total)}</> : inr(pr.total)
+                          })()}
                         </button>
                       </div>
                     </div>
