@@ -54,7 +54,7 @@ export const OFFER_RULES = {
 
 // ── Diwali price packs (5–15 Nov) ──
 // Unlike every other offer these MOVE A PRICE — but only as their own cart
-// lines at their own price ("Red Velvet Cupcakes (Diwali pack of 10)" ₹279),
+// lines at their own price ("Red Velvet Cupcakes (Diwali pack of 10)" ₹289),
 // exactly like a product tier. No total is recomputed anywhere, so the
 // five-places rule isn't engaged: cart, checkout, receipt, invoice and the
 // UPI amount just add up the lines as always. `was` is the same pieces at
@@ -66,18 +66,18 @@ export const OFFER_RULES = {
 // 10 at the per-piece price, then a round-ish Diwali price ending in 9:
 //   ₹25 cupcakes   250 → 239   (Vanilla, Sprinkle)
 //   ₹28 cupcakes   280 → 269   (Chocolate, Nutella, Strawberry)
-//   ₹30 cupcakes   300 → 279   (Red Velvet, Biscoff)
+//   ₹30 cupcakes   300 → 289   (Red Velvet, Biscoff — was 279 until 28 Oct)
 //   ₹35 cupcake    350 → 329   (Pistachio)
 //   ₹15 cake pops  150 → 139   (Chocolate, Vanilla, Red Velvet)
-// 239 / 279 / 329 / 139 are the owner's figures; 269 follows the same step.
+// 239 / 289 / 329 / 139 are the owner's figures; 269 follows the same step.
 export const DIWALI_PACK10 = {
   'cup-vanilla': 239,
   'cup-sprinkle': 239,
   'cup-chocolate': 269,
   'cup-nutella': 269,
   'cup-strawberry': 269,
-  'cup-redvelvet': 279,
-  'cup-biscoff': 279,
+  'cup-redvelvet': 289,
+  'cup-biscoff': 289,
   'cup-pistachio': 329,
   'bk-cakepop-chocolate': 139,
   'bk-cakepop-vanilla': 139,

@@ -68,9 +68,10 @@ function MidMonthChip({ now }) {
 function OfferPicker({ tabs }) {
   const [tab, setTab] = useState(0)
   const { items, add, increment, decrement } = useCart()
-  // Diwali packs are sold only on the real dates — a ?diwali=preview tab
-  // shows them but can't add one.
+  // Diwali packs are sold only on the real dates. A ?diwali=preview tab shows
+  // the same "Add" button, but a tap only says when packs open.
   const packsOpen = diwaliWindow(undefined, true).live
+  const [packSoon, setPackSoon] = useState(null)
   const qtyOf = (id) => items.find((it) => it.id === id)?.qty || 0
 
   return (
@@ -101,8 +102,8 @@ function OfferPicker({ tabs }) {
               {line.was > line.price
                 ? <PriceTag was={line.was} now={line.price} small flag={null} />
                 : <span className="cc-opick__price">{inr(line.price)}</span>}
-              {line.pack && !packsOpen && !qty ? (
-                <span className="cc-opick__soon">From 5 Nov</span>
+              {line.pack && !packsOpen && packSoon === line.id ? (
+                <span className="cc-opick__soon" role="status">Opens 5 Nov</span>
               ) : qty ? (
                 <span className="cc-opick__stepper">
                   <button type="button" onClick={() => decrement(line.id)} aria-label={`One fewer ${line.name}`}><FiMinus size={12} /></button>
@@ -110,7 +111,12 @@ function OfferPicker({ tabs }) {
                   <button type="button" onClick={() => increment(line.id)} aria-label={`One more ${line.name}`}><FiPlus size={12} /></button>
                 </span>
               ) : (
-                <button type="button" className="cc-opick__add" onClick={() => add(line)} aria-label={`Add ${line.name}`}>
+                <button
+                  type="button"
+                  className="cc-opick__add"
+                  onClick={() => (line.pack && !packsOpen ? setPackSoon(line.id) : add(line))}
+                  aria-label={`Add ${line.name}`}
+                >
                   <FiPlus size={12} /> Add
                 </button>
               )}

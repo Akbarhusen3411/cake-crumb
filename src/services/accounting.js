@@ -232,11 +232,12 @@ export async function ensureFreeGiftMenu() {
  * can be booked at its pack price: a "Diwali pack of 10" for every cupcake
  * and for Chocolate, Vanilla and Red Velvet cake pops, and "Diwali 2 boxes of
  * 6" for Variety.
- * Names follow the menu's ("Red Velvet" under "Cupcake" / "Cake Pop"). Only
- * ADDS missing rows (category + name + variant); bump the flag to re-run.
+ * Names follow the menu's ("Red Velvet" under "Cupcake" / "Cake Pop"). Adds
+ * missing pack rows and corrects a pack row's price (category + name + variant);
+ * never touches any other row. Bump the flag to re-run.
  */
 export async function ensureDiwaliPackMenu() {
-  const FLAG = 'cc_acc_diwalipack_v3' // v3: + 2 Variety boxes
+  const FLAG = 'cc_acc_diwalipack_v4' // v4: Red Velvet & Biscoff 10-pack ₹279 → ₹289
   try { if (localStorage.getItem(FLAG)) return } catch { /* ignore */ }
   const menu = await listDocs(ACC.MENU)
   const rows = []
@@ -250,8 +251,11 @@ export async function ensureDiwaliPackMenu() {
     if (DIWALI_PACK2[p.id]) rows.push({ category, name: name.replace(/\s*\(Box of 6\)$/, ''), variant: 'Diwali 2 boxes of 6', price: DIWALI_PACK2[p.id] })
   }
   for (const r of rows) {
-    const exists = menu.some((m) => m.category === r.category && m.name === r.name && String(m.variant) === r.variant)
-    if (!exists) await addDocRec(ACC.MENU, r)
+    // A pack row is ours, so its price follows offers.js (₹279 → ₹289 for Red
+    // Velvet/Biscoff); any other row is never touched.
+    const existing = menu.find((m) => m.category === r.category && m.name === r.name && String(m.variant) === r.variant)
+    if (!existing) await addDocRec(ACC.MENU, r)
+    else if (Number(existing.price) !== r.price) await updateDocRec(ACC.MENU, existing.id, { price: r.price })
   }
   try { localStorage.setItem(FLAG, '1') } catch { /* ignore */ }
 }

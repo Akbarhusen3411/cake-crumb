@@ -158,6 +158,9 @@ export default function Shop() {
   // ADDED on the real dates — a preview shows "From 5 Nov" instead.
   const dealNow = useOfferClock()
   const packsOpen = diwaliWindow(dealNow, true).live
+  // In a preview before 5 Nov the "+ Add" still shows (so the card looks as
+  // customers will see it), but a tap only says when packs open.
+  const [packSoon, setPackSoon] = useState(null)
 
 
   const filtered = useMemo(() => {
@@ -531,11 +534,18 @@ export default function Shop() {
                               <div key={d.label} className="cc-card-deal">
                                 <span className="cc-card-deal__label">{d.label}</span>
                                 <PriceTag was={d.was} now={d.now} small flag={null} />
-                                {packsOpen ? (
-                                  <button type="button" className="cc-card-deal__add" onClick={() => add(d.line)} aria-label={`Add ${d.line.name}`}>
+                                {packSoon === d.line.id ? (
+                                  <span className="cc-card-deal__soon" role="status">Opens 5 Nov</span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="cc-card-deal__add"
+                                    onClick={() => (packsOpen ? add(d.line) : setPackSoon(d.line.id))}
+                                    aria-label={`Add ${d.line.name}`}
+                                  >
                                     + Add
                                   </button>
-                                ) : <span className="cc-card-deal__soon">5 Nov</span>}
+                                )}
                               </div>
                             ) : (
                               <Link key={d.offer} to={`/offers#${d.offer}`} className="cc-card-deal cc-card-deal--gift">
