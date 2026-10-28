@@ -209,7 +209,9 @@ export default function Checkout() {
     setTimeout(() => setCopied(false), 1500)
   }
 
-  const isDetailsValid = useMemo(() => {
+  // Plain, not useMemo: cheap, and the compiler couldn't keep the memo once
+  // placeOrder() started reading the same values.
+  const isDetailsValid = (() => {
     const phoneOk =
       form.phone.length === selectedCountry.len ||
       // accept 7–15 digits as a generic fallback for countries with
@@ -228,7 +230,7 @@ export default function Checkout() {
         (form.address.trim() && form.city.trim() && /^\d{6}$/.test(form.pincode.trim()))) &&
       form.deliveryDate && form.deliveryDate >= minDeliveryDate
     )
-  }, [form, minDeliveryDate, selectedCountry])
+  })()
   // 'loading': the pincode lookup hasn't answered yet, so the fee is unknown.
   // Ordering now saved ₹0 delivery for a customer 40 km away.
   const deliveryPending = form.deliveryMethod === 'delivery' && deliveryCalc === 'loading'
@@ -341,9 +343,41 @@ export default function Checkout() {
   // fail on its own. Default true: an unknown answer shouldn't hide the link.
   const [canTrack, setCanTrack] = useState(true)
 
+  // Why the order can't go yet, said out loud: every field marked touched (so
+  // its error shows), focus moved to the first problem. The button used to be
+  // a bare disabled grey one — with errors only after a field was left, a
+  // customer who skipped the date saw nothing to fix.
+  const [submitHint, setSubmitHint] = useState('')
+  function revealProblems() {
+    const keys = ['name', 'email', 'address', 'city', 'pincode', 'deliveryDate']
+    const next = {}
+    for (const k of keys) next[k] = validateField(k, form[k] ?? '')
+    if (form.deliveryMethod !== 'delivery') { next.address = ''; next.city = ''; next.pincode = '' }
+    next.phone = validatePhone()
+    setErrors((e) => ({ ...e, ...next }))
+    setTouched((t) => ({ ...t, ...Object.fromEntries([...keys, 'phone'].map((k) => [k, true])) }))
+    const FIELD = { name: '[aria-label="Full name"]', phone: '#phone-input', email: '[aria-label="Email (optional)"]', address: '[aria-label="Delivery address"]', city: '[aria-label="City"]', pincode: '[aria-label="Pincode"]', deliveryDate: '#delivery-date' }
+    const first = ['name', 'phone', 'email', 'address', 'city', 'pincode', 'deliveryDate'].find((k) => next[k])
+    if (cartBlocked) {
+      setSubmitHint('Please fix the item in your cart first.')
+      document.getElementById('checkout-issues')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    } else if (first) {
+      setSubmitHint('Please fill in the highlighted details.')
+      const el = document.querySelector(FIELD[first])
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el?.focus({ preventScroll: true })
+    } else if (!isPaymentValid) {
+      setSubmitHint('Please choose how you will pay.')
+      document.getElementById('checkout-payment')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } else if (deliveryPending) {
+      setSubmitHint('Working out the delivery charge — one moment.')
+    }
+  }
+
   function placeOrder(e) {
     e.preventDefault()
-    if (!isFormValid) return
+    if (!isFormValid) { revealProblems(); return }
+    setSubmitHint('')
     // Re-check at the moment of ordering — nothing redraws this page as the
     // clock ticks, so a form finished at 23:58 on 15 Nov could still send a
     // Diwali pack price at 00:01, and a tab left open overnight a same-day date.
@@ -581,7 +615,10 @@ export default function Checkout() {
           </div>
         </div>
 
-        <form id="checkout-form" onSubmit={placeOrder}>
+        {/* noValidate: the browser's own check ran first on Place Order and
+            only focused the first empty field, silently — placeOrder() now
+            shows every error, says why, and focuses the first one. */}
+        <form id="checkout-form" onSubmit={placeOrder} noValidate>
           <div className="row g-4">
             <div className="col-lg-7">
               <div
@@ -668,8 +705,8 @@ export default function Checkout() {
                   </div>
                   {/* Delivery method — radio toggle + notice */}
                   <div className="col-12">
-                    <label className="cc-field-label">How would you like to receive your order? *</label>
-                    <div className="cc-delivery-method">
+                    <div id="delivery-method-label" className="cc-field-label">How would you like to receive your order? *</div>
+                    <div className="cc-delivery-method" role="radiogroup" aria-labelledby="delivery-method-label">
                       <label className={`cc-delivery-method__opt${form.deliveryMethod === 'delivery' ? ' is-active' : ''}`}>
                         <input
                           type="radio"
@@ -822,11 +859,12 @@ export default function Checkout() {
                   </div>
                 )}
 
-                <div className="d-flex flex-column flex-md-row gap-3 mb-3">
+                <div className="d-flex flex-column flex-md-row gap-3 mb-3" role="group" aria-label="How would you like to pay?">
                   {bulk ? (
                     <button
                       type="button"
                       className={'payment-tab' + (form.payment === 'deposit' ? ' active' : '')}
+                      aria-pressed={form.payment === 'deposit'}
                       onClick={() => update('payment', 'deposit')}
                     >
                       <span className="icon-wrap"><FiSmartphone size={18} /></span>
@@ -841,6 +879,7 @@ export default function Checkout() {
                   <button
                     type="button"
                     className={'payment-tab' + (form.payment === 'upi' ? ' active' : '')}
+                    aria-pressed={form.payment === 'upi'}
                     onClick={() => update('payment', 'upi')}
                   >
                     <span className="icon-wrap"><FiSmartphone size={18} /></span>
@@ -855,6 +894,7 @@ export default function Checkout() {
                     <button
                       type="button"
                       className={'payment-tab' + (form.payment === 'cod' ? ' active' : '')}
+                      aria-pressed={form.payment === 'cod'}
                       onClick={() => update('payment', 'cod')}
                     >
                       <span className="icon-wrap"><FiTruck size={18} /></span>
@@ -1160,9 +1200,11 @@ export default function Checkout() {
                 )}
 
                 <CartIssues id="checkout-issues" />
-                <button type="submit" className="cc-place-order-btn" disabled={!isFormValid}>
-                  <FiCheckCircle size={18} /> Place Order
+                <button type="submit" className="cc-place-order-btn" aria-describedby={submitHint ? 'place-order-hint' : undefined}>
+                  <FiCheckCircle size={18} /> {deliveryPending ? 'Working out delivery…' : 'Place Order'}
                 </button>
+                {/* Polite, not an alert: the field errors themselves are alerts. */}
+                <p id="place-order-hint" className="cc-field-error mt-2 mb-0 text-center" role="status" aria-live="polite">{submitHint}</p>
 
                 <div className="cc-infochips cc-infochips--sm cc-summary-trust">
                   <span className="cc-infochip"><FiShield aria-hidden /> Secure</span>

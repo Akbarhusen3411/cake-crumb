@@ -51,6 +51,10 @@ function verifyAmount(o) {
 function waNumber(raw) {
   if (!raw) return ''
   let d = String(raw).replace(/\D/g, '')
+  // An Indian mobile typed with a leading 0 ("09876543210") — common in the
+  // ChatBot's free-text phone step — became wa.me/09876543210, an invalid
+  // number for every status message. International numbers pass through.
+  if (d.length === 11 && d.startsWith('0')) d = d.slice(1)
   if (d.length === 10) d = '91' + d
   return d
 }

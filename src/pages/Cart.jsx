@@ -76,9 +76,9 @@ export default function Cart() {
                       </div>
                       <div className="cc-cart-item__bottom">
                         <div className="cc-cart-item__qty">
-                          <button className="qty-btn" onClick={() => decrement(it.id)} aria-label="Decrease"><FiMinus size={11} /></button>
+                          <button className="qty-btn" onClick={() => decrement(it.id)} aria-label={`One fewer ${it.name}`}><FiMinus size={11} /></button>
                           <span style={{ minWidth: 16, textAlign: 'center', fontWeight: 600, fontSize: '0.88rem' }}>{it.qty}</span>
-                          <button className="qty-btn" onClick={() => increment(it.id)} aria-label="Increase"><FiPlus size={11} /></button>
+                          <button className="qty-btn" onClick={() => increment(it.id)} aria-label={`One more ${it.name}`}><FiPlus size={11} /></button>
                         </div>
                         <div className="cc-cart-item__price-block">
                           {/* Per-unit hint only helps when there's more than one — at
@@ -129,11 +129,11 @@ export default function Cart() {
                     </div>
                     <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
                       <div className="d-inline-flex align-items-center" style={{ gap: '0.5rem' }}>
-                        <button className="qty-btn" onClick={() => decrement(it.id)} aria-label="Decrease">
+                        <button className="qty-btn" onClick={() => decrement(it.id)} aria-label={`One fewer ${it.name}`}>
                           <FiMinus size={12} />
                         </button>
                         <span style={{ minWidth: 18, textAlign: 'center', fontWeight: 600 }}>{it.qty}</span>
-                        <button className="qty-btn" onClick={() => increment(it.id)} aria-label="Increase">
+                        <button className="qty-btn" onClick={() => increment(it.id)} aria-label={`One more ${it.name}`}>
                           <FiPlus size={12} />
                         </button>
                       </div>

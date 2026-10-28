@@ -109,7 +109,9 @@ export default function AdminAccounting() {
     const left = strip.scrollLeft + (r.left - s.left) - (s.width - r.width) / 2
     strip.scrollTo({ left: Math.max(0, left), behavior: 'smooth' })
   }, [tab, ready])
-  const showUnpaid = () => { setOrdersPreset({ pay: 'unpaid', period: 'all' }); setTab('orders') }
+  // `period`: the month the Dashboard is showing, so the list that opens is the
+  // one the strip counted (it always opened every month's unpaid orders).
+  const showUnpaid = (period = 'all') => { setOrdersPreset({ pay: 'unpaid', period }); setTab('orders') }
   const [menu, setMenu] = useState([])
   const [orders, setOrders] = useState([])
   const [expenses, setExpenses] = useState([])

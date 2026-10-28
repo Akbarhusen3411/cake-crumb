@@ -213,7 +213,7 @@ export default function Footer() {
         {/* Newsletter card */}
         <div className="cc-footer-m__newsletter">
           <span className="tag-badge">Stay Sweet</span>
-          <h3 className="cc-footer-m__news-head">Sweet news in your inbox</h3>
+          <p className="cc-footer-m__news-head">Sweet news in your inbox</p>
           <p className="cc-footer-m__news-sub">
             New flavours &amp; festival specials — never spam.
           </p>
@@ -269,7 +269,7 @@ export default function Footer() {
 
             {/* 2. Quick Links */}
             <div className="cc-footer-d__col cc-footer-d__col--links">
-              <h6 className="cc-footer-d__heading">Quick Links</h6>
+              <h2 className="cc-footer-d__heading">Quick Links</h2>
               <ul className="cc-footer-d__links">
                 {quickLinks.map((l) => (
                   <li key={l.to}>
@@ -281,7 +281,7 @@ export default function Footer() {
 
             {/* 3. Contact Us */}
             <div className="cc-footer-d__col cc-footer-d__col--contact">
-              <h6 className="cc-footer-d__heading">Contact Us</h6>
+              <h2 className="cc-footer-d__heading">Contact Us</h2>
               <ul className="cc-footer-d__info">
                 <li>
                   <span className="cc-footer-d__info-icon"><FiMapPin size={14} /></span>
@@ -311,7 +311,7 @@ export default function Footer() {
                 starts after that — so shop hours would only turn away someone
                 messaging at 10pm, which is a perfectly good time to order. */}
             <div className="cc-footer-d__col cc-footer-d__col--order">
-              <h6 className="cc-footer-d__heading">Ordering</h6>
+              <h2 className="cc-footer-d__heading">Ordering</h2>
               <ul className="cc-footer-d__info">
                 <li>
                   <span className="cc-footer-d__info-icon"><FiClock size={14} /></span>
@@ -331,7 +331,7 @@ export default function Footer() {
                 1400px five columns are too tight, so Ordering tucks in under
                 Contact Us and the map keeps its own column (see .cc-footer-d__grid). */}
             <div className="cc-footer-d__col cc-footer-d__col--map">
-              <h6 className="cc-footer-d__heading">Find Us</h6>
+              <h2 className="cc-footer-d__heading">Find Us</h2>
               <FooterMap />
             </div>
           </div>

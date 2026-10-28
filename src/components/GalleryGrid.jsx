@@ -169,7 +169,7 @@ export default function GalleryGrid({ photos }) {
               src={u(p.id, 600, 750)}
               srcSet={srcSet(p.id)}
               sizes="(min-width: 1400px) 16vw, (min-width: 992px) 19vw, (min-width: 768px) 24vw, (min-width: 576px) 31vw, 47vw"
-              alt={p.alt}
+              alt="" // the button is already named "View larger: …" and shows the caption
               loading={i < 12 ? 'eager' : 'lazy'}
               className="cc-gallery-tile"
             />

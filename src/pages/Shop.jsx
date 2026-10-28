@@ -339,7 +339,7 @@ export default function Shop() {
             {/* FILTER SIDEBAR */}
             <aside className="col-lg-3 col-xl-2">
               <div className="cc-shop-filter">
-                <h6 className="cc-shop-filter__heading">Filter By</h6>
+                <h2 className="cc-shop-filter__heading">Filter By</h2>
 
                 {/* Mobile-only toggle — collapses the long filter list by default */}
                 <button
@@ -500,7 +500,7 @@ export default function Shop() {
                       {/* A real <button> inside the heading, not a clickable
                           <h6>: the title opens the quick view, so it has to be
                           reachable by keyboard and announced as a control. */}
-                      <h6 className="cc-product-card__name">
+                      <h3 className="cc-product-card__name">
                         <button
                           type="button"
                           className="cc-product-card__name-btn"
@@ -509,7 +509,7 @@ export default function Shop() {
                         >
                           {p.name}
                         </button>
-                      </h6>
+                      </h3>
                       {/* The wording comes from priceLabel() — the per-piece
                           card keeps its own JSX only to append the size caption.
                           Don't re-derive the figure here: doing exactly that is
@@ -700,7 +700,7 @@ export default function Shop() {
                   <span className="cc-shop-special__icon">
                     <FiHeart size={16} />
                   </span>
-                  <h6 className="cc-shop-special__title">Need Something Special?</h6>
+                  <h2 className="cc-shop-special__title">Need Something Special?</h2>
                   <p className="cc-shop-special__text">
                     We love creating custom treats for your special moments.
                   </p>

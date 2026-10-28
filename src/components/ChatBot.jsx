@@ -1423,14 +1423,14 @@ export default function ChatBot() {
               style={{ height: 42, width: 'auto', display: 'block' }}
             />
             <div className="flex-1 min-w-0 leading-tight">
-              <h3
-                className="truncate"
+              <p
+                className="truncate m-0"
                 style={{ fontFamily: "'Playfair Display', 'Cormorant Garamond', Georgia, serif", color: '#1a1a1a', fontWeight: 700, letterSpacing: '0.03em', fontSize: 17 }}
               >
                 CAKE
                 <span style={{ fontStyle: 'italic', fontWeight: 500, fontSize: '1.28em', margin: '0 0.05em', verticalAlign: '-0.05em' }}>&</span>
                 CRUMB
-              </h3>
+              </p>
               <p
                 className="truncate"
                 style={{ fontFamily: "'Allura', cursive", color: '#1a1a1a', fontSize: 12.5, marginTop: 1, lineHeight: 1.1 }}

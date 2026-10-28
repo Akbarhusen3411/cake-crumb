@@ -15,7 +15,7 @@ import { normalizePhone } from '../../../utils/customerPhone.js'
 // stays memoised instead of re-rendering on every keystroke elsewhere.
 const EMPTY = Object.freeze([])
 const emptyLine = () => ({ category: '', item: '', variant: '', qty: 1, unitPrice: '' })
-const lineTotal = (l) => Math.round((Number(l.qty) || 0) * (Number(l.unitPrice) || 0))
+const lineTotal = (l) => Math.round(Math.round(Number(l.qty) || 0) * (Number(l.unitPrice) || 0))
 
 /** A captioned control in the details pane. */
 const Field = ({ label, hint, half = false, bad = false, children }) => (
@@ -164,7 +164,7 @@ const OrderLine = memo(function OrderLine({
             onClick={() => onChange(index, { ...line, qty: Math.max(perPiece ? 2 : 1, (Number(line.qty) || 0) - 1) })}>
             <FiMinus />
           </button>
-          <input type="number" min={perPiece ? 2 : 1} inputMode="numeric" className="form-control form-control-sm"
+          <input type="number" min={perPiece ? 2 : 1} step="1" inputMode="numeric" className="form-control form-control-sm"
             aria-label="Quantity" title={perPiece ? 'Sold per piece — minimum 2' : 'Quantity'}
             value={line.qty} onChange={(e) => onChange(index, { ...line, qty: e.target.value })}
             // Enter finishes the line and opens the next one: writing a long bill
@@ -277,7 +277,7 @@ export default function OrderForm({ menu = [], customers = [], phones = {}, init
   // Only lines that name an item count — a row still being filled in is not
   // part of the bill, and `submit` saves exactly these.
   const filled = lines.filter((l) => l.item)
-  const totalQty = filled.reduce((s, l) => s + (Number(l.qty) || 0), 0)
+  const totalQty = filled.reduce((s, l) => s + Math.round(Number(l.qty) || 0), 0)
   const total = filled.reduce((s, l) => s + lineTotal(l), 0)
 
   const clean = lines

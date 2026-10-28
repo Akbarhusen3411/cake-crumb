@@ -232,12 +232,14 @@ export default function DashboardTab({ orders, expenses, withdrawals, onShowUnpa
 
       <div className="cc-acc-hero">
         <div className="cc-acc-card cc-acc-card--hero cc-acc-card--accent">
-          <div className="cc-acc-label">Money in hand</div>
+          {/* One month on its own is that month's NET flow, not the money in
+              the till — labelled so; All time is the real money in hand. */}
+          <div className="cc-acc-label">{allTime ? 'Money in hand' : 'Net this month'}</div>
           {/* Both branches of this used to be the same colour, so a negative —
               more taken out than came in — read exactly like a healthy figure. */}
           <div className="cc-acc-value mt-1" style={{ color: s.moneyInHand < 0 ? '#a3172c' : '#c23a2b' }}>
             {inr(s.moneyInHand)}
-            {s.moneyInHand < 0 ? <span className="cc-acc-note d-block">More has gone out than came in.</span> : null}
+            {s.moneyInHand < 0 ? <span className="cc-acc-note d-block">{allTime ? 'More has gone out than came in.' : 'More went out than came in this month.'}</span> : null}
           </div>
           {/* A phone gets the formula without the figures — the four tiles
               right below carry them, and with them it ran to three lines. */}
@@ -277,7 +279,7 @@ export default function DashboardTab({ orders, expenses, withdrawals, onShowUnpa
         {/* Money owed is the one figure here you can act on, so it opens the
             orders it refers to instead of leaving you to filter for them. */}
         {s.unpaidCount > 0 && onShowUnpaid ? (
-          <button type="button" className="cc-acc-link" onClick={onShowUnpaid}
+          <button type="button" className="cc-acc-link" onClick={() => onShowUnpaid(allTime ? 'all' : sel)}
             title="Open these orders in the Orders tab">
             Still to collect <strong>{inr(s.toCollect)}</strong> from {s.unpaidCount} unpaid
             order{s.unpaidCount === 1 ? '' : 's'} →

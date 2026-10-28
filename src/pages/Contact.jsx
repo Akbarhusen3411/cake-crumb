@@ -270,6 +270,7 @@ export default function Contact() {
                 <div className="row g-2 g-md-3">
                   <div className="col-md-6">
                     <input
+                      aria-label="Your name"
                       className="cc-input"
                       placeholder="Your Name *"
                       value={form.name}
@@ -280,6 +281,7 @@ export default function Contact() {
                   </div>
                   <div className="col-md-6">
                     <input
+                      aria-label="Phone (10-digit)"
                       className="cc-input"
                       placeholder="Phone (10-digit) *"
                       value={form.phone}
@@ -322,6 +324,7 @@ export default function Contact() {
                   </div>
                   <div className="col-md-6">
                     <select
+                      aria-label="Cake type"
                       className="cc-input"
                       value={form.category}
                       onChange={(e) => update('category', e.target.value)}
@@ -332,6 +335,7 @@ export default function Contact() {
                   </div>
                   <div className="col-md-6">
                     <input
+                      aria-label="Number of servings"
                       className="cc-input"
                       type="number"
                       min="1"
@@ -342,6 +346,7 @@ export default function Contact() {
                   </div>
                   <div className="col-12">
                     <input
+                      aria-label="Flavour preference"
                       className="cc-input"
                       placeholder="Flavour preference (e.g. Pistachio, Biscoff…)"
                       value={form.flavor}
@@ -376,6 +381,7 @@ export default function Contact() {
                   <div className="row g-2 g-md-3 mt-1" style={{ animation: 'qv-up 0.2s ease-out' }}>
                     <div className="col-md-6">
                       <input
+                        aria-label="Email (optional)"
                         className="cc-input"
                         placeholder="Email (optional)"
                         type="email"
@@ -385,6 +391,7 @@ export default function Contact() {
                     </div>
                     <div className="col-md-6">
                       <select
+                        aria-label="Budget"
                         className="cc-input"
                         value={form.budget}
                         onChange={(e) => update('budget', e.target.value)}
@@ -395,6 +402,7 @@ export default function Contact() {
                     </div>
                     <div className="col-12">
                       <input
+                        aria-label="Message on cake"
                         className="cc-input"
                         placeholder='Message on cake (e.g. "Happy Birthday Aanya!")'
                         value={form.message}
@@ -404,6 +412,7 @@ export default function Contact() {
                     </div>
                     <div className="col-12">
                       <textarea
+                        aria-label="Dietary needs, design ideas, theme"
                         className="cc-input"
                         rows={2}
                         placeholder="Eggless / dietary needs, design ideas, theme…"

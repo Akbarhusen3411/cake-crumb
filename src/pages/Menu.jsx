@@ -292,7 +292,7 @@ export default function Menu() {
                   />
                 </span>
                 <div className="cc-menu-card__body">
-                  <h3 className="cc-menu-card__title">{card.title}</h3>
+                  <h2 className="cc-menu-card__title">{card.title}</h2>
                   <span className="cc-menu-card__rule" aria-hidden />
                   <div className="cc-menu-card__items">
                     {card.rows.map((it) => (
@@ -343,7 +343,7 @@ export default function Menu() {
                 <FiHeart size={20} />
               </span>
               <div>
-                <h4 className="cc-menu-custom__title">Custom Orders</h4>
+                <h2 className="cc-menu-custom__title">Custom Orders</h2>
                 <p className="cc-menu-custom__text">
                   Have something special in mind? We love creating custom treats for
                   birthdays, weddings, and every celebration!

@@ -27,7 +27,8 @@ export default function NotFound() {
       <div className="container py-4 text-center" style={{ maxWidth: 620 }}>
         <span className="eyebrow">404</span>
         <h1 className="section-title mt-2">This page has crumbled</h1>
-        <HeartDivider width={180} />
+        {/* 90, not 180: the wider one ran off a 320–375px phone */}
+        <HeartDivider width={90} />
         <p className="mt-3" style={{ maxWidth: 460, margin: '0.75rem auto 0' }}>
           The link you followed has moved or never existed. Nothing is lost —
           everything we bake is a tap away.

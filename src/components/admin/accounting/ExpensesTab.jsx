@@ -388,7 +388,8 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], saving = false, on
   }
   const removeItem = (i) => setItems((p) => (p.length === 1 ? p : p.filter((_, idx) => idx !== i)))
 
-  const itemsTotal = items.reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.price) || 0), 0)
+  const qtyOf = (q) => Math.round((Number(q) || 0) * 1000) / 1000 // up to 3 decimals: 0.5 kg, 0.25 L
+  const itemsTotal = Math.round(items.reduce((s, it) => s + qtyOf(it.qty) * (Number(it.price) || 0), 0) * 100) / 100
   const total = itemsTotal + (Number(delivery) || 0)
   const named = items.filter((it) => it.name.trim() || Number(it.price) > 0)
 
@@ -407,7 +408,7 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], saving = false, on
     setTried(true)
     if (problem()) return
     const cleanItems = items
-      .map((it) => ({ name: it.name.trim(), qty: Math.round(Number(it.qty) || 1), price: Number(it.price) || 0 }))
+      .map((it) => ({ name: it.name.trim(), qty: qtyOf(it.qty) || 1, price: Number(it.price) || 0 }))
       .filter((it) => it.name || it.price)
     onSave({
       date,
@@ -552,7 +553,7 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], saving = false, on
                         onClick={() => setItem(i, 'qty', Math.max(1, (Number(it.qty) || 0) - 1))}>
                         <FiMinus />
                       </button>
-                      <input type="number" min="1" inputMode="numeric" className="form-control form-control-sm" aria-label="Quantity"
+                      <input type="number" min="0" step="any" inputMode="decimal" className="form-control form-control-sm" aria-label="Quantity"
                         value={it.qty} onChange={(e) => setItem(i, 'qty', e.target.value)} />
                       <button type="button" className="cc-qty__btn" aria-label="One more"
                         onClick={() => setItem(i, 'qty', (Number(it.qty) || 0) + 1)}>

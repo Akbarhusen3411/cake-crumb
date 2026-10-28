@@ -421,7 +421,7 @@ export default function Reviews() {
               </button>
 
               <div className="cc-reviews-list__head">
-                <h3 className="cc-reviews-list__title">What Our Customers Are Saying</h3>
+                <h2 className="cc-reviews-list__title">What Our Customers Are Saying</h2>
                 <div className="d-flex align-items-center" style={{ gap: '0.6rem' }}>
                   <label className="cc-shop-toolbar__sort">
                     <span>Sort by:</span>
@@ -441,7 +441,7 @@ export default function Reviews() {
                       onClick={openAdmin}
                       className="border-0 bg-transparent"
                       aria-label="Admin login"
-                      style={{ color: 'var(--cc-cocoa-soft)', opacity: 0.5 }}
+                      style={{ color: 'var(--cc-cocoa-soft)', opacity: 0.7, padding: 6, lineHeight: 0 }} // 24px target
                     >
                       <FiLock size={12} />
                     </button>
@@ -502,7 +502,7 @@ export default function Reviews() {
                   <span className="cc-features-card__icon cc-features-card__icon--lg">
                     <FiHeart size={22} />
                   </span>
-                  <h5 className="mt-3">No reviews yet</h5>
+                  <h3 className="mt-3 h5">No reviews yet</h3>
                   {/* "on the right" was only true on desktop — on a phone the
                       form sits below the whole list. */}
                   <p>Be the first to share your sweet experience — the "Share Your Experience" form is all yours.</p>
@@ -552,7 +552,7 @@ export default function Reviews() {
                           <span className="cc-review-card__time">{timeAgo(r.createdAt)}</span>
                         )}
                       </div>
-                      {r.title && <h5 className="cc-review-card__title">{r.title}</h5>}
+                      {r.title && <h3 className="cc-review-card__title">{r.title}</h3>}
                       <p className="cc-review-card__text">{r.text}</p>
                       {isAdmin && (
                         <button
@@ -612,7 +612,7 @@ export default function Reviews() {
                   aria-hidden="true"
                   style={HONEYPOT_STYLE}
                 />
-                <h6 className="cc-share-form__heading">Share Your Experience</h6>
+                <h2 className="cc-share-form__heading">Share Your Experience</h2>
                 <p className="cc-share-form__sub">
                   We'd love to hear your thoughts! Your review helps us and other sweet customers.
                 </p>
