@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Security-Policy" content="default-src &#39;self&#39;; script-src &#39;self&#39; https://plausible.io https://www.google.com https://www.gstatic.com; style-src &#39;self&#39; &#39;unsafe-inline&#39; https://fonts.googleapis.com; font-src &#39;self&#39; data: https://fonts.gstatic.com; img-src &#39;self&#39; data: blob: https://images.unsplash.com; media-src &#39;self&#39;; connect-src &#39;self&#39; https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://www.googleapis.com https://content-firebaseappcheck.googleapis.com https://api.emailjs.com https://nominatim.openstreetmap.org https://plausible.io https://www.google.com; frame-src https://snapwidget.com https://www.google.com; worker-src &#39;self&#39; blob:; object-src &#39;none&#39;; base-uri &#39;self&#39;; form-action &#39;self&#39;">
+
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/webp" href="/cake-crumb/favicon.webp" />
+    <link rel="apple-touch-icon" href="/cake-crumb/favicon.webp" />
+    <!-- Preload the header logo so it starts downloading immediately, in parallel with
+         the JS bundle — otherwise the <img> request only fires after React mounts,
+         making the logo pop in a moment late on first load. -->
+    <link rel="preload" as="image" href="/cake-crumb/logo_final-400.webp" fetchpriority="high" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#e0617a" />
+
+    <!-- Primary -->
+    <title>Shop | Cake &amp; Crumb</title>
+    <meta name="description" content="Order from our full menu — cheesecakes, milk cakes, cookies, cupcakes, dessert cups and drinks. Pay by UPI or cash."
+    />
+    <meta name="keywords" content="cake, cheesecake, milk cake, cookies, dessert, bakery, custom cake, birthday cake, India, online order" />
+    <meta name="author" content="Cake & Crumb" />
+
+    <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Cake & Crumb" />
+    <meta property="og:title" content="Shop | Cake &amp; Crumb" />
+    <meta property="og:description" content="Order from our full menu — cheesecakes, milk cakes, cookies, cupcakes, dessert cups and drinks. Pay by UPI or cash."
+    />
+    <!-- A purpose-made card, not a product photo: og wants 1.91:1 and every
+         product shot here is portrait, so a share preview was cropping one to
+         a thin middle slice. Cut from products/milkcake-assorted-tubs.webp
+         (1600x900), which loses 30px top and bottom and nothing at the sides.
+         JPEG deliberately — the Facebook and WhatsApp crawlers are reliable
+         with it and patchy with WebP. Regenerate with:
+           sharp(src).resize(1200, 630, { fit: 'cover' }).jpeg({ quality: 82 }) -->
+    <meta property="og:image" content="https://akbarhusen3411.github.io/cake-crumb/og-card.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Cake & Crumb — assorted milk cake tubs" />
+    <meta property="og:url" content="https://akbarhusen3411.github.io/cake-crumb/shop" />
+    <!-- Each page file written by scripts/prerender-routes.js gets its own. -->
+    <link rel="canonical" href="https://akbarhusen3411.github.io/cake-crumb/shop" />
+    <meta property="og:locale" content="en_IN" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Shop | Cake &amp; Crumb" />
+    <meta name="twitter:description" content="Order from our full menu — cheesecakes, milk cakes, cookies, cupcakes, dessert cups and drinks. Pay by UPI or cash."
+    />
+    <meta name="twitter:image" content="https://akbarhusen3411.github.io/cake-crumb/og-card.jpg" />
+
+    <!-- JSON-LD: Bakery -->
+    <!-- NOTE: no openingHoursSpecification here, deliberately. This is a
+         made-to-order kitchen, not a shop counter — orders arrive on WhatsApp
+         at any hour, the date is agreed with the customer, and baking starts
+         after that. Publishing hours would have Google show a "Closed now"
+         badge and turn people away at times an order is perfectly welcome.
+         (JSON-LD is strict JSON: never put // comments inside the block.) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Bakery",
+        "name": "Cake & Crumb",
+        "description": "The gourmet chocolate and berry boutique. Handcrafted cheesecakes, milk cakes, cookies and desserts.",
+        "url": "https://akbarhusen3411.github.io/cake-crumb/",
+        "image": "https://akbarhusen3411.github.io/cake-crumb/products/cheesecake-trio-flavors.webp",
+        "telephone": "+91-91731-83440",
+        "email": "cakeandcrumb.in@gmail.com",
+        "priceRange": "₹₹",
+        "servesCuisine": ["Desserts", "Bakery"],
+        "paymentAccepted": ["UPI", "Cash"],
+        "currenciesAccepted": "INR",
+        "sameAs": ["https://www.instagram.com/cake_and_crumb_1/"],
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "386, Zahir Manzil, Venipura, Mominvad, Near Police Station",
+          "addressLocality": "Vaso",
+          "addressRegion": "Gujarat",
+          "postalCode": "387380",
+          "addressCountry": "IN"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 22.6654339,
+          "longitude": 72.7558635
+        },
+        "areaServed": { "@type": "State", "name": "Gujarat" }
+      }
+    </script>
+
+    <!-- Plausible analytics — cookieless and collects no personal data, so it
+         needs no consent banner OF ITS OWN. Note that is no longer a statement
+         about the whole site: Firebase App Check runs reCAPTCHA on every page
+         and does set a `_GRECAPTCHA` cookie (disclosed on /privacy). `defer`
+         keeps this off the critical path, and a blocked or failed load costs
+         the page nothing.
+
+         ⚠ REQUIRES AN ACCOUNT TO COLLECT ANYTHING. Sign up at
+         https://plausible.io and add the site "akbarhusen3411.github.io".
+         Until that exists this script loads and reports nowhere — harmless,
+         but you will see no data. Remove the tag if you'd rather not send
+         pageviews to a third party at all. -->
+    <script defer data-domain="akbarhusen3411.github.io" src="https://plausible.io/js/script.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Hero photos are served from Unsplash — open the connection early so the
+         above-the-fold hero image starts downloading sooner on first paint. -->
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Lato:wght@300;400;500;600;700;800;900&family=Allura&display=swap"
+    />
+    <script type="module" crossorigin src="/cake-crumb/assets/index-DpN4TnCh.js"></script>
+    <link rel="modulepreload" crossorigin href="/cake-crumb/assets/rolldown-runtime-jpDsebLB.js">
+    <link rel="modulepreload" crossorigin href="/cake-crumb/assets/react-vendor-DX2Sh_E-.js">
+    <link rel="modulepreload" crossorigin href="/cake-crumb/assets/certifications-D94C_YYf.js">
+    <link rel="modulepreload" crossorigin href="/cake-crumb/assets/format-XQan9feh.js">
+    <link rel="stylesheet" crossorigin href="/cake-crumb/assets/index-lfm49fTn.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
