@@ -1,0 +1,1 @@
+import{mt as e}from"./react-vendor-DX2Sh_E-.js";import"./format-XQan9feh.js";import{l as t}from"./index-CuhyUwLH.js";e();function n({items:e,subtotal:n,compact:r=!1}){return t(),null}export{n as t};
