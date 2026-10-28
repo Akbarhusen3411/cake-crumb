@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { FiGift, FiX, FiClock } from 'react-icons/fi'
 import { u } from '../data/images.js'
 import { inr } from '../data/format.js'
-import { OFFERS_ON, OFFER_RULES, offerById, midMonthWindow, midMonthKey, daysUntil } from '../data/offers.js'
+import { OFFERS_ON, EVERYDAY_ON, OFFER_RULES, offerById, midMonthWindow, midMonthKey, daysUntil } from '../data/offers.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
 
 /**
@@ -69,7 +69,7 @@ export default function MidMonthPopup() {
   const mid = midMonthWindow(now)
   const key = midMonthKey(now)
   const allowedHere = !HIDDEN_ON.some((r) => pathname === r || pathname.startsWith(r + '/'))
-  const eligible = OFFERS_ON && mid.live && allowedHere
+  const eligible = OFFERS_ON && EVERYDAY_ON && mid.live && allowedHere
 
   // Open after a beat, so the page is seen first. Marked as seen the moment it
   // opens — moving to another page must not bring it back.

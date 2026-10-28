@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FiGift, FiArrowRight } from 'react-icons/fi'
-import { OFFERS_ON, activeOffers, midMonthWindow } from '../data/offers.js'
+import { activeOffers, midMonthWindow } from '../data/offers.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
 
 const EVERY_MS = 3800
@@ -18,7 +18,7 @@ const EVERY_MS = 3800
  */
 export default function OffersTicker() {
   const now = useOfferClock()
-  const offers = OFFERS_ON ? activeOffers(now) : []
+  const offers = activeOffers(now)
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
   const count = offers.length
@@ -39,7 +39,7 @@ export default function OffersTicker() {
     <div className="cc-ticker" data-no-reveal>
       <Link
         to={`/offers#${o.id}`}
-        className={`cc-ticker__pill${o.id === 'mid-month' ? ' is-hot' : ''}`}
+        className={`cc-ticker__pill${o.id === 'mid-month' || o.season ? ' is-hot' : ''}`}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
         onFocus={() => setPaused(true)}

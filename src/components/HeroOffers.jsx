@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { FiGift, FiArrowRight } from 'react-icons/fi'
-import { OFFERS_ON, activeOffers } from '../data/offers.js'
+import { activeOffers } from '../data/offers.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
 
 // Where each sticker sits on the hero photo, and the side it flies in from.
@@ -20,8 +20,8 @@ const SLOTS = ['top', 'right', 'bottom']
  */
 export default function HeroOffers() {
   const now = useOfferClock()
-  if (!OFFERS_ON) return null
   const picks = activeOffers(now).slice(0, SLOTS.length)
+  if (!picks.length) return null
 
   return (
     <div className="cc-hero-stickers" data-no-reveal>
@@ -29,12 +29,12 @@ export default function HeroOffers() {
         <Link
           key={o.id}
           to={`/offers#${o.id}`}
-          className={`cc-hero-sticker cc-hero-sticker--${SLOTS[i]}${o.id === 'mid-month' ? ' is-hot' : ''}`}
+          className={`cc-hero-sticker cc-hero-sticker--${SLOTS[i]}${o.id === 'mid-month' || o.season ? ' is-hot' : ''}`}
         >
           <span className="cc-hero-sticker__icon" aria-hidden><FiGift size={15} /></span>
           <span className="cc-hero-sticker__text">
             <span className="cc-hero-sticker__name">
-              {o.id === 'mid-month' ? 'Limited time · ' : ''}{o.name}
+              {o.id === 'mid-month' || o.season ? 'Limited time · ' : ''}{o.name}
             </span>
             <span className="cc-hero-sticker__gift">Free: {(o.giftShort || o.gift).toLowerCase()}</span>
           </span>

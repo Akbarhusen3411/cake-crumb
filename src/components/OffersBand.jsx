@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { FiArrowRight, FiGift, FiClock } from 'react-icons/fi'
 import { u, srcSet } from '../data/images.js'
-import { OFFERS_ON, activeOffers, midMonthWindow, daysUntil } from '../data/offers.js'
+import { activeOffers, midMonthWindow, daysUntil } from '../data/offers.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
 
 const dayMonth = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
@@ -27,9 +27,12 @@ const dayMonth = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: '
  */
 export default function OffersBand() {
   const now = useOfferClock()
-  if (!OFFERS_ON) return null
-  const mid = midMonthWindow(now)
   const offers = activeOffers(now)
+  if (!offers.length) return null
+  const mid = midMonthWindow(now)
+  const midShown = offers.some((o) => o.id === 'mid-month')
+  // Two offers (Diwali on its own) sit side by side; six three across.
+  const gridMod = offers.length <= 2 ? ' cc-home-offers__grid--two' : midShown ? '' : ' cc-home-offers__grid--six'
   const left = mid.live ? daysUntil(mid.to, now) : null
   const endsLine = left === 0
     ? 'Last day — ends at midnight'
@@ -53,7 +56,7 @@ export default function OffersBand() {
 
         {/* Seven tiles (Mid-Month live) lay out four across with Mid-Month
             double width; the six everyday ones lay out three across. */}
-        <div className={`cc-home-offers__grid${mid.live ? '' : ' cc-home-offers__grid--six'}`}>
+        <div className={`cc-home-offers__grid${gridMod}`}>
           {offers.map((o, i) => (
             <Link
               key={o.id}

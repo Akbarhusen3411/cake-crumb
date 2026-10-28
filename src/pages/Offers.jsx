@@ -11,8 +11,8 @@ import { BULK_ORDER_MIN, DEPOSIT_PCT } from '../data/shopConfig.js'
 import { useCart } from '../context/CartContext.jsx'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
 import {
-  OFFERS_ON, OFFER_RULES, OFFER_PICKERS, ordinal,
-  activeOffers, cartOfferStatus, midMonthWindow, daysUntil,
+  OFFER_RULES, OFFER_PICKERS, EVERYDAY_ON, TIERED, ordinal,
+  activeOffers, cartOfferStatus, midMonthWindow, diwaliWindow, daysUntil,
 } from '../data/offers.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
 
@@ -21,6 +21,21 @@ const COUNT_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'
 const countWord = (n) => COUNT_WORDS[n] || String(n)
 
 const dayMonth = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+
+/** The hero's date line: Diwali while it runs, else the Mid-Month window (when everyday offers are on). */
+function SeasonChip({ now }) {
+  const d = diwaliWindow(now)
+  if (d.live) {
+    const left = daysUntil(d.to, now)
+    return (
+      <span className="cc-offers-chip cc-offers-chip--live">
+        <span className="cc-offers-dot" aria-hidden />
+        Diwali offers are on — {left === 0 ? 'last day today' : `till ${dayMonth(d.to)}`}
+      </span>
+    )
+  }
+  return EVERYDAY_ON ? <MidMonthChip now={now} /> : null
+}
 
 /** The mid-month line for the hero: running now, or when it next opens. */
 function MidMonthChip({ now }) {
@@ -103,24 +118,25 @@ function OfferPicker({ tabs }) {
 function OfferStatus({ offer, status, subtotal }) {
   const { earned, counts, mid } = status
   const won = status.offer?.id === offer.id
+  const tiered = TIERED[offer.id]
+  const unitWord = (n) => (tiered?.count === 'sponge' ? (n === 1 ? 'cake' : 'cakes') : n === 1 ? 'tub' : 'tubs')
   if (earned[offer.id]) {
-    // Tub Lover can be unlocked at its first tier with a bigger one in reach.
-    const tiers = OFFER_RULES.tubTiers
-    const top = tiers[tiers.length - 1]
-    const stepUp = offer.id === 'tub-lover' && counts.tubs < top.min
+    // A tiered offer can be unlocked with a bigger tier still in reach.
+    const n = tiered ? counts[tiered.count] : 0
+    const next = tiered ? tiered.tiers.find((t) => t.min > n) : null
     return (
       <>
         <div className={`cc-ostatus is-earned${won ? ' is-won' : ''}`}>
           <FiCheckCircle size={14} />
-          {offer.id === 'tub-lover' && won
-            ? `Unlocked — ${status.tubTier.gift} free`
+          {tiered && won
+            ? `Unlocked — ${status.tiers[offer.id].gift} free`
             : won ? 'Unlocked — this is your gift' : 'Unlocked · a bigger gift already applies'}
         </div>
-        {stepUp && (
+        {next && (
           <div className="cc-ostatus">
-            <span>{counts.tubs} of {top.min} tubs — {top.min - counts.tubs} more for {top.gift}</span>
+            <span>{n} of {next.min} {unitWord(next.min)} — {next.min - n} more for {next.gift}</span>
             <span className="cc-onudge__bar" aria-hidden>
-              <span style={{ width: `${Math.round((counts.tubs / top.min) * 100)}%` }} />
+              <span style={{ width: `${Math.round((n / next.min) * 100)}%` }} />
             </span>
           </div>
         )}
@@ -145,13 +161,15 @@ function OfferStatus({ offer, status, subtotal }) {
         progress = counts.boxes / 2
       }
       break
-    case 'tub-lover': {
-      if (!counts.tubs) break
-      // Counts towards the first tier, then the top one.
-      const tiers = OFFER_RULES.tubTiers
-      const next = tiers.find((t) => counts.tubs < t.min) || tiers[tiers.length - 1]
-      text = `${counts.tubs} of ${next.min} tubs — ${next.gift} free`
-      progress = counts.tubs / next.min
+    case 'tub-lover':
+    case 'diwali-tubs':
+    case 'diwali-sponge': {
+      const n = counts[tiered.count]
+      if (!n) break
+      // Counts towards the first tier it hasn't reached.
+      const next = tiered.tiers.find((t) => n < t.min) || tiered.tiers[tiered.tiers.length - 1]
+      text = `${n} of ${next.min} ${unitWord(next.min)} — ${next.gift} free`
+      progress = n / next.min
       break
     }
     case 'tub-sip':
@@ -268,11 +286,12 @@ function BasketBar({ status, count, subtotal }) {
 export default function Offers() {
   usePageMeta({
     title: 'Offers',
-    description: 'Free cake pops, cupcakes and cookies added to your Cake & Crumb order — everyday offers, plus a Mid-Month Treat from the 14th to the 20th. Menu prices, gifts on us.',
+    description: 'Free cake pops, cupcakes and tubs added to your Cake & Crumb order when an offer is running. Menu prices, gifts on us.',
   })
   const { items, count, subtotal } = useCart()
   const now = useOfferClock()
   const offers = activeOffers(now)
+  const live = offers.length > 0
   const status = cartOfferStatus(items, subtotal, now)
   const { hash } = useLocation()
   const target = hash.slice(1)
@@ -298,23 +317,23 @@ export default function Offers() {
           <span className="eyebrow">Cake &amp; Crumb Offers</span>
           <h1 className="cc-offers-hero__title">A Little Extra,<br />On Us</h1>
           <p className="cc-offers-hero__lede">
-            {OFFERS_ON
+            {live
               ? `${countWord(offers.length)} ways to get something free with your order. You pay the menu price — the extra treats are on the house.`
               : 'There are no offers running just now. Every cake is still baked to order, and we’d love to make yours.'}
           </p>
-          {OFFERS_ON && (
-            <div className="cc-offers-hero__meta"><MidMonthChip now={now} /></div>
+          {live && (
+            <div className="cc-offers-hero__meta"><SeasonChip now={now} /></div>
           )}
           <div className="cc-offers-hero__cta">
             <Link to="/shop" className="btn-rose"><FiShoppingBag /> Shop now</Link>
-            {OFFERS_ON && (
+            {live && (
               <a href="#offer-list" className="cc-offers-hero__link">See all offers <FiArrowRight size={14} /></a>
             )}
           </div>
         </div>
       </section>
 
-      {OFFERS_ON && (
+      {live && (
         <>
           {/* ───── OFFERS ───── */}
           <section id="offer-list" className="cc-offers-list">
@@ -384,10 +403,18 @@ export default function Offers() {
                   <FiMessageCircle aria-hidden />
                   <span><strong>Not in your cart total</strong>The gift is added when we confirm your order on WhatsApp.</span>
                 </li>
-                <li>
-                  <FiClock aria-hidden />
-                  <span><strong>Mid-Month timing</strong>From 12:00 am on the {ordinal(OFFER_RULES.midMonth.fromDay)} to midnight on the {ordinal(OFFER_RULES.midMonth.toDay)}. The time you place the order is what counts.</span>
-                </li>
+                {status.diwali.live && (
+                  <li>
+                    <FiClock aria-hidden />
+                    <span><strong>Diwali dates</strong>From 12:00 am on {dayMonth(status.diwali.from)} to midnight on {dayMonth(status.diwali.to)}. The time you place the order is what counts.</span>
+                  </li>
+                )}
+                {EVERYDAY_ON && (
+                  <li>
+                    <FiClock aria-hidden />
+                    <span><strong>Mid-Month timing</strong>From 12:00 am on the {ordinal(OFFER_RULES.midMonth.fromDay)} to midnight on the {ordinal(OFFER_RULES.midMonth.toDay)}. The time you place the order is what counts.</span>
+                  </li>
+                )}
                 <li>
                   <FiHeart aria-hidden />
                   <span><strong>Our pick of flavours</strong>Gift flavours come from the day’s bake.</span>
@@ -426,7 +453,7 @@ export default function Offers() {
         </div>
       </section>
 
-      {OFFERS_ON && <BasketBar status={status} count={count} subtotal={subtotal} />}
+      {live && <BasketBar status={status} count={count} subtotal={subtotal} />}
     </div>
   )
 }

@@ -15,7 +15,13 @@ import { inr } from './format.js'
 
 // Master switch: false hides the Home band, the cart gift card and the receipt
 // line, and /offers says there are none running. Nothing else needs touching.
-export const OFFERS_ON = false
+export const OFFERS_ON = true
+
+// The seven everyday offers (Mid-Month, Gift Box Pair, Cheesecake Lover, Tub
+// Lover, Tub & Sip, Cookie Dozen, Big Basket). Off since 28 Oct 2026 by the
+// owner's choice; true brings them all back. Seasonal offers (Diwali) run on
+// their own dates either way.
+export const EVERYDAY_ON = false
 
 export const OFFER_RULES = {
   // Day-of-month window, inclusive: on from 00:00 on the 13th to 23:59 on the
@@ -27,6 +33,21 @@ export const OFFER_RULES = {
   tubTiers: [
     { min: 2, gift: '3 cake pops', value: 45 },
     { min: 5, gift: '5 cake pops', value: 75 },
+  ],
+  // Diwali: on from 00:00 on 5 Nov to 23:59 on 15 Nov, by the visitor's clock
+  // — the same days as the Diwali banner and welcome screen (festivals.js,
+  // DiwaliWelcome.jsx); change all three together. Values are menu value
+  // (₹15 a cake pop, ~₹25 a cupcake, ₹100–120 a tub) and decide the gift.
+  diwali: { month: 11, fromDay: 5, toDay: 15 },
+  diwaliTubTiers: [
+    { min: 2, gift: '3 cake pops', value: 45 },
+    { min: 3, gift: '4 cake pops', value: 60 },
+    { min: 4, gift: '2 cupcakes + 2 cake pops', value: 80 },
+    { min: 6, gift: '1 extra cheesecake tub', value: 120 },
+  ],
+  diwaliSpongeTiers: [
+    { min: 1, gift: '4 cake pops', value: 60 },
+    { min: 2, gift: '1 sponge cake tub + 3 cake pops', value: 145 },
   ],
 }
 
@@ -43,6 +64,38 @@ const MID_TO = ordinal(OFFER_RULES.midMonth.toDay)
 // Home cards show; `condition` and `gift` stay the full wording for /offers and
 // the cart. `get` defaults to `gift`.
 export const OFFERS = [
+  // ── Diwali (5–15 Nov only) ──
+  {
+    id: 'diwali-tubs',
+    season: 'diwali',
+    buy: 'Any 2 cheesecake tubs',
+    buyNote: '3 tubs → 4 cake pops · 4 → 2 cupcakes + 2 cake pops · 6 → a free tub',
+    get: '3 cake pops',
+    name: 'Diwali Tub Treat',
+    tag: 'Diwali · 5 – 15 Nov',
+    condition: 'Order cheesecake tubs, any flavours mixed: 2 tubs get 3 cake pops, 3 get 4 cake pops, 4 get 2 cupcakes + 2 cake pops, and 6 get a 7th tub free.',
+    gift: '3 cake pops, up to a free tub with 6',
+    giftShort: 'up to a free tub',
+    image: img.cheesecakeStrawberryCups,
+    alt: 'Strawberry cheesecake in single-serve tubs',
+    cta: { label: 'Shop cheesecake tubs', to: '/shop?category=Cheesecakes' },
+  },
+  {
+    id: 'diwali-sponge',
+    season: 'diwali',
+    buy: 'A whole sponge cake',
+    buyNote: 'Buy 2 for a free sponge tub + 3 cake pops',
+    get: '4 cake pops',
+    name: 'Diwali Cake Treat',
+    tag: 'Diwali · 5 – 15 Nov',
+    condition: 'Order a whole sponge cake (Bento), any flavour, for 4 free cake pops — or two whole sponge cakes for a free sponge cake tub + 3 cake pops.',
+    gift: '4 cake pops, or a sponge tub + 3 cake pops with 2',
+    giftShort: 'up to a sponge tub + 3 cake pops',
+    image: img.rcCakeYellowRose,
+    alt: 'A whole sponge cake with yellow buttercream roses',
+    cta: { label: 'Shop sponge cakes', to: '/shop?category=Sponge%20Cakes' },
+  },
+  // ── Everyday (only while EVERYDAY_ON) ──
   {
     id: 'mid-month',
     buy: `Spend ${inr(OFFER_RULES.midMonth.min)} or more`,
@@ -162,10 +215,26 @@ export function offerNow() {
   }
 }
 
-/** The offers running right now — the everyday ones, plus Mid-Month in its window. */
+/** The offers running right now: Diwali ones in their window, then the everyday ones (if on), Mid-Month only in its window. */
 export function activeOffers(now = offerNow()) {
-  const live = midMonthWindow(now).live
-  return OFFERS.filter((o) => o.id !== 'mid-month' || live)
+  if (!OFFERS_ON) return []
+  const midLive = midMonthWindow(now).live
+  const diwaliLive = diwaliWindow(now).live
+  return OFFERS.filter((o) =>
+    o.season === 'diwali' ? diwaliLive : EVERYDAY_ON && (o.id !== 'mid-month' || midLive),
+  )
+}
+
+/** Is any offer running now? Gates every offer surface, so none shows empty. */
+export const offersLive = (now = offerNow()) => activeOffers(now).length > 0
+
+/** { live, from, to } — this year's Diwali window. Dates are local. */
+export function diwaliWindow(now = offerNow()) {
+  const { month, fromDay, toDay } = OFFER_RULES.diwali
+  const from = new Date(now.getFullYear(), month - 1, fromDay)
+  const to = new Date(now.getFullYear(), month - 1, toDay)
+  const d = now.getDate()
+  return { live: now.getMonth() + 1 === month && d >= fromDay && d <= toDay, from, to }
 }
 
 /** "2026-10" — which month's window it is; what the pop-up remembers it showed. */
@@ -201,7 +270,7 @@ export function daysUntil(date, now = offerNow()) {
 // Cheesecake Lover: 3 cake pops is worth less than 2 cupcakes, 5 is worth more.
 // Ties go to the earlier offer in RANK. Mid-Month and Gift Box Pair give the
 // same box.
-const RANK = ['big-basket', 'cookie-dozen', 'mid-month', 'gift-pair', 'tub-lover', 'cheesecake', 'tub-sip']
+const RANK = ['diwali-sponge', 'diwali-tubs', 'big-basket', 'cookie-dozen', 'mid-month', 'gift-pair', 'tub-lover', 'cheesecake', 'tub-sip']
 const GIFT_VALUE = {
   'big-basket': 150,
   'cookie-dozen': 110,
@@ -246,6 +315,19 @@ const isCheesecakeTub = ({ product, tier, isSlice }) =>
   product?.category === 'Cheesecakes' && (isSlice || /^tub$/i.test(tier))
 const isDrink = ({ product }) => product?.category === 'Drinks'
 const isCookieDozen = ({ product, tier }) => product?.category === 'Cookies' && tier === 'Box of 12'
+// A WHOLE sponge cake (the base "Whole Bento" tier), not a sponge tub.
+const isWholeSponge = ({ product, isSlice, tier }) =>
+  product?.category === 'Sponge Cakes' && !isSlice && !/^tub$/i.test(tier)
+
+// Offers whose gift grows with a count. id → which count, its tiers, and the
+// word for one item (for "add 2 more cheesecake tubs").
+export const TIERED = {
+  'tub-lover': { count: 'tubs', tiers: OFFER_RULES.tubTiers, unit: 'cheesecake tub' },
+  'diwali-tubs': { count: 'tubs', tiers: OFFER_RULES.diwaliTubTiers, unit: 'cheesecake tub' },
+  'diwali-sponge': { count: 'sponge', tiers: OFFER_RULES.diwaliSpongeTiers, unit: 'whole sponge cake' },
+}
+/** The highest tier of `tiers` that `n` reaches, or null. */
+export const tierFor = (tiers, n) => [...tiers].reverse().find((t) => n >= t.min) || null
 
 /**
  * Where a cart stands. `offer` is the best OFFERS entry it earns (or null);
@@ -266,7 +348,7 @@ export function tubTier(tubs) {
  * was measured on, for the per-card status on /offers.
  */
 export function cartOfferStatus(items = [], subtotal = 0, now = offerNow()) {
-  const counts = { boxes: 0, banto: 0, tubs: 0, drinks: 0, dozens: 0 }
+  const counts = { boxes: 0, banto: 0, tubs: 0, drinks: 0, dozens: 0, sponge: 0 }
   for (const it of items) {
     const info = lineInfo(it)
     if (isGiftBox(info)) counts.boxes += it.qty
@@ -274,20 +356,30 @@ export function cartOfferStatus(items = [], subtotal = 0, now = offerNow()) {
     if (isCheesecakeTub(info)) counts.tubs += it.qty
     if (isDrink(info)) counts.drinks += it.qty
     if (isCookieDozen(info)) counts.dozens += it.qty
+    if (isWholeSponge(info)) counts.sponge += it.qty
   }
   const mid = midMonthWindow(now)
+  const diwali = diwaliWindow(now)
   const has = items.length > 0
-  const tier = tubTier(counts.tubs)
+  const every = OFFERS_ON && EVERYDAY_ON
+  const fest = OFFERS_ON && diwali.live
+  // The tier each tiered offer reaches right now (null = not yet).
+  const tiers = Object.fromEntries(
+    Object.entries(TIERED).map(([id, t]) => [id, tierFor(t.tiers, counts[t.count])]),
+  )
+  const tier = tiers['tub-lover']
   const earned = {
-    'big-basket': has && subtotal >= OFFER_RULES.bigBasketMin,
-    'cookie-dozen': counts.dozens >= 1,
-    'mid-month': has && mid.live && subtotal >= OFFER_RULES.midMonth.min,
-    'gift-pair': counts.boxes >= 2,
-    'tub-lover': !!tier,
-    cheesecake: counts.banto >= 1,
-    'tub-sip': counts.tubs >= 1 && counts.drinks >= 1,
+    'diwali-tubs': fest && !!tiers['diwali-tubs'],
+    'diwali-sponge': fest && !!tiers['diwali-sponge'],
+    'big-basket': every && has && subtotal >= OFFER_RULES.bigBasketMin,
+    'cookie-dozen': every && counts.dozens >= 1,
+    'mid-month': every && has && mid.live && subtotal >= OFFER_RULES.midMonth.min,
+    'gift-pair': every && counts.boxes >= 2,
+    'tub-lover': every && !!tier,
+    cheesecake: every && counts.banto >= 1,
+    'tub-sip': every && counts.tubs >= 1 && counts.drinks >= 1,
   }
-  const value = (id) => (id === 'tub-lover' ? (tier?.value ?? 0) : GIFT_VALUE[id])
+  const value = (id) => (TIERED[id] ? (tiers[id]?.value ?? 0) : GIFT_VALUE[id])
   const bestId = RANK.filter((id) => earned[id])
     .reduce((best, id) => (best && value(best) >= value(id) ? best : id), null)
   const bestValue = bestId ? value(bestId) : 0
@@ -298,51 +390,64 @@ export function cartOfferStatus(items = [], subtotal = 0, now = offerNow()) {
   const firstTier = OFFER_RULES.tubTiers[0]
   const withGift = (id, gift) => ({ ...offerById(id), gift })
 
+  // The next step up a tiered Diwali offer, once something counting towards it
+  // is in the basket: "Add 1 more cheesecake tub for 4 cake pops free".
+  const more = (n, what) => `${n} more ${what}${n === 1 ? '' : 's'}`
+  const stepUp = (id) => {
+    const t = TIERED[id]
+    const n = counts[t.count]
+    const next = t.tiers.find((x) => x.min > n)
+    if (!fest || !n || !next || !beats(id, next.value)) return null
+    return { offer: withGift(id, next.gift), add: more(next.min - n, t.unit), progress: n / next.min }
+  }
+
   // Only nudge when the next step is genuinely close — a ₹200 cart told to
   // spend ₹1,300 more reads as a sales pitch, not a tip. First match wins, so
   // the order below is the order of preference.
-  const more = (n, what) => `${n} more ${what}${n === 1 ? '' : 's'}`
   const candidates = [
-    beats('big-basket') && subtotal >= OFFER_RULES.bigBasketMin * 0.6 && {
+    stepUp('diwali-sponge'),
+    stepUp('diwali-tubs'),
+    every && beats('big-basket') && subtotal >= OFFER_RULES.bigBasketMin * 0.6 && {
       offer: offerById('big-basket'),
       need: OFFER_RULES.bigBasketMin - subtotal,
       progress: subtotal / OFFER_RULES.bigBasketMin,
     },
-    beats('mid-month') && mid.live && has && subtotal < OFFER_RULES.midMonth.min && {
+    every && beats('mid-month') && mid.live && has && subtotal < OFFER_RULES.midMonth.min && {
       offer: offerById('mid-month'),
       need: OFFER_RULES.midMonth.min - subtotal,
       progress: subtotal / OFFER_RULES.midMonth.min,
     },
-    beats('gift-pair') && counts.boxes === 1 && {
+    every && beats('gift-pair') && counts.boxes === 1 && {
       offer: offerById('gift-pair'),
       add: '1 more box of 6',
       progress: 0.5,
     },
     // Already on the first tub tier: the next one is the step up.
-    beats('tub-lover', topTier.value) && counts.tubs >= firstTier.min && counts.tubs < topTier.min && {
+    every && beats('tub-lover', topTier.value) && counts.tubs >= firstTier.min && counts.tubs < topTier.min && {
       offer: withGift('tub-lover', topTier.gift),
       add: more(topTier.min - counts.tubs, 'cheesecake tub'),
       progress: counts.tubs / topTier.min,
     },
-    beats('tub-sip') && counts.tubs >= 1 && counts.drinks === 0 && {
+    every && beats('tub-sip') && counts.tubs >= 1 && counts.drinks === 0 && {
       offer: offerById('tub-sip'),
       add: 'any drink',
       progress: 0.5,
     },
-    beats('tub-lover', firstTier.value) && counts.tubs >= 1 && counts.tubs < firstTier.min && {
+    every && beats('tub-lover', firstTier.value) && counts.tubs >= 1 && counts.tubs < firstTier.min && {
       offer: withGift('tub-lover', firstTier.gift),
       add: more(firstTier.min - counts.tubs, 'cheesecake tub'),
       progress: counts.tubs / firstTier.min,
     },
-    beats('tub-sip') && counts.drinks >= 1 && counts.tubs === 0 && {
+    every && beats('tub-sip') && counts.drinks >= 1 && counts.tubs === 0 && {
       offer: offerById('tub-sip'),
       add: 'a cheesecake tub',
       progress: 0.5,
     },
   ]
   const nudge = has ? candidates.find(Boolean) || null : null
-  const offer = !bestId ? null : bestId === 'tub-lover' ? withGift('tub-lover', tier.gift) : offerById(bestId)
-  return { offer, nudge, earned, counts, mid, tubTier: tier }
+  // A tiered offer's gift is the tier actually reached.
+  const offer = !bestId ? null : TIERED[bestId] ? withGift(bestId, tiers[bestId].gift) : offerById(bestId)
+  return { offer, nudge, earned, counts, mid, diwali, tubTier: tier, tiers }
 }
 
 // ── Quick-add choices for the offer cards on /offers ──────────────────────────
@@ -417,6 +522,13 @@ function cookieDozenTabs() {
     .map((p) => choice({ id: `${p.id}-slice`, name: `${p.name} (${p.sliceLabel})`, price: p.slice, img: p.img }, short(p.name))))]
 }
 
+// Whole sponge cakes, built as /shop builds the base tier: "<name> (Whole Bento)".
+function spongeTabs() {
+  return [tab('Whole sponge cakes', shopProducts
+    .filter((p) => p.category === 'Sponge Cakes')
+    .map((p) => choice({ id: p.id, name: `${p.name} (${p.sizeLabel})`, price: p.price, img: p.img }, p.name.replace(/ Sponge Cake$/, ''))))]
+}
+
 /** Offer id → { label, tabs } for the offers that qualify on particular items. */
 export const OFFER_PICKERS = {
   'gift-pair': { label: 'Choose your boxes', tabs: giftBoxTabs() },
@@ -424,4 +536,6 @@ export const OFFER_PICKERS = {
   cheesecake: { label: 'Choose your cheesecake', tabs: bantoTabs() },
   'tub-sip': { label: 'Choose a tub & a drink', tabs: tubSipTabs() },
   'cookie-dozen': { label: 'Choose your cookies', tabs: cookieDozenTabs() },
+  'diwali-tubs': { label: 'Choose your tubs', tabs: tubLoverTabs() },
+  'diwali-sponge': { label: 'Choose your sponge cake', tabs: spongeTabs() },
 }

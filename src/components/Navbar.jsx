@@ -10,7 +10,8 @@ import SearchOverlay from './SearchOverlay.jsx'
 import { asset } from '../data/images.js'
 import { useCart } from '../context/CartContext.jsx'
 import { WHATSAPP_PHONE } from './WhatsAppButton.jsx'
-import { OFFERS_ON } from '../data/offers.js'
+import { offersLive } from '../data/offers.js'
+import { useOfferClock } from '../hooks/useOfferClock.js'
 
 // Order is the browsing journey, not the sitemap: look at what's on offer
 // (Menu), buy it (Shop), then the softer pages. About sits last because it's
@@ -28,16 +29,16 @@ const links = [
 
 // The phone menu also links /offers — it was reachable on a phone only through
 // the Home page. Mobile only, by the owner's choice: the desktop bar is already
-// tight on small laptops. Hidden with everything else when OFFERS_ON is false.
-const mobileLinks = OFFERS_ON
-  ? [...links.slice(0, 3), { to: '/offers', label: 'Offers', icon: FiGift, tag: 'Free gifts' }, ...links.slice(3)]
-  : links
+// tight on small laptops. Only while an offer is running (offersLive), so it
+// comes and goes with Diwali by itself.
+const offerLinks = [...links.slice(0, 3), { to: '/offers', label: 'Offers', icon: FiGift, tag: 'Free gifts' }, ...links.slice(3)]
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const { count } = useCart()
+  const mobileLinks = offersLive(useOfferClock()) ? offerLinks : links
 
   // Force close on any route change. Defensive — covers the case where a
   // link click slips past the onClick handler.

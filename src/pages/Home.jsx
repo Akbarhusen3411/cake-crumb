@@ -15,7 +15,8 @@ import InstagramFeed from '../components/InstagramFeed.jsx'
 import OffersBand from '../components/OffersBand.jsx'
 import HeroOffers from '../components/HeroOffers.jsx'
 import OffersTicker from '../components/OffersTicker.jsx'
-import { OFFERS_ON } from '../data/offers.js'
+import { offersLive } from '../data/offers.js'
+import { useOfferClock } from '../hooks/useOfferClock.js'
 import { DEPOSIT_PCT, depositAmount } from '../data/shopConfig.js'
 
 // The Home band quotes this product's price from the catalogue, never its own copy.
@@ -23,6 +24,7 @@ const GIFT_BOX = shopProducts.find((p) => p.id === 'sg-birthday-box')
 
 export default function Home() {
   const { add } = useCart()
+  const offersOn = offersLive(useOfferClock())
   usePageMeta({
     title: 'Home',
     description: 'Cake & Crumb — handcrafted cheesecakes, milk cakes, cookies and desserts. Made with love. Order on WhatsApp.',
@@ -53,7 +55,7 @@ export default function Home() {
                 <Link to="/shop" className="btn-rose">
                   <FiShoppingBag /> Shop Now
                 </Link>
-                {OFFERS_ON && (
+                {offersOn && (
                   <Link to="/offers" className="btn-outline-rose cc-home-hero__offers-btn">
                     <FiGift /> See today’s offers
                   </Link>
@@ -91,7 +93,7 @@ export default function Home() {
       </section>
 
       {/* ───── OFFERS ───── straight after the hero, so a visitor sees them
-          before scrolling; renders nothing while OFFERS_ON is false. */}
+          before scrolling; renders nothing while no offer is running. */}
       <OffersTicker />
       <OffersBand />
 

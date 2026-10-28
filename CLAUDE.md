@@ -65,7 +65,7 @@ Find the subsystem your task touches and read that section first:
 | Swapping a product photo | **Photos** | `npm run photos` links + resizes + checks; a slug-named file needs no code edit |
 | Anything with video | **Video** | Phone `.MOV` is HEVC and plays in Safari only; sources must stay out of `/public` |
 | Reviews, ratings, testimonials | **Reviews** | Three fabrications were removed; reviewer emails were publicly readable |
-| Offers on the website (`/offers`, Home, the cart gift) | **Offers on the site** | Free gifts only, detected in the cart; Mid-Month switches on and off by date |
+| Offers on the website (`/offers`, Home, the cart gift) | **Offers on the site** | Free gifts only, detected in the cart; only the two Diwali offers run (5–15 Nov); Mid-Month switches on and off by date |
 | A poster or newspaper ad | **Print posters**, **No discount system** | Print, not code — every printed fact is hand-copied, and no offer may move a total |
 | Adding a product category | **Product catalog** (*Special Gifts*) | Six files must agree; one silently strips the allergen badges if missed |
 | The printed A4 menu | **Printed menu** | Generated from `products.js` — rebuild after a price change |
@@ -419,9 +419,16 @@ Facebook artwork and the Google-review poster. Not in the app or Vite build. Eve
 
 ### Offers on the site — `/offers`, Home, and the cart
 
-Seven offers in **`data/offers.js`**, the single place to edit them. **Every offer is a free item added to the order, never a lower price**, so no total moves and the five-places rule isn't engaged. The bakery adds the gift by hand on WhatsApp.
+Nine offers in **`data/offers.js`** — two Diwali, seven everyday — the single place to edit them. **Every offer is a free item added to the order, never a lower price**, so no total moves and the five-places rule isn't engaged. The bakery adds the gift by hand on WhatsApp.
 
-- **All offers are OFF (`OFFERS_ON = false`) since 28 Oct 2026** — the owner switched them off ahead of Diwali; Diwali offers were being chosen but none are built. `OFFERS_ON = false` hides everything (Home band, ticker, hero stickers, pop-up, cart gift card, receipt line). `OFFER_RULES` holds the Mid-Month window (13th–20th), its ₹499 minimum, the ₹1,500 Big Basket line and Tub Lover's tiers (2 tubs → 3 cake pops, 5 → 5).
+- **Two switches.** `OFFERS_ON` is the master (false hides everything). **`EVERYDAY_ON = false` since 28 Oct 2026** — the seven everyday offers are off by the owner's choice; true brings them back. Seasonal offers (`season: 'diwali'`) ignore it and run on their own dates.
+- **Diwali offers — 5–15 Nov** (`OFFER_RULES.diwali`, `diwaliWindow()`; same days as the banner and `DiwaliWelcome` — change all three together). Owner-chosen from a list of proposals:
+  - **Diwali Tub Treat** (`diwali-tubs`, cheesecake tubs mixed): 2 → 3 cake pops · 3 → 4 cake pops · 4 → 2 cupcakes + 2 cake pops · 6 → 1 extra tub (`diwaliTubTiers`).
+  - **Diwali Cake Treat** (`diwali-sponge`, WHOLE sponge Bento — sponge tubs don't count, `isWholeSponge`): 1 → 4 cake pops · 2 → a sponge tub + 3 cake pops (`diwaliSpongeTiers`).
+  - Gifts were sized at ≤ ~17% of the smallest qualifying order at menu price; the owner's ingredient costs were never checked.
+- **Tiered offers share one shape** — `TIERED` (id → count, tiers, unit word) + `tierFor()`. A tier's `value` is its menu value and decides it against other offers; the cart's gift is the tier reached, and `stepUp()` nudges to the next one. `cartOfferStatus` returns `tiers` and `diwali`; `/offers`' `OfferStatus` reads `TIERED` for every tiered card. A new tiered offer = a `TIERED` entry + its tiers + a `counts` field.
+- **Every offer surface gates on `activeOffers(now)` / `offersLive(now)`, never on `OFFERS_ON` alone** — Home band, ticker, stickers, the hero "See today's offers" button, the phone menu's Offers link (built in the component, with `useOfferClock()`) and /offers all vanish outside a window instead of showing empty. Two offers lay out side by side (`.cc-home-offers__grid--two`). `MidMonthPopup` also needs `EVERYDAY_ON`.
+- `OFFER_RULES` also holds the Mid-Month window (13th–20th), its ₹499 minimum, the ₹1,500 Big Basket line and Tub Lover's tiers (2 tubs → 3 cake pops, 5 → 5).
 - **Mid-Month is date-driven by the visitor's clock** — 00:00 on the 13th to 23:59 on the 20th, monthly, no redeploy. Outside the window it's *hidden* everywhere (Home, `/offers`, cart). Time is read through **`offerNow()`**, re-rendered via **`useOfferClock()`** (every minute + tab focus). **`?testdate=YYYY-MM-DD[THH:MM]` works on the dev server only** (gated on `import.meta.env.DEV`) — keep it so.
 - **`cartOfferStatus(items, subtotal, now)`** decides the gift: one per order, the **biggest by menu value** (`GIFT_VALUE`, tier values for Tub Lover), ties by `RANK`. Returns a `nudge` only when the next gift is close. Classifies lines by the **"(tier)" bracket in the name, then the id suffix** — an *exact* id match first, since `lo-dipped-slice` merely ends in `-slice`.
 - **Picker lines must be built exactly as Shop/QuickView build them** (`<id>-slice` + "(tier)" name + tier price), or one box becomes two cart lines.
@@ -666,7 +673,7 @@ One wording on Home, footer, cart, FAQ and `/contact`: **order a day ahead; orde
 
 ### Festival banner
 
-`data/festivals.js` defines date-ranged banners; `FestivalBanner.jsx` picks the active one from the local clock (read through `offerNow()`, so `?testdate=` works on the dev server). Ranges wrap year boundaries (see `new-year`). Diwali runs **5–15 Nov** (Diwali is 8 Nov 2026 — check yearly), says "Order festive cakes and gift boxes a day ahead" and links to **/shop**, not /offers (offers are off).
+`data/festivals.js` defines date-ranged banners; `FestivalBanner.jsx` picks the active one from the local clock (read through `offerNow()`, so `?testdate=` works on the dev server). Ranges wrap year boundaries (see `new-year`). Diwali runs **5–15 Nov** (Diwali is 8 Nov 2026 — check yearly), says "Order festive cakes and gift boxes a day ahead" and links to **/shop**, not /offers (set while offers were off; the Diwali offers came after — ask before relinking).
 
 **Diwali & New Year welcome — `DiwaliWelcome.jsx`**, mounted in `App.jsx` (not on admin). A full-screen greeting shown **before the site, 5–15 Nov (`WINDOW`), once a day per device** (`cc_diwali_welcome_v1`), never on cart/checkout/confirm-order/admin. Same 5–15 Nov as the banner — **change both together**. Both are checked when the page opens; a tab left open over midnight switches on its next load.
 
