@@ -216,7 +216,7 @@ export const shopProducts = [
   // ───── SPECIAL GIFTS ─────
   // One product today. `group` is the occasion ("Birthday"), so a second
   // occasion is a new row with its own group, not a new category.
-  { id: 'sg-birthday-box', name: 'Birthday Gift Box', price: 1500, category: 'Special Gifts', sizeLabel: 'Box', group: 'Birthday', desc: 'A birthday cake and fresh flowers, packed together in one gift box — and a dessert cup comes free with it.' },
+  { id: 'sg-birthday-box', name: 'Birthday & Anniversary Gift Box', price: 1600, category: 'Special Gifts', sizeLabel: 'Box', group: 'Birthday & Anniversary', desc: 'A cake and fresh flowers for a birthday or an anniversary, packed together in one gift box — and a dessert cup comes free with it.' },
 
   // ───── DESSERT CUPS ─────
   { id: 'dc-custard-vanilla', name: 'Vanilla Custard Cup', price: 60, category: 'Dessert Cups', sizeLabel: '150ml' },

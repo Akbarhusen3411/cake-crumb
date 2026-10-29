@@ -94,10 +94,21 @@ export const DIWALI_PACK10 = {
 export const DIWALI_PACK2 = {
   'cup-variety': 339,
 }
+// Single items at a percentage off for Diwali — product id → % off. The price
+// is worked out from products.js (rounded down to whole rupees), so a price
+// change follows: the gift box ₹1,600 → ₹1,440 (owner's ask, 29 Oct 2026).
+// Same shape as the packs: its own cart line (<id>-d1, "(Diwali price)").
+export const DIWALI_PCT_OFF = {
+  'sg-birthday-box': 10,
+}
+/** The Diwali price of a DIWALI_PCT_OFF product, or null. */
+export const diwaliOffPrice = (p) =>
+  p && DIWALI_PCT_OFF[p.id] ? Math.floor((p.price * (100 - DIWALI_PCT_OFF[p.id])) / 100) : null
 
-/** Is this cart line a Diwali pack? (ids end -d2 / -d10; -d8 was the dropped
- *  box of 8, still matched so an old cart line is caught.) */
-export const isDiwaliPackId = (id) => /-d(2|8|10)$/.test(String(id || ''))
+/** Is this cart line a Diwali pack? (ids end -d1 / -d2 / -d10; -d1 is a single
+ *  item at its Diwali price; -d8 was the dropped box of 8, still matched so an
+ *  old cart line is caught.) */
+export const isDiwaliPackId = (id) => /-d(1|2|8|10)$/.test(String(id || ''))
 
 const byId = (id) => shopProducts.find((p) => p.id === id)
 
@@ -122,7 +133,12 @@ function packRule(p) {
   if (!p) return null
   if (DIWALI_PACK10[p.id] && isPerPiece(p)) return { size: 10, price: DIWALI_PACK10[p.id], line: pack10Line(p), label: 'pack of 10', unit: 'pieces' }
   if (DIWALI_PACK2[p.id]) return { size: 2, price: DIWALI_PACK2[p.id], line: pack2Line(p), label: 'pack of 2 boxes', unit: 'boxes' }
+  if (DIWALI_PCT_OFF[p.id]) return { size: 1, price: diwaliOffPrice(p), line: price1Line(p), label: `${DIWALI_PCT_OFF[p.id]}% off`, unit: 'box' }
   return null
+}
+/** The cart line for one item at its Diwali % off (the gift box). */
+export function price1Line(p) {
+  return { id: `${p.id}-d1`, name: `${p.name} (Diwali price)`, price: diwaliOffPrice(p), img: p.img }
 }
 /** The cart line for the Diwali "2 boxes" pack (Variety). */
 export function pack2Line(p) {
@@ -135,7 +151,7 @@ export function piecesPrice(p, qty, now = offerNow()) {
   const rule = packRule(p)
   if (!OFFERS_ON || !rule || !diwaliWindow(now, true).live) return { total: regular, regular, packs: 0 }
   const packs = Math.floor(n / rule.size)
-  return { total: packs * rule.price + (n % rule.size) * p.price, regular, packs, label: rule.label }
+  return { total: packs * rule.price + (n % rule.size) * p.price, regular, packs, label: rule.label, single: rule.size === 1 }
 }
 
 /** "Add N more for the Diwali pack" — once at least half a pack is chosen. Real dates only. */
@@ -163,11 +179,11 @@ export function applyDiwaliPacks(items, now = offerNow()) {
     if (!rule) continue
     const loose = out.find((x) => x.id === p.id && Number(x.price) === p.price)
     const L = loose?.qty || 0
-    if (rule.size === 2) {
-      // 2 Variety boxes → the pair, the rest stays a box.
-      if (L < 2) continue
-      out = setQty(out, loose, L % 2)
-      out = addPack(out, rule.line, Math.floor(L / 2))
+    if (rule.size !== 10) {
+      // 2 Variety boxes → the pair, the rest stays a box; a gift box → its Diwali-price line.
+      if (L < rule.size) continue
+      out = setQty(out, loose, L % rule.size)
+      out = addPack(out, rule.line, Math.floor(L / rule.size))
       continue
     }
     const box = hasBox6(p) ? out.find((x) => x.id === `${p.id}-slice` && Number(x.price) === p.slice) : null
@@ -245,13 +261,17 @@ export function unpackExpiredPacks(items = [], now = offerNow()) {
   if (diwaliWindow(now, true).live || !items.some((it) => isDiwaliPackId(it.id))) return items
   let out = items.filter((it) => !isDiwaliPackId(it.id))
   for (const it of items) {
-    const m = String(it.id).match(/^(.*)-d(2|8|10)$/)
+    const m = String(it.id).match(/^(.*)-d(1|2|8|10)$/)
     if (!m) continue
     const p = byId(m[1])
     if (!p) continue
     const packs = Math.max(1, Number(it.qty) || 1)
     let line, per
-    if (m[2] === '2') {
+    if (m[2] === '1') {
+      // one item at its Diwali price → the same item at the regular price
+      line = { id: p.id, name: p.name, price: p.price, img: p.img, qty: 0, minQty: 1 }
+      per = 1
+    } else if (m[2] === '2') {
       // 2 boxes of 6: the box line (Variety is box-only, sold as the product itself)
       line = p.slice != null ? boxLine(p) : { id: p.id, name: p.name, price: p.price, img: p.img, qty: 0, minQty: 1 }
       per = 2
@@ -301,8 +321,8 @@ export function chatbotPacks(entries, now = offerNow()) {
     const boxE = hasBox6(p) ? out.find(([n, v]) => split(n).base === base && Number(v.price) === p.slice && split(n).tier === p.sliceLabel) : null
     const L = looseE?.[1].qty || 0
     const B = boxE?.[1].qty || 0
-    const best = rule.size === 2
-      ? { packs: Math.floor(L / 2), loose: L % 2, boxes: 0 }
+    const best = rule.size !== 10
+      ? { packs: Math.floor(L / rule.size), loose: L % rule.size, boxes: 0 }
       : bestPacking(p, L, B)
     if (!best.packs) continue
     const looseName = looseE?.[0] || `${base} — ${p.sizeLabel || 'Whole'}`
@@ -311,7 +331,7 @@ export function chatbotPacks(entries, now = offerNow()) {
     out = out.filter(([n]) => !drop.has(n))
     if (best.loose) out.push([looseName, { ...(looseE?.[1] || {}), qty: best.loose, price: p.price }])
     if (rule.size === 10 && best.boxes) out.push([boxName, { ...(boxE?.[1] || {}), qty: best.boxes, price: p.slice }])
-    const label = rule.size === 10 ? 'Diwali pack of 10' : 'Diwali 2 boxes of 6'
+    const label = rule.size === 10 ? 'Diwali pack of 10' : rule.size === 2 ? 'Diwali 2 boxes of 6' : 'Diwali price'
     out.push([`${clean} — ${label}`, { qty: best.packs, price: rule.price, was: p.price * rule.size, cat: looseName }])
   }
   return out
@@ -327,7 +347,7 @@ export function packHint(name, price, now = offerNow()) {
   const base = String(name).match(/^(.*?)\s+—\s+(.+)$/)?.[1] || name
   const p = shopProducts.find((x) => x.name === base)
   const rule = packRule(p)
-  return rule && Number(price) === p.price ? { size: rule.size, price: rule.price, unit: rule.size === 10 ? 'pcs' : 'boxes' } : null
+  return rule && Number(price) === p.price ? { size: rule.size, price: rule.price, unit: rule.size === 10 ? 'pcs' : rule.size === 1 ? 'box' : 'boxes' } : null
 }
 
 /**
@@ -345,6 +365,9 @@ export function productDiwaliDeals(p, now = offerNow()) {
   }
   if (DIWALI_PACK2[p.id]) {
     deals.push({ kind: 'price', label: '2 boxes', was: p.price * 2, now: DIWALI_PACK2[p.id], line: pack2Line(p) })
+  }
+  if (DIWALI_PCT_OFF[p.id]) {
+    deals.push({ kind: 'price', label: `${DIWALI_PCT_OFF[p.id]}% off`, was: p.price, now: diwaliOffPrice(p), line: price1Line(p) })
   }
   if (p.category === 'Cheesecakes' && p.slice != null) {
     const t = OFFER_RULES.diwaliTubTiers[0]

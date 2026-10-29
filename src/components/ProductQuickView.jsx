@@ -82,7 +82,7 @@ function QtyBuy({ label, minQty, unitPrice, each = 'each', qty, setQty, price, n
           <strong>{price.packs > 0 && <span className="visually-hidden">Diwali price </span>}{inr(price.total)}</strong>
           <small>
             {price.packs > 0
-              ? `Diwali price · ${price.packs === 1 ? '' : `${price.packs} × `}${price.label}`
+              ? `Diwali price · ${price.single || price.packs === 1 ? '' : `${price.packs} × `}${price.label}`
               : `${qty} × ${inr(unitPrice)}`}
           </small>
         </div>

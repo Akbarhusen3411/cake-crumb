@@ -18,7 +18,7 @@ import InstagramFeed from '../components/InstagramFeed.jsx'
 const OffersBand = lazy(() => import('../components/OffersBand.jsx'))
 const HeroOffers = lazy(() => import('../components/HeroOffers.jsx'))
 const OffersTicker = lazy(() => import('../components/OffersTicker.jsx'))
-import { offersLive } from '../data/offerRules.js'
+import { offersLive, OFFERS_ON, diwaliWindow, diwaliOffPrice } from '../data/offerRules.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
 import { DEPOSIT_PCT, depositAmount } from '../data/shopConfig.js'
 
@@ -27,7 +27,12 @@ const GIFT_BOX = shopProducts.find((p) => p.id === 'sg-birthday-box')
 
 export default function Home() {
   const { add } = useCart()
-  const offersOn = offersLive(useOfferClock())
+  const offerClock = useOfferClock()
+  const offersOn = offersLive(offerClock)
+  // 5–15 Nov the gift box is 10% off (offerRules.js DIWALI_PCT_OFF); the cart
+  // bills it as its own "(Diwali price)" line.
+  const giftDiwali = GIFT_BOX && OFFERS_ON && diwaliWindow(offerClock).live ? diwaliOffPrice(GIFT_BOX) : null
+  const giftPrice = giftDiwali ?? GIFT_BOX?.price
   usePageMeta({
     title: 'Home',
     description: 'Cake & Crumb — handcrafted cheesecakes, milk cakes, cookies and desserts. Made with love. Order on WhatsApp.',
@@ -169,7 +174,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ───── BIRTHDAY GIFT BOX ─────
+      {/* ───── BIRTHDAY & ANNIVERSARY GIFT BOX ─────
           The product is `sg-birthday-box` in products.js; the price shown and
           the button's target both come from that entry. Remove the product
           and the whole band goes with it. */}
@@ -182,17 +187,17 @@ export default function Home() {
                 src={u(img.giftBirthdayBox)}
                 srcSet={srcSet(img.giftBirthdayBox)}
                 sizes="(min-width: 992px) 460px, 92vw"
-                alt="Birthday gift box with a pink cake, a dessert tub and a rose bouquet"
+                alt="Birthday and anniversary gift box with a pink cake, a dessert tub and a rose bouquet"
                 loading="lazy"
               />
             </div>
             <div className="cc-home-gift__text">
-              <span className="eyebrow">Birthday Special</span>
-              <h2 className="section-title mt-3">The Birthday Gift Box</h2>
+              <span className="eyebrow">Birthday &amp; Anniversary Special</span>
+              <h2 className="section-title mt-3">The Birthday &amp; Anniversary Gift Box</h2>
               <HeartDivider width={50} />
               <p className="cc-home-gift__lede">
-                A birthday cake and fresh flowers, packed together in one box — a whole
-                birthday surprise, ready to hand over. A dessert cup comes free with it.
+                A cake and fresh flowers, packed together in one box — a whole birthday
+                or anniversary surprise, ready to hand over. A dessert cup comes free with it.
               </p>
               <div className="cc-infochips">
                 <span className="cc-infochip"><FiGift aria-hidden /> Made to order</span>
@@ -201,9 +206,16 @@ export default function Home() {
               </div>
               {/* Price, advance and button read as one buying panel (boxed on a phone). */}
               <div className="cc-home-gift__buy">
-                <div className="cc-home-gift__price">{inr(GIFT_BOX.price)}</div>
+                <div className="cc-home-gift__price">
+                  {giftDiwali != null && (
+                    <s className="cc-home-gift__was"><span className="visually-hidden">Regular price </span>{inr(GIFT_BOX.price)}</s>
+                  )}
+                  {giftDiwali != null && <span className="visually-hidden">Diwali price </span>}
+                  {inr(giftPrice)}
+                  {giftDiwali != null && <span className="cc-home-gift__off">Diwali · 10% off</span>}
+                </div>
                 <p className="cc-home-gift__adv">
-                  <strong>Book with a {Math.round(DEPOSIT_PCT * 100)}% advance of {inr(depositAmount(GIFT_BOX.price))}</strong>
+                  <strong>Book with a {Math.round(DEPOSIT_PCT * 100)}% advance of {inr(depositAmount(giftPrice))}</strong>
                   <span className="cc-home-gift__sep"> · </span>
                   <span className="cc-home-gift__bal">balance on delivery or pickup</span>
                 </p>
@@ -211,7 +223,7 @@ export default function Home() {
                   to={`/shop?category=${encodeURIComponent(GIFT_BOX.category)}&product=${GIFT_BOX.id}`}
                   className="btn-rose cc-home-gift__btn"
                 >
-                  <FiGift size={16} /> Order the Birthday Gift Box
+                  <FiGift size={16} /> Order the Gift Box
                 </Link>
               </div>
             </div>

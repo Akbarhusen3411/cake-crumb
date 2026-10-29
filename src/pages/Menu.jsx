@@ -142,7 +142,7 @@ const CARDS = [
     // (as tall as the rows, a 21:9 band on a phone) cut through it.
     square: true,
     // The advance line reads shopConfig, so a price or deposit change follows.
-    note: () => `♥ Cake and fresh flowers in one box, with a free dessert cup. Book with a ${Math.round(DEPOSIT_PCT * 100)}% advance (${inr(depositAmount(shopProducts.find((p) => p.id === 'sg-birthday-box')?.price || 0))}).`,
+    note: () => `♥ Cake and flowers for birthdays or anniversaries, plus a free dessert cup. Book with a ${Math.round(DEPOSIT_PCT * 100)}% advance (${inr(depositAmount(shopProducts.find((p) => p.id === 'sg-birthday-box')?.price || 0))}).`,
   },
   {
     // Platters had no card at all, so Pancakes and Crêpe Rolls appeared

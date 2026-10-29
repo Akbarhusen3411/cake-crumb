@@ -22,7 +22,8 @@ const CartContext = createContext(null)
 // Bump to v4 only if a price or id changes AFTER this build is live.
 //
 // v4 (Oct 2026): Birthday Gift Box ₹1,400 → ₹1,500.
-const STORAGE_KEY = 'cc_cart_v4'
+// v5 (Oct 2026): renamed Birthday & Anniversary Gift Box, ₹1,500 → ₹1,600.
+const STORAGE_KEY = 'cc_cart_v5'
 
 // Smallest quantity this line may sit at. Products carry `minQty` (cupcakes are
 // per-piece with a minimum of 2 — the bakery won't bake a single one); anything

@@ -50,7 +50,7 @@ Every link opens directly: **Ctrl + click** in VS Code / Cursor, or just click w
 | Dessert Cups | [local](http://localhost:5173/cake-crumb/shop?category=Dessert%20Cups) | [live](https://akbarhusen3411.github.io/cake-crumb/shop?category=Dessert%20Cups) |
 | Platters | [local](http://localhost:5173/cake-crumb/shop?category=Platters) | [live](https://akbarhusen3411.github.io/cake-crumb/shop?category=Platters) |
 | Drinks | [local](http://localhost:5173/cake-crumb/shop?category=Drinks) | [live](https://akbarhusen3411.github.io/cake-crumb/shop?category=Drinks) |
-| Special Gifts (Birthday Gift Box) | [local](http://localhost:5173/cake-crumb/shop?category=Special%20Gifts&product=sg-birthday-box) | [live](https://akbarhusen3411.github.io/cake-crumb/shop?category=Special%20Gifts&product=sg-birthday-box) |
+| Special Gifts (Birthday & Anniversary Gift Box) | [local](http://localhost:5173/cake-crumb/shop?category=Special%20Gifts&product=sg-birthday-box) | [live](https://akbarhusen3411.github.io/cake-crumb/shop?category=Special%20Gifts&product=sg-birthday-box) |
 
 ## ⭐ Reviews
 

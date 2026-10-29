@@ -198,9 +198,9 @@ const pBakes = `
   <div class="gift">
     <figure><img src="../public/products/gift-box-birthday-flatlay.webp" alt="" /></figure>
     <div class="gift__txt">
-      <div class="gift__kicker">Special Gifts · Birthday</div>
-      <div class="gift__name">${esc(gift.name)}</div>
-      <p>A birthday cake and fresh flowers, packed together in one gift box.</p>
+      <div class="gift__kicker">Special Gifts · Birthday &amp; Anniversary</div>
+      <div class="gift__name">${esc(gift.name).replace(/ Gift Box$/, "&nbsp;Gift&nbsp;Box")}</div>
+      <p>A cake and fresh flowers for a birthday or an anniversary, packed together in one gift box.</p>
       <p class="gift__free">&#9829; A dessert cup comes free with it</p>
       <div class="gift__price">${rs(gift.price)}</div>
       <p class="gift__adv">Book with a ${Math.round(DEPOSIT_PCT * 100)}% advance of ${rs(depositAmount(gift.price))} &middot; balance on delivery or pickup</p>
@@ -245,7 +245,7 @@ const cover = `
   <div class="inside">
     <div class="inside__t"><span>What&rsquo;s inside</span></div>
     <ol class="inside__list">
-      ${[['Cheesecakes', 2], ['Milk &amp; Sponge Cakes', 3], ['Cookies', 3], ['Cupcakes &amp; Cake Pops', 4], ['Dessert Cups &amp; Cakesicles', 4], ['Brownies &amp; Blondies', 5], ['Birthday Gift Box', 5], ['Drinks &amp; Coffee', 6], ['Order &amp; Contact', 7]]
+      ${[['Cheesecakes', 2], ['Milk &amp; Sponge Cakes', 3], ['Cookies', 3], ['Cupcakes &amp; Cake Pops', 4], ['Dessert Cups &amp; Cakesicles', 4], ['Brownies &amp; Blondies', 5], ['Birthday &amp; Anniversary Gift Box', 5], ['Drinks &amp; Coffee', 6], ['Order &amp; Contact', 7]]
         .map(([t, n]) => `<li><span>${t}</span><span class="lead"></span><b>${n}</b></li>`).join('')}
     </ol>
   </div>

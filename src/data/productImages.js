@@ -180,7 +180,7 @@ export const PRODUCT_IMAGES = {
   'Crêpe Roll (Nutella filled)':          'bakes-rose-petal-bars.jpeg',
 
   // ───── SPECIAL GIFTS ─────
-  'Birthday Gift Box':                    'birthday-gift-box.jpeg',
+  'Birthday & Anniversary Gift Box':      'birthday-gift-box.jpeg',
 
   // ───── DESSERT CUPS ─────
   'Vanilla Custard Cup':                  'dessert-cups-lemon.jpeg',
@@ -243,7 +243,7 @@ export const PRODUCT_IMAGES = {
  * a short opt-in list rather than an array on every row above.
  */
 export const EXTRA_PHOTOS = {
-  'Birthday Gift Box': ['gift-box-birthday-flatlay.jpeg'],
+  'Birthday & Anniversary Gift Box': ['gift-box-birthday-flatlay.jpeg'],
 }
 
 /** The six category teaser cards on the Menu page (keyed by card title). */

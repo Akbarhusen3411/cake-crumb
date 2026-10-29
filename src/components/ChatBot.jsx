@@ -466,7 +466,7 @@ function DatePickerWidget({ onPick, pickup = false }) {
 function PackHint({ name, price }) {
   const h = packHint(name, price)
   if (!h) return null
-  return <span className="block text-[10px] font-bold text-berry mt-0.5">🎁 Diwali: {h.size} {h.unit} for {inr(h.price)}</span>
+  return <span className="block text-[10px] font-bold text-berry mt-0.5">🎁 Diwali: {h.size === 1 ? `price ${inr(h.price)}` : `${h.size} ${h.unit} for ${inr(h.price)}`}</span>
 }
 
 function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {

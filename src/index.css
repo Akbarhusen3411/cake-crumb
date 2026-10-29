@@ -3731,6 +3731,24 @@ header[style*="sticky"] {
   font-weight: 900;
   color: var(--cc-rose-ink);
 }
+/* Diwali: regular price struck through beside the 10%-off price. */
+.cc-home-gift__was {
+  margin-right: 0.5rem;
+  font-size: 0.65em;
+  font-weight: 700;
+  color: var(--cc-cocoa-soft);
+}
+.cc-home-gift__off {
+  display: inline-block;
+  margin-left: 0.6rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: #c0395b;
+  color: #fff;
+  font-size: 0.5em;
+  font-weight: 700;
+  vertical-align: middle;
+}
 .cc-home-gift__adv {
   margin: 0.25rem 0 0;
   font-size: 0.95rem;

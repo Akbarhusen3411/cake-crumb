@@ -15,7 +15,7 @@ by hand, the next build overwrites it.
 | 2 · Cheesecakes | Classic · Exotic · Chocolate · Premium, Banto and Tub prices, size guide |
 | 3 · Cakes & Cookies | Milk Cakes, Sponge Cakes (Bento / Tub), Cookies (1 · box of 6 · box of 12), custom-cake note, size guide |
 | 4 · Cupcakes & Treats | Cupcakes, Cake Pops, Dessert Cups, Cakesicles (by shape), Sweet Treats, Platters |
-| 5 · Bakes & Gifts | Brownies, Blondies, New on the Menu, Dipping Boxes, Birthday Gift Box |
+| 5 · Bakes & Gifts | Brownies, Blondies, New on the Menu, Dipping Boxes, Birthday & Anniversary Gift Box |
 | 6 · Drinks | Mojitos, Milkshakes, Iced Coffee, Hot Coffee, eggless note |
 | 7 · Order & Contact | How to order (1-2-3), WhatsApp, Instagram, email, address, ordering facts, three QR codes (WhatsApp · Instagram · Google) |
 
@@ -58,7 +58,7 @@ big change look through the PNGs to make sure nothing overflows.
   **Tub** = single serve. Not typos.
 - The old menu's second number (90816 68490) is the UPI number and was left off on purpose, as was
   "GPay · PhonePe · Paytm" — the menu says "UPI (any app) · Cash".
-- The Birthday Gift Box is a cake and flowers; the dessert cup is a free extra.
+- The Birthday & Anniversary Gift Box is a cake and flowers; the dessert cup is a free extra.
 
 ---
 

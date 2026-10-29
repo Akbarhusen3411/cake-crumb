@@ -13,8 +13,8 @@ import { img } from './images.js'
 import { shopProducts } from './products.js'
 import { inr } from './format.js'
 import {
-  OFFERS_ON, EVERYDAY_ON, OFFER_RULES, DIWALI_PACK10, DIWALI_PACK2, DIWALI_DATES, DIWALI_FROM,
-  ordinal, offerNow, diwaliWindow, midMonthWindow, pack10Line, pack2Line,
+  OFFERS_ON, EVERYDAY_ON, OFFER_RULES, DIWALI_PACK10, DIWALI_PACK2, DIWALI_PCT_OFF, DIWALI_DATES, DIWALI_FROM,
+  ordinal, offerNow, diwaliWindow, midMonthWindow, pack10Line, pack2Line, price1Line, diwaliOffPrice,
 } from './offerRules.js'
 
 // The rules half (dates, pack prices, roll-up, clock) lives in offerRules.js;
@@ -33,6 +33,9 @@ function diwaliPackPrices() {
     cup10 && { label: '10 cupcakes', note: 'every flavour · from', ...ten(cup10) },
     { label: '2 Variety boxes', note: '12 cupcakes, all different', was: byId('cup-variety').price * 2, now: DIWALI_PACK2['cup-variety'] },
     { label: '10 cake pops', note: 'Chocolate, Vanilla or Red Velvet', ...ten('bk-cakepop-chocolate') },
+    ...shopProducts.filter((p) => DIWALI_PCT_OFF[p.id]).map((p) => ({
+      label: 'Gift box', note: `birthday or anniversary · ${DIWALI_PCT_OFF[p.id]}% off`, was: p.price, now: diwaliOffPrice(p),
+    })),
   ].filter(Boolean)
 }
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
@@ -85,13 +88,13 @@ export const OFFERS = [
     season: 'diwali',
     prices: diwaliPackPrices(),
     deal: true, // a price, not a free gift: label "Deal", no cart gift
-    buy: 'Diwali packs — cupcakes & cake pops',
-    buyNote: `Cupcakes from ${inr(DIWALI_FROM.cupcakes10)} · cake pops ${inr(DIWALI_FROM.cakePops10)} · 2 Variety boxes ${inr(DIWALI_FROM.variety2)}`,
+    buy: 'Diwali packs — cupcakes, cake pops & the gift box',
+    buyNote: `Cupcakes from ${inr(DIWALI_FROM.cupcakes10)} · cake pops ${inr(DIWALI_FROM.cakePops10)} · 2 Variety boxes ${inr(DIWALI_FROM.variety2)} · gift box 10% off`,
     get: `Packs from ${inr(DIWALI_FROM.from)}`,
     getLabel: 'Deal',
     name: 'Diwali Sweet Packs',
     tag: `Diwali · ${DIWALI_DATES.range}`,
-    condition: 'Diwali-only packs at a special price — 10 cupcakes of any flavour, 10 Chocolate, Vanilla or Red Velvet cake pops, or 2 Variety boxes of 6.',
+    condition: 'Diwali-only packs at a special price — 10 cupcakes of any flavour, 10 Chocolate, Vanilla or Red Velvet cake pops, or 2 Variety boxes of 6 — and the Birthday & Anniversary Gift Box at 10% off.',
     gift: 'Diwali pack prices',
     tickerText: `10 cupcakes from ${inr(DIWALI_FROM.cupcakes10)} · 10 cake pops ${inr(DIWALI_FROM.cakePops10)}`,
     image: img.rcOwnCupcakesSix,
@@ -516,11 +519,15 @@ function diwaliPackTabs() {
   const two = shopProducts
     .filter((p) => DIWALI_PACK2[p.id])
     .map((p) => choice({ ...pack2Line(p), was: p.price * 2, pack: true }, 'Variety × 2 boxes'))
+  const off = shopProducts
+    .filter((p) => DIWALI_PCT_OFF[p.id])
+    .map((p) => choice({ ...price1Line(p), was: p.price, pack: true }, 'Gift box'))
   return [
     tab('Cupcakes × 10', ten((p) => p.category === 'Cupcakes')),
     tab('Variety × 2', two),
     tab('Cake pops × 10', ten((p) => p.group === 'Cake Pops')),
-  ]
+    off.length && tab('Gift box · 10% off', off),
+  ].filter(Boolean)
 }
 
 /** Offer id → { label, tabs } for the offers that qualify on particular items. */
