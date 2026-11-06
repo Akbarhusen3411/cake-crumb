@@ -5,7 +5,7 @@ import UndoToast from './UndoToast.jsx'
 import { useUndo, withoutId } from './useUndo.js'
 import FilterChips from './FilterChips.jsx'
 import PeriodSelect from './PeriodSelect.jsx'
-import { ACC, addDocRec, updateDocRec, deleteDocRec, monthsFrom } from '../../../services/accounting.js'
+import { ACC, addDocRec, updateDocRec, deleteDocRec, monthsFrom, orderTotal } from '../../../services/accounting.js'
 import { inr } from '../../../data/format.js'
 import { todayIso, fmtDate, inPeriod } from '../../../utils/adminDate.js'
 import { useIsMobile } from '../../../hooks/useIsMobile.js'
@@ -31,7 +31,7 @@ const METHOD_FILTERS = [
 const IN_INK = '#1b7f5e'
 const OUT_INK = '#7a5bb0'
 
-export default function OwnerMoneyTab({ withdrawals, reload }) {
+export default function OwnerMoneyTab({ withdrawals, orders = [], reload }) {
   const [q, setQ] = useState('')
   const [dirFilter, setDirFilter] = useState('all')
   const [methodFilter, setMethodFilter] = useState('all')
@@ -53,6 +53,25 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
     if (period !== 'all') list = list.filter((w) => inPeriod(w.date, period))
     return list
   }, [withdrawals, q, dirFilter, methodFilter, period])
+
+  // Earnings worked out step by step, the Dashboard's way (s.earnings): money
+  // received from orders − taken out + put back in. Follows the Dates filter
+  // only — Direction / Cash / search are for finding entries, not for this sum.
+  const earn = useMemo(() => {
+    let received = 0, put = 0, took = 0
+    for (const o of orders) {
+      if (!o.paid || String(o.status || '').toLowerCase() === 'cancelled' || !inPeriod(o.date, period)) continue
+      received += orderTotal(o)
+    }
+    for (const w of withdrawals) {
+      if (!inPeriod(w.date, period)) continue
+      const a = Number(w.amount) || 0
+      if (dirOf(w) === IN) put += a; else took += a
+    }
+    return { received, put, took, net: received - took + put }
+  }, [orders, withdrawals, period])
+  const periodLabel = period === 'all' ? 'All time' : period === 'today' ? 'Today'
+    : new Date(`${period}-01T00:00:00`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
 
   const filtered = dirFilter !== 'all' || methodFilter !== 'all' || period !== 'all' || q.trim() !== ''
   // Totals follow the filter, not the page — "Money in, this month" has to add
@@ -98,13 +117,21 @@ export default function OwnerMoneyTab({ withdrawals, reload }) {
 
   return (
     <div>
+      <section className="cc-earn" aria-label="Earnings">
+        <div className="cc-earn__head">
+          <span>Earnings</span>
+          <small>{periodLabel}</small>
+        </div>
+        <dl className="cc-earn__rows">
+          <div><dt>Received from orders</dt><dd>{inr(earn.received)}</dd></div>
+          <div className="cc-earn__out"><dt><FiArrowUpRight /> Taken out</dt><dd>− {inr(earn.took)}</dd></div>
+          <div className="cc-earn__in"><dt><FiArrowDownLeft /> Put in</dt><dd>+ {inr(earn.put)}</dd></div>
+          <div className={`cc-earn__total${earn.net < 0 ? ' is-neg' : ''}`}><dt>Earnings now</dt><dd>{inr(earn.net)}</dd></div>
+        </dl>
+      </section>
       <p className="text-muted small mb-3">
-        Your <strong>own</strong> money moving in and out — not customer money.
-        <strong> Money in</strong> is what you invest from your pocket; it raises Money in Hand but
-        is not earnings. <strong>Money out</strong> is what you take for yourself; it lowers Money in
-        Hand but is not a business cost. Neither one changes Profit.
-        <br />
-        Buying material is <strong>not</strong> recorded here — that goes in the Expenses tab.
+        Your <strong>own</strong> money, not customer money. Taking money out lowers Earnings; putting
+        it back in raises them again. Profit doesn’t change. Material you buy goes in Expenses.
       </p>
 
       <div className="cc-admin-toolbar d-flex flex-wrap gap-2 align-items-center mb-3">
@@ -253,8 +280,8 @@ function OwnerMoneyForm({ initial, direction, saving, onSave, onClose }) {
     <Modal
       title={isIn ? 'Put money in' : 'Take money out'}
       subtitle={isIn
-        ? 'Your own money going into the bakery — it is not earnings.'
-        : 'Money taken out for personal / home use — it is not a business cost.'}
+        ? 'Your own money going into the bakery — it adds back to Earnings.'
+        : 'Money taken out for personal / home use — it comes off Earnings.'}
       onClose={onClose}
       footer={<>
         <button className="btn btn-light" onClick={onClose} disabled={saving}>Cancel</button>

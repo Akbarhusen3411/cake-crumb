@@ -306,7 +306,7 @@ export default function AdminAccounting() {
       {tab === 'orders' && <OrdersTab orders={orders} menu={menu} reload={reload} preset={ordersPreset} />}
       {tab === 'menu' && <MenuTab menu={menu} reload={reload} />}
       {tab === 'expenses' && <ExpensesTab expenses={expenses} reload={reload} />}
-      {tab === 'withdrawals' && <OwnerMoneyTab withdrawals={withdrawals} reload={reload} />}
+      {tab === 'withdrawals' && <OwnerMoneyTab withdrawals={withdrawals} orders={orders} reload={reload} />}
       {tab === 'monthly' && <MonthlyTab orders={orders} expenses={expenses} withdrawals={withdrawals} />}
 
       <DangerZone orders={orders} expenses={expenses} withdrawals={withdrawals} />

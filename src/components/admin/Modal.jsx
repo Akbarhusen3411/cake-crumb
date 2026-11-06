@@ -23,6 +23,47 @@ export default function Modal({ title, subtitle, icon, onClose, children, footer
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = '' }
   }, [onClose])
 
+  // `overflow: hidden` on <body> doesn't stop a finger: on a phone a swipe over
+  // a part of the sheet that can't scroll (or one already at its end) moved the
+  // page behind. Same cure as the storefront's mobile menu: refuse the gesture
+  // unless something under the finger can still scroll that way. Event-based —
+  // nothing on <html>/<body> is changed (that path jumps iOS to the top).
+  useEffect(() => {
+    let lastX = 0, lastY = 0
+    const canScroll = (from, dy) => {
+      for (let el = from; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
+        const oy = getComputedStyle(el).overflowY
+        if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight + 1) {
+          if (dy < 0 && el.scrollTop > 0) return true // moving up, room above
+          if (dy > 0 && el.scrollTop + el.clientHeight < el.scrollHeight - 1) return true // room below
+        }
+      }
+      return false
+    }
+    const onTouchStart = (e) => { lastX = e.touches[0]?.clientX ?? 0; lastY = e.touches[0]?.clientY ?? 0 }
+    const onTouchMove = (e) => {
+      if (e.touches.length !== 1) return // pinch-zoom stays allowed
+      const { clientX: x, clientY: y } = e.touches[0]
+      const dx = lastX - x
+      const dy = lastY - y // finger up → content moves down → dy > 0
+      lastX = x; lastY = y
+      if (Math.abs(dx) > Math.abs(dy)) return // sideways swipes (chip rows) are left alone
+      if (dy !== 0 && !canScroll(e.target, dy) && e.cancelable) e.preventDefault()
+    }
+    const onWheel = (e) => {
+      if (e.ctrlKey || !e.deltaY) return // browser zoom, or a sideways scroll
+      if (!canScroll(e.target, e.deltaY) && e.cancelable) e.preventDefault()
+    }
+    document.addEventListener('touchstart', onTouchStart, { passive: true })
+    document.addEventListener('touchmove', onTouchMove, { passive: false })
+    document.addEventListener('wheel', onWheel, { passive: false })
+    return () => {
+      document.removeEventListener('touchstart', onTouchStart)
+      document.removeEventListener('touchmove', onTouchMove)
+      document.removeEventListener('wheel', onWheel)
+    }
+  }, [])
+
   // Move focus into the sheet on open and hand it back to whatever opened it on
   // close — without this, Escape drops a keyboard user back at the top of the
   // document and a screen reader keeps reading the page behind.

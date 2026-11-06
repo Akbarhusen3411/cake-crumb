@@ -244,10 +244,9 @@ export default function DashboardTab({ orders, expenses, withdrawals, onShowUnpa
           {/* A phone gets the formula without the figures — the four tiles
               right below carry them, and with them it ran to three lines. */}
           <div className="cc-acc-note cc-acc-note--long">
-            Invested {inr(s.invested)} + earnings {inr(s.received)} − expenses {inr(s.totalExpenses)}
-            {' '}− taken out {inr(s.totalWithdrawn)}
+            Earnings {inr(s.earnings)} − expenses {inr(s.totalExpenses)}
           </div>
-          <div className="cc-acc-note cc-acc-note--short">Invested + earnings − expenses − taken out</div>
+          <div className="cc-acc-note cc-acc-note--short">Earnings − expenses</div>
         </div>
 
         <div className="cc-acc-card cc-acc-card--hero">
@@ -257,22 +256,25 @@ export default function DashboardTab({ orders, expenses, withdrawals, onShowUnpa
           </div>
           {prev ? <Delta cur={s.profit} prev={prev.profit} month={prevMonth} /> : null}
           <div className="cc-acc-note cc-acc-note--long">
-            Earnings {inr(s.received)} − expenses {inr(s.totalExpenses)}. Money you put in is not
-            profit — it is your own money coming back.
+            Received from orders {inr(s.received)} − expenses {inr(s.totalExpenses)}. Money you
+            take out or put in doesn’t change profit.
           </div>
-          <div className="cc-acc-note cc-acc-note--short">Earnings − expenses</div>
+          <div className="cc-acc-note cc-acc-note--short">Received − expenses</div>
         </div>
       </div>
 
       <div className="cc-acc-kpis mt-3">
-        <Stat label="Invested" value={inr(s.invested)} color={INK_IN} note="Your own money put in" />
+        <Stat label="Invested" value={inr(s.invested)} color={INK_IN} note="Put in — adds to Earnings" />
         {/* paidCount, not orderCount — this figure is money received, and
             orderCount includes the ones still unpaid. */}
-        <Stat label="Earnings" value={inr(s.received)} color={SERIES_SALES}
-          delta={prev ? <Delta cur={s.received} prev={prev.received} month={prevMonth} /> : null}
-          note={`${s.paidCount} paid order${s.paidCount === 1 ? '' : 's'} of ${s.orderCount}`} />
+        {/* Received from orders − taken out + put back in (s.earnings). */}
+        <Stat label="Earnings" value={inr(s.earnings)} color={s.earnings < 0 ? '#a3172c' : SERIES_SALES}
+          delta={prev ? <Delta cur={s.earnings} prev={prev.earnings} month={prevMonth} /> : null}
+          note={s.invested || s.totalWithdrawn
+            ? `Received ${inr(s.received)} − out ${inr(s.totalWithdrawn)} + in ${inr(s.invested)}`
+            : `${s.paidCount} paid order${s.paidCount === 1 ? '' : 's'} of ${s.orderCount}`} />
         <Stat label="Expenses" value={inr(s.totalExpenses)} color={SERIES_EXPENSES} note="Material & supplies" />
-        <Stat label="Taken out" value={inr(s.totalWithdrawn)} note="For yourself, not the bakery" />
+        <Stat label="Taken out" value={inr(s.totalWithdrawn)} note="Comes off Earnings" />
       </div>
 
       <p className="cc-acc-note cc-acc-strip mt-3 mb-0 text-center">

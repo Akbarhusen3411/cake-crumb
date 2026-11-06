@@ -10,6 +10,9 @@ import { todayIso } from '../../../utils/adminDate.js'
 import { isPerPieceVariant, isFreeGiftLine } from '../../../services/accounting.js'
 import { variantLabel, sortVariants } from '../../../utils/orderItems.js'
 import { normalizePhone } from '../../../utils/customerPhone.js'
+import { useIsMobile } from '../../../hooks/useIsMobile.js'
+import OrderItemsMobile from './OrderItemsMobile.jsx'
+import CustomerPickerMobile from './CustomerPickerMobile.jsx'
 
 // One shared empty array, so a row with no category still gets a stable prop and
 // stays memoised instead of re-rendering on every keystroke elsewhere.
@@ -208,7 +211,7 @@ const OrderLine = memo(function OrderLine({
  * customer, payment, status) sits in a column beside it. A thirty-item order
  * scrolls one list; nothing else on the sheet moves.
  */
-export default function OrderForm({ menu = [], customers = [], phones = {}, initial = null, saving = false, onSave, onClose }) {
+export default function OrderForm({ menu = [], customers = [], phones = {}, customerStats = {}, initial = null, saving = false, onSave, onClose }) {
   // Editing is decided by the id, not by `initial` being present: a duplicate
   // arrives fully prefilled but with no id, so it saves as a new order and gets
   // its own number.
@@ -227,6 +230,8 @@ export default function OrderForm({ menu = [], customers = [], phones = {}, init
   const [method, setMethod] = useState(initial?.method || 'Cash')
   const [status, setStatus] = useState(initial?.status || 'Completed')
   const [notes, setNotes] = useState(initial?.notes || '')
+  const mobile = useIsMobile()
+  const [noteOpen, setNoteOpen] = useState(!!initial?.notes)
   const [lines, setLines] = useState(() => {
     if (initial?.items?.length) {
       return initial.items.map((it) => ({
@@ -321,6 +326,55 @@ export default function OrderForm({ menu = [], customers = [], phones = {}, init
     onSave({ date, customer: customer.trim(), phone: normalizePhone(phone) || '', items: clean, amount: total, paid, method, status, notes: notes.trim() })
   }
 
+  const customerField = (
+    <Field label="Customer" bad={err?.field === 'customer'}>
+      <SearchableSelect value={customer} onChange={pickCustomer} options={customers}
+        icon={<FiUser />} placeholder="Type customer name…" title="Customer" allowCustom />
+    </Field>
+  )
+  const dateInput = <input type="date" className="form-control" value={date} onChange={(e) => setDate(e.target.value)} />
+  const phoneInput = (
+    <input type="tel" inputMode="tel" autoComplete="off" className="form-control"
+      placeholder="10-digit mobile" value={phone}
+      onChange={(e) => { phoneTyped.current = true; setPhone(e.target.value) }} />
+  )
+  const paySeg = (
+    <Seg
+      value={paid ? 'paid' : 'unpaid'} onChange={(v) => setPaid(v === 'paid')}
+      options={[
+        { value: 'paid', label: 'Paid', tone: 'ok', icon: <FiCheck /> },
+        { value: 'unpaid', label: 'Not yet', tone: 'warn', icon: <FiClock /> },
+      ]}
+    />
+  )
+  const methodSeg = (
+    <Seg
+      value={method} onChange={setMethod}
+      options={[
+        { value: 'Cash', label: 'Cash', icon: <FiDollarSign /> },
+        { value: 'Online', label: 'Online', icon: <FiSmartphone /> },
+      ]}
+    />
+  )
+  // Pending = not started, In Progress = baking now, Completed = handed over.
+  // Only "Cancelled" changes the money (computeSummary drops it); the rest are
+  // for the baker's own tracking.
+  const statusSeg = (
+    <Seg
+      value={status} onChange={setStatus}
+      options={[
+        { value: 'Completed', label: 'Completed' },
+        { value: 'In Progress', label: 'In Progress' },
+        { value: 'Pending', label: 'Pending' },
+        { value: 'Cancelled', label: 'Cancelled', tone: 'danger' },
+      ]}
+    />
+  )
+  const notesInput = (
+    <textarea className="form-control" rows={2} value={notes} spellCheck={false}
+      onChange={(e) => setNotes(e.target.value)} placeholder="Anything to remember…" />
+  )
+
   return (
     <Modal
       full
@@ -356,118 +410,114 @@ export default function OrderForm({ menu = [], customers = [], phones = {}, init
         </button>
       </>}
     >
-      <div className="cc-sheet">
-        {/* Asked once per order, so it sits out of the way of the list that is
-            filled in over and over. Second in the DOM, first on a phone. */}
-        <aside className="cc-sheet__side">
-          <div className="cc-sheet__sidetitle">Order details</div>
+      {mobile ? (
+        // Phone: who → what → how paid, top to bottom, one short row per item.
+        <div className="cc-mo">
+          <section className="cc-mo-sec">
+            <Field label="Customer" bad={err?.field === 'customer'}>
+              <CustomerPickerMobile value={customer} onChange={pickCustomer} customers={customers}
+                stats={customerStats} bad={err?.field === 'customer'} />
+            </Field>
+            <div className="cc-mo-pair">
+              <Field label="Date" bad={err?.field === 'date'}>{dateInput}</Field>
+              <Field label="Phone" hint="optional" bad={err?.field === 'phone'}>{phoneInput}</Field>
+            </div>
+          </section>
+          <section className="cc-mo-sec">
+            <div className="cc-mo-head">
+              <span>Items</span>
+              {filled.length ? <small>{filled.length} item{filled.length === 1 ? '' : 's'} · {totalQty} qty</small> : null}
+            </div>
+            <OrderItemsMobile lines={lines} setLines={setLines} index={index} bad={err?.field === 'items'} />
+          </section>
+          <section className="cc-mo-sec">
+            <div className="cc-mo-pair">
+              <Field label="Payment">{paySeg}</Field>
+              <Field label="Money in">{methodSeg}</Field>
+            </div>
+            <Field label="Status">{statusSeg}</Field>
+            {noteOpen ? (
+              <Field label="Notes" hint="optional">{notesInput}</Field>
+            ) : (
+              <button type="button" className="cc-mo-note" onClick={() => setNoteOpen(true)}>
+                <FiPlus /> Add a note
+              </button>
+            )}
+          </section>
+        </div>
+      ) : (
+        <div className="cc-sheet">
+          {/* Asked once per order, so it sits out of the way of the list that is
+              filled in over and over. Second in the DOM, first on a phone. */}
+          <aside className="cc-sheet__side">
+            <div className="cc-sheet__sidetitle">Order details</div>
 
-          <Field label="Date" bad={err?.field === 'date'}>
-            <input type="date" className="form-control" value={date} onChange={(e) => setDate(e.target.value)} />
-          </Field>
-          <Field label="Customer" bad={err?.field === 'customer'}>
-            <SearchableSelect value={customer} onChange={pickCustomer} options={customers}
-              icon={<FiUser />} placeholder="Type customer name…" title="Customer" allowCustom />
-          </Field>
-          <Field label="Phone" hint="optional · for payment reminders" bad={err?.field === 'phone'}>
-            <input type="tel" inputMode="tel" autoComplete="off" className="form-control"
-              placeholder="10-digit mobile" value={phone}
-              onChange={(e) => { phoneTyped.current = true; setPhone(e.target.value) }} />
-          </Field>
-          <Field label="Payment" half>
-            <Seg
-              value={paid ? 'paid' : 'unpaid'} onChange={(v) => setPaid(v === 'paid')}
-              options={[
-                { value: 'paid', label: 'Paid', tone: 'ok', icon: <FiCheck /> },
-                { value: 'unpaid', label: 'Not yet', tone: 'warn', icon: <FiClock /> },
-              ]}
-            />
-          </Field>
-          <Field label="Money in" half>
-            <Seg
-              value={method} onChange={setMethod}
-              options={[
-                { value: 'Cash', label: 'Cash', icon: <FiDollarSign /> },
-                { value: 'Online', label: 'Online', icon: <FiSmartphone /> },
-              ]}
-            />
-          </Field>
-          {/* Pending = not started, In Progress = baking now, Completed = handed
-              over. Only "Cancelled" changes the money (computeSummary drops it);
-              the rest are for the baker's own tracking. */}
-          <Field label="Status">
-            <Seg
-              value={status} onChange={setStatus}
-              options={[
-                { value: 'Completed', label: 'Completed' },
-                { value: 'In Progress', label: 'In Progress' },
-                { value: 'Pending', label: 'Pending' },
-                { value: 'Cancelled', label: 'Cancelled', tone: 'danger' },
-              ]}
-            />
-          </Field>
-          <Field label="Notes" hint="optional">
-            <textarea className="form-control" rows={2} value={notes} spellCheck={false}
-              onChange={(e) => setNotes(e.target.value)} placeholder="Anything to remember…" />
-          </Field>
+            <Field label="Date" bad={err?.field === 'date'}>{dateInput}</Field>
+            {customerField}
+            <Field label="Phone" hint="optional · for payment reminders" bad={err?.field === 'phone'}>{phoneInput}</Field>
+            <Field label="Payment" half>{paySeg}</Field>
+            <Field label="Money in" half>{methodSeg}</Field>
+            <Field label="Status">{statusSeg}</Field>
+            <Field label="Notes" hint="optional">{notesInput}</Field>
 
-          <div className="cc-ssum">
-            <div className="cc-ssum__row">
-              <span>Items</span><b>{filled.length}</b>
+            <div className="cc-ssum">
+              <div className="cc-ssum__row">
+                <span>Items</span><b>{filled.length}</b>
+              </div>
+              <div className="cc-ssum__row">
+                <span>Total quantity</span><b>{totalQty}</b>
+              </div>
+              <div className="cc-ssum__grand">
+                <span>Order total</span><b>{inr(total)}</b>
+              </div>
             </div>
-            <div className="cc-ssum__row">
-              <span>Total quantity</span><b>{totalQty}</b>
-            </div>
-            <div className="cc-ssum__grand">
-              <span>Order total</span><b>{inr(total)}</b>
-            </div>
-          </div>
-        </aside>
+          </aside>
 
-        {/* One table, not eight labelled fields per item: the captions are stated
-            once and every value sits centred under the one that names it. */}
-        <section className={`cc-sheet__main${err?.field === 'items' ? ' cc-sheet__main--bad' : ''}`}>
-          <div className="cc-sheet__panehead">
-            <span className="cc-sheet__title">Items</span>
-            <span className="cc-sheet__hint">Rates come from Menu &amp; Prices · press Enter on Qty for the next item</span>
-          </div>
+          {/* One table, not eight labelled fields per item: the captions are stated
+              once and every value sits centred under the one that names it. */}
+          <section className={`cc-sheet__main${err?.field === 'items' ? ' cc-sheet__main--bad' : ''}`}>
+            <div className="cc-sheet__panehead">
+              <span className="cc-sheet__title">Items</span>
+              <span className="cc-sheet__hint">Rates come from Menu &amp; Prices · press Enter on Qty for the next item</span>
+            </div>
 
-          <div className="cc-stable cc-stable--order">
-            <div className="cc-sline cc-sline--head">
-              <span className="cc-sline__cell cc-sline__n">#</span>
-              <span className="cc-sline__cell cc-sline__cat">Category</span>
-              <span className="cc-sline__cell cc-sline__item">Item</span>
-              <span className="cc-sline__cell cc-sline__size">Size</span>
-              <span className="cc-sline__cell cc-sline__qty">Qty</span>
-              <span className="cc-sline__cell cc-sline__rate">Rate</span>
-              <span className="cc-sline__cell cc-sline__amt">Total</span>
-              <span className="cc-sline__cell cc-sline__del" />
+            <div className="cc-stable cc-stable--order">
+              <div className="cc-sline cc-sline--head">
+                <span className="cc-sline__cell cc-sline__n">#</span>
+                <span className="cc-sline__cell cc-sline__cat">Category</span>
+                <span className="cc-sline__cell cc-sline__item">Item</span>
+                <span className="cc-sline__cell cc-sline__size">Size</span>
+                <span className="cc-sline__cell cc-sline__qty">Qty</span>
+                <span className="cc-sline__cell cc-sline__rate">Rate</span>
+                <span className="cc-sline__cell cc-sline__amt">Total</span>
+                <span className="cc-sline__cell cc-sline__del" />
+              </div>
+              {/* The one scrolling region on the sheet — see Modal's `flush`. */}
+              <div ref={scrollRef} className="cc-stable__scroll">
+                {lines.map((line, i) => (
+                  <OrderLine
+                    key={i} index={i} line={line}
+                    categories={index.categories}
+                    catEntry={index.byCat.get(line.category)}
+                    canRemove={lines.length > 1} autoOpenItem={autoOpenIdx === i}
+                    onChange={setLine} onRemove={removeLine} onAddRow={addLine}
+                  />
+                ))}
+              </div>
+              {/* Outside the scroller on purpose — it stays directly under the
+                  last visible row however long the list gets. */}
+              <button type="button" className="cc-saddrow" onClick={addLine}>
+                <FiPlus /> Add item
+              </button>
+              {/* Closes the table, so it reads as the sum of the column above it. */}
+              <div className="cc-stotal">
+                <span>{filled.length} item{filled.length === 1 ? '' : 's'} · {totalQty} qty</span>
+                <b>{inr(total)}</b>
+              </div>
             </div>
-            {/* The one scrolling region on the sheet — see Modal's `flush`. */}
-            <div ref={scrollRef} className="cc-stable__scroll">
-              {lines.map((line, i) => (
-                <OrderLine
-                  key={i} index={i} line={line}
-                  categories={index.categories}
-                  catEntry={index.byCat.get(line.category)}
-                  canRemove={lines.length > 1} autoOpenItem={autoOpenIdx === i}
-                  onChange={setLine} onRemove={removeLine} onAddRow={addLine}
-                />
-              ))}
-            </div>
-            {/* Outside the scroller on purpose — it stays directly under the
-                last visible row however long the list gets. */}
-            <button type="button" className="cc-saddrow" onClick={addLine}>
-              <FiPlus /> Add item
-            </button>
-            {/* Closes the table, so it reads as the sum of the column above it. */}
-            <div className="cc-stotal">
-              <span>{filled.length} item{filled.length === 1 ? '' : 's'} · {totalQty} qty</span>
-              <b>{inr(total)}</b>
-            </div>
-          </div>
-        </section>
-      </div>
+          </section>
+        </div>
+      )}
     </Modal>
   )
 }

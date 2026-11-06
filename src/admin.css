@@ -2293,21 +2293,57 @@
   /* Two price tiles a row: size over price, the bin at the side. One a row
      made Blondie alone a screen and a half. */
   .cc-mitem__prices { grid-template-columns: 1fr 1fr; gap: 0.3rem; margin-top: 0.3rem; }
+  /* Size over price, both centred in the tile (owner's ask, Nov 2026). */
   .cc-mitem__price {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
     gap: 0;
     min-height: 2.6rem;
     padding: 0.25rem 0.5rem;
+    text-align: center;
   }
-  .cc-mitem__var { width: 100%; font-size: 0.72rem; line-height: 1.25; }
+  .cc-mitem__var { width: 100%; font-size: 0.72rem; line-height: 1.25; text-align: center; }
+  .cc-mitem__qbox input { text-align: center; }
+  /* One row per item, everything lined up through its middle (owner's ask,
+     Nov 2026): name on the left · its price tiles · a round "+" for a new
+     size. The head's two children join the row's grid. */
+  .cc-mitem {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.9fr) auto;
+    align-items: center;
+    column-gap: 0.5rem;
+  }
+  .cc-mitem__head { display: contents; }
+  /* Rows pinned: auto-placement put the tiles AFTER the "+" (column 3), which
+     pushed them onto a second row. */
+  .cc-mitem__name { grid-column: 1; grid-row: 1; }
+  .cc-mitem__prices {
+    grid-column: 2;
+    grid-row: 1;
+    grid-template-columns: repeat(auto-fit, minmax(6.4rem, 1fr));
+    align-items: center;
+    margin-top: 0;
+  }
+  .cc-mitem__prices li.cc-mitem__quick { grid-column: 1 / -1; }
+  /* While a price is being typed, its tiles take the full width on a row of
+     their own, so the price box and its ✓ ✕ ⋯ fit. */
+  .cc-mitem:has(.cc-mitem__quick) .cc-mitem__prices { grid-column: 1 / -1; grid-row: 2; margin-top: 0.35rem; }
+  .cc-mitem__add {
+    grid-column: 3;
+    grid-row: 1;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    justify-content: center;
+    font-size: 0; /* icon only — the label stays on aria-label / title */
+  }
+  .cc-mitem__add svg { width: 15px; height: 15px; }
   .cc-mitem__price b { font-size: 0.86rem; line-height: 1.25; }
   .cc-mitem__pen { display: none; }
   .cc-mitem__del { width: 2rem; }
   .cc-mitem__del svg { width: 14px; height: 14px; }
   .cc-mitem { padding: 0.35rem 0; }
-  .cc-mitem__add { height: 1.55rem; padding: 0 0.5rem; font-size: 0.68rem; }
   .cc-mitem__price { min-height: 2.3rem; }
   .cc-mcat__body { padding: 0.1rem 0.55rem 0.55rem; }
 }
@@ -2571,3 +2607,474 @@
   .cc-modal-body { padding: 0.9rem !important; }
 }
 
+
+/* ── New Order on a phone (OrderForm's `mobile` body + OrderItemsMobile) ──
+   Who → what → how paid, top to bottom. Each item is ONE short row; items are
+   added from a slide-up picker (category → item → size tiles) that reuses the
+   SearchableSelect sheet (.cc-ssheet). The desktop table made each item a tall
+   card of three dropdowns, and a long order a page of empty-looking boxes. */
+.cc-mo { display: flex; flex-direction: column; }
+.cc-mo-sec { padding: 0.9rem 0.9rem 0.3rem; border-bottom: 1px solid #f6e6ea; }
+.cc-mo-sec:first-child { background: #fffaf8; }
+.cc-mo-sec:last-child { border-bottom: 0; padding-bottom: 0.9rem; }
+.cc-mo-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.cc-mo-pair > .cc-field { min-width: 0; }
+.cc-mo .form-control { font-size: 16px; min-height: 2.75rem; }
+.cc-mo .cc-seg { flex-wrap: nowrap; gap: 0.3rem; }
+.cc-mo .cc-seg__btn { flex: 1 1 0; min-width: 0; min-height: 2.6rem; padding-inline: 0.3rem; font-size: 0.78rem; }
+.cc-mo-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.55rem;
+}
+.cc-mo-head span { font-family: var(--font-heading, serif); font-size: 1.1rem; font-weight: 700; color: var(--cc-cocoa, #5b3e36); }
+.cc-mo-head small { color: #7a584d; font-size: 0.78rem; font-variant-numeric: lining-nums tabular-nums; }
+
+.cc-mo-items { margin-bottom: 0.6rem; }
+.cc-mo-items--bad .cc-mo-empty,
+.cc-mo-items--bad .cc-mo-list { border-color: #b23b3b; box-shadow: 0 0 0 3px rgba(178, 59, 59, 0.12); }
+.cc-mo-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1.5px dashed #ecc3cd;
+  border-radius: 14px;
+  background: #fff;
+  text-align: left;
+  color: var(--cc-cocoa, #5b3e36);
+}
+.cc-mo-empty__ico {
+  flex: 0 0 auto;
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cc-rose-deep, #cf3e63);
+  color: #fff;
+  font-size: 1.2rem;
+}
+.cc-mo-empty b { display: block; font-size: 1rem; }
+.cc-mo-empty small { color: #7a584d; font-size: 0.8rem; }
+
+.cc-mo-list { list-style: none; margin: 0; padding: 0; border: 1px solid #f0dde2; border-radius: 14px; background: #fff; overflow: hidden; }
+/* name over category + rate on the left; stepper over amount; bin on the right */
+.cc-mo-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: "text qty del" "text amt del";
+  align-items: center;
+  column-gap: 0.5rem;
+  row-gap: 0.15rem;
+  padding: 0.6rem 0.4rem 0.6rem 0.75rem;
+  border-bottom: 1px solid #f8edf0;
+}
+.cc-mo-line:last-child { border-bottom: 0; }
+.cc-mo-line--bad { background: #fff4f4; }
+.cc-mo-line__text { grid-area: text; min-width: 0; }
+.cc-mo-line__name { display: block; font-weight: 700; font-size: 0.92rem; color: var(--cc-cocoa, #5b3e36); line-height: 1.25; }
+.cc-mo-line__name em { font-style: normal; font-weight: 600; color: #7a584d; }
+.cc-mo-line__sub { display: flex; align-items: center; gap: 0.25rem; margin-top: 0.1rem; font-size: 0.76rem; color: #7a584d; font-variant-numeric: lining-nums tabular-nums; }
+.cc-mo-line--bad .cc-mo-line__sub { color: #b23b3b; font-weight: 700; }
+.cc-mo-line__qty { grid-area: qty; display: flex; align-items: center; border: 1px solid #eddbe0; border-radius: 999px; }
+.cc-mo-line__qty button {
+  width: 2.1rem;
+  height: 2.1rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cc-rose-ink, #ad2f4e);
+}
+.cc-mo-line__qty button:disabled { color: #d6c3c8; }
+.cc-mo-line__qty span { min-width: 1.6rem; text-align: center; font-weight: 800; font-variant-numeric: lining-nums tabular-nums; color: var(--cc-cocoa, #5b3e36); }
+.cc-mo-line__amt { grid-area: amt; justify-self: end; padding-right: 0.35rem; font-size: 0.9rem; color: #1b7f5e; font-variant-numeric: lining-nums tabular-nums; }
+.cc-mo-line__del {
+  grid-area: del;
+  width: 2.3rem;
+  height: 2.3rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #a0848b;
+}
+.cc-mo-add,
+.cc-mo-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  margin-top: 0.55rem;
+  min-height: 2.8rem;
+  border: 1.5px dashed #ecc3cd;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--cc-rose-ink, #ad2f4e);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.cc-mo-note { margin: 0 0 0.6rem; min-height: 2.4rem; border-style: solid; border-color: #f0dde2; font-size: 0.82rem; }
+
+/* The picker */
+.cc-mpick .cc-ssheet__panel { height: min(78vh, calc(100% - var(--cc-kb, 0px) - 3rem)); }
+.cc-mpick__back,
+.cc-mpick__clear {
+  flex: 0 0 auto;
+  width: 2.4rem;
+  height: 2.4rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #fdf1f4;
+  color: var(--cc-rose-ink, #ad2f4e);
+  font-size: 1.2rem;
+}
+.cc-mpick__clear { width: 1.9rem; height: 1.9rem; font-size: 0.95rem; }
+.cc-mpick__done {
+  flex: 0 0 auto;
+  min-height: 2.4rem;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cc-rose-deep, #cf3e63);
+  color: #fff;
+  font-weight: 700;
+}
+.cc-mpick__flash {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: -0.2rem 1rem 0.5rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 10px;
+  background: #e8f5ef;
+  color: #145c44;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.cc-mpick__body { padding-top: 0.7rem; }
+.cc-mpick__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; padding: 0 0.4rem; }
+.cc-mpick__tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.15rem;
+  min-height: 4rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #eddbe0;
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+  color: var(--cc-cocoa, #5b3e36);
+}
+.cc-mpick__tile span { font-weight: 700; font-size: 0.92rem; line-height: 1.2; }
+.cc-mpick__tile small { font-size: 0.74rem; color: #7a584d; font-variant-numeric: lining-nums tabular-nums; }
+.cc-mpick__tile b { font-size: 1rem; color: var(--cc-rose-ink, #ad2f4e); font-variant-numeric: lining-nums tabular-nums; }
+.cc-mpick__tile--cat { background: #fffaf8; }
+.cc-mpick__tile:active { background: #fdeef2; }
+.cc-mpick__tile.is-in { border-color: var(--cc-rose, #e0617a); background: #fff6f8; }
+.cc-mpick__count {
+  position: absolute;
+  top: -0.45rem;
+  right: -0.35rem;
+  min-width: 1.45rem;
+  height: 1.45rem;
+  padding: 0 0.35rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--cc-rose-deep, #cf3e63);
+  color: #fff;
+  font-style: normal;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+.cc-mpick__rows { display: flex; flex-direction: column; }
+.cc-mpick__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  min-height: 3rem;
+  padding: 0.5rem 0.6rem;
+  border: 0;
+  border-bottom: 1px solid #f8edf0;
+  background: #fff;
+  text-align: left;
+  color: var(--cc-cocoa, #5b3e36);
+  font-size: 0.98rem;
+}
+.cc-mpick__row small { flex: 0 0 auto; color: #7a584d; font-size: 0.76rem; }
+
+/* ── Customer picker on a phone (CustomerPickerMobile) ──
+   The field is a tappable card showing who's picked; the sheet lists recent
+   customers first, each with initials, order count, last order and any amount
+   still owed. Reuses the .cc-ssheet bottom sheet. */
+.cc-cpick-field {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 3.4rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #eddbe0;
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+  color: var(--cc-cocoa, #5b3e36);
+}
+.cc-cpick-field.is-bad { border-color: #b23b3b; box-shadow: 0 0 0 3px rgba(178, 59, 59, 0.12); }
+.cc-cpick-field__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.cc-cpick-field__text b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1rem; }
+.cc-cpick-field:not(.is-set) .cc-cpick-field__text b { font-weight: 600; color: #7a584d; }
+.cc-cpick-field__text small { font-size: 0.76rem; color: #7a584d; }
+.cc-cpick-field__chev { flex: 0 0 auto; color: #b07a88; }
+
+.cc-cpick__av {
+  flex: 0 0 auto;
+  width: 2.4rem;
+  height: 2.4rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.cc-cpick__av--empty { background: #f6e6ea; color: #b07a88; font-size: 1.05rem; }
+.cc-cpick__av--new { background: #e8f5ef; color: #1b7f5e; font-size: 1.1rem; }
+
+.cc-cpick .cc-ssheet__panel { height: min(82vh, calc(100% - var(--cc-kb, 0px) - 2rem)); }
+.cc-cpick__list { padding-top: 0.2rem; }
+.cc-cpick__sec {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0.65rem 0.6rem 0.35rem;
+  background: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a6a60;
+}
+.cc-cpick__row,
+.cc-cpick__new {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 3.6rem;
+  padding: 0.5rem 0.6rem;
+  border: 0;
+  border-bottom: 1px solid #f8edf0;
+  border-radius: 0;
+  background: #fff;
+  text-align: left;
+  color: var(--cc-cocoa, #5b3e36);
+}
+.cc-cpick__row:active,
+.cc-cpick__new:active { background: #fdf1f4; }
+.cc-cpick__row.is-on { background: #fff6f8; }
+.cc-cpick__new { margin-top: 0.4rem; border: 1.5px dashed #b9dccb; border-radius: 12px; background: #f6fbf8; }
+.cc-cpick__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.cc-cpick__text b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.98rem; font-weight: 700; }
+.cc-cpick__text small {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  color: #7a584d;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-cpick__ph { color: #1b7f5e; }
+.cc-cpick__owes {
+  flex: 0 0 auto;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: #fff4e6;
+  color: #8a5a10;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-cpick__tick { flex: 0 0 auto; color: var(--cc-rose-ink, #ad2f4e); font-size: 1.1rem; }
+
+/* ── New Expense on a phone (ExpensesTab's `mobile` body + ExpenseItemsMobile) ──
+   Same frame as New Order (.cc-mo-*): each thing bought is one tappable row,
+   and a line is added or changed in a small slide-up sheet. */
+.cc-mo-cats { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -0.9rem; padding: 0.1rem 0.9rem 0.3rem; }
+.cc-mo-cats::-webkit-scrollbar { display: none; }
+.cc-mo-cats .cc-catpick__btn { flex: 0 0 auto; white-space: nowrap; }
+.cc-mo-empty__ico--spend { background: #b23b3b; }
+.cc-mo-sum { display: flex; flex-direction: column; align-items: flex-end; }
+.cc-mo-sum b { display: flex; align-items: center; min-height: 2.75rem; font-size: 1.15rem; color: #b23b3b; font-variant-numeric: lining-nums tabular-nums; }
+
+.cc-mo-xline { display: flex; align-items: center; border-bottom: 1px solid #f8edf0; }
+.cc-mo-list > li:last-child .cc-mo-xline { border-bottom: 0; }
+.cc-mo-xline__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3.4rem;
+  padding: 0.55rem 0.3rem 0.55rem 0.75rem;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  color: var(--cc-cocoa, #5b3e36);
+}
+.cc-mo-xline__main:active { background: #fdf4f6; }
+.cc-mo-xline__main .cc-mo-line__text { flex: 1 1 auto; }
+.cc-mo-xline__amt { flex: 0 0 auto; font-size: 0.92rem; color: #b23b3b; font-variant-numeric: lining-nums tabular-nums; }
+.cc-mo-xline__chev { flex: 0 0 auto; color: #c9a9b1; }
+.cc-mo-xline .cc-mo-line__del { flex: 0 0 auto; margin-right: 0.3rem; }
+
+/* The add / change sheet */
+.cc-xsheet__body { padding: 0.3rem 1rem 0.6rem; overflow-y: auto; }
+.cc-xsheet__label {
+  display: block;
+  margin: 0.55rem 0 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a6a60;
+}
+.cc-xsheet .form-control { min-height: 2.9rem; border-color: #eddbe0; border-radius: 12px; font-size: 16px; }
+.cc-xsheet .form-control:focus { border-color: var(--cc-rose, #e0617a); box-shadow: 0 0 0 3px rgba(224, 97, 122, 0.14); }
+.cc-xsheet__price.is-bad { border-color: #b23b3b; box-shadow: 0 0 0 3px rgba(178, 59, 59, 0.12); }
+.cc-xsheet__sugg {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0.5rem -1rem 0;
+  padding: 0 1rem 0.1rem;
+}
+.cc-xsheet__sugg::-webkit-scrollbar { display: none; }
+.cc-xsheet__sugg button {
+  flex: 0 0 auto;
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #eddbe0;
+  border-radius: 999px;
+  background: #fffafb;
+  color: #7a584d;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.cc-xsheet__row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+.cc-xsheet__qty { display: flex; align-items: center; min-height: 2.9rem; border: 1px solid #eddbe0; border-radius: 12px; background: #fff; }
+.cc-xsheet__qty button {
+  flex: 0 0 auto;
+  width: 2.7rem;
+  height: 2.8rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--cc-rose-ink, #ad2f4e);
+  font-size: 1.05rem;
+}
+.cc-xsheet__qty button:disabled { color: #d6c3c8; }
+.cc-xsheet__qty input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--cc-cocoa, #5b3e36);
+  -moz-appearance: textfield;
+}
+.cc-xsheet__qty input::-webkit-inner-spin-button,
+.cc-xsheet__qty input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.cc-xsheet__err { margin-top: 0.35rem; color: #b23b3b; font-size: 0.8rem; font-weight: 700; }
+.cc-xsheet__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 0.8rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 12px;
+  background: #fdf1f1;
+  color: #7a584d;
+  font-size: 0.85rem;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cc-xsheet__total b { font-size: 1.2rem; color: #b23b3b; }
+.cc-xsheet__foot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem 0.9rem;
+  border-top: 1px solid #f6e6ea;
+}
+.cc-xsheet__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.9rem;
+  border: 0;
+  border-radius: 12px;
+  background: var(--cc-rose-deep, #cf3e63);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.cc-xsheet__btn--ghost { border: 1px solid #eddbe0; background: #fff; color: var(--cc-rose-ink, #ad2f4e); }
+
+/* ── My Money: the Earnings card (OwnerMoneyTab) ──
+   Received − taken out + put in = Earnings now, laid out as a sum. Colours
+   match the tab's own in (green) / out (purple). */
+.cc-earn {
+  margin-bottom: 0.9rem;
+  padding: 0.9rem 1rem 0.8rem;
+  border: 1px solid #f0dde2;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fffaf8 0%, #fff 100%);
+  box-shadow: 0 4px 16px rgba(120, 40, 70, 0.06);
+}
+.cc-earn__head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.4rem; }
+.cc-earn__head span { font-family: var(--font-heading, serif); font-size: 1.15rem; font-weight: 700; color: var(--cc-cocoa, #5b3e36); }
+.cc-earn__head small { color: #7a584d; font-size: 0.78rem; font-weight: 600; }
+.cc-earn__rows { margin: 0; }
+.cc-earn__rows > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px dashed #f0dde2;
+}
+.cc-earn__rows dt { display: flex; align-items: center; gap: 0.35rem; margin: 0; font-weight: 600; font-size: 0.9rem; color: #7a584d; }
+.cc-earn__rows dd { margin: 0; font-weight: 700; font-size: 0.95rem; color: var(--cc-cocoa, #5b3e36); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.cc-earn__out dt, .cc-earn__out dd { color: #6a4c9e; }
+.cc-earn__in dt, .cc-earn__in dd { color: #1b7f5e; }
+.cc-earn__rows > .cc-earn__total { margin-top: 0.15rem; padding-top: 0.55rem; border-bottom: 0; border-top: 2px solid #ecc3cd; }
+.cc-earn__total dt { color: var(--cc-cocoa, #5b3e36); font-weight: 800; font-size: 0.95rem; }
+.cc-earn__total dd { color: #cf3e63; font-size: 1.35rem; font-weight: 800; }
+.cc-earn__total.is-neg dd { color: #a3172c; }
+@media (min-width: 768px) {
+  .cc-earn { max-width: 460px; }
+}

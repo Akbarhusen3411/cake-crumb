@@ -185,6 +185,20 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
     }
     return m
   }, [orders])
+  // For the phone's customer picker: how often each customer orders, when they
+  // last did, and what they still owe (cancelled orders left out).
+  const customerStats = useMemo(() => {
+    const m = {}
+    for (const o of orders) {
+      const key = String(o.customer || '').trim().toLowerCase()
+      if (!key) continue
+      const s = (m[key] ||= { orders: 0, last: '', owed: 0, phone: phoneByCustomer[key] || '' })
+      s.orders += 1
+      if (String(o.date || '') > s.last) s.last = String(o.date || '')
+      if (!o.paid && statusKey(o) !== 'cancelled') s.owed += orderTotal(o)
+    }
+    return m
+  }, [orders, phoneByCustomer])
   const phoneOf = (o) => o.phone || phoneByCustomer[String(o.customer || '').trim().toLowerCase()] || ''
   // "Payment pending" on WhatsApp: everything this customer still owes, every
   // unpaid order listed. Opened synchronously so a phone browser doesn't block
@@ -373,9 +387,12 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
       </div>
 
       <div className="cc-admin-toolbar d-flex flex-wrap gap-2 align-items-center mb-2">
-        <button className="cc-admin-toolbar-btn btn text-white d-inline-flex align-items-center gap-2" style={{ background: 'var(--cc-rose,#e0617a)', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => setEditing({})}>
-          <FiPlus /> New Order
-        </button>
+        {/* Phones add with the round + button (AddFab) — one add control, not two. */}
+        {mobile ? null : (
+          <button className="cc-admin-toolbar-btn btn text-white d-inline-flex align-items-center gap-2" style={{ background: 'var(--cc-rose,#e0617a)', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => setEditing({})}>
+            <FiPlus /> New Order
+          </button>
+        )}
         <input
           className="form-control" style={{ maxWidth: 280 }}
           placeholder="Search order ID, customer or item…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }}
@@ -427,7 +444,7 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
 
       {rows.length === 0 ? (
         <div className="text-center text-muted py-4" style={{ border: '1px solid #f0e0e3', borderRadius: 12 }}>
-          {filtered ? 'No orders match these filters.' : 'No orders yet. Click “New Order”.'}
+          {filtered ? 'No orders match these filters.' : (mobile ? 'No orders yet. Tap + to add one.' : 'No orders yet. Click “New Order”.')}
         </div>
       ) : mobile ? (
         // ── mobile: stacked cards ──
@@ -617,6 +634,7 @@ export default function OrdersTab({ orders, menu, reload, preset = null }) {
           menu={menu}
           customers={customers}
           phones={phoneByCustomer}
+          customerStats={customerStats}
           // Prefilled for an edit *and* for a duplicate; only the id says which.
           initial={editing.id || editing.items ? editing : null}
           saving={busy}

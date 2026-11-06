@@ -39,7 +39,7 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
     out.push(['TOTAL', sum(1), sum(2), sum(3), sum(4), sum(5), sum(6), sum(7)])
     downloadCsv(
       `cake-crumb-monthly-${todayIso()}.csv`,
-      ['Month', 'Orders', 'Invested', 'Earnings', 'Expenses', 'Taken out', 'To collect', 'Profit'],
+      ['Month', 'Orders', 'Invested', 'Received', 'Expenses', 'Taken out', 'To collect', 'Profit'],
       out
     )
   }
@@ -49,8 +49,8 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
       {/* The rule in one line beside the CSV button; the long version is the
           paragraph's tooltip. Four lines of it pushed the first month off a phone. */}
       <div className="cc-mrep__intro">
-        <p title="Money you invest or take out is your own, so it changes neither earnings nor profit. An unpaid order counts only once the customer pays — until then it sits in “To collect”.">
-          <strong>Profit = Earnings − Expenses</strong> — money received, not invoiced. Your own money in/out isn’t counted.
+        <p title="Money you invest or take out is your own, so it doesn’t change profit. An unpaid order counts only once the customer pays — until then it sits in “To collect”.">
+          <strong>Profit = Received − Expenses</strong> — money received, not invoiced. Your own money in/out isn’t counted.
         </p>
         <button className="btn btn-sm btn-light d-inline-flex align-items-center gap-1"
           onClick={exportCsv} disabled={!rows.length} title="Download this table as a spreadsheet">
@@ -81,7 +81,7 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
                 </div>
               </div>
               <dl className="cc-mrep__stats">
-                <div><dt>Earnings</dt><dd className="cc-mrep__v--earn">{inr(all.received)}</dd></div>
+                <div><dt>Received</dt><dd className="cc-mrep__v--earn">{inr(all.received)}</dd></div>
                 <div><dt>Expenses</dt><dd className="cc-mrep__v--exp">{inr(all.totalExpenses)}</dd></div>
                 <div><dt>To collect</dt><dd className="cc-mrep__v--due">{inr(all.toCollect)}</dd></div>
               </dl>
@@ -106,17 +106,17 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
                 </div>
 
                 <div className="cc-mrep__bar" role="img"
-                  aria-label={`Expenses were ${spentPct}% of earnings`}>
+                  aria-label={`Expenses were ${spentPct}% of money received`}>
                   <i style={{ width: `${spentPct}%` }} />
                 </div>
                 <div className="cc-mrep__barnote">
                   {s.received > 0
-                    ? `${spentPct}% of earnings went on expenses`
-                    : (s.totalExpenses > 0 ? 'Expenses with no earnings yet' : 'Nothing earned or spent')}
+                    ? `${spentPct}% of money received went on expenses`
+                    : (s.totalExpenses > 0 ? 'Expenses with nothing received yet' : 'Nothing earned or spent')}
                 </div>
 
                 <dl className="cc-mrep__stats">
-                  <div><dt>Earnings</dt><dd className="cc-mrep__v--earn">{inr(s.received)}</dd></div>
+                  <div><dt>Received</dt><dd className="cc-mrep__v--earn">{inr(s.received)}</dd></div>
                   <div><dt>Expenses</dt><dd className="cc-mrep__v--exp">{inr(s.totalExpenses)}</dd></div>
                   <div><dt>To collect</dt><dd className="cc-mrep__v--due">{inr(s.toCollect)}</dd></div>
                 </dl>
@@ -148,7 +148,7 @@ export default function MonthlyTab({ orders, expenses, withdrawals }) {
             <thead style={{ background: '#f9eef1' }}>
               <tr style={{ color: '#7a4a58' }}>
                 <th>Month</th><th>Orders</th>
-                <th>Invested</th><th>Earnings</th>
+                <th>Invested</th><th>Received</th>
                 <th>Expenses</th><th>Taken out</th>
                 <th>To Collect</th><th>Profit</th>
               </tr>

@@ -6,6 +6,7 @@ import {
 import Modal from '../Modal.jsx'
 import UndoToast from './UndoToast.jsx'
 import AddFab from './AddFab.jsx'
+import ExpenseItemsMobile from './ExpenseItemsMobile.jsx'
 import { useUndo, withoutId } from './useUndo.js'
 import FilterChips from './FilterChips.jsx'
 import PeriodSelect from './PeriodSelect.jsx'
@@ -175,9 +176,12 @@ export default function ExpensesTab({ expenses, reload }) {
   return (
     <div>
       <div className="cc-admin-toolbar d-flex flex-wrap gap-2 align-items-center mb-2">
-        <button className="cc-admin-toolbar-btn btn text-white d-inline-flex align-items-center gap-2" style={{ background: 'var(--cc-rose,#e0617a)', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => setEditing({})}>
-          <FiPlus /> New Expense
-        </button>
+        {/* Phones add with the round + button (AddFab) — one add control, not two. */}
+        {mobile ? null : (
+          <button className="cc-admin-toolbar-btn btn text-white d-inline-flex align-items-center gap-2" style={{ background: 'var(--cc-rose,#e0617a)', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => setEditing({})}>
+            <FiPlus /> New Expense
+          </button>
+        )}
         <input
           className="form-control" style={{ maxWidth: 280 }}
           placeholder="Search shop, item or note…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }}
@@ -240,7 +244,7 @@ export default function ExpensesTab({ expenses, reload }) {
 
       {rows.length === 0 ? (
         <div className="text-center text-muted py-4" style={{ border: '1px solid #f0e0e3', borderRadius: 12 }}>
-          {filtered ? 'No expenses match these filters.' : 'No expenses yet. Click “New Expense”.'}
+          {filtered ? 'No expenses match these filters.' : (mobile ? 'No expenses yet. Tap + to add one.' : 'No expenses yet. Click “New Expense”.')}
         </div>
       ) : mobile ? (
         // ── mobile: stacked cards ──
@@ -376,6 +380,8 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], saving = false, on
     return src.map((it) => ({ name: it.name || '', qty: it.qty ?? 1, price: it.price ?? '' }))
   })
   const listRef = useRef(null)
+  const mobile = useIsMobile()
+  const [noteOpen, setNoteOpen] = useState(!!initial?.notes)
 
   const setItem = (i, key, val) => setItems((p) => p.map((it, idx) => (idx === i ? { ...it, [key]: val } : it)))
   const addItem = () => {
@@ -456,6 +462,80 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], saving = false, on
         {vendors.map((n) => <option key={n} value={n} />)}
       </datalist>
 
+      {mobile ? (
+        // Phone: where and how paid → what for → the list → delivery and notes.
+        <div className="cc-mo">
+          <section className="cc-mo-sec">
+            <div className="cc-mo-pair">
+              <div className={`cc-field${err?.field === 'date' ? ' cc-field--bad' : ''}`}>
+                <span className="cc-field__label">Date</span>
+                <input type="date" className="form-control" value={date} onChange={(e) => setDate(e.target.value)} />
+              </div>
+              <div className="cc-field">
+                <span className="cc-field__label">Paid from</span>
+                <div className="cc-seg">
+                  {['Cash', 'Online'].map((m) => (
+                    <button key={m} type="button" className="cc-seg__btn" aria-pressed={method === m}
+                      onClick={() => setMethod(m)}>
+                      <span className="cc-seg__ico">{m === 'Cash' ? <FiDollarSign /> : <FiSmartphone />}</span>
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="cc-field">
+              <span className="cc-field__label">Bought from<i>shop / venue</i></span>
+              <input className="form-control" list="cc-exp-vendors" placeholder="e.g. Blinkit, D-Mart…"
+                value={vendor} onChange={(e) => setVendor(e.target.value)} spellCheck={false} />
+            </div>
+            <div className="cc-field">
+              <span className="cc-field__label">What for</span>
+              {/* One swipeable row instead of two wrapped lines of chips. */}
+              <div className="cc-catpick cc-mo-cats" role="radiogroup" aria-label="Expense category">
+                {EXPENSE_CATS.map((c) => (
+                  <button key={c.key} type="button" role="radio" aria-checked={category === c.key}
+                    className={`cc-catpick__btn${category === c.key ? ' cc-catpick__btn--on' : ''}`}
+                    style={{ '--cat': c.color }} onClick={() => setCategory(c.key)}>
+                    <i aria-hidden="true" />{c.key}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+          <section className="cc-mo-sec">
+            <div className="cc-mo-head">
+              <span>Shopping list</span>
+              {named.length ? <small>{named.length} item{named.length === 1 ? '' : 's'} · {inr(itemsTotal)}</small> : null}
+            </div>
+            <ExpenseItemsMobile items={items} setItems={setItems} itemNames={itemNames} bad={err?.field === 'items'} />
+          </section>
+          <section className="cc-mo-sec">
+            <div className="cc-mo-pair">
+              <div className="cc-field">
+                <span className="cc-field__label">Delivery<i>₹ · optional</i></span>
+                <input type="number" min="0" inputMode="decimal" className="form-control" placeholder="0"
+                  value={delivery} onChange={(e) => setDelivery(e.target.value)} />
+              </div>
+              <div className="cc-field cc-mo-sum">
+                <span className="cc-field__label">Total spent</span>
+                <b>{inr(total)}</b>
+              </div>
+            </div>
+            {noteOpen ? (
+              <div className="cc-field">
+                <span className="cc-field__label">Notes<i>optional</i></span>
+                <input className="form-control" value={notes} onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Anything to remember…" />
+              </div>
+            ) : (
+              <button type="button" className="cc-mo-note" onClick={() => setNoteOpen(true)}>
+                <FiPlus /> Add a note
+              </button>
+            )}
+          </section>
+        </div>
+      ) : (
       <div className="cc-sheet">
         <aside className="cc-sheet__side">
           <div className="cc-sheet__sidetitle">Expense details</div>
@@ -602,6 +682,7 @@ function ExpenseForm({ initial, vendors = [], itemNames = [], saving = false, on
           </div>
         </section>
       </div>
+      )}
     </Modal>
   )
 }
