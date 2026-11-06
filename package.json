@@ -14,7 +14,7 @@
     "convert-videos": "node scripts/convert-videos.js",
     "check-images": "node scripts/check-product-images.js",
     "predeploy": "npm run build && node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\" && node scripts/stamp-sitemap.js && node scripts/prerender-routes.js",
-    "deploy": "gh-pages -d dist",
+    "deploy": "gh-pages -d dist --no-history",
     "check-prices": "node scripts/check-prices.js"
   },
   "dependencies": {
