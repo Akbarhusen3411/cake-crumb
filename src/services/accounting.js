@@ -67,8 +67,18 @@ function reportCloudError(op, coll, err) {
 // only on a server ack, which left "Saving…" spinning at the counter); the
 // row simply stays pending and is re-sent.
 const SAVE_TIMEOUT_MS = 12000
+const TIMEOUT_MSG = 'timeout — slow or no connection; will retry'
 const withTimeout = (p, ms = SAVE_TIMEOUT_MS) =>
-  Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout — slow or no connection; will retry')), ms))])
+  Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(TIMEOUT_MSG)), ms))])
+const isTimeout = (err) => err?.message === TIMEOUT_MSG
+// The menu set-up checks run on every unlock and are safe to skip (they try
+// again next time). A slow first connection on a phone — App Check + warm-up
+// often takes longer than 12 s — is not a failed save, so it must not raise
+// the "Not saved to the cloud" banner. Real errors (rules, App Check) still do.
+function reportSetupError(op, coll, err) {
+  if (isTimeout(err)) { console.warn(`[accounting] ${op} skipped (slow connection)`, coll); return }
+  reportCloudError(op, coll, err)
+}
 /** A record as it may be written to the cloud: no id, no sync bookkeeping. */
 const cloudData = ({ id, _pending, ...rest }) => rest // eslint-disable-line no-unused-vars
 const stripPending = ({ _pending, ...rest }) => rest // eslint-disable-line no-unused-vars
@@ -270,29 +280,27 @@ export async function deleteDocRec(coll, id) {
 export async function seedMenuIfEmpty() {
   const db = await getDb()
   if (!db) {
-    const existing = readLocal(ACC.MENU)
-    if (existing.length > 0) return existing
-    const seeded = ACCOUNTING_MENU.map((m, i) => ({ id: `seed-${i}`, ...m }))
-    writeLocal(ACC.MENU, seeded)
-    return seeded
+    if (readLocal(ACC.MENU).length > 0) return
+    writeLocal(ACC.MENU, ACCOUNTING_MENU.map((m, i) => ({ id: `seed-${i}`, ...m })))
+    return
   }
   let fs
   try {
     fs = await import('firebase/firestore')
-    const snap = await withTimeout(fs.getDocsFromServer(fs.collection(db, ACC.MENU)))
-    if (!snap.empty) return await listDocs(ACC.MENU)
+    // One doc answers "is it empty?" — downloading all 207+ rows here is what
+    // timed out on a phone's first connection. The live feed loads the menu.
+    const snap = await withTimeout(fs.getDocsFromServer(fs.query(fs.collection(db, ACC.MENU), fs.limit(1))))
+    if (!snap.empty) return
   } catch (err) {
-    reportCloudError('read menu', ACC.MENU, err)
-    return readLocal(ACC.MENU)
+    reportSetupError('read menu', ACC.MENU, err)
+    return
   }
   try {
     const batch = fs.writeBatch(db) // 207 < 500 batch limit
     ACCOUNTING_MENU.forEach((m) => batch.set(fs.doc(fs.collection(db, ACC.MENU)), m))
     await withTimeout(batch.commit())
-    return await listDocs(ACC.MENU)
   } catch (err) {
     reportCloudError('seed menu', ACC.MENU, err)
-    return readLocal(ACC.MENU)
   }
 }
 
@@ -340,7 +348,7 @@ async function alreadyRan(flag) {
     if (local) await setDoc(ref, { migrations: { [flag]: new Date().toISOString() } }, { merge: true })
     return local
   } catch (err) {
-    reportCloudError('read', 'acc_settings', err)
+    reportSetupError('read', 'acc_settings', err)
     // Can't tell whether the book already ran it — skip rather than risk
     // overwriting the owner's prices. It will run on a later, healthy unlock.
     return true

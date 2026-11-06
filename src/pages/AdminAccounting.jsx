@@ -149,27 +149,31 @@ export default function AdminAccounting() {
     if (!ready) return // nothing loads while the PIN gate is up
     let active = true
     const unsubs = []
+    // The figures load first. Menu set-up used to run before them, so on a
+    // phone's slow first connection the page sat at ₹0 for up to a minute of
+    // one-by-one checks. It now runs alongside; anything it adds to the menu
+    // arrives through the live feed.
+    queueMicrotask(() => { if (active) setLoading(true) })
+    const feeds = [
+      [ACC.MENU, setMenu], [ACC.ORDERS, setOrders],
+      [ACC.EXPENSES, setExpenses], [ACC.WITHDRAWALS, setWithdrawals],
+    ]
+    feeds.forEach(([coll, set]) => {
+      unsubs.push(subscribeDocs(coll, (rows) => {
+        if (!active) return
+        set(rows)
+        setLoading(false)
+      }))
+    })
     ;(async () => {
       // Menu setup only. The Excel-history importer is retired (see accounting.js)
       // — the books were cleared to start fresh, and it would refill them.
       await seedMenuIfEmpty()
+      if (!active) return
       await ensurePerPieceMenu() // adds "Per piece" prices for Cake Pop & Cupcakes
       await ensureCakePopPrices() // owner's Cake Pop prices + Pistachio
       await ensureFreeGiftMenu() // ₹0 "Free Gift" rows for offer gifts
       await ensureDiwaliPackMenu() // Diwali pack-of-10 prices
-      if (!active) return
-      setLoading(true)
-      const feeds = [
-        [ACC.MENU, setMenu], [ACC.ORDERS, setOrders],
-        [ACC.EXPENSES, setExpenses], [ACC.WITHDRAWALS, setWithdrawals],
-      ]
-      feeds.forEach(([coll, set]) => {
-        unsubs.push(subscribeDocs(coll, (rows) => {
-          if (!active) return
-          set(rows)
-          setLoading(false)
-        }))
-      })
     })()
     return () => { active = false; unsubs.forEach((u) => u()) }
   }, [ready])
