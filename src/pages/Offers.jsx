@@ -12,7 +12,7 @@ import { useCart } from '../context/CartContext.jsx'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
 import {
   OFFER_RULES, OFFER_PICKERS, EVERYDAY_ON, TIERED, ordinal,
-  activeOffers, cartOfferStatus, midMonthWindow, diwaliWindow, daysUntil, OFFERS_ON, DIWALI_DATES,
+  activeOffers, cartOfferStatus, midMonthWindow, diwaliWindow, daysUntil, OFFERS_ON, DIWALI_ON, DIWALI_DATES,
 } from '../data/offers.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
 import OfferSteps, { PriceTag } from '../components/OfferSteps.jsx'
@@ -312,7 +312,7 @@ export default function Offers() {
   // offers" on a page whose description promises them. Read from
   // OFFER_RULES.diwali, so a date change follows. Up to 30 days ahead.
   const dw = diwaliWindow(now, true)
-  const diwaliIn = !live && OFFERS_ON ? daysUntil(dw.from, now) : -1
+  const diwaliIn = !live && OFFERS_ON && DIWALI_ON ? daysUntil(dw.from, now) : -1
   const diwaliSoon = diwaliIn > 0 && diwaliIn <= 30
   const fmtDay = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
   // A priced deal (the Diwali packs) is running beside the free gifts, so the

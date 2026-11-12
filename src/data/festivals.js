@@ -2,6 +2,12 @@
 // All dates are evaluated against the user's local clock (so Indian users see Diwali timed correctly).
 // To customize: edit dates / messages here, no code changes needed.
 
+// Master switch for the whole Diwali season: offers, packs, the gift box's
+// 10% off, the welcome screen, the banner and ?diwali=preview. Switched off
+// 12 Nov 2026 by the owner (site back to normal before 15 Nov). True brings
+// it all back on its dates (OFFER_RULES.diwali in offerRules.js).
+export const DIWALI_ON = false
+
 export const FESTIVALS = [
   {
     id: 'new-year',
@@ -120,6 +126,7 @@ export const FESTIVALS = [
  */
 const PREVIEW_KEY = 'cc_diwali_preview'
 export function isDiwaliPreview() {
+  if (!DIWALI_ON) return false
   try {
     const param = new URLSearchParams(window.location.search).get('diwali')
     if (param === 'preview') sessionStorage.setItem(PREVIEW_KEY, '1')
@@ -141,7 +148,7 @@ export function getActiveFestival(now = new Date()) {
     // A moving festival lists its dates per year; with none for this year it
     // stays hidden rather than showing last year's week.
     const range = f.years ? f.years[now.getFullYear()] : f.range
-    if (!range) continue
+    if (!range || (f.id === 'diwali' && !DIWALI_ON)) continue
     const { fromMonth, fromDay, toMonth, toDay } = range
     const wrapsYear = toMonth < fromMonth || (toMonth === fromMonth && toDay < fromDay)
     if (wrapsYear) {

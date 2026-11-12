@@ -1,7 +1,7 @@
 import { getDb, isFirebaseEnabled } from '../firebase.js'
 import { ACCOUNTING_MENU } from '../data/accountingMenu.js'
 import { shopProducts } from '../data/products.js'
-import { DIWALI_PACK10, DIWALI_PACK2 } from '../data/offerRules.js'
+import { DIWALI_PACK10, DIWALI_PACK2, DIWALI_ON } from '../data/offerRules.js'
 
 // Admin-only daily-accounting store. Same shape as services/orders.js:
 // Firestore when configured, always mirrored to localStorage, never throws.
@@ -318,7 +318,7 @@ export const isPerPieceVariant = (v) => /per\s*piece/i.test(v || '')
 // the door for every other one. No cloud (localStorage-only build) → the
 // local flag alone, as before.
 // Every importer's flag, so a pre-marker book can be stamped in one go.
-const IMPORTER_FLAGS = ['cc_acc_perpiece_v1', 'cc_acc_cakepop_v2', 'cc_acc_freegift_v1', 'cc_acc_diwalipack_v4']
+const IMPORTER_FLAGS = ['cc_acc_perpiece_v1', 'cc_acc_cakepop_v2', 'cc_acc_freegift_v1', 'cc_acc_diwalipack_v4', 'cc_acc_menufix_nov26_v1']
 async function alreadyRan(flag) {
   let local = false
   try { local = !!localStorage.getItem(flag) } catch { /* ignore */ }
@@ -429,6 +429,9 @@ export async function ensureFreeGiftMenu() {
  */
 export async function ensureDiwaliPackMenu() {
   const FLAG = 'cc_acc_diwalipack_v4' // v4: Red Velvet & Biscoff 10-pack ₹279 → ₹289
+  // Diwali switched off (festivals.js) → add nothing, and don't mark it run.
+  // To bring the rows back next year: DIWALI_ON = true and bump the suffix.
+  if (!DIWALI_ON) return
   if (await alreadyRan(FLAG)) return
   const menu = await listDocs(ACC.MENU)
   const rows = []
@@ -447,6 +450,31 @@ export async function ensureDiwaliPackMenu() {
     const existing = menu.find((m) => m.category === r.category && m.name === r.name && String(m.variant) === r.variant)
     if (!existing) await addDocRec(ACC.MENU, r)
     else if (Number(existing.price) !== r.price) await updateDocRec(ACC.MENU, existing.id, { price: r.price })
+  }
+  await markRan(FLAG)
+}
+
+/**
+ * One-time menu clean-up, 12 Nov 2026 (owner's ask: Menu & Prices to match the
+ * website and the printed menu). Checked against a backup of the live menu:
+ *  - deletes the Sprinkle cupcake "Per piece" row at ₹4 (a typo; the ₹25 row stays),
+ *  - deletes the Diwali pack rows (Diwali switched off; DIWALI_ON in festivals.js),
+ *  - adds the gift box under Specials at its website price, if no row has its name.
+ * Matches on category + name + variant/price, never ids. Past orders keep their
+ * own lines, so nothing booked changes. Once per book.
+ */
+export async function fixMenuNov2026() {
+  const FLAG = 'cc_acc_menufix_nov26_v1'
+  if (await alreadyRan(FLAG)) return
+  const menu = await listDocs(ACC.MENU)
+  const drop = menu.filter((m) =>
+    (m.category === 'Cupcake' && m.name === 'Sprinkle' && isPerPieceVariant(m.variant) && Number(m.price) === 4) ||
+    (!DIWALI_ON && ['Cupcake', 'Cake Pop'].includes(m.category) && /^Diwali\s/i.test(String(m.variant || '')))
+  )
+  for (const m of drop) await deleteDocRec(ACC.MENU, m.id)
+  const box = shopProducts.find((p) => p.id === 'sg-birthday-box')
+  if (box && !menu.some((m) => String(m.name).trim().toLowerCase() === box.name.toLowerCase())) {
+    await addDocRec(ACC.MENU, { category: 'Specials', name: box.name, variant: 'Box', price: box.price })
   }
   await markRan(FLAG)
 }

@@ -6,7 +6,8 @@
 // eager code should import from HERE.
 
 import { shopProducts, isPerPiece } from './products.js'
-import { isDiwaliPreview } from './festivals.js'
+import { isDiwaliPreview, DIWALI_ON } from './festivals.js'
+export { DIWALI_ON }
 
 // Master switch: false hides the Home band, the cart gift card and the receipt
 // line, and /offers says there are none running. Nothing else needs touching.
@@ -433,7 +434,7 @@ export function diwaliWindow(now = offerNow(), real = false) {
   const to = new Date(now.getFullYear(), month - 1, toDay)
   const d = now.getDate()
   const inside = now.getMonth() + 1 === month && d >= fromDay && d <= toDay
-  return { live: inside || (!real && isDiwaliPreview()), from, to }
+  return { live: DIWALI_ON && (inside || (!real && isDiwaliPreview())), from, to }
 }
 
 /** "2026-10" — which month's window it is; what the pop-up remembers it showed. */
