@@ -18,7 +18,7 @@ import InstagramFeed from '../components/InstagramFeed.jsx'
 const OffersBand = lazy(() => import('../components/OffersBand.jsx'))
 const HeroOffers = lazy(() => import('../components/HeroOffers.jsx'))
 const OffersTicker = lazy(() => import('../components/OffersTicker.jsx'))
-import { offersLive, OFFERS_ON, diwaliWindow, diwaliOffPrice } from '../data/offerRules.js'
+import { offersLive } from '../data/offerRules.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
 import { DEPOSIT_PCT, depositAmount } from '../data/shopConfig.js'
 
@@ -29,10 +29,7 @@ export default function Home() {
   const { add } = useCart()
   const offerClock = useOfferClock()
   const offersOn = offersLive(offerClock)
-  // 5–15 Nov the gift box is 10% off (offerRules.js DIWALI_PCT_OFF); the cart
-  // bills it as its own "(Diwali price)" line.
-  const giftDiwali = GIFT_BOX && OFFERS_ON && diwaliWindow(offerClock).live ? diwaliOffPrice(GIFT_BOX) : null
-  const giftPrice = giftDiwali ?? GIFT_BOX?.price
+  const giftPrice = GIFT_BOX?.price
   usePageMeta({
     title: 'Home',
     description: 'Cake & Crumb — handcrafted cheesecakes, milk cakes, cookies and desserts. Made with love. Order on WhatsApp.',
@@ -207,12 +204,7 @@ export default function Home() {
               {/* Price, advance and button read as one buying panel (boxed on a phone). */}
               <div className="cc-home-gift__buy">
                 <div className="cc-home-gift__price">
-                  {giftDiwali != null && (
-                    <s className="cc-home-gift__was"><span className="visually-hidden">Regular price </span>{inr(GIFT_BOX.price)}</s>
-                  )}
-                  {giftDiwali != null && <span className="visually-hidden">Diwali price </span>}
                   {inr(giftPrice)}
-                  {giftDiwali != null && <span className="cc-home-gift__off">Diwali · 10% off</span>}
                 </div>
                 <p className="cc-home-gift__adv">
                   <strong>Book with a {Math.round(DEPOSIT_PCT * 100)}% advance of {inr(depositAmount(giftPrice))}</strong>

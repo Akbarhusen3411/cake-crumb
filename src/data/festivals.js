@@ -1,12 +1,6 @@
 // Festival calendar — auto-shows banners during these date ranges.
-// All dates are evaluated against the user's local clock (so Indian users see Diwali timed correctly).
+// All dates are evaluated against the user's local clock (so Indian users see each festival timed correctly).
 // To customize: edit dates / messages here, no code changes needed.
-
-// Master switch for the whole Diwali season: offers, packs, the gift box's
-// 10% off, the welcome screen, the banner and ?diwali=preview. Switched off
-// 12 Nov 2026 by the owner (site back to normal before 15 Nov). True brings
-// it all back on its dates (OFFER_RULES.diwali in offerRules.js).
-export const DIWALI_ON = false
 
 export const FESTIVALS = [
   {
@@ -84,21 +78,6 @@ export const FESTIVALS = [
     },
   },
   {
-    id: 'diwali',
-    name: 'Diwali',
-    icon: '🪔',
-    bg: 'linear-gradient(90deg, #d97706 0%, #f59e0b 35%, #fbbf24 70%, #fcd34d 100%)',
-    fg: '#1a1a1a',
-    accent: '#7c2d12',
-    // No truffles here — the bakery doesn't sell them (CLAUDE.md, Customer-facing
-    // copy). Diwali moves between mid-October and mid-November; check the range
-    // each year (8 Nov in 2026).
-    message: 'Happy Diwali! Order festive cakes and gift boxes a day ahead.',
-    cta: 'Shop now',
-    to: '/shop',
-    range: { fromMonth: 11, fromDay: 5, toMonth: 11, toDay: 15 }, // matches DiwaliWelcome
-  },
-  {
     id: 'christmas',
     name: 'Christmas',
     icon: '🎄',
@@ -113,31 +92,6 @@ export const FESTIVALS = [
 ]
 
 /**
- * `?diwali=preview` shows the whole Diwali season on any date — banner,
- * welcome screen AND the Diwali offers — on the live site too, so the owner
- * can check it before 5 Nov. It sticks for that browser tab (sessionStorage),
- * so moving to /offers or /cart keeps it; `?diwali=off` or closing the tab
- * ends it.
- *
- * Safe to leave public: the offers only LOOK live. Checkout reads the real
- * date (`cartOfferStatus(..., { real: true })`), so an order placed in preview
- * outside 5–15 Nov carries no gift line in its WhatsApp receipt. It never
- * touches offerNow(); `?testdate=` stays dev-only.
- */
-const PREVIEW_KEY = 'cc_diwali_preview'
-export function isDiwaliPreview() {
-  if (!DIWALI_ON) return false
-  try {
-    const param = new URLSearchParams(window.location.search).get('diwali')
-    if (param === 'preview') sessionStorage.setItem(PREVIEW_KEY, '1')
-    else if (param === 'off') sessionStorage.removeItem(PREVIEW_KEY)
-    return sessionStorage.getItem(PREVIEW_KEY) === '1'
-  } catch {
-    return false
-  }
-}
-
-/**
  * Returns the active festival for the given date, or null if none.
  * Handles year-wrap ranges (e.g. New Year: Dec 26 → Jan 4).
  */
@@ -148,7 +102,7 @@ export function getActiveFestival(now = new Date()) {
     // A moving festival lists its dates per year; with none for this year it
     // stays hidden rather than showing last year's week.
     const range = f.years ? f.years[now.getFullYear()] : f.range
-    if (!range || (f.id === 'diwali' && !DIWALI_ON)) continue
+    if (!range) continue
     const { fromMonth, fromDay, toMonth, toDay } = range
     const wrapsYear = toMonth < fromMonth || (toMonth === fromMonth && toDay < fromDay)
     if (wrapsYear) {

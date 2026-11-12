@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiX, FiShoppingBag, FiMinus, FiPlus, FiInfo, FiGift } from 'react-icons/fi'
+import { FiX, FiShoppingBag, FiMinus, FiPlus, FiInfo } from 'react-icons/fi'
 import { u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { describe, hasUnit } from '../data/products.js'
 import { useCart } from '../context/CartContext.jsx'
-import { piecesPrice, packNudge, boxesPrice } from '../data/offerRules.js'
 import AllergenTags from './AllergenTags.jsx'
 import { useDialogFocus } from '../hooks/useDialogFocus.js'
 
@@ -52,11 +51,9 @@ function BatchHint() {
  */
 /**
  * The buying panel, the same for every size: size + its price on top, a
- * large − / + counter beside the live total (the regular price struck when a
- * Diwali pack of 10 applies), an optional "add N more for the pack" line,
- * then one full-width Add. Built for a 300px phone column up to desktop.
+ * large − / + counter beside the live total, then one full-width Add. Built for a 300px phone column up to desktop.
  */
-function QtyBuy({ label, minQty, unitPrice, each = 'each', qty, setQty, price, nudge, onAdd }) {
+function QtyBuy({ label, minQty, unitPrice, each = 'each', qty, setQty, onAdd }) {
   return (
     <div className="qv-buy">
       <div className="qv-buy__head">
@@ -78,21 +75,10 @@ function QtyBuy({ label, minQty, unitPrice, each = 'each', qty, setQty, price, n
           </button>
         </div>
         <div className="qv-buy__total" aria-live="polite">
-          {price.packs > 0 && <s><span className="visually-hidden">Regular price </span>{inr(price.regular)}</s>}
-          <strong>{price.packs > 0 && <span className="visually-hidden">Diwali price </span>}{inr(price.total)}</strong>
-          <small>
-            {price.packs > 0
-              ? `Diwali price · ${price.single || price.packs === 1 ? '' : `${price.packs} × `}${price.label}`
-              : `${qty} × ${inr(unitPrice)}`}
-          </small>
+          <strong>{inr(unitPrice * qty)}</strong>
+          <small>{`${qty} × ${inr(unitPrice)}`}</small>
         </div>
       </div>
-
-      {nudge && (
-        <p className="qv-buy__nudge">
-          <FiGift size={13} aria-hidden /> Add {nudge.need} more for the Diwali pack — {nudge.size} for {inr(nudge.price)}
-        </p>
-      )}
 
       <button type="button" className="qv-btn qv-btn--filled qv-buy__add" onClick={onAdd}>
         <FiShoppingBag size={15} /> Add {qty} to cart
@@ -201,12 +187,6 @@ export default function ProductQuickView({ product, onClose }) {
   const tier = tiers[Math.min(tierIdx, tiers.length - 1)]
   const tqty = qtyByTier[tier.key] ?? tier.min
   const setTqty = (fn) => setQtyByTier((m) => ({ ...m, [tier.key]: fn(m[tier.key] ?? tier.min) }))
-  // Only the loose-piece base tier can become a Diwali pack of 10.
-  // Boxes of 6 count towards the Diwali pack too (2 Vanilla boxes → ₹289).
-  const tprice = tier.key === 'base' ? piecesPrice(p, tqty)
-    : tier.key === 'slice' ? boxesPrice(p, tqty)
-    : { total: tier.unitPrice * tqty, regular: tier.unitPrice * tqty, packs: 0 }
-  const tnudge = tier.key === 'base' ? packNudge(p, tqty) : null
   const tbatch = (tier.key === 'base' && showBatchNote) || tier.batch
 
   return (
@@ -326,8 +306,6 @@ export default function ProductQuickView({ product, onClose }) {
                 each={tier.pieces ? 'each' : tiers.length > 1 ? 'each' : ''}
                 qty={tqty}
                 setQty={setTqty}
-                price={tprice}
-                nudge={tnudge}
                 onAdd={() => addAndClose(tier.line(tqty), tqty)}
               />
               {tbatch && tqty <= BATCH_NOTE_UPTO && <BatchHint />}

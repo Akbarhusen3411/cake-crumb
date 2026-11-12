@@ -23,8 +23,8 @@ const A_NUTS    = [...A_BAKED, 'contains-nuts']
 // Featured cards on Home — visually distinctive picks across categories.
 // `shopId` + `tier` name the shop product and size each card sells, so its
 // Add to Cart puts in the SAME line the Shop would (featuredCartLine below).
-// With its own 'feat-N' id the card's line never merged with the Shop's, and
-// two Red Velvet boxes from Home missed the Diwali pack (₹360 vs ₹349).
+// With its own 'feat-N' id the card's line never merged with the Shop's (two
+// Red Velvet boxes from Home became two separate cart lines).
 export const featured = [
   { id: 'feat-1', name: 'Blueberry Cheesecake', price: 410, category: 'Cheesecakes', allergens: A_BAKED, shopId: 'cc-blueberry', tier: 'base' },
   { id: 'feat-2', name: 'Red Velvet Cupcakes (Box of 6)', price: 180, category: 'Cupcakes', allergens: A_BAKED, shopId: 'cup-redvelvet', tier: 'slice' },

@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   FiHeart, FiShoppingBag, FiX, FiPlus, FiMinus, FiCheckCircle, FiClock,
-  FiShield, FiChevronDown, FiSliders, FiGift,
+  FiShield, FiChevronDown, FiSliders,
 } from 'react-icons/fi'
 import { TbToolsKitchen2 } from 'react-icons/tb'
 import HeartDivider from '../components/HeartDivider.jsx'
@@ -11,9 +11,6 @@ import { img, u, srcSet } from '../data/images.js'
 import { inr } from '../data/format.js'
 import { DECORATION_EXTRA } from '../data/shopConfig.js'
 import OfferGift from '../components/OfferGift.jsx'
-import { PriceTag } from '../components/OfferSteps.jsx'
-import { productDiwaliDeals, diwaliWindow, DIWALI_DATES } from '../data/offerRules.js'
-import { useOfferClock } from '../hooks/useOfferClock.js'
 import { useCart } from '../context/CartContext.jsx'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import { useJsonLd } from '../hooks/useJsonLd.js'
@@ -155,13 +152,6 @@ export default function Shop() {
     (category !== 'All Products' ? 1 : 0) +
     (priceRange !== 'all' ? 1 : 0)
   const { items, count, subtotal, add, increment, decrement, remove, clear } = useCart()
-  // Diwali deals on the cards (5–15 Nov, or a preview). A pack can only be
-  // ADDED on the real dates — a preview shows "From 5 Nov" instead.
-  const dealNow = useOfferClock()
-  const packsOpen = diwaliWindow(dealNow, true).live
-  // In a preview before 5 Nov the "+ Add" still shows (so the card looks as
-  // customers will see it), but a tap only says when packs open.
-  const [packSoon, setPackSoon] = useState(null)
 
 
   const filtered = useMemo(() => {
@@ -524,38 +514,6 @@ export default function Shop() {
                           priceLabel(p)
                         )}
                       </div>
-                      {/* Diwali: pack prices with the regular price struck
-                          through, or the free gift this product earns. */}
-                      {(() => {
-                        const deals = productDiwaliDeals(p, dealNow)
-                        if (!deals.length) return null
-                        return (
-                          <div className="cc-card-deals">
-                            {deals.map((d) => d.kind === 'price' ? (
-                              <div key={d.label} className="cc-card-deal">
-                                <span className="cc-card-deal__label">{d.label}</span>
-                                <PriceTag was={d.was} now={d.now} small flag={null} />
-                                {packSoon === d.line.id ? (
-                                  <span className="cc-card-deal__soon" role="status">{DIWALI_DATES.opens}</span>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    className="cc-card-deal__add"
-                                    onClick={() => (packsOpen ? add(d.line) : setPackSoon(d.line.id))}
-                                    aria-label={`Add ${d.line.name}`}
-                                  >
-                                    + Add
-                                  </button>
-                                )}
-                              </div>
-                            ) : (
-                              <Link key={d.offer} to={`/offers#${d.offer}`} className="cc-card-deal cc-card-deal--gift">
-                                <FiGift size={13} aria-hidden /> {d.text}
-                              </Link>
-                            ))}
-                          </div>
-                        )
-                      })()}
                       <button
                         className="cc-product-card__add"
                         /* Twelve buttons all reading "Add to Cart" is what a

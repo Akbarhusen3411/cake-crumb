@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FiX } from 'react-icons/fi'
-import { FESTIVALS, getActiveFestival, isDiwaliPreview } from '../data/festivals.js'
+import { getActiveFestival } from '../data/festivals.js'
 import { offerNow } from '../data/offerRules.js' // honours ?testdate on the dev server
 
 const DISMISS_KEY = 'cc_festival_dismissed_v1'
@@ -11,12 +11,10 @@ export default function FestivalBanner() {
   const [hidden, setHidden] = useState(true)
 
   useEffect(() => {
-    // ?diwali=preview: show the Diwali banner on any date, even if closed before.
-    const preview = isDiwaliPreview()
-    const f = preview ? FESTIVALS.find((x) => x.id === 'diwali') : getActiveFestival(offerNow())
+    const f = getActiveFestival(offerNow())
     if (!f) return
     let dismissed = false
-    if (!preview) try {
+    try {
       const raw = localStorage.getItem(DISMISS_KEY)
       if (raw) {
         const parsed = JSON.parse(raw)

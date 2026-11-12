@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { applyDiwaliPacks, unpackExpiredPacks } from '../data/offerRules.js'
 
 const CartContext = createContext(null)
 // v2: lines gained `minQty`, and the cupcake ids changed meaning — `cup-vanilla`
@@ -23,7 +22,9 @@ const CartContext = createContext(null)
 //
 // v4 (Oct 2026): Birthday Gift Box ₹1,400 → ₹1,500.
 // v5 (Oct 2026): renamed Birthday & Anniversary Gift Box, ₹1,500 → ₹1,600.
-const STORAGE_KEY = 'cc_cart_v5'
+// v6 (12 Nov 2026): Diwali packs removed — a saved cart could still hold a
+// pack line (-d10 / -d2 / -d1) at its Diwali price.
+const STORAGE_KEY = 'cc_cart_v6'
 
 // Smallest quantity this line may sit at. Products carry `minQty` (cupcakes are
 // per-piece with a minimum of 2 — the bakery won't bake a single one); anything
@@ -36,7 +37,7 @@ function loadInitial() {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? applyDiwaliPacks(parsed) : []
+    return Array.isArray(parsed) ? parsed : []
   } catch {
     return []
   }
@@ -59,14 +60,12 @@ export function CartProvider({ children }) {
   function add(product, qty) {
     const min = minQtyOf(product)
     const addQty = qty == null ? min : Math.max(1, Number(qty) || 1)
-    // applyDiwaliPacks: from 5–15 Nov every 10 loose cupcakes / cake pops
-    // become one Diwali pack line at the pack price (see data/offers.js).
     setItems((prev) => {
       const found = prev.find((p) => p.id === product.id)
       if (found) {
-        return applyDiwaliPacks(prev.map((p) => (p.id === product.id ? { ...p, qty: p.qty + addQty } : p)))
+        return prev.map((p) => (p.id === product.id ? { ...p, qty: p.qty + addQty } : p))
       }
-      return applyDiwaliPacks([...prev, { id: product.id, name: product.name, price: Number(product.price) || 0, img: product.img, qty: addQty, minQty: min }])
+      return [...prev, { id: product.id, name: product.name, price: Number(product.price) || 0, img: product.img, qty: addQty, minQty: min }]
     })
     // `product.note` is an optional one-line aside for the toast — today the
     // batch-bake message on a small order of loose pieces. It is deliberately
@@ -80,7 +79,7 @@ export function CartProvider({ children }) {
   }
 
   function increment(id) {
-    setItems((prev) => applyDiwaliPacks(prev.map((p) => (p.id === id ? { ...p, qty: p.qty + 1 } : p))))
+    setItems((prev) => prev.map((p) => (p.id === id ? { ...p, qty: p.qty + 1 } : p)))
   }
 
   // Falling below a line's minimum drops it from the cart, which is the same
@@ -94,10 +93,6 @@ export function CartProvider({ children }) {
     )
   }
 
-  // After Diwali: pack lines back to the same pieces at the regular price.
-  function unpackPacks() {
-    setItems((prev) => unpackExpiredPacks(prev))
-  }
 
   function clear() {
     setItems([])
@@ -117,7 +112,7 @@ export function CartProvider({ children }) {
     // Kept as 0 so any consumer of `total` matches the subtotal shown at checkout.
     const delivery = 0
     const total = subtotal
-    return { items, count, subtotal, delivery, total, add, remove, increment, decrement, clear, unpackPacks, toast }
+    return { items, count, subtotal, delivery, total, add, remove, increment, decrement, clear, toast }
   }, [items, toast])
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>

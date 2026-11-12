@@ -4,7 +4,7 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 /**
- * Focus handling for a modal dialog (the Diwali welcome, the product quick
+ * Focus handling for a modal dialog (the product quick
  * view): while `active`, focus moves into `ref` (the dialog itself, which
  * should carry tabIndex={-1}), Tab and Shift+Tab wrap inside it instead of
  * walking onto the blurred page behind, and on close focus goes back to

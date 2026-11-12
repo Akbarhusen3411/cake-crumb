@@ -30,7 +30,7 @@ const links = [
 // The phone menu also links /offers — it was reachable on a phone only through
 // the Home page. Mobile only, by the owner's choice: the desktop bar is already
 // tight on small laptops. Only while an offer is running (offersLive), so it
-// comes and goes with Diwali by itself.
+// comes and goes with the offers by itself.
 const offerLinks = [...links.slice(0, 3), { to: '/offers', label: 'Offers', icon: FiGift, tag: 'Gifts & deals' }, ...links.slice(3)]
 
 export default function Navbar() {

@@ -12,33 +12,11 @@
 import { img } from './images.js'
 import { shopProducts } from './products.js'
 import { inr } from './format.js'
-import {
-  OFFERS_ON, EVERYDAY_ON, OFFER_RULES, DIWALI_PACK10, DIWALI_PACK2, DIWALI_PCT_OFF, DIWALI_DATES, DIWALI_FROM,
-  ordinal, offerNow, diwaliWindow, midMonthWindow, pack10Line, pack2Line, price1Line, diwaliOffPrice,
-} from './offerRules.js'
+import { OFFERS_ON, EVERYDAY_ON, OFFER_RULES, ordinal, offerNow, midMonthWindow } from './offerRules.js'
 
-// The rules half (dates, pack prices, roll-up, clock) lives in offerRules.js;
+// The rules half (switches, dates, clock) lives in offerRules.js;
 // everything there is re-exported so old imports keep working.
 export * from './offerRules.js'
-
-// The packs as the cards show them: one row per pack with its regular and
-// Diwali price. Worked out from products.js, so a price change follows.
-const byId = (id) => shopProducts.find((p) => p.id === id)
-function diwaliPackPrices() {
-  const ten = (id) => ({ was: byId(id).price * 10, now: DIWALI_PACK10[id] })
-  // The cheapest 10-cupcake pack leads ("from"); every flavour has one.
-  const cup10 = Object.keys(DIWALI_PACK10).filter((id) => id.startsWith('cup-'))
-    .reduce((a, id) => (!a || DIWALI_PACK10[id] < DIWALI_PACK10[a] ? id : a), null)
-  return [
-    cup10 && { label: '10 cupcakes', note: 'every flavour · from', ...ten(cup10) },
-    { label: '2 Variety boxes', note: '12 cupcakes, all different', was: byId('cup-variety').price * 2, now: DIWALI_PACK2['cup-variety'] },
-    { label: '10 cake pops', note: 'Chocolate, Vanilla or Red Velvet', ...ten('bk-cakepop-chocolate') },
-    ...shopProducts.filter((p) => DIWALI_PCT_OFF[p.id]).map((p) => ({
-      label: 'Gift box', note: `birthday or anniversary · ${DIWALI_PCT_OFF[p.id]}% off`, was: p.price, now: diwaliOffPrice(p),
-    })),
-  ].filter(Boolean)
-}
-const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
 
 const MID_FROM = ordinal(OFFER_RULES.midMonth.fromDay)
 const MID_TO = ordinal(OFFER_RULES.midMonth.toDay)
@@ -47,61 +25,6 @@ const MID_TO = ordinal(OFFER_RULES.midMonth.toDay)
 // Home cards show; `condition` and `gift` stay the full wording for /offers and
 // the cart. `get` defaults to `gift`.
 export const OFFERS = [
-  // ── Diwali (5–15 Nov only) ──
-  {
-    id: 'diwali-tubs',
-    season: 'diwali',
-    // The cards show these rows instead of a sentence: "2 tubs → 3 cake pops free".
-    steps: OFFER_RULES.diwaliTubTiers.map((t) => ({ buy: plural(t.min, 'tub', 'tubs'), get: t.gift })),
-    stepsHead: 'Cheesecake tubs · mix any flavours',
-    buy: 'Any 2 cheesecake tubs',
-    buyNote: '3 tubs → 4 cake pops · 4 → 2 cupcakes + 2 cake pops · 6 → a free tub',
-    get: '3 cake pops',
-    name: 'Diwali Tub Treat',
-    tag: `Diwali · ${DIWALI_DATES.range}`,
-    condition: 'Order cheesecake tubs, any flavours mixed: 2 tubs get 3 cake pops, 3 get 4 cake pops, 4 get 2 cupcakes + 2 cake pops, and 6 get a 7th tub free.',
-    gift: '3 cake pops, up to a free tub with 6',
-    giftShort: 'up to a 7th tub',
-    image: img.cheesecakeStrawberryCups,
-    alt: 'Strawberry cheesecake in single-serve tubs',
-    cta: { label: 'Shop cheesecake tubs', to: '/shop?category=Cheesecakes' },
-  },
-  {
-    id: 'diwali-sponge',
-    season: 'diwali',
-    steps: OFFER_RULES.diwaliSpongeTiers.map((t) => ({ buy: plural(t.min, 'whole cake', 'whole cakes'), get: t.gift })),
-    stepsHead: 'Whole sponge cake · any flavour',
-    buy: 'A whole sponge cake',
-    buyNote: 'Buy 2 for a free sponge tub + 3 cake pops',
-    get: '4 cake pops',
-    name: 'Diwali Cake Treat',
-    tag: `Diwali · ${DIWALI_DATES.range}`,
-    condition: 'Order a whole sponge cake (Bento), any flavour, for 4 free cake pops — or two whole sponge cakes for a free sponge cake tub + 3 cake pops.',
-    gift: '4 cake pops, or a sponge tub + 3 cake pops with 2',
-    giftShort: 'up to a sponge tub + 3 cake pops',
-    image: img.rcCakeYellowRose,
-    alt: 'A whole sponge cake with yellow buttercream roses',
-    cta: { label: 'Shop sponge cakes', to: '/shop?category=Sponge%20Cakes' },
-  },
-  {
-    id: 'diwali-packs',
-    season: 'diwali',
-    prices: diwaliPackPrices(),
-    deal: true, // a price, not a free gift: label "Deal", no cart gift
-    buy: 'Diwali packs — cupcakes, cake pops & the gift box',
-    buyNote: `Cupcakes from ${inr(DIWALI_FROM.cupcakes10)} · cake pops ${inr(DIWALI_FROM.cakePops10)} · 2 Variety boxes ${inr(DIWALI_FROM.variety2)} · gift box 10% off`,
-    get: `Packs from ${inr(DIWALI_FROM.from)}`,
-    getLabel: 'Deal',
-    name: 'Diwali Sweet Packs',
-    tag: `Diwali · ${DIWALI_DATES.range}`,
-    condition: 'Diwali-only packs at a special price — 10 cupcakes of any flavour, 10 Chocolate, Vanilla or Red Velvet cake pops, or 2 Variety boxes of 6 — and the Birthday & Anniversary Gift Box at 10% off.',
-    gift: 'Diwali pack prices',
-    tickerText: `10 cupcakes from ${inr(DIWALI_FROM.cupcakes10)} · 10 cake pops ${inr(DIWALI_FROM.cakePops10)}`,
-    image: img.rcOwnCupcakesSix,
-    alt: 'Six assorted cupcakes',
-    cta: { label: 'Choose a pack', to: '/offers#diwali-packs' },
-  },
-  // ── Everyday (only while EVERYDAY_ON) ──
   {
     id: 'mid-month',
     buy: `Spend ${inr(OFFER_RULES.midMonth.min)} or more`,
@@ -193,14 +116,11 @@ export const OFFERS = [
 
 export const offerById = (id) => OFFERS.find((o) => o.id === id)
 
-/** The offers running right now: Diwali ones in their window, then the everyday ones (if on), Mid-Month only in its window. */
+/** The offers running right now: the everyday ones (if on), Mid-Month only in its window. */
 export function activeOffers(now = offerNow()) {
-  if (!OFFERS_ON) return []
+  if (!OFFERS_ON || !EVERYDAY_ON) return []
   const midLive = midMonthWindow(now).live
-  const diwaliLive = diwaliWindow(now).live
-  return OFFERS.filter((o) =>
-    o.season === 'diwali' ? diwaliLive : EVERYDAY_ON && (o.id !== 'mid-month' || midLive),
-  )
+  return OFFERS.filter((o) => o.id !== 'mid-month' || midLive)
 }
 
 // ── Which offer does this cart earn? ──────────────────────────────────────────
@@ -213,7 +133,7 @@ export function activeOffers(now = offerNow()) {
 // Cheesecake Lover: 3 cake pops is worth less than 2 cupcakes, 5 is worth more.
 // Ties go to the earlier offer in RANK. Mid-Month and Gift Box Pair give the
 // same box.
-const RANK = ['diwali-sponge', 'diwali-tubs', 'big-basket', 'cookie-dozen', 'mid-month', 'gift-pair', 'tub-lover', 'cheesecake', 'tub-sip']
+const RANK = ['big-basket', 'cookie-dozen', 'mid-month', 'gift-pair', 'tub-lover', 'cheesecake', 'tub-sip']
 const GIFT_VALUE = {
   'big-basket': 150,
   'cookie-dozen': 110,
@@ -263,16 +183,10 @@ const isCheesecakeTub = ({ product, tier, isSlice }) =>
   product?.category === 'Cheesecakes' && (isSlice || /^tub$/i.test(tier))
 const isDrink = ({ product }) => product?.category === 'Drinks'
 const isCookieDozen = ({ product, tier }) => product?.category === 'Cookies' && tier === 'Box of 12'
-// A WHOLE sponge cake (the base "Whole Bento" tier), not a sponge tub.
-const isWholeSponge = ({ product, isSlice, tier }) =>
-  product?.category === 'Sponge Cakes' && !isSlice && !/^tub$/i.test(tier)
-
 // Offers whose gift grows with a count. id → which count, its tiers, and the
 // word for one item (for "add 2 more cheesecake tubs").
 export const TIERED = {
   'tub-lover': { count: 'tubs', tiers: OFFER_RULES.tubTiers, unit: 'cheesecake tub' },
-  'diwali-tubs': { count: 'tubs', tiers: OFFER_RULES.diwaliTubTiers, unit: 'cheesecake tub' },
-  'diwali-sponge': { count: 'sponge', tiers: OFFER_RULES.diwaliSpongeTiers, unit: 'whole sponge cake' },
 }
 /** The highest tier of `tiers` that `n` reaches, or null. */
 export const tierFor = (tiers, n) => [...tiers].reverse().find((t) => n >= t.min) || null
@@ -295,8 +209,8 @@ export function tubTier(tubs) {
  * `earned` maps every offer id to true/false, and `counts` carries what each
  * was measured on, for the per-card status on /offers.
  */
-export function cartOfferStatus(items = [], subtotal = 0, now = offerNow(), { real = false, everyday = EVERYDAY_ON } = {}) {
-  const counts = { boxes: 0, banto: 0, tubs: 0, drinks: 0, dozens: 0, sponge: 0 }
+export function cartOfferStatus(items = [], subtotal = 0, now = offerNow(), { everyday = EVERYDAY_ON } = {}) {
+  const counts = { boxes: 0, banto: 0, tubs: 0, drinks: 0, dozens: 0 }
   for (const it of items) {
     const info = lineInfo(it)
     if (isGiftBox(info)) counts.boxes += it.qty
@@ -304,21 +218,16 @@ export function cartOfferStatus(items = [], subtotal = 0, now = offerNow(), { re
     if (isCheesecakeTub(info)) counts.tubs += it.qty
     if (isDrink(info)) counts.drinks += it.qty
     if (isCookieDozen(info)) counts.dozens += it.qty
-    if (isWholeSponge(info)) counts.sponge += it.qty
   }
   const mid = midMonthWindow(now)
-  const diwali = diwaliWindow(now, real)
   const has = items.length > 0
   const every = OFFERS_ON && everyday
-  const fest = OFFERS_ON && diwali.live
   // The tier each tiered offer reaches right now (null = not yet).
   const tiers = Object.fromEntries(
     Object.entries(TIERED).map(([id, t]) => [id, tierFor(t.tiers, counts[t.count])]),
   )
   const tier = tiers['tub-lover']
   const earned = {
-    'diwali-tubs': fest && !!tiers['diwali-tubs'],
-    'diwali-sponge': fest && !!tiers['diwali-sponge'],
     'big-basket': every && has && subtotal >= OFFER_RULES.bigBasketMin,
     'cookie-dozen': every && counts.dozens >= 1,
     'mid-month': every && has && mid.live && subtotal >= OFFER_RULES.midMonth.min,
@@ -338,23 +247,12 @@ export function cartOfferStatus(items = [], subtotal = 0, now = offerNow(), { re
   const firstTier = OFFER_RULES.tubTiers[0]
   const withGift = (id, gift) => ({ ...offerById(id), gift })
 
-  // The next step up a tiered Diwali offer, once something counting towards it
-  // is in the basket: "Add 1 more cheesecake tub for 4 cake pops free".
   const more = (n, what) => `${n} more ${what}${n === 1 ? '' : 's'}`
-  const stepUp = (id) => {
-    const t = TIERED[id]
-    const n = counts[t.count]
-    const next = t.tiers.find((x) => x.min > n)
-    if (!fest || !n || !next || !beats(id, next.value)) return null
-    return { offer: withGift(id, next.gift), add: more(next.min - n, t.unit), progress: n / next.min }
-  }
 
   // Only nudge when the next step is genuinely close — a ₹200 cart told to
   // spend ₹1,300 more reads as a sales pitch, not a tip. First match wins, so
   // the order below is the order of preference.
   const candidates = [
-    stepUp('diwali-sponge'),
-    stepUp('diwali-tubs'),
     every && beats('big-basket') && subtotal >= OFFER_RULES.bigBasketMin * 0.6 && {
       offer: offerById('big-basket'),
       need: OFFER_RULES.bigBasketMin - subtotal,
@@ -395,13 +293,13 @@ export function cartOfferStatus(items = [], subtotal = 0, now = offerNow(), { re
   const nudge = has ? candidates.find(Boolean) || null : null
   // A tiered offer's gift is the tier actually reached.
   const offer = !bestId ? null : TIERED[bestId] ? withGift(bestId, tiers[bestId].gift) : offerById(bestId)
-  return { offer, nudge, earned, counts, mid, diwali, tubTier: tier, tiers }
+  return { offer, nudge, earned, counts, mid, tubTier: tier, tiers }
 }
 
 /**
  * The gift a SAVED order earned — for /admin/orders, so the bakery packs it
  * without hunting through the WhatsApp receipt. Judged on the order's own
- * items and the time it was placed, on the real calendar (never a preview).
+ * items and the time it was placed.
  * The gift isn't stored on the order (that would need a rules change), so this
  * re-works it out; the result is the same as the receipt's line for website
  * orders, and also covers ChatBot orders, whose receipt has no gift line.
@@ -427,7 +325,7 @@ export function orderGift(order) {
   if (!when || Number.isNaN(when.getTime())) return null
   const items = Array.isArray(order.items) ? order.items : []
   const subtotal = Number(order.totals?.subtotal) || items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 1), 0)
-  return giftRecord(cartOfferStatus(items, subtotal, when, { real: true, everyday: when < EVERYDAY_OFF_FROM }).offer)
+  return giftRecord(cartOfferStatus(items, subtotal, when, { everyday: when < EVERYDAY_OFF_FROM }).offer)
 }
 
 // ── Quick-add choices for the offer cards on /offers ──────────────────────────
@@ -502,34 +400,6 @@ function cookieDozenTabs() {
     .map((p) => choice({ id: `${p.id}-slice`, name: `${p.name} (${p.sliceLabel})`, price: p.slice, img: p.img }, short(p.name))))]
 }
 
-// Whole sponge cakes, built as /shop builds the base tier: "<name> (Whole Bento)".
-function spongeTabs() {
-  return [tab('Whole sponge cakes', shopProducts
-    .filter((p) => p.category === 'Sponge Cakes')
-    .map((p) => choice({ id: p.id, name: `${p.name} (${p.sizeLabel})`, price: p.price, img: p.img }, p.name.replace(/ Sponge Cake$/, ''))))]
-}
-
-// Diwali packs: each line carries `was` (struck through) and `pack`, which
-// the picker uses to allow adding only inside the real window.
-const short2 = (name) => name.replace(/ (Cupcakes|Cake Pops)$/, '')
-function diwaliPackTabs() {
-  const ten = (test) => shopProducts
-    .filter((p) => DIWALI_PACK10[p.id] && test(p))
-    .map((p) => choice({ ...pack10Line(p), was: p.price * 10, pack: true }, short2(p.name)))
-  const two = shopProducts
-    .filter((p) => DIWALI_PACK2[p.id])
-    .map((p) => choice({ ...pack2Line(p), was: p.price * 2, pack: true }, 'Variety × 2 boxes'))
-  const off = shopProducts
-    .filter((p) => DIWALI_PCT_OFF[p.id])
-    .map((p) => choice({ ...price1Line(p), was: p.price, pack: true }, 'Gift box'))
-  return [
-    tab('Cupcakes × 10', ten((p) => p.category === 'Cupcakes')),
-    tab('Variety × 2', two),
-    tab('Cake pops × 10', ten((p) => p.group === 'Cake Pops')),
-    off.length && tab('Gift box · 10% off', off),
-  ].filter(Boolean)
-}
-
 /** Offer id → { label, tabs } for the offers that qualify on particular items. */
 export const OFFER_PICKERS = {
   'gift-pair': { label: 'Choose your boxes', tabs: giftBoxTabs() },
@@ -537,7 +407,4 @@ export const OFFER_PICKERS = {
   cheesecake: { label: 'Choose your cheesecake', tabs: bantoTabs() },
   'tub-sip': { label: 'Choose a tub & a drink', tabs: tubSipTabs() },
   'cookie-dozen': { label: 'Choose your cookies', tabs: cookieDozenTabs() },
-  'diwali-tubs': { label: 'Choose your tubs', tabs: tubLoverTabs() },
-  'diwali-sponge': { label: 'Choose your sponge cake', tabs: spongeTabs() },
-  'diwali-packs': { label: 'Choose your pack', tabs: diwaliPackTabs() },
 }

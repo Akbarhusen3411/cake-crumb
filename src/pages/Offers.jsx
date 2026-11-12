@@ -12,31 +12,15 @@ import { useCart } from '../context/CartContext.jsx'
 import { buildWhatsAppLink } from '../components/WhatsAppButton.jsx'
 import {
   OFFER_RULES, OFFER_PICKERS, EVERYDAY_ON, TIERED, ordinal,
-  activeOffers, cartOfferStatus, midMonthWindow, diwaliWindow, daysUntil, OFFERS_ON, DIWALI_ON, DIWALI_DATES,
+  activeOffers, cartOfferStatus, midMonthWindow, daysUntil,
 } from '../data/offers.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
-import OfferSteps, { PriceTag } from '../components/OfferSteps.jsx'
 
 // The hero says how many offers there are, so it can't go stale when one is added.
 const COUNT_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
 const countWord = (n) => COUNT_WORDS[n] || String(n)
 
 const dayMonth = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
-
-/** The hero's date line: Diwali while it runs, else the Mid-Month window (when everyday offers are on). */
-function SeasonChip({ now }) {
-  const d = diwaliWindow(now)
-  if (d.live) {
-    const left = daysUntil(d.to, now)
-    return (
-      <span className="cc-offers-chip cc-offers-chip--live">
-        <span className="cc-offers-dot" aria-hidden />
-        Diwali offers are on — {left === 0 ? 'last day today' : `till ${dayMonth(d.to)}`}
-      </span>
-    )
-  }
-  return EVERYDAY_ON ? <MidMonthChip now={now} /> : null
-}
 
 /** The mid-month line for the hero: running now, or when it next opens. */
 function MidMonthChip({ now }) {
@@ -68,10 +52,6 @@ function MidMonthChip({ now }) {
 function OfferPicker({ tabs }) {
   const [tab, setTab] = useState(0)
   const { items, add, increment, decrement } = useCart()
-  // Diwali packs are sold only on the real dates. A ?diwali=preview tab shows
-  // the same "Add" button, but a tap only says when packs open.
-  const packsOpen = diwaliWindow(undefined, true).live
-  const [packSoon, setPackSoon] = useState(null)
   const qtyOf = (id) => items.find((it) => it.id === id)?.qty || 0
 
   return (
@@ -99,12 +79,8 @@ function OfferPicker({ tabs }) {
             <div key={line.id} className={`cc-opick__item${qty ? ' is-in' : ''}`}>
               <img src={u(line.img, 200, 200)} srcSet={srcSet(line.img)} sizes="96px" alt="" loading="lazy" />
               <span className="cc-opick__name" title={line.name}>{label}</span>
-              {line.was > line.price
-                ? <PriceTag was={line.was} now={line.price} small flag={null} />
-                : <span className="cc-opick__price">{inr(line.price)}</span>}
-              {line.pack && !packsOpen && packSoon === line.id ? (
-                <span className="cc-opick__soon" role="status">{DIWALI_DATES.opens}</span>
-              ) : qty ? (
+              <span className="cc-opick__price">{inr(line.price)}</span>
+              {qty ? (
                 <span className="cc-opick__stepper">
                   <button type="button" onClick={() => decrement(line.id)} aria-label={`One fewer ${line.name}`}><FiMinus size={12} /></button>
                   <strong aria-live="polite">{qty}</strong>
@@ -114,7 +90,7 @@ function OfferPicker({ tabs }) {
                 <button
                   type="button"
                   className="cc-opick__add"
-                  onClick={() => (line.pack && !packsOpen ? setPackSoon(line.id) : add(line))}
+                  onClick={() => add(line)}
                   aria-label={`Add ${line.name}`}
                 >
                   <FiPlus size={12} /> Add
@@ -133,7 +109,7 @@ function OfferStatus({ offer, status, subtotal }) {
   const { earned, counts, mid } = status
   const won = status.offer?.id === offer.id
   const tiered = TIERED[offer.id]
-  const unitWord = (n) => (tiered?.count === 'sponge' ? (n === 1 ? 'cake' : 'cakes') : n === 1 ? 'tub' : 'tubs')
+  const unitWord = (n) => (n === 1 ? 'tub' : 'tubs')
   if (earned[offer.id]) {
     // A tiered offer can be unlocked with a bigger tier still in reach.
     const n = tiered ? counts[tiered.count] : 0
@@ -175,9 +151,7 @@ function OfferStatus({ offer, status, subtotal }) {
         progress = counts.boxes / 2
       }
       break
-    case 'tub-lover':
-    case 'diwali-tubs':
-    case 'diwali-sponge': {
+    case 'tub-lover': {
       const n = counts[tiered.count]
       if (!n) break
       // Counts towards the first tier it hasn't reached.
@@ -233,9 +207,7 @@ function OfferCard({ offer: o, index, status, subtotal, startOpen }) {
       <div className="cc-orow__body">
         <span className="cc-orow__tag">{o.tag}</span>
         <h3 className="cc-orow__name">{o.name}</h3>
-        {/* Diwali offers say their deal as steps or price tags; the everyday
-            ones keep the BUY / FREE pair. Same on Home, so both pages read alike. */}
-        {o.steps || o.prices ? <OfferSteps offer={o} /> : (
+        {/* The deal as a BUY / FREE pair — same on Home, so both pages read alike. */}
         <p className="cc-offer-deal">
           <span className="cc-offer-deal__row">
             <span className="cc-offer-deal__label">Buy</span>
@@ -245,11 +217,10 @@ function OfferCard({ offer: o, index, status, subtotal, startOpen }) {
             </span>
           </span>
           <span className="cc-offer-deal__row cc-offer-deal__row--get">
-            <span className="cc-offer-deal__label"><FiGift size={12} aria-hidden /> {o.getLabel || 'Free'}</span>
+            <span className="cc-offer-deal__label"><FiGift size={12} aria-hidden /> Free</span>
             <span className="cc-offer-deal__text">{o.get || o.gift}</span>
           </span>
         </p>
-        )}
         <OfferStatus offer={o} status={status} subtotal={subtotal} />
         <div className="cc-orow__actions">
           {picker ? (
@@ -267,7 +238,7 @@ function OfferCard({ offer: o, index, status, subtotal, startOpen }) {
               {o.cta.label} <FiArrowRight size={14} />
             </Link>
           )}
-          {picker && !o.deal && (
+          {picker && (
             <Link to={o.cta.to} className="cc-orow__link">
               Or browse the shop <FiArrowRight size={13} />
             </Link>
@@ -302,22 +273,12 @@ function BasketBar({ status, count, subtotal }) {
 export default function Offers() {
   usePageMeta({
     title: 'Offers',
-    description: 'Free cake pops and tubs with your Cake & Crumb order, and special-price Diwali packs of cupcakes and cake pops — whenever an offer is running.',
+    description: 'Free cake pops, cupcakes and cookies with your Cake & Crumb order — whenever an offer is running.',
   })
   const { items, count, subtotal } = useCart()
   const now = useOfferClock()
   const offers = activeOffers(now)
   const live = offers.length > 0
-  // Nothing running, but Diwali is coming: say when, rather than a flat "no
-  // offers" on a page whose description promises them. Read from
-  // OFFER_RULES.diwali, so a date change follows. Up to 30 days ahead.
-  const dw = diwaliWindow(now, true)
-  const diwaliIn = !live && OFFERS_ON && DIWALI_ON ? daysUntil(dw.from, now) : -1
-  const diwaliSoon = diwaliIn > 0 && diwaliIn <= 30
-  const fmtDay = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
-  // A priced deal (the Diwali packs) is running beside the free gifts, so the
-  // copy can't say "you pay the menu price, gifts on us" for everything.
-  const hasDeals = offers.some((o) => o.deal)
   const status = cartOfferStatus(items, subtotal, now)
   const { hash } = useLocation()
   const target = hash.slice(1)
@@ -344,15 +305,11 @@ export default function Offers() {
           <h1 className="cc-offers-hero__title">A Little Extra,<br />On Us</h1>
           <p className="cc-offers-hero__lede">
             {live
-              ? hasDeals
-                ? `${countWord(offers.length)} ways to treat yourself: free treats added to your order, and special Diwali pack prices on cupcakes and cake pops.`
-                : `${countWord(offers.length)} ways to get something free with your order. You pay the menu price — the extra treats are on the house.`
-              : diwaliSoon
-                ? `Our Diwali offers start on ${fmtDay(dw.from)} — ${diwaliIn === 1 ? 'tomorrow' : `in ${diwaliIn} days`} — and run to ${fmtDay(dw.to)}: free treats with cheesecake tubs and whole cakes, and special pack prices on cupcakes and cake pops.`
-                : 'There are no offers running just now. Every cake is still baked to order, and we’d love to make yours.'}
+              ? `${countWord(offers.length)} ways to get something free with your order. You pay the menu price — the extra treats are on the house.`
+              : 'There are no offers running just now. Every cake is still baked to order, and we’d love to make yours.'}
           </p>
-          {live && (
-            <div className="cc-offers-hero__meta"><SeasonChip now={now} /></div>
+          {live && EVERYDAY_ON && (
+            <div className="cc-offers-hero__meta"><MidMonthChip now={now} /></div>
           )}
           <div className="cc-offers-hero__cta">
             <Link to="/shop" className="btn-rose"><FiShoppingBag /> Shop now</Link>
@@ -370,7 +327,7 @@ export default function Offers() {
             <div className="container py-4 py-md-5">
               <div className="text-center mb-4 mb-md-5">
                 <span className="eyebrow">The Offers</span>
-                <h2 className="section-title mt-3">{hasDeals ? 'Pick Your Treat' : 'Pick Your Free Treat'}</h2>
+                <h2 className="section-title mt-3">Pick Your Free Treat</h2>
               </div>
               <div className="cc-orows">
                 {offers.map((o, i) => (
@@ -403,7 +360,7 @@ export default function Offers() {
                   <h3>Order as usual</h3>
                   <p>
                     On the website, through our chat, or straight on WhatsApp.
-                    {hasDeals ? ' Diwali pack prices are already in your cart total.' : ' Your total is the menu price.'}
+                    {' Your total is the menu price.'}
                   </p>
                 </li>
                 <li>
@@ -433,23 +390,15 @@ export default function Offers() {
                   <span>
                     <strong>One gift per order</strong>
                     Gifts don’t combine — if your order fits more than one, you get the bigger gift.
-                    {hasDeals ? ' A Diwali pack price and a free gift can go together.' : ''}
                   </span>
                 </li>
                 <li>
                   <FiMessageCircle aria-hidden />
                   <span>
-                    <strong>{hasDeals ? 'Gifts aren’t in your cart total' : 'Not in your cart total'}</strong>
+                    <strong>Not in your cart total</strong>
                     The gift is added when we confirm your order on WhatsApp.
-                    {hasDeals ? ' Pack prices are — what you see in the cart is what you pay.' : ''}
                   </span>
                 </li>
-                {status.diwali.live && (
-                  <li>
-                    <FiClock aria-hidden />
-                    <span><strong>Diwali dates</strong>From 12:00 am on {dayMonth(status.diwali.from)} to midnight on {dayMonth(status.diwali.to)}. The time you place the order is what counts.</span>
-                  </li>
-                )}
                 {EVERYDAY_ON && (
                   <li>
                     <FiClock aria-hidden />

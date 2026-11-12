@@ -244,9 +244,7 @@ export default function Checkout() {
     ? (form.payment === 'upi' || form.payment === 'deposit')
     : (form.payment === 'upi' || form.payment === 'cod')
 
-  // A Diwali pack carries its Diwali price, so it can't be ordered once 5–15
-  // Nov is over (a cart saved during Diwali, or a preview tab). Real calendar.
-  // Also: a lone cupcake left under its minimum (cartProblems / CartIssues).
+  // A lone cupcake left under its minimum (cartProblems / CartIssues).
   const cartBlocked = cartProblems(items).any
   const isFormValid = isDetailsValid && isPaymentValid && subtotal > 0 && !cartBlocked && !deliveryPending
 
@@ -277,8 +275,7 @@ export default function Checkout() {
   const [placedDeliveryDate, setPlacedDeliveryDate] = useState('')
 
   function buildOrderMessage(id, snapshotItems, totals, deliveryDate) {
-    // `real`: a ?diwali=preview tab must not put a gift on a real order outside 5–15 Nov.
-    const gift = OFFERS_ON ? cartOfferStatus(snapshotItems, totals.subtotal, undefined, { real: true }).offer : null
+    const gift = OFFERS_ON ? cartOfferStatus(snapshotItems, totals.subtotal).offer : null
     const isPickup = form.deliveryMethod === 'pickup'
     // Deposit figures derived from the passed totals so the success-page re-send
     // (which runs after the cart is cleared) still shows the right numbers.
@@ -379,8 +376,7 @@ export default function Checkout() {
     if (!isFormValid) { revealProblems(); return }
     setSubmitHint('')
     // Re-check at the moment of ordering — nothing redraws this page as the
-    // clock ticks, so a form finished at 23:58 on 15 Nov could still send a
-    // Diwali pack price at 00:01, and a tab left open overnight a same-day date.
+    // clock ticks, so a tab left open overnight could send a same-day date.
     if (cartProblems(items).any || form.deliveryDate < getMinDeliveryDate()) {
       setTouched((t) => ({ ...t, deliveryDate: true }))
       setRecheck((n) => n + 1)
@@ -406,8 +402,8 @@ export default function Checkout() {
       orderId: id,
       items: snapshotItems,
       totals: snapshotTotals,
-      // Same rule as the receipt's "🎁 Free gift" line (real calendar).
-      offerGift: OFFERS_ON ? giftRecord(cartOfferStatus(snapshotItems, subtotal, undefined, { real: true }).offer) : null,
+      // Same rule as the receipt's "🎁 Free gift" line.
+      offerGift: OFFERS_ON ? giftRecord(cartOfferStatus(snapshotItems, subtotal).offer) : null,
       customer: {
         name: form.name,
         // store with country code so admin emails / WhatsApp messages

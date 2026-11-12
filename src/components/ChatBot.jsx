@@ -15,7 +15,7 @@ import { kmFromBakeryByPincode } from '../services/delivery.js'
 import { WHATSAPP_PHONE } from './WhatsAppButton.jsx'
 import { useCart } from '../context/CartContext.jsx'
 import { localIso } from '../utils/adminDate.js'
-import { chatbotPacks, cartOfferStatus, giftRecord, activeOffers, packHint, DIWALI_DATES } from '../data/offers.js'
+import { cartOfferStatus, giftRecord } from '../data/offers.js'
 import {
   MENU_DATA, ORDER_ITEMS, MENU_CATEGORIES, ORDER_CATEGORIES, getItemCat,
 } from '../data/chatbotMenu.js'
@@ -125,27 +125,10 @@ const MAIN_OPTIONS = [
   { label: '📞 Contact Us', action: 'contact' },
 ]
 
-// The main menu, with "🎁 Diwali Offers" first while they run (5–15 Nov, or a
-// preview — the offers text only describes; prices still follow the real date).
-const diwaliOffers = () => activeOffers().filter((o) => o.season === 'diwali')
-const mainOptions = () =>
-  diwaliOffers().length ? [{ label: '🎁 Diwali Offers', action: 'offers' }, ...MAIN_OPTIONS] : MAIN_OPTIONS
+const mainOptions = () => MAIN_OPTIONS
 
-/** The Diwali offers as one chat message: gift steps and pack prices. */
-function offersMessage() {
-  const lines = [`🪔 *Diwali offers · ${DIWALI_DATES.short}*`]
-  for (const o of diwaliOffers()) {
-    lines.push('', `*${o.name}*${o.stepsHead ? ` — ${o.stepsHead.toLowerCase()}` : ''}`)
-    if (o.steps) o.steps.forEach((st) => lines.push(`• ${st.buy} → ${st.get} *free*`))
-    if (o.prices) o.prices.forEach((pr) => lines.push(`• ${pr.label}${pr.note ? ` (${pr.note})` : ''}: *${inr(pr.now)}* (was ${inr(pr.was)})`))
-  }
-  lines.push('', '🎁 Free gifts are added when we confirm your order on WhatsApp. Pack prices are already in your total — add 10 pieces and the price drops by itself.')
-  return lines.join('\n')
-}
-
-/** The gift a bot cart earns (real calendar), as stored on the order. */
 const chatGift = (entries, subtotal) =>
-  giftRecord(cartOfferStatus(entries.map(([name, { qty, price }]) => ({ id: '', name, qty, price })), subtotal, undefined, { real: true }).offer)
+  giftRecord(cartOfferStatus(entries.map(([name, { qty, price }]) => ({ id: '', name, qty, price })), subtotal).offer)
 
 // Above this many buttons, lay them out two-per-row instead of one long column.
 // Tuned so the 9-category menu/order lists go grid but MAIN_OPTIONS (5, with longer
@@ -250,8 +233,6 @@ function PriceCard({ cat }) {
 }
 
 // ─── Order summary card (chat-styled version of the website checkout summary) ───
-// A Diwali pack line's regular price, struck, before its pack price.
-const Was = ({ it }) => (it.was > it.price ? <s className="mr-1 font-semibold text-chocolate-light/60">{inr(it.was * it.qty)}</s> : null)
 
 // "🎁 Free gift" line on the review and summary cards.
 function GiftNote({ gift }) {
@@ -299,7 +280,7 @@ function OrderSummaryCard({ data }) {
                 <span className="text-chocolate-light/70">{inr(it.price)}</span>
               </p>
             </div>
-            <span className="text-[12.5px] font-bold shrink-0" style={{ color: '#5b3e36' }}><Was it={it} />{inr(it.price * it.qty)}</span>
+            <span className="text-[12.5px] font-bold shrink-0" style={{ color: '#5b3e36' }}>{inr(it.price * it.qty)}</span>
           </div>
         ))}
       </div>
@@ -381,7 +362,7 @@ function CartPreviewCard({ items, subtotal, gift }) {
                 <span className="text-chocolate-light/70">{inr(it.price)} each</span>
               </p>
             </div>
-            <span className="text-[12.5px] font-bold shrink-0" style={{ color: '#5b3e36' }}><Was it={it} />{inr(it.price * it.qty)}</span>
+            <span className="text-[12.5px] font-bold shrink-0" style={{ color: '#5b3e36' }}>{inr(it.price * it.qty)}</span>
           </div>
         ))}
       </div>
@@ -462,13 +443,6 @@ function DatePickerWidget({ onPick, pickup = false }) {
 }
 
 // ─── Order item selector ───
-// "🎁 Diwali: 10 for ₹239" under an item that rolls up into a pack (real dates).
-function PackHint({ name, price }) {
-  const h = packHint(name, price)
-  if (!h) return null
-  return <span className="block text-[10px] font-bold text-berry mt-0.5">🎁 Diwali: {h.size === 1 ? `price ${inr(h.price)}` : `${h.size} ${h.unit} for ${inr(h.price)}`}</span>
-}
-
 function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
   // Running count across the whole order (cart is the full name→qty map).
   const cartCount = Object.values(cart).reduce((sum, q) => sum + (q || 0), 0)
@@ -509,7 +483,6 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
                           </span>
                           <span className="text-[13px] font-bold text-berry shrink-0">{inr(v.price)}</span>
                         </div>
-                        <PackHint name={v.name} price={v.price} />
                         {q > 0 ? (
                           <div className="flex items-center justify-between">
                             <button
@@ -551,7 +524,6 @@ function OrderItemSelector({ items, cart, onUpdate, onDone, total = 0 }) {
               <div className="flex-1 min-w-0 pr-2">
                 <p className="text-[12.5px] font-medium text-chocolate truncate leading-tight">{item.name}</p>
                 <p className="text-[11px] text-berry font-bold mt-0.5">{inr(item.price)}</p>
-                <PackHint name={item.name} price={item.price} />
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 {qty > 0 && (
@@ -696,9 +668,8 @@ export default function ChatBot() {
     })
   }
 
-  // The cart as it will be charged: from 5–15 Nov full packs roll up to their
-  // Diwali price (10 cupcakes / cake pops, 2 Variety boxes), as on the website.
-  const pricedEntries = () => chatbotPacks(Object.entries(orderCart).filter(([, v]) => v.qty > 0))
+  // The cart as it will be charged: every line with a quantity.
+  const pricedEntries = () => Object.entries(orderCart).filter(([, v]) => v.qty > 0)
   const getCartTotal = () =>
     pricedEntries().reduce((sum, [, item]) => sum + item.price * item.qty, 0)
 
@@ -864,8 +835,8 @@ export default function ChatBot() {
     if (orderInfo.email) sendCustomerConfirmation(orderData)
 
     const grouped = {}
-    items.forEach(([name, { qty, price, cat: from }]) => {
-      const cat = getItemCat(from || name) || '📦 Other'
+    items.forEach(([name, { qty, price }]) => {
+      const cat = getItemCat(name) || '📦 Other'
       if (!grouped[cat]) grouped[cat] = []
       grouped[cat].push({ name, qty, price })
     })
@@ -1003,7 +974,7 @@ export default function ChatBot() {
           {
             from: 'bot',
             cartPreview: {
-              items: pricedEntries().map(([name, { qty, price, was }]) => ({ name, qty, price, was })),
+              items: pricedEntries().map(([name, { qty, price }]) => ({ name, qty, price })),
               subtotal: getCartTotal(),
               gift: chatGift(pricedEntries(), getCartTotal()),
             },
@@ -1126,11 +1097,6 @@ export default function ChatBot() {
         )
         setOptions([{ label: '🛒 Place Order', action: 'order' }, { label: '🏠 Main Menu', action: 'home' }])
         break
-      case 'offers':
-        setOptions([])
-        await addBotMessage(offersMessage())
-        setOptions([{ label: '🛒 Place Order', action: 'order' }, { label: '🏠 Main Menu', action: 'home' }])
-        break
       case 'location':
         setOptions([])
         await addBotMessage(`*Our Location*\n\n📍 ${BAKERY_ADDRESS.full}\n🗺️ ${MAP_LINK}\n🏠 Home bakery — we deliver around Vaso, Kheda and nearby districts, or collect for free.`)
@@ -1157,7 +1123,7 @@ export default function ChatBot() {
     // pickup never reaches that step and is free regardless.
     const fee = deliveryFee(deliveryMethod, deliveryKm)
     const total = subtotal + fee
-    const summaryItems = pricedEntries().map(([name, { qty, price, was }]) => ({ name, qty, price, was }))
+    const summaryItems = pricedEntries().map(([name, { qty, price }]) => ({ name, qty, price }))
     setMessages((prev) => [
       ...prev,
       {

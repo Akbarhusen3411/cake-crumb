@@ -53,7 +53,7 @@ Copy `.env.example` → `.env` and fill in the keys you want to use. **Restart t
 - 📱 WhatsApp auto-opens with pre-filled order summary on checkout
 - 🤖 Floating chatbot for orders without leaving the page
 - ⭐ Customer reviews with admin moderation, star ratings, JSON-LD aggregate rating for SEO
-- 🎉 Festival banners that auto-show on calendar dates (Diwali, Valentine's, etc.)
+- 🎉 Festival banners that auto-show on calendar dates (New Year, Christmas, Valentine's, etc.)
 - 🖼️ Auto WebP image pipeline (`sharp`) — keeps the site light on mobile
 - 🔍 Per-route `<title>` / OG meta + sitemap for SEO
 

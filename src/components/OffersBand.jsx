@@ -3,7 +3,6 @@ import { FiArrowRight, FiGift, FiClock } from 'react-icons/fi'
 import { u, srcSet } from '../data/images.js'
 import { activeOffers, midMonthWindow, daysUntil } from '../data/offers.js'
 import { useOfferClock } from '../hooks/useOfferClock.js'
-import OfferSteps from './OfferSteps.jsx'
 
 const dayMonth = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 
@@ -30,11 +29,9 @@ export default function OffersBand() {
   const now = useOfferClock()
   const offers = activeOffers(now)
   if (!offers.length) return null
-  // The Diwali packs are a price, not a free gift — say so when they run.
-  const hasDeals = offers.some((o) => o.deal)
   const mid = midMonthWindow(now)
   const midShown = offers.some((o) => o.id === 'mid-month')
-  // Two offers sit side by side, three (Diwali on its own) three across.
+  // Two offers sit side by side, three three across.
   const gridMod = offers.length <= 2 ? ' cc-home-offers__grid--two' : offers.length === 3 ? ' cc-home-offers__grid--three' : midShown ? '' : ' cc-home-offers__grid--six'
   const left = mid.live ? daysUntil(mid.to, now) : null
   const endsLine = left === 0
@@ -49,9 +46,7 @@ export default function OffersBand() {
             <span className="eyebrow">Offers</span>
             <h2 id="home-offers-title" className="section-title mt-3">Something Extra, On Us</h2>
             <p className="cc-home-offers__lede">
-              {hasDeals
-                ? 'Free treats added to your order, plus special Diwali pack prices. No codes — pack prices are in your cart, and we pack the gift in when we confirm.'
-                : 'Menu prices, with free treats added to your order. No codes — we pack the gift in when we confirm.'}
+              Menu prices, with free treats added to your order. No codes — we pack the gift in when we confirm.
             </p>
           </div>
           <Link to="/offers" className="btn-rose cc-home-offers__all">
@@ -89,7 +84,6 @@ export default function OffersBand() {
                 <span className="cc-offer-card__name">{o.name}</span>
                 {/* The deal in two lines — what to buy, what comes free. The
                     full condition sentence lives on /offers. */}
-                {o.steps || o.prices ? <OfferSteps offer={o} compact /> : (
                 <span className="cc-offer-deal">
                   <span className="cc-offer-deal__row">
                     <span className="cc-offer-deal__label">Buy</span>
@@ -99,11 +93,10 @@ export default function OffersBand() {
                     </span>
                   </span>
                   <span className="cc-offer-deal__row cc-offer-deal__row--get">
-                    <span className="cc-offer-deal__label"><FiGift size={12} aria-hidden /> {o.getLabel || 'Free'}</span>
+                    <span className="cc-offer-deal__label"><FiGift size={12} aria-hidden /> Free</span>
                     <span className="cc-offer-deal__text">{o.get || o.gift}</span>
                   </span>
                 </span>
-                )}
                 {o.id === 'mid-month' && (
                   <span className="cc-offer-card__spot">
                     <span className="cc-offer-card__ends"><FiClock size={13} aria-hidden /> {endsLine}</span>

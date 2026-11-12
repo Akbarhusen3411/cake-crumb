@@ -6,7 +6,7 @@ import { getFirebaseAuth, isFirebaseEnabled, firebaseUnavailableMessage } from '
 import { usePageMeta } from '../hooks/usePageMeta.js'
 import {
   ACC, listDocs, subscribeDocs, onCloudError,
-  seedMenuIfEmpty, ensurePerPieceMenu, ensureCakePopPrices, ensureFreeGiftMenu, ensureDiwaliPackMenu, fixMenuNov2026,
+  seedMenuIfEmpty, ensurePerPieceMenu, ensureCakePopPrices, ensureFreeGiftMenu, fixMenuNov2026,
 } from '../services/accounting.js'
 import AdminPageHead from '../components/admin/AdminPageHead.jsx'
 import DashboardTab from '../components/admin/accounting/DashboardTab.jsx'
@@ -173,7 +173,6 @@ export default function AdminAccounting() {
       await ensurePerPieceMenu() // adds "Per piece" prices for Cake Pop & Cupcakes
       await ensureCakePopPrices() // owner's Cake Pop prices + Pistachio
       await ensureFreeGiftMenu() // ₹0 "Free Gift" rows for offer gifts
-      await ensureDiwaliPackMenu() // Diwali pack-of-10 prices (only while Diwali is on)
       await fixMenuNov2026() // Nov 2026: menu matches the website (₹4 typo, Diwali rows, gift box)
     })()
     return () => { active = false; unsubs.forEach((u) => u()) }

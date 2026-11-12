@@ -62,18 +62,6 @@ Every link opens directly: **Ctrl + click** in VS Code / Cursor, or just click w
 | Google profile | — | [Google profile](https://local.google.com/place?placeid=ChIJy73gGoNZXjkRBkwvQscbki4) |
 | Google Maps listing | — | [Google Maps](https://maps.google.com/?cid=3355775214967278598) |
 
-## 🪔 Diwali preview (see the offers before 5 Nov)
-
-| Purpose | Local | Live |
-|---|---|---|
-| **Preview Diwali** — welcome screen, banner and offers on any date (stays on for that tab) | [local preview](http://localhost:5173/cake-crumb/?diwali=preview) | [live preview](https://akbarhusen3411.github.io/cake-crumb/?diwali=preview) |
-| Preview the Shop with Diwali deals | [local shop](http://localhost:5173/cake-crumb/shop?diwali=preview) | [live shop](https://akbarhusen3411.github.io/cake-crumb/shop?diwali=preview) |
-| Preview the Offers page | [local offers](http://localhost:5173/cake-crumb/offers?diwali=preview) | [live offers](https://akbarhusen3411.github.io/cake-crumb/offers?diwali=preview) |
-| Turn the preview off | [local off](http://localhost:5173/cake-crumb/?diwali=off) | [live off](https://akbarhusen3411.github.io/cake-crumb/?diwali=off) |
-| **Pretend it is a date** (local only — e.g. 8 Nov, real pack prices) | [8 Nov](http://localhost:5173/cake-crumb/?testdate=2026-11-08) · [16 Nov](http://localhost:5173/cake-crumb/cart?testdate=2026-11-16) · [back to today](http://localhost:5173/cake-crumb/?testdate=off) | — (switched off on the live site) |
-
-A preview only *shows* the offers — a real order outside 5–15 Nov never gets a pack price or a free gift.
-
 ## 🔐 Admin (only you — bookmark, never share)
 
 All use the **same Firebase login** (cakeandcrumb.in@gmail.com). Closing the tab signs you out; accounting also asks for your PIN.

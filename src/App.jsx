@@ -9,13 +9,12 @@ import DeferredChatBot from './components/DeferredChatBot.jsx'
 import FestivalBanner from './components/FestivalBanner.jsx'
 import BackToTop from './components/BackToTop.jsx'
 import ScrollReveal from './components/ScrollReveal.jsx'
-import { OFFERS_ON, EVERYDAY_ON, offerNow, diwaliWindow } from './data/offerRules.js'
+import { OFFERS_ON, EVERYDAY_ON } from './data/offerRules.js'
 
 // Seasonal pop-ups are their own chunks, fetched only when their window can be
 // live — eager, they cost every page ~10 KB all year for a few days' use.
 // Each still decides for itself whether to open (route, visit, dates).
 const MidMonthPopup = lazy(() => import('./components/MidMonthPopup.jsx'))
-const DiwaliWelcome = lazy(() => import('./components/DiwaliWelcome.jsx'))
 import Home from './pages/Home.jsx'
 import PageFallback from './components/skeletons/PageFallback.jsx'
 import ErrorBoundary, { clearChunkReloadGuard } from './components/ErrorBoundary.jsx'
@@ -119,7 +118,6 @@ function App() {
         {/* 13th–20th only, once a month; skips cart/checkout itself. */}
         {!isAdmin && OFFERS_ON && EVERYDAY_ON && <Suspense fallback={null}><MidMonthPopup /></Suspense>}
         {/* 5–15 November, once per visit; shown before the site. */}
-        {!isAdmin && diwaliWindow(offerNow()).live && <Suspense fallback={null}><DiwaliWelcome /></Suspense>}
       </div>
     </CartProvider>
   )

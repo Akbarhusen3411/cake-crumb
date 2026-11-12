@@ -2264,7 +2264,7 @@
   .cc-mitem__name { grid-area: name; font-size: 0.84rem; }
   .cc-mitem__add { grid-area: add; height: 1.6rem; padding: 0 0.5rem; font-size: 0.7rem; }
   /* Tiles size to their text (a flex row, not fixed columns), so a long
-     size like "Diwali pack of 10" is never cut to "Diwali…". */
+     size like "Box of 12" is never cut short. */
   .cc-mitem__prices {
     grid-area: prices;
     margin: 0;
